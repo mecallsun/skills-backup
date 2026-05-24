@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "skills": {
+    "a-share-flow-analyzer": {
+      "source": "chenhab03/multiagent-stock-research",
+      "sourceType": "github",
+      "skillPath": "skills/a-share-flow-analyzer/SKILL.md",
+      "computedHash": "9d7916ab28f390f8a9ea128a42d70c0afea7d5e4e634c9d10ceaf2d1f2137270"
+    },
+    "a-stock-data": {
+      "source": "simonlin1212/a-stock-data",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "ab3581277b5652e4ffa5dd45d6405ba73421d376fd3f1911f3084965b6b5e18d"
+    },
+    "ashare": {
+      "source": "410417122/ashare-ai",
+      "sourceType": "github",
+      "skillPath": "ashare-plugin/skills/ashare/SKILL.md",
+      "computedHash": "9af643591963fc9585b698414bd638e4b4a9be675b0f65c287f8143f04dd7fc9"
+    },
+    "china-stock-analyst": {
+      "source": "wjt0321/china-stock-analyst",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b9565c5dbef1b6decc64930e0fa1a197a9d47964ba937b28871d768260393db9"
+    },
+    "company-financial-analysis": {
+      "source": "viekai/analyse-skills",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "83d263440d5de33156e7105c782975c0ba6021317ade9df9092446d9387b82dd"
+    },
+    "experiments": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/experiments/SKILL.md",
+      "computedHash": "d35f0fe13d480397ca20f620ffca4d5f0ac1ef6dbef582941559af71e63dac5a"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "n8n-cli": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": "packages/@n8n/cli/skills/n8n-cli/SKILL.md",
+      "computedHash": "ca8a7b9de366f8cd9d44210adb8f886c0e808aba1948588fb2a2559bdca3d2be"
+    },
+    "n8n:content-design": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/content-design/SKILL.md",
+      "computedHash": "1c220b873b3b7fe706976cec6827e037c2ee3138cdc1deda642a686314f2e74e"
+    },
+    "n8n:conventions": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/conventions/SKILL.md",
+      "computedHash": "0b3469868d2f71b6c828a110019cc210c1e6c2e3732c663feb6a183ec4cac840"
+    },
+    "n8n:create-community-node-lint-rule": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/create-community-node-lint-rule/SKILL.md",
+      "computedHash": "fadf90e86696672f2ecc5fa8dc0b9c9301bcbf0f0f4ddf735e854f226ea4a343"
+    },
+    "n8n:create-issue": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/create-issue/SKILL.md",
+      "computedHash": "00f2da92ce0b741032cadd2c12fb019066c6d419ec35a54cf707bb2858e7c35e"
+    },
+    "n8n:create-pr": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/create-pr/SKILL.md",
+      "computedHash": "9d23d01910e985f113a725c5179a42b6a8dfc6e397d34d5320ff46690aa16cea"
+    },
+    "n8n:create-skill": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/create-skill/SKILL.md",
+      "computedHash": "58a3ad4a753a1511f7077a12b2599092aea7661501ef1c3b512bcfa062979c4a"
+    },
+    "n8n:db-migrations": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/db-migrations/SKILL.md",
+      "computedHash": "d21d8ab9208429d793bf3cc4a0e4bbed2cd7c340294b81766fcbbfc9dceb7a55"
+    },
+    "n8n:design-system": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/design-system/SKILL.md",
+      "computedHash": "b606dd0f7303d93036585be9021d60fbd1613eb949eb9f8118f689f6eba0bb81"
+    },
+    "n8n:linear-issue": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/linear-issue/SKILL.md",
+      "computedHash": "3c5530e152160d0f60b66f2ea8fa60ae11d34f04920f46991fb30e1c409caeac"
+    },
+    "n8n:loom-transcript": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/loom-transcript/SKILL.md",
+      "computedHash": "bf8e523843a6f71435c4dc0d4ba2d9316840a169a79de655711934ebe4214ad1"
+    },
+    "n8n:node-add-oauth": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/node-add-oauth/SKILL.md",
+      "computedHash": "a6c0e02d36965abd23af2d23656bd01709c5d96b09df0cc9aa5eaff0fc85204f"
+    },
+    "n8n:protect-endpoints": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/protect-endpoints/SKILL.md",
+      "computedHash": "ce4dabac4e2bab22f17044a5b11b2f94cef2fb031d8933c19f768ebe0d4020f1"
+    },
+    "n8n:reproduce-bug": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/reproduce-bug/SKILL.md",
+      "computedHash": "754f4c7c8e65f34950967d217f5b526f50649ed80e45420340a5c049214717a8"
+    },
+    "n8n:setup-mcps": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/setup-mcps/SKILL.md",
+      "computedHash": "7f4dde33bfd6a54926df8bcf8044c790e5a3215fc8d7bef2f1c0837cb937c403"
+    },
+    "n8n:spec-driven-development": {
+      "source": "n8n-io/n8n",
+      "sourceType": "github",
+      "skillPath": ".claude/plugins/n8n/skills/spec-driven-development/SKILL.md",
+      "computedHash": "be2e21b9003242548dc92e8c740c78fd14bcf51de5996867aef2d6112904a3dc"
+    },
+    "pdf": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pdf/SKILL.md",
+      "computedHash": "37226d4220d844377e6b2a386c51a011df4cd130855ff0b80bcc22f9c28abd57"
+    },
+    "stock-analysis": {
+      "source": "liusai0820/stock-analysis-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "de015af9de451e2babb3ad119447d8bba47ac2373f788d4a1a45fe3cfe0bc0da"
+    },
+    "stock-analyst": {
+      "source": "chengzuopeng/stock-sdk-mcp",
+      "sourceType": "github",
+      "skillPath": "skills/stock-analyst/SKILL.md",
+      "computedHash": "8ff07f522cfce376d3e87936824ae985c391c9bd5181a73e44985287fc5476e0"
+    },
+    "xlsx": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/xlsx/SKILL.md",
+      "computedHash": "cb7fba2177d0d35d14b3244272b25d1b05246e99b3468a087fe06c84193dbd20"
+    }
+  }
+}

@@ -1,0 +1,132 @@
+# AI Skills TOP100 安装命令列表
+# 每行一个安装命令，按分类整理
+
+# ===== S类：置顶必装 =====
+npx skills add https://github.com/vercel-labs/skills --skill find-skills
+
+# ===== A类：AI工作流 =====
+npx skills add mendableai/firecrawl
+npx skills add n8n-io/n8n
+npx skills add skills-sh/playwright-agent
+npx skills add skills-sh/openai-assistants
+npx skills add langchain-ai/langchain-skill
+npx skills add skills-sh/browser-use
+npx skills add skills-sh/make-automation
+npx skills add modelcontextprotocol/servers
+npx skills add skills-sh/zapier-ai
+npx skills add skills-sh/multi-agent
+
+# ===== B类：数据分析 =====
+npx skills add skills-sh/pandas-analyst
+npx skills add skills-sh/sql-analytics
+npx skills add skills-sh/excel-automation
+npx skills add skills-sh/plotly-dashboard
+npx skills add skills-sh/metabase-bi
+npx skills add skills-sh/report-generator
+npx skills add skills-sh/data-quality
+npx skills add skills-sh/jupyter-colab
+npx skills add skills-sh/power-bi
+npx skills add skills-sh/airtable-analyst
+
+# ===== C类：A股量化 =====
+npx skills add simonlin1212/a-stock-data
+npx skills add https://github.com/liusai0820/stock-analysis-skill --skill stock-analysis
+npx skills add https://github.com/sugarforever/01coder-agent-skills --skill china-stock-analysis
+claude plugin marketplace add 410417122/ashare-ai
+npx skills add viekai/analyse-skills
+npx skills add https://github.com/wjt0321/china-stock-analyst
+npx skills add skills-sh/fin-modeling
+npx skills add skills-sh/backtesting
+npx skills add https://github.com/chengzuopeng/stock-sdk-mcp --skill stock-analyst
+npx skills add skills-sh/capm-model
+npx skills add skills-sh/risk-metrics
+npx skills add skills-sh/arima-forecast
+npx skills add skills-sh/behavioral-finance
+npx skills add chenhab03/multiagent-stock-research
+npx skills add skills-sh/finance-scraper
+npx skills add MrDeerLei/dragonscope-ashare
+
+# ===== D类：VibeCoding =====
+npx skills add shadcn-ui/shadcn
+npx skills add vercel/nextjs-skill
+npx skills add vercel/ai-sdk-skill
+npx skills add drizzle-team/drizzle-skill
+npx skills add supabase/supabase-skill
+npx skills add tailwindlabs/tailwind-skill
+npx skills add tiangolo/fastapi-skill
+npx skills add skills-sh/python-scripts
+npx skills add prisma/prisma-skill
+npx skills add skills-sh/react-hooks
+
+# ===== E类：内容创作 =====
+npx skills add skills-sh/short-video-script
+npx skills add skills-sh/content-marketing
+npx skills add skills-sh/long-form-writer
+npx skills add skills-sh/seo-optimizer
+npx skills add skills-sh/brand-voice
+npx skills add skills-sh/xiaohongshu
+npx skills add skills-sh/email-outreach
+npx skills add skills-sh/social-calendar
+
+# ===== F类：职场效率 =====
+npx skills add skills-sh/meeting-notes
+npx skills add skills-sh/exec-presentation
+npx skills add skills-sh/okr-designer
+npx skills add skills-sh/performance-review
+npx skills add skills-sh/contract-review
+npx skills add skills-sh/decision-matrix
+npx skills add skills-sh/hiring-screener
+npx skills add skills-sh/email-assistant
+npx skills add skills-sh/sop-generator
+npx skills add skills-sh/project-tracker
+
+# ===== G类：研究调研 =====
+npx skills add skills-sh/deep-research
+npx skills add skills-sh/competitor-intel
+npx skills add skills-sh/market-research
+npx skills add skills-sh/news-monitor
+npx skills add skills-sh/web-extractor
+npx skills add skills-sh/customer-insights
+npx skills add skills-sh/supply-chain-research
+npx skills add skills-sh/policy-tracker
+npx skills add skills-sh/paper-reader
+npx skills add skills-sh/linkedin-scout
+
+# ===== H类：基础设施 =====
+npx skills add skills-sh/docker-compose
+npx skills add skills-sh/github-actions
+npx skills add skills-sh/grafana-dashboard
+npx skills add skills-sh/kubernetes-helm
+npx skills add skills-sh/terraform-aws
+npx skills add skills-sh/postgres-optimizer
+npx skills add skills-sh/linux-admin
+npx skills add skills-sh/redis-cache
+
+# ===== I类：UI/UX =====
+npx skills add skills-sh/product-prd
+npx skills add skills-sh/figma-ai
+npx skills add skills-sh/landing-optimizer
+npx skills add skills-sh/wireframe-gen
+npx skills add skills-sh/ux-auditor
+npx skills add skills-sh/design-tokens
+npx skills add skills-sh/user-research
+npx skills add skills-sh/ab-tester
+
+# ===== J类：知识库 =====
+npx skills add skills-sh/obsidian-vault
+npx skills add skills-sh/rag-pipeline
+npx skills add skills-sh/notion-ai
+npx skills add skills-sh/course-designer
+npx skills add skills-sh/corporate-wiki
+npx skills add skills-sh/spaced-repetition
+npx skills add skills-sh/tech-docs
+npx skills add skills-sh/knowledge-graph
+
+# ===== K类：安全防护 =====
+npx skills add skills-sh/prompt-guard
+npx skills add snyk/snyk-skill
+npx skills add skills-sh/secrets-detector
+npx skills add skills-sh/owasp-scanner
+npx skills add skills-sh/supply-chain-audit
+npx skills add skills-sh/runtime-monitor
+npx skills add skills-sh/malware-detector
