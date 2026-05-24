@@ -1,0 +1,14 @@
+AI Skills TOP100 安装结果 - Sun May 24 00:06:55     2026
+========================================
+[跳过] find-skills
+[安装] mendableai/firecrawl
+[失败] mendableai/firecrawl - [90m│[39m  [2m      - For SSH: ssh-add -l (to check loaded keys)[22m
+[90m│[39m
+[90m│[39m  [2m      - For HTTPS: gh auth status (if using GitHub CLI)[22m
+[90m│[39m
+[90m│[39m  [2mTip: use the --yes (-y) and --global (-g) flags to install without prompts.[22m
+[90m│[39m
+[90m└[39m  [31mInstallation failed[39m
+
+[999D[J[31m■[39m  Canceled
+[?25h

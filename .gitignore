@@ -1,0 +1,17 @@
+# 排除大文件和临时文件
+.agents/skills/.git/
+node_modules/
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# 只保留SKILL.md和必要的元数据
+# 排除完整的仓库克隆（太大）
+**/node_modules/**
+**/.git/objects/**
+**/dist/**
+**/build/**
+
+# 保留安装命令和文档
+!AI_Skills_TOP100_Install_Commands.txt
