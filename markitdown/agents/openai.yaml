@@ -1,4 +1,0 @@
-interface:
-  display_name: "markitdown"
-  short_description: "Extract markdown text from office documents, PDFs, spreadsheets, and web files."
-  default_prompt: "Use $markitdown to convert the provided file into Markdown text and show the extracted content."
