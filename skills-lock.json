@@ -1,1715 +1,1932 @@
 {
-  "version": 1,
-  "skills": {
-    "a-share-flow-analyzer": {
-      "source": "chenhab03/multiagent-stock-research",
-      "sourceType": "github",
-      "skillPath": "skills/a-share-flow-analyzer/SKILL.md",
-      "computedHash": "9d7916ab28f390f8a9ea128a42d70c0afea7d5e4e634c9d10ceaf2d1f2137270"
-    },
-    "a-stock-data": {
-      "source": "simonlin1212/a-stock-data",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "ab3581277b5652e4ffa5dd45d6405ba73421d376fd3f1911f3084965b6b5e18d"
-    },
-    "accessibility": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/accessibility/SKILL.md",
-      "computedHash": "e5639db209a6a93db908bf52dc6f6044738ab33088aa4b75e4befcd9410c1d15"
-    },
-    "agent-architecture-audit": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-architecture-audit/SKILL.md",
-      "computedHash": "d2e5f5466dd8e0affeb0fbad3772fe3d5e6a93203ddabddc23d8d86d99b5ed55"
-    },
-    "agent-eval": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-eval/SKILL.md",
-      "computedHash": "db8d81556351de0edbebbebed62fc987cfa7e2ea3ebec084959523bb8b9636dd"
-    },
-    "agent-harness-construction": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-harness-construction/SKILL.md",
-      "computedHash": "d9a2517c996efbace963d617df2af1843ed7cfb8b94fdfd5e5e91c53059aa9d5"
-    },
-    "agent-introspection-debugging": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-introspection-debugging/SKILL.md",
-      "computedHash": "adadcc3da859b6422b528ff8b82e17977eaf8d192c5cb9db8960c191f935f43e"
-    },
-    "agent-payment-x402": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-payment-x402/SKILL.md",
-      "computedHash": "973ba44e1a1c996472b36c0eabf1dd9c36489025daa1eb110be297eb3db5b027"
-    },
-    "agent-sort": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agent-sort/SKILL.md",
-      "computedHash": "66f4dcc5cc595d59c7895a626bf6863f0a458092ec7f7d045073119970547493"
-    },
-    "agentic-engineering": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agentic-engineering/SKILL.md",
-      "computedHash": "bb94a05897dcf53c8548885da09427b0537d98dc84755d6e2e9e65111df9ae71"
-    },
-    "agentic-os": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/agentic-os/SKILL.md",
-      "computedHash": "8dd7e9342c89c1772896350ca23a6c75fc76828503add9b327da77dbfbc59f78"
-    },
-    "ai-first-engineering": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ai-first-engineering/SKILL.md",
-      "computedHash": "e6a54a137c855d5ad07ab9f8f4cf2175be5ab5e56a378f876f2235a6a516b93c"
-    },
-    "ai-regression-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ai-regression-testing/SKILL.md",
-      "computedHash": "1597a649a5100015a30462cfba9b89b0fa8daa65e7e84d0e8556d8fb5ec26e63"
-    },
-    "android-clean-architecture": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/android-clean-architecture/SKILL.md",
-      "computedHash": "908c1ce8aff32a560bc3b2315c9124cc530683deac578877de69a91febbdf36a"
-    },
-    "angular-developer": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/angular-developer/SKILL.md",
-      "computedHash": "53f35b3aa72569391d26d39ee9c904ee040099f590531e612dd9021a201a5ea9"
-    },
-    "api-connector-builder": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/api-connector-builder/SKILL.md",
-      "computedHash": "ca1666ee4435a4ae4f311d5b3890a4d988bd64907da7e21b47f1210c8fb1164b"
-    },
-    "api-design": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/api-design/SKILL.md",
-      "computedHash": "cd8dad9f9cf4eae8632a3969cd12f4e9ad1f9d58a9ed607c2d9ce51876d6dd13"
-    },
-    "architecture-decision-records": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/architecture-decision-records/SKILL.md",
-      "computedHash": "8d9e40da770364616b711bc2958429fc56bf08878cd98e1931be5501f3d6bc66"
-    },
-    "article-writing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/article-writing/SKILL.md",
-      "computedHash": "817681512514c182560c980986b1400f7c9951c36271fd6870c7c376d0ab3a99"
-    },
-    "ashare": {
-      "source": "410417122/ashare-ai",
-      "sourceType": "github",
-      "skillPath": "ashare-plugin/skills/ashare/SKILL.md",
-      "computedHash": "9af643591963fc9585b698414bd638e4b4a9be675b0f65c287f8143f04dd7fc9"
-    },
-    "automation-audit-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/automation-audit-ops/SKILL.md",
-      "computedHash": "595bd5647770a580d0ae28e7a815f18731dddafa2152da052582c6e34d25422b"
-    },
-    "autonomous-agent-harness": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/autonomous-agent-harness/SKILL.md",
-      "computedHash": "5426dac34fd49e88faa403ef7c6c5cb2927e4474b4e83600f0cef1d8e9bb02e7"
-    },
-    "autonomous-loops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/autonomous-loops/SKILL.md",
-      "computedHash": "585e76192261d9cfc99e15ab1b017c6a4545943ebcf12f10421a32673ccab3b3"
-    },
-    "backend-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/backend-patterns/SKILL.md",
-      "computedHash": "d7ed6fc2707b070cb8a422ba7f9e1198a2ed8098920789ab0be8be494390391a"
-    },
-    "benchmark": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/benchmark/SKILL.md",
-      "computedHash": "8225f25b605503eae429a3d2032af1427ef61574dff5efe4f4d967f7db8a505d"
-    },
-    "blender-motion-state-inspection": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/blender-motion-state-inspection/SKILL.md",
-      "computedHash": "e5a15310ca17c9ef31607035ecc79f5e643befa52bf218262cc9f27b618f4d24"
-    },
-    "blueprint": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/blueprint/SKILL.md",
-      "computedHash": "30c01e39c57a39a765b2240083515904ab9598340baaa5199b3953651cba938a"
-    },
-    "brand-voice": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/brand-voice/SKILL.md",
-      "computedHash": "647b67a86d9783f28b4166f2644c17b12b3fb31bf8d93c44892892cbdbe6589c"
-    },
-    "browser-automation": {
-      "source": "sophieguanongit/openclaw-browser-automation",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "92adaf867ed14977022a087e36270645785efef257c9ae6d42ccc95e5a7340ee"
-    },
-    "browser-qa": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/browser-qa/SKILL.md",
-      "computedHash": "7d224e090831649cb2c9fec1c95cdaa4d12eac9de51943dda3c97e768ea08c28"
-    },
-    "bun-runtime": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/bun-runtime/SKILL.md",
-      "computedHash": "5e8627ece37efa7f9ea4fdd7360ef95ad8bce4ce92ae8afd90a27347df1b6f9c"
-    },
-    "canary-watch": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/canary-watch/SKILL.md",
-      "computedHash": "96957e9763f1cdb1ed4d9a51e6cae0ef0ab9d8e616a72f8420f208c70795f3f0"
-    },
-    "carrier-relationship-management": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/carrier-relationship-management/SKILL.md",
-      "computedHash": "226d85fa68d20135dea8fad4a52580e4d14e5d19468b42eee82e50170cac6f19"
-    },
-    "china-stock-analyst": {
-      "source": "wjt0321/china-stock-analyst",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "b9565c5dbef1b6decc64930e0fa1a197a9d47964ba937b28871d768260393db9"
-    },
-    "cisco-ios-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/cisco-ios-patterns/SKILL.md",
-      "computedHash": "42532d3052399c148b5b866f0da0d9cb88dadf3ca127c10df34c179209f4b268"
-    },
-    "ck": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ck/SKILL.md",
-      "computedHash": "818d325f6332f55593cb2f6fd5ba8f38e021282b8bb7ca1dece8a8c8a3315242"
-    },
-    "claude-devfleet": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/claude-devfleet/SKILL.md",
-      "computedHash": "b6869004ca2f00416512f68ff696b2d778fc57a1a92126b742c26f5fab1ae706"
-    },
-    "click-path-audit": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/click-path-audit/SKILL.md",
-      "computedHash": "14b41b758b37a3c83377ebefaf00fb29c6e66150e5ab8b5ddb0bbf53fe17e8f6"
-    },
-    "clickhouse-io": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/clickhouse-io/SKILL.md",
-      "computedHash": "ba4bd8ef6d76ac2b2efb49665ec2def19c1132878fcfbd789028bb7f380d9cbd"
-    },
-    "code-tour": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/code-tour/SKILL.md",
-      "computedHash": "bbb1722d3e0d8c65c57b82e05ddc73b135261d033485900f38d2ae72970efe9a"
-    },
-    "codebase-onboarding": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/codebase-onboarding/SKILL.md",
-      "computedHash": "36f2599ce3332c1758f22d877c763a79d412ddd861a22305598212ba2d63fa07"
-    },
-    "coding-standards": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/coding-standards/SKILL.md",
-      "computedHash": "ebb4d173fb97f0189986097bcf0c4c4bfa64f0dd713ec094947ccf7b549efbe4"
-    },
-    "company-financial-analysis": {
-      "source": "viekai/analyse-skills",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "83d263440d5de33156e7105c782975c0ba6021317ade9df9092446d9387b82dd"
-    },
-    "compose-multiplatform-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/compose-multiplatform-patterns/SKILL.md",
-      "computedHash": "1c9bf56198af1b1a358ccdfb11baf4bba17036333c2da91556c47efec1ae92f5"
-    },
-    "configure-ecc": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/configure-ecc/SKILL.md",
-      "computedHash": "d8f8af3acc1f75eb0494a55fa1d79ad3e5e0dc58391649f7735154663439dc62"
-    },
-    "connections-optimizer": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/connections-optimizer/SKILL.md",
-      "computedHash": "9e0b96799474172b7885eeed490c5ef6f8283ebb4605d91c2205326e8991b499"
-    },
-    "content-engine": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/content-engine/SKILL.md",
-      "computedHash": "7076fb011546c67d93325534e33d5f5d4736cb08c16d6d10d22faf4e2f465ee9"
-    },
-    "content-hash-cache-pattern": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/content-hash-cache-pattern/SKILL.md",
-      "computedHash": "87f3d3ddae326226e8638a6f6fd0402f35bed4131ef10070f9f9d84afeb86103"
-    },
-    "content-strategy": {
-      "source": "coreyhaines31/marketingskills",
-      "sourceType": "github",
-      "skillPath": "skills/content-strategy/SKILL.md",
-      "computedHash": "1b337a892b4aaa0665a6af0d6ffcdc77fd728c3c34e25b6e3ff474105d4c0b69"
-    },
-    "context-budget": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/context-budget/SKILL.md",
-      "computedHash": "8fbc914ceddef6f8741b78aa585866aa3543a3bfa51bd8364a9addda98b3be6a"
-    },
-    "continuous-agent-loop": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/continuous-agent-loop/SKILL.md",
-      "computedHash": "1f7c1a63b812958a8d1f4f992f4255a225022d80e04c6ad8dbd4de9f530da28d"
-    },
-    "continuous-learning": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/continuous-learning/SKILL.md",
-      "computedHash": "b8509cc9bf9c560a4f1e3e739cbccb873c7ed4a43724dd3e3a1c926737ad8b24"
-    },
-    "continuous-learning-v2": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/continuous-learning-v2/SKILL.md",
-      "computedHash": "db767f917d24e452c684fa3e2d208685bbca385957e711873eead80e323c5a89"
-    },
-    "cost-aware-llm-pipeline": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/cost-aware-llm-pipeline/SKILL.md",
-      "computedHash": "405590f0e45cf4b8a4e99e409891ea1b76cb81185a31f51d63de71e84ac17358"
-    },
-    "cost-tracking": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/cost-tracking/SKILL.md",
-      "computedHash": "1cc4504b9ce95955f5657435e4c48374c9837c84be1b861c5f241405bfa0e935"
-    },
-    "council": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/council/SKILL.md",
-      "computedHash": "50326a0134c3db2a9d58022b9962b9d3610042178b6f585c25199a2b290a5fb8"
-    },
-    "cpp-coding-standards": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/cpp-coding-standards/SKILL.md",
-      "computedHash": "78e483c066cbd04aabfff8d4d179494c6dd70140ce1dae4f8e53d8fdb080f7d0"
-    },
-    "cpp-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/cpp-testing/SKILL.md",
-      "computedHash": "e101660729cbccd5ff2ce24995a6361b2b46b9f7ff0520e4188678336db7de28"
-    },
-    "crosspost": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/crosspost/SKILL.md",
-      "computedHash": "095fc7c86cffb02e14a502b3149c32be9ea601eb916263c5a2180aeeb98cf241"
-    },
-    "csharp-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/csharp-testing/SKILL.md",
-      "computedHash": "a581fbd3b2af21d1349b9cda51612d2e5b34f5dcf86fdec146841d906138141c"
-    },
-    "customer-billing-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/customer-billing-ops/SKILL.md",
-      "computedHash": "aa1ef85e9cd6bed8b6ef2328298b23038d9e0cc9e8e0d6db40d765ea33493fe3"
-    },
-    "customs-trade-compliance": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/customs-trade-compliance/SKILL.md",
-      "computedHash": "3453a8ba11c1773006a4cc4457df9080e877a0f0cb148de3d498011270972d88"
-    },
-    "dart-flutter-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/dart-flutter-patterns/SKILL.md",
-      "computedHash": "340e81b5936211afafd1eb9740b650956813712400c0548ba9d6b442b286e8c9"
-    },
-    "dashboard-builder": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/dashboard-builder/SKILL.md",
-      "computedHash": "f3013462171015dfd91195faafc8395bf1a9f790bd28506ef0992f9c8543ba78"
-    },
-    "data-scraper-agent": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/data-scraper-agent/SKILL.md",
-      "computedHash": "a0f83e7ab79e3de024aedf9350e05e7d7e00ef50fdf02e65cc90f3444ecc85e5"
-    },
-    "database-migrations": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/database-migrations/SKILL.md",
-      "computedHash": "9ad960c29effe20f801f6589c580b5c81702fbb6fa835e3a6d9eb78ff856981c"
-    },
-    "deep-agents-memory": {
-      "source": "langchain-ai/langchain-skills",
-      "sourceType": "github",
-      "skillPath": "config/skills/deep-agents-memory/SKILL.md",
-      "computedHash": "cd4f906c303a13bb740ce310a9918bbaac190150fe2e943c5c3ddea010417a69"
-    },
-    "deep-research": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/deep-research/SKILL.md",
-      "computedHash": "db5758e86bf5424cb908591ee79384dda1702b29d0a1cf908a1713a517f24baf"
-    },
-    "defi-amm-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/defi-amm-security/SKILL.md",
-      "computedHash": "6f003566bd23ff465fcbe2a1df42cde92db080e7968de21504f03881726a94b2"
-    },
-    "deployment-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/deployment-patterns/SKILL.md",
-      "computedHash": "1a8a000f5ca0d10119ecc332d6dfe14e10c275219b87e78aaa9436a38e0caa75"
-    },
-    "design-system": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/design-system/SKILL.md",
-      "computedHash": "efa25e1d86526877ffaa7e7b7797ac430b4af66d87994dc4e046e52b909fbc4e"
-    },
-    "django-celery": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/django-celery/SKILL.md",
-      "computedHash": "3dc6831f1dad3fab4ec063c5f607885d024ac3cfc9453ccb560513327ed65a40"
-    },
-    "django-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/django-patterns/SKILL.md",
-      "computedHash": "68b6f71bf032d7a2ed9a74bcf9c0732a7f2fe2d6126996d0d813baab9d7170d9"
-    },
-    "django-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/django-security/SKILL.md",
-      "computedHash": "7d7a2cd3340482d1a99b5f0a5ab2929ad7a5259c81973d09e8676fb19565c624"
-    },
-    "django-tdd": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/django-tdd/SKILL.md",
-      "computedHash": "60b9b893ef8931adcc996c3149ff69ac2a30efc6f21048d9e554ce780a1c1051"
-    },
-    "django-verification": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/django-verification/SKILL.md",
-      "computedHash": "813ae12e682dde4994ffebdd67e6bc5c0c1191a074e70cac3ac71ffed1cf318e"
-    },
-    "dmux-workflows": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/dmux-workflows/SKILL.md",
-      "computedHash": "57ff42936785d58c186159e5b528a0df26842d5a4801db23e2df89adcc190f52"
-    },
-    "docker-compose-orchestration": {
-      "source": "manutej/luxor-claude-marketplace",
-      "sourceType": "github",
-      "skillPath": "plugins/luxor-devops-suite/skills/docker-compose-orchestration/SKILL.md",
-      "computedHash": "01831d0723a2ac491e233bd9bfdffdac8c0ae5500f140a3ca0382ac5f4a26159"
-    },
-    "docker-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/docker-patterns/SKILL.md",
-      "computedHash": "a028783213034aee06d0aa0487c7e6096ae755d24bdd05de9475425306057fcd"
-    },
-    "documentation-lookup": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/documentation-lookup/SKILL.md",
-      "computedHash": "161e392a2d7ca4649bd2e2d795007cb2093e2927c792076b0a5ed026e0d126bd"
-    },
-    "dotnet-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/dotnet-patterns/SKILL.md",
-      "computedHash": "093acce04bc58e34881af59c839829cbedf6816a97ca268fe5037d2d4f12cfa7"
-    },
-    "e2e-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/e2e-testing/SKILL.md",
-      "computedHash": "8e3ac8d268f7ccd4994fa3368e551df13fa48f489674ed57a6c764bcb31b7d00"
-    },
-    "ecc-guide": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ecc-guide/SKILL.md",
-      "computedHash": "6e148d11269f400b56af4a9ce27eecb455eff95d385f305a01d617c23b3eaeab"
-    },
-    "ecc-tools-cost-audit": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ecc-tools-cost-audit/SKILL.md",
-      "computedHash": "25f8d864b53c06133eecbaa832f4cfa3f755f2538e4e5150eb4532186b022d26"
-    },
-    "email-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/email-ops/SKILL.md",
-      "computedHash": "535ac0fe652de96a9dc40a45eacf57e301bc2c2ac6871cbbf0648a111ad08489"
-    },
-    "energy-procurement": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/energy-procurement/SKILL.md",
-      "computedHash": "e50d23e8da30882664ac1c26ebf18afff828c7f36e773ed5044993e98e4267dd"
-    },
-    "enterprise-agent-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/enterprise-agent-ops/SKILL.md",
-      "computedHash": "8c9e4fb8947d7c0bbe9300fbc426fd6a573f16e3977f0346e0b955072ddb284f"
-    },
-    "error-handling": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/error-handling/SKILL.md",
-      "computedHash": "f821365c5433a2cfc48acd7ea1ef7ae9718cf29ffb00e95bc7cfada713f144a0"
-    },
-    "eval-harness": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/eval-harness/SKILL.md",
-      "computedHash": "c464cb2a7796486b8c513040776a23e281b9d5c1c4ae12a03d48b4d87f31aff2"
-    },
-    "everything-claude-code": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": ".agents/skills/everything-claude-code/SKILL.md",
-      "computedHash": "59891637565c983eb16b976d8f76ca7e1662765e9573e321d2c8af8e9bdb222b"
-    },
-    "everything-claude-code-conventions": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": ".claude/skills/everything-claude-code/SKILL.md",
-      "computedHash": "fd2a7d45b311c7c2b3e76f621f52fe4ad68ad31e3d1f3828406d3cdaaf295d73"
-    },
-    "evm-token-decimals": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/evm-token-decimals/SKILL.md",
-      "computedHash": "151f0d9916a2edd05ea0376e0ba13d55716e8cd960eb3ab2cbf324646460fcf7"
-    },
-    "exa-search": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/exa-search/SKILL.md",
-      "computedHash": "ff118a2d7094e21c3bbd363be30e059afcc13739823b386396db18b717b671e0"
-    },
-    "excel-automation": {
-      "source": "claude-office-skills/skills",
-      "sourceType": "github",
-      "skillPath": "excel-automation/SKILL.md",
-      "computedHash": "cfca335f10ee2f1c3afe3fceacc8c0a95af657abae1b9bba0c8320865d437043"
-    },
-    "experiments": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/experiments/SKILL.md",
-      "computedHash": "d35f0fe13d480397ca20f620ffca4d5f0ac1ef6dbef582941559af71e63dac5a"
-    },
-    "fal-ai-media": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/fal-ai-media/SKILL.md",
-      "computedHash": "53beb63c8470786e958084f7115ce4b69ebcc4a6a53f7ad8b71d62a455159368"
-    },
-    "fastapi-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/fastapi-patterns/SKILL.md",
-      "computedHash": "e0567fbadd7bb80250868163f1bb26f0f62d1e66d6ef546e9136d6b737f1aaba"
-    },
-    "fastapi-python": {
-      "source": "mindrally/skills",
-      "sourceType": "github",
-      "skillPath": "fastapi-python/SKILL.md",
-      "computedHash": "4521c6090735152b7b8df670cefe5c1c6d1dcaa115de67bb96e74ebf802d4f24"
-    },
-    "finance-billing-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/finance-billing-ops/SKILL.md",
-      "computedHash": "0187779ffb42ae6205b12994be43556e0c22eefda413c31644bf7f4fe3f7c0c0"
-    },
-    "find-skills": {
-      "source": "vercel-labs/skills",
-      "sourceType": "github",
-      "skillPath": "skills/find-skills/SKILL.md",
-      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
-    },
-    "firecrawl-build-interact": {
-      "source": "firecrawl/skills",
-      "sourceType": "github",
-      "skillPath": "skills/firecrawl-build-interact/SKILL.md",
-      "computedHash": "460a6d43dc315a313d32839e425aab89732d008fa8f14fa013ade8276f483b0b"
-    },
-    "firecrawl-build-onboarding": {
-      "source": "firecrawl/skills",
-      "sourceType": "github",
-      "skillPath": "skills/firecrawl-build-onboarding/SKILL.md",
-      "computedHash": "3ce65712e870b37dc956930e01cd93f7a5c222dd1092433295e66d48bee15e84"
-    },
-    "firecrawl-build-scrape": {
-      "source": "firecrawl/skills",
-      "sourceType": "github",
-      "skillPath": "skills/firecrawl-build-scrape/SKILL.md",
-      "computedHash": "3c8788d791e11957870301f8a36e1c281a8a74cdc034f1137a9166054bf76c35"
-    },
-    "firecrawl-build-search": {
-      "source": "firecrawl/skills",
-      "sourceType": "github",
-      "skillPath": "skills/firecrawl-build-search/SKILL.md",
-      "computedHash": "52d7ab2732f22550c08c86244abbe99c9af319d86887104b768fdb6e413a6d05"
-    },
-    "flox-environments": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/flox-environments/SKILL.md",
-      "computedHash": "84dba435f9d62fd61b67f4a8ee636c5b11b501ee01aaa163438fdf6a7340cbc7"
-    },
-    "flutter-dart-code-review": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/flutter-dart-code-review/SKILL.md",
-      "computedHash": "080fb45f1d5e1fc9c236e4aee0159da8b476df466f867a742d0b9aff83dfd063"
-    },
-    "foundation-models-on-device": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/foundation-models-on-device/SKILL.md",
-      "computedHash": "ac531cd6bb94ecbb400ad8954a10030cf3f212c57bfda489efa91510fc1f5d90"
-    },
-    "frontend-design-direction": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-design-direction/SKILL.md",
-      "computedHash": "ddc2a7385e568c0cede201e86d2996a1b9ee70614eba7f86e978aaf508443b1f"
-    },
-    "frontend-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-patterns/SKILL.md",
-      "computedHash": "4c2920da9aef340538f2d579f465fd99c5b679d4afa0daba775215c0e506d0b1"
-    },
-    "frontend-slides": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/frontend-slides/SKILL.md",
-      "computedHash": "d5a347b0515281cb76e07f9e5ec0082b4cfae46358c556819c0b9caf5136268c"
-    },
-    "fsharp-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/fsharp-testing/SKILL.md",
-      "computedHash": "3ab2b4d0c483d1d37ac1fcbd4f461e8105dba83a7b6546a74a2017d294c79aeb"
-    },
-    "gan-style-harness": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/gan-style-harness/SKILL.md",
-      "computedHash": "6ba1dbbe48fce359bbf77ef204be28d51a447b2049e15cac3cac0fa42369e886"
-    },
-    "gateguard": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/gateguard/SKILL.md",
-      "computedHash": "4147c3ef9d0db57f24e5748630bd4f9505e5635f549ba0b87ce8cae9ab7a04b2"
-    },
-    "geo-content-optimizer": {
-      "source": "aaron-he-zhu/seo-geo-claude-skills",
-      "sourceType": "github",
-      "skillPath": "build/geo-content-optimizer/SKILL.md",
-      "computedHash": "912c24aa1abeebbf1acd16b60ed9bfa33e370e977141d829e01069a845234ab8"
-    },
-    "gget": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/scientific-pkg-gget/SKILL.md",
-      "computedHash": "511d81b170ff0cb74a198636e8cc22a7c1bb22a9fb8897aeb11e947e2142bfdb"
-    },
-    "git-workflow": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/git-workflow/SKILL.md",
-      "computedHash": "61dec9633cd2466b9923dcb9210069d360cbb7bdb1e8506a0565cc23ca0bbfcb"
-    },
-    "github-actions-docs": {
-      "source": "xixu-me/skills",
-      "sourceType": "github",
-      "skillPath": "skills/github-actions-docs/SKILL.md",
-      "computedHash": "ead3fa2aff18e829c468dee593e1dc897aa95dc7a07d9ff8ff9f30c296b19af8"
-    },
-    "github-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/github-ops/SKILL.md",
-      "computedHash": "839379a824fb8213f90a5422681118b8a09dfe2abbd0657ade0faf0d774cde0e"
-    },
-    "golang-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/golang-patterns/SKILL.md",
-      "computedHash": "2168b141260f2c0c2c952afe22f0947cdc76f4339e823ab666933853e206e511"
-    },
-    "golang-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/golang-testing/SKILL.md",
-      "computedHash": "1f263c92e24067adcf574000dd078d3bd0baf9a6568becb2510df1af31c906ef"
-    },
-    "google-workspace-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/google-workspace-ops/SKILL.md",
-      "computedHash": "f6a4a6d5a952a01cc2766771dd831a09f74d56b14c88cc1cd733d94f59cc9f2d"
-    },
-    "grafana-oss": {
-      "source": "grafana/skills",
-      "sourceType": "github",
-      "skillPath": "skills/grafana-core/grafana-oss/SKILL.md",
-      "computedHash": "ae599bbeb4b8e6c62c06f37811c46be9fa065102f94590f3778fa16f12ed2843"
-    },
-    "healthcare-cdss-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/healthcare-cdss-patterns/SKILL.md",
-      "computedHash": "bf2c03d75f12ec6b764fb1ce0797a5b0c5b548f69c35011230ce3183b4558f8d"
-    },
-    "healthcare-emr-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/healthcare-emr-patterns/SKILL.md",
-      "computedHash": "68ac73886d70ded98445df6aec9328bbe1bfe01f9f40771a0a2241a2dfc7dbe5"
-    },
-    "healthcare-eval-harness": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/healthcare-eval-harness/SKILL.md",
-      "computedHash": "49a51b75d2a444b440cb9259670a6db7bbb0eb63a75fa2a61edbbddaded8593e"
-    },
-    "healthcare-phi-compliance": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/healthcare-phi-compliance/SKILL.md",
-      "computedHash": "80e20cc8522f061acb861f0b68316f1a2ef508e76d40c6902f7b7e2b555b2428"
-    },
-    "helm-chart-scaffolding": {
-      "source": "wshobson/agents",
-      "sourceType": "github",
-      "skillPath": "plugins/kubernetes-operations/skills/helm-chart-scaffolding/SKILL.md",
-      "computedHash": "b1d32f4512f1fc5748d6f8bcfb6af4fb685281c182df3471535f2328a8214a3c"
-    },
-    "hermes-imports": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/hermes-imports/SKILL.md",
-      "computedHash": "76eed24bdbe0bed257720a8bcb0b1ddd056927842091ed0d69ddf494d65f78fb"
-    },
-    "hexagonal-architecture": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/hexagonal-architecture/SKILL.md",
-      "computedHash": "74bb41df595b6b2b70569fec4c63180a936254377d81f2d3d44aa3a0d2bd6d5d"
-    },
-    "hipaa-compliance": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/hipaa-compliance/SKILL.md",
-      "computedHash": "3c93dd5c8c83f8859916308288ac719e6014419c02f07fcca60d1265628de01d"
-    },
-    "homelab-network-readiness": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/homelab-network-readiness/SKILL.md",
-      "computedHash": "6d81cbf6524db4b9d91ea7fa6cb0755b19be6c7872560853e55e1df60a0eecc5"
-    },
-    "homelab-network-setup": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/homelab-network-setup/SKILL.md",
-      "computedHash": "9c1b3ea4aedd14266baa01142546a6f024284b31edeedad64ea8dab6a8f82bff"
-    },
-    "homelab-pihole-dns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/homelab-pihole-dns/SKILL.md",
-      "computedHash": "a7184dc81b084eba2f28dfb0ec5ea4c0a341ed0595c9e67cd497a76f6d7813d2"
-    },
-    "homelab-vlan-segmentation": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/homelab-vlan-segmentation/SKILL.md",
-      "computedHash": "2c3adc28c87941912efa87316e24cf5ae839777d1b82fd1443d3c82458dc84ac"
-    },
-    "homelab-wireguard-vpn": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/homelab-wireguard-vpn/SKILL.md",
-      "computedHash": "2efceb62a02af370aa9a5765d8dacbaea6e3721e71adf5d165b6ca4ee3861898"
-    },
-    "hookify-rules": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/hookify-rules/SKILL.md",
-      "computedHash": "3261d2108ee0af046bf30abac77845c053b7243a0833e1589203a350363f6c61"
-    },
-    "inventory-demand-planning": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/inventory-demand-planning/SKILL.md",
-      "computedHash": "9a1479b6cc6becf71e5e2fce4772c6ca3e00c874b90f24e6406b2c97c7533e20"
-    },
-    "investor-materials": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/investor-materials/SKILL.md",
-      "computedHash": "f65d21f96ce34c4d452be3d98117f1c6d2584667bc92cc67b85a5ac4f387cd96"
-    },
-    "investor-outreach": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/investor-outreach/SKILL.md",
-      "computedHash": "3043d2b0b3d48283a0b3afbf6f59360a7451a0882f3501f22c6204d5157a270a"
-    },
-    "ios-icon-gen": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ios-icon-gen/SKILL.md",
-      "computedHash": "f35440223c45885f54ff862461700a0d2d882998bf8a16cac5a9d5f45020b748"
-    },
-    "iterative-retrieval": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/iterative-retrieval/SKILL.md",
-      "computedHash": "0833f1d763dc0371f373c9363dfe00b4165b32e41bfd9c8cc2db3e94c40b0e6c"
-    },
-    "java-coding-standards": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/java-coding-standards/SKILL.md",
-      "computedHash": "64975ca9d45b1334cf444766c1ae4c22a82207e863de38118b94949f824d4bfd"
-    },
-    "jira-integration": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/jira-integration/SKILL.md",
-      "computedHash": "37e4d8329fa21ad5bfa369d57661f0d85126210e38421c37a96eecdc7c6ab04d"
-    },
-    "jpa-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/jpa-patterns/SKILL.md",
-      "computedHash": "9e81a5773027f8ea3079cbdd3fbbee01ec1e7891f8dd663a4cef3cf3ba208061"
-    },
-    "knowledge-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/knowledge-ops/SKILL.md",
-      "computedHash": "51857b97ab7542309d5fa585e1ea2127f371289984c12ebdccb1ec5b983cbacf"
-    },
-    "kotlin-coroutines-flows": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-coroutines-flows/SKILL.md",
-      "computedHash": "b6bb6a1966e6dfe830112d741c96101f4cf3f69796b8c1c72aec9dae823290cc"
-    },
-    "kotlin-exposed-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-exposed-patterns/SKILL.md",
-      "computedHash": "cf1be341311622e00718e54895e07bbae2032b0898f9c0b59fcc9509a040e19c"
-    },
-    "kotlin-ktor-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-ktor-patterns/SKILL.md",
-      "computedHash": "40f89ab61ceebe23825d8d5836ea9266b190f5b6c41c877088321dfe41220e89"
-    },
-    "kotlin-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-patterns/SKILL.md",
-      "computedHash": "5fc6cf22b6e4028c7fa0b4e0814b1c9bce4c0d1c2defb17511efd170da7bc064"
-    },
-    "kotlin-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/kotlin-testing/SKILL.md",
-      "computedHash": "3d29dbc8e966349c4b51208cdd7af85d0492286d9cc8ae1666e3c6f1433a37d1"
-    },
-    "laravel-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/laravel-patterns/SKILL.md",
-      "computedHash": "2e6eef44bf27bc5c8070e3454d10b586d60ecd71808a5bc756f3d7c50f3473a3"
-    },
-    "laravel-plugin-discovery": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/laravel-plugin-discovery/SKILL.md",
-      "computedHash": "c0d9dc8424ef6e51d3197163a3a83f12d69c0241e9bc2a732bc8c46d2918d981"
-    },
-    "laravel-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/laravel-security/SKILL.md",
-      "computedHash": "86d246c2eb8fcda4586e13f9e32cd55e3ff222f6079a7f0b4442ef5e4e0971e7"
-    },
-    "laravel-tdd": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/laravel-tdd/SKILL.md",
-      "computedHash": "02918544e96bc9b84d13b3c75f60f30414c27c90c6bc8222a2d04c71e7850b67"
-    },
-    "laravel-verification": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/laravel-verification/SKILL.md",
-      "computedHash": "80f51eca5417d5a088e71b0b9846ffd7704342192385d9eb366010da7d64aebf"
-    },
-    "lead-intelligence": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/lead-intelligence/SKILL.md",
-      "computedHash": "3720496a8c1ac82b30f8d570cc57481e0a7c83b1c00df5f2689d6aa07a74f003"
-    },
-    "liquid-glass-design": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/liquid-glass-design/SKILL.md",
-      "computedHash": "18c81c59796c6280db62d5fb9ac544c094259c51a9c69cfc225ba6c428b9ed57"
-    },
-    "literature-review": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/scientific-thinking-literature-review/SKILL.md",
-      "computedHash": "c70761e100f6b6e1753137e7fa650dfe54a57951b270f8ad308c77d521a6ed49"
-    },
-    "llm-trading-agent-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/llm-trading-agent-security/SKILL.md",
-      "computedHash": "bb326baa3ab87c0116fb0b684feb37054b61919860dcbbd547a99e69d1967da3"
-    },
-    "logistics-exception-management": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/logistics-exception-management/SKILL.md",
-      "computedHash": "3a189f92b2d54d153aa61d306ed9ce7d188857a81efc90e73106099d17beea79"
-    },
-    "make-interfaces-feel-better": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/make-interfaces-feel-better/SKILL.md",
-      "computedHash": "f41945848dffe4398744e4bb880ddbf3f90874cfecd8c46911f3ea74a6fc3b1b"
-    },
-    "manim-video": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/manim-video/SKILL.md",
-      "computedHash": "2b240f7419393032c091b1e84bca4631eea121c1fb0e2e8e8164dadd09861c6a"
-    },
-    "market-research": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/market-research/SKILL.md",
-      "computedHash": "a244b79d8fa662db695963ed8cff55b4a97cf0c746cb16737bb0af04d3ae3001"
-    },
-    "mcp-server-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/mcp-server-patterns/SKILL.md",
-      "computedHash": "d669a938ced6f6d6ba0cd8458af134ea94ac419a81b64fa1033d2bf6266b5162"
-    },
-    "meeting-notes": {
-      "source": "claude-office-skills/skills",
-      "sourceType": "github",
-      "skillPath": "meeting-notes/SKILL.md",
-      "computedHash": "6006c3253877d32e1ca500f6c6f901e294778f06547ddc8db7f6ce859a19eff9"
-    },
-    "messages-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/messages-ops/SKILL.md",
-      "computedHash": "0069b3b0b1dd44080e081efa144ed53d78a176591a89ceae0a31a9753fa3f95a"
-    },
-    "mle-workflow": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/mle-workflow/SKILL.md",
-      "computedHash": "e6ce7528a372e97e43af0223d10a9d91a76d66961d9547e17530538e390c569c"
-    },
-    "motion-advanced": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/motion-advanced/SKILL.md",
-      "computedHash": "244358d3c6f6de43727879e75bd7c9832bdac1fc1ce8b21dbd338dd9aaef257e"
-    },
-    "motion-foundations": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/motion-foundations/SKILL.md",
-      "computedHash": "6ab9f6a04c4f6efb8969ee2eb64451b86ca3d922135ee85d524e740a21682351"
-    },
-    "motion-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/motion-patterns/SKILL.md",
-      "computedHash": "b1d3bf308c2191f18ccd98e2249fe4906a6452ccc16cd340bc4bc838dbf05dc7"
-    },
-    "motion-ui": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/motion-ui/SKILL.md",
-      "computedHash": "147121345905d7a81a57ecf240491c52151346c4eb9107f4f1b89acc373fade6"
-    },
-    "mysql-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/mysql-patterns/SKILL.md",
-      "computedHash": "904e358555214c02324a6389b4ffce8f9f3905360bd3d76626373f3906ebbc5b"
-    },
-    "n8n-cli": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": "packages/@n8n/cli/skills/n8n-cli/SKILL.md",
-      "computedHash": "ca8a7b9de366f8cd9d44210adb8f886c0e808aba1948588fb2a2559bdca3d2be"
-    },
-    "n8n:content-design": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/content-design/SKILL.md",
-      "computedHash": "1c220b873b3b7fe706976cec6827e037c2ee3138cdc1deda642a686314f2e74e"
-    },
-    "n8n:conventions": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/conventions/SKILL.md",
-      "computedHash": "0b3469868d2f71b6c828a110019cc210c1e6c2e3732c663feb6a183ec4cac840"
-    },
-    "n8n:create-community-node-lint-rule": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/create-community-node-lint-rule/SKILL.md",
-      "computedHash": "fadf90e86696672f2ecc5fa8dc0b9c9301bcbf0f0f4ddf735e854f226ea4a343"
-    },
-    "n8n:create-issue": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/create-issue/SKILL.md",
-      "computedHash": "00f2da92ce0b741032cadd2c12fb019066c6d419ec35a54cf707bb2858e7c35e"
-    },
-    "n8n:create-pr": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/create-pr/SKILL.md",
-      "computedHash": "9d23d01910e985f113a725c5179a42b6a8dfc6e397d34d5320ff46690aa16cea"
-    },
-    "n8n:create-skill": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/create-skill/SKILL.md",
-      "computedHash": "58a3ad4a753a1511f7077a12b2599092aea7661501ef1c3b512bcfa062979c4a"
-    },
-    "n8n:db-migrations": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/db-migrations/SKILL.md",
-      "computedHash": "d21d8ab9208429d793bf3cc4a0e4bbed2cd7c340294b81766fcbbfc9dceb7a55"
-    },
-    "n8n:design-system": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/design-system/SKILL.md",
-      "computedHash": "b606dd0f7303d93036585be9021d60fbd1613eb949eb9f8118f689f6eba0bb81"
-    },
-    "n8n:linear-issue": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/linear-issue/SKILL.md",
-      "computedHash": "3c5530e152160d0f60b66f2ea8fa60ae11d34f04920f46991fb30e1c409caeac"
-    },
-    "n8n:loom-transcript": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/loom-transcript/SKILL.md",
-      "computedHash": "bf8e523843a6f71435c4dc0d4ba2d9316840a169a79de655711934ebe4214ad1"
-    },
-    "n8n:node-add-oauth": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/node-add-oauth/SKILL.md",
-      "computedHash": "a6c0e02d36965abd23af2d23656bd01709c5d96b09df0cc9aa5eaff0fc85204f"
-    },
-    "n8n:protect-endpoints": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/protect-endpoints/SKILL.md",
-      "computedHash": "ce4dabac4e2bab22f17044a5b11b2f94cef2fb031d8933c19f768ebe0d4020f1"
-    },
-    "n8n:reproduce-bug": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/reproduce-bug/SKILL.md",
-      "computedHash": "754f4c7c8e65f34950967d217f5b526f50649ed80e45420340a5c049214717a8"
-    },
-    "n8n:setup-mcps": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/setup-mcps/SKILL.md",
-      "computedHash": "7f4dde33bfd6a54926df8bcf8044c790e5a3215fc8d7bef2f1c0837cb937c403"
-    },
-    "n8n:spec-driven-development": {
-      "source": "n8n-io/n8n",
-      "sourceType": "github",
-      "skillPath": ".claude/plugins/n8n/skills/spec-driven-development/SKILL.md",
-      "computedHash": "be2e21b9003242548dc92e8c740c78fd14bcf51de5996867aef2d6112904a3dc"
-    },
-    "nanoclaw-repl": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nanoclaw-repl/SKILL.md",
-      "computedHash": "a8cb12dd28d6a26f4fb72a205f3fab72e4b191bee12710764d83a87731991a21"
-    },
-    "nestjs-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nestjs-patterns/SKILL.md",
-      "computedHash": "c76d605454b9c21b11716ead1753667e583e6c30e803982d247748b79a1d0da7"
-    },
-    "netmiko-ssh-automation": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/netmiko-ssh-automation/SKILL.md",
-      "computedHash": "affe60b1eb5c7a2ef4a59e0be9669f699640ec8bd452998ec1f53f78af44e7fa"
-    },
-    "network-bgp-diagnostics": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/network-bgp-diagnostics/SKILL.md",
-      "computedHash": "1185aaf215ab122baed8fa32a617a530954f97d050d046597e5a9606a1bb2a2b"
-    },
-    "network-config-validation": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/network-config-validation/SKILL.md",
-      "computedHash": "0cc06145504911a4d90208429bdec79af8c32d4ef74ff2f19067a24f866dd2c7"
-    },
-    "network-interface-health": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/network-interface-health/SKILL.md",
-      "computedHash": "2006248a91e9b45b3734ec77fe82187c22d88bd568d092d7c6e757471ce03d7f"
-    },
-    "nextjs-turbopack": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nextjs-turbopack/SKILL.md",
-      "computedHash": "cdcf2cd8bba77ef74d171a69f311350ed7290d66a6ffd451fd408ab875dd77f5"
-    },
-    "nodejs-keccak256": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nodejs-keccak256/SKILL.md",
-      "computedHash": "114655e05636cf06d88d10b277b7c8573740ece3ddd34a9489da58227003c8e5"
-    },
-    "notion-research-documentation": {
-      "source": "openai/skills",
-      "sourceType": "github",
-      "skillPath": "skills/.curated/notion-research-documentation/SKILL.md",
-      "computedHash": "58f6d7ee593087d2a8c4dc85f282b09240e43eb63683b2b55e13084b3e035429"
-    },
-    "nutrient-document-processing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nutrient-document-processing/SKILL.md",
-      "computedHash": "e8c6dac7e4398610c5d0465ec92029cff9dcb87d4d0e787ed0c437e1d3b2c3d9"
-    },
-    "nuxt4-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/nuxt4-patterns/SKILL.md",
-      "computedHash": "b46b846c8feeb54e86d4649bec66e79602058fb2932fb9f76cd24b7611273f02"
-    },
-    "openclaw-persona-forge": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/openclaw-persona-forge/SKILL.md",
-      "computedHash": "b991fe2892c978d4c469f1348d2e321cd1e9c7961bfcef6fee29a3a5f6031952"
-    },
-    "opensource-pipeline": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/opensource-pipeline/SKILL.md",
-      "computedHash": "30d0aee6a832c573952bb646c6dc55e8c47c1b55c34698362465347a1b6a5d8d"
-    },
-    "parallel-deep-research": {
-      "source": "parallel-web/parallel-agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/parallel-deep-research/SKILL.md",
-      "computedHash": "03d375d50ede8d460c2e382f5098bc0650cf2290766f73346cbd560ac9037d28"
-    },
-    "pdf": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/pdf/SKILL.md",
-      "computedHash": "37226d4220d844377e6b2a386c51a011df4cd130855ff0b80bcc22f9c28abd57"
-    },
-    "perl-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/perl-patterns/SKILL.md",
-      "computedHash": "8d3ab9314fff30d30ee4a1181058d9f153b52678fedfc4b520154352478bf56d"
-    },
-    "perl-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/perl-security/SKILL.md",
-      "computedHash": "bf4acd3fc0aa03a22daeada70c2dcc221bbac52f0f3a0ac38a9ab49e2a2f31c6"
-    },
-    "perl-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/perl-testing/SKILL.md",
-      "computedHash": "6790db473a839f84fdcb39acc84942becd27de79a8c660ce07c543e95e1ce5c3"
-    },
-    "plan-orchestrate": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/plan-orchestrate/SKILL.md",
-      "computedHash": "3a2a0d82504842b16d7a2f75f52773064a37e2f861fc7276fa9b833128a95d33"
-    },
-    "plankton-code-quality": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/plankton-code-quality/SKILL.md",
-      "computedHash": "185f73d61b85decdccdf4e5f1660433acb01cf8d10ceef574f228934f13329cc"
-    },
-    "postgres-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/postgres-patterns/SKILL.md",
-      "computedHash": "8056467956521c8f4b58caefa9f91584be64e4bcccdaa8090a147c0b81f88aeb"
-    },
-    "prd-development": {
-      "source": "deanpeters/product-manager-skills",
-      "sourceType": "github",
-      "skillPath": "skills/prd-development/SKILL.md",
-      "computedHash": "1b7f6de0d407c7ed581ab96fcdd332392f4552ddafa26da5fe29eff863123c7f"
-    },
-    "prisma-database-setup": {
-      "source": "prisma/skills",
-      "sourceType": "github",
-      "skillPath": "prisma-database-setup/SKILL.md",
-      "computedHash": "0d6f44ac34b1ed3f8ed2970ecf90483d0f658fd1d204458f62bfefa28f31b095"
-    },
-    "prisma-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/prisma-patterns/SKILL.md",
-      "computedHash": "e8089c9d6ad35a986010f9ff99e9466ad4a7e8f680659c25534c9cd50b3bf3ad"
-    },
-    "product-capability": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/product-capability/SKILL.md",
-      "computedHash": "8a7a0219490ef37201cea89cc666ec5acf391bb28d89567a5d545cdd300eaa45"
-    },
-    "product-lens": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/product-lens/SKILL.md",
-      "computedHash": "a52561058b75df0e6520cb0d3455e96d944888c611c2a589db359fb81b289f2f"
-    },
-    "production-audit": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/production-audit/SKILL.md",
-      "computedHash": "47dce2dce4b112789b0dee305042882953b6f68b7a9fc05353dcd3ec47ed3054"
-    },
-    "production-scheduling": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/production-scheduling/SKILL.md",
-      "computedHash": "3940509d7a6a65fc1909c5b8c16d2a8bf46ed7a491e8e2a55b4782cb0b788d6e"
-    },
-    "project-flow-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/project-flow-ops/SKILL.md",
-      "computedHash": "63c995be520681cb0162eef00f12976a8f673b3df35cd152e4bbf65a93accb91"
-    },
-    "prompt-guard": {
-      "source": "orchestra-research/ai-research-skills",
-      "sourceType": "github",
-      "skillPath": "07-safety-alignment/prompt-guard/SKILL.md",
-      "computedHash": "fa4d4c55a03f0df8967c35c40c18c13c01fa4d36ab7758f78d2d687a4365cc4b"
-    },
-    "prompt-optimizer": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/prompt-optimizer/SKILL.md",
-      "computedHash": "86b33802d68684557e4da9808ff58d8256f75e995523c820e94280e8bc578d76"
-    },
-    "pubmed-database": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/scientific-db-pubmed-database/SKILL.md",
-      "computedHash": "2645f142e22788e9321add3131e6bec87c46c1fbd47ba0140c285f4023036a96"
-    },
-    "python-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/python-patterns/SKILL.md",
-      "computedHash": "fb08a3345b09766c7423a837cd8a3e416abc4b71a51ff8c1901622bb73b999ef"
-    },
-    "python-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/python-testing/SKILL.md",
-      "computedHash": "9bb9ccc595dbc4fd6ea1e70ba14e0d9c17f0ed0dc55331d593b1e0965d31df39"
-    },
-    "pytorch-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/pytorch-patterns/SKILL.md",
-      "computedHash": "ad5141095e87144129934656b80501e42b166cf5694640088450919bac2b9500"
-    },
-    "quality-nonconformance": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/quality-nonconformance/SKILL.md",
-      "computedHash": "65e96290130fe45c144adc6f3c00abbcbaf7914e8932c484faa995434e4ec979"
-    },
-    "quarkus-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/quarkus-patterns/SKILL.md",
-      "computedHash": "46264a0ef6ca826342f7cdde42bd921857a3be4494b5dd1852fd6da55f17344b"
-    },
-    "quarkus-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/quarkus-security/SKILL.md",
-      "computedHash": "831e92a99ee96fa965179f4fa9572562ab27c1839949b18884cb5187724b1f25"
-    },
-    "quarkus-tdd": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/quarkus-tdd/SKILL.md",
-      "computedHash": "64c431e2afb9adcd09fdbb60bb8539d3f2a30b95e9d1ae4f2ba6f84ded299025"
-    },
-    "quarkus-verification": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/quarkus-verification/SKILL.md",
-      "computedHash": "dbc746ae2045fa3bb2d13f087f629d58e18f1ca78428067561fc9a9a93093beb"
-    },
-    "ralphinho-rfc-pipeline": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ralphinho-rfc-pipeline/SKILL.md",
-      "computedHash": "ac4fc9662d610c67e2dd44414822dfed85a74d8c1770aebf1e4934d8aee8ea9a"
-    },
-    "recsys-pipeline-architect": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/recsys-pipeline-architect/SKILL.md",
-      "computedHash": "584329e54ea51018770f623757ac3cdbf0ea11ada09d8fe4f47f62b6b3610946"
-    },
-    "redis-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/redis-patterns/SKILL.md",
-      "computedHash": "ab933475340855635a284aec8c5655039abb247551efd52259d63f74f70368e3"
-    },
-    "regex-vs-llm-structured-text": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/regex-vs-llm-structured-text/SKILL.md",
-      "computedHash": "a44fb29cb58d4613e83d6d180914eceb293aa65d2b7345472d78cf06e73cb7b4"
-    },
-    "remotion-video-creation": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/remotion-video-creation/SKILL.md",
-      "computedHash": "d48a058c29b4fb29d74dcd4ae5a59893d666172a6954fde7e211219227efff6b"
-    },
-    "repo-scan": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/repo-scan/SKILL.md",
-      "computedHash": "b72913237752d3ff232f7b3844fe3b0d90c63c229df54fe5dd90aa9bf3b8d8ed"
-    },
-    "report-generator": {
-      "source": "guia-matthieu/clawfu-skills",
-      "sourceType": "github",
-      "skillPath": "skills/automation/report-generator/SKILL.md",
-      "computedHash": "b950638e83648f6f48287eeb03076919c18bbdf804b6f33a002bed20cb9df1ae"
-    },
-    "research-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/research-ops/SKILL.md",
-      "computedHash": "f014287546aec48779256fba2fe075a434684703c406e9c0cf8e2c33e3e65eec"
-    },
-    "returns-reverse-logistics": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/returns-reverse-logistics/SKILL.md",
-      "computedHash": "b96a74fe503d6862cb993844cb86dc9391374570f0387e5fc32abd4fbbcbfd6b"
-    },
-    "rules-distill": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/rules-distill/SKILL.md",
-      "computedHash": "f227549d3897086d821b0269a21cae919b5fecc28fa31e60cd95c782d9cfb278"
-    },
-    "rust-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/rust-patterns/SKILL.md",
-      "computedHash": "b297bfd60f56c4a2d03e229dc71bf61523bcfd7e64609cc19f9c3b488b6aa89b"
-    },
-    "rust-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/rust-testing/SKILL.md",
-      "computedHash": "5a8c205fa3052d88990346b1513f8ce594d6d533412bbd22c40dcc34897efc77"
-    },
-    "safety-guard": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/safety-guard/SKILL.md",
-      "computedHash": "91559b59f45a6ba8b75582047ad82846366aa8da6cff99db63c784d033e39d19"
-    },
-    "santa-method": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/santa-method/SKILL.md",
-      "computedHash": "60a8661b6fb1bad65e04dd197e0bc8bbfdba9431863887ad24c1c66a7cb99fdf"
-    },
-    "scholar-evaluation": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/scientific-thinking-scholar-evaluation/SKILL.md",
-      "computedHash": "397ec9c2a9cf6ca008e4d9aa94bc7e7922cf0fd64a84b41b9175de0ea3d9fdfa"
-    },
-    "search-first": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/search-first/SKILL.md",
-      "computedHash": "b4df5338047cae470d20ac918fe42f1edeba0def45057f0b5d0319ceab8fbadd"
-    },
-    "security-bounty-hunter": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/security-bounty-hunter/SKILL.md",
-      "computedHash": "fb93f8de0479ade398baa1173309bd056b8a99b9a353fd974d4a70fb708c9417"
-    },
-    "security-review": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/security-review/SKILL.md",
-      "computedHash": "7e488eba549ed7145579a7177e7b491906b2c66319a052a31a068e5219c1ebcd"
-    },
-    "security-scan": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/security-scan/SKILL.md",
-      "computedHash": "da0906902dd47d54357b9d80d50c4dcc9c350137dbe5a7fb7fc9830245a57c1e"
-    },
-    "seo": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/seo/SKILL.md",
-      "computedHash": "68dddc754062d85a25a29ccd063854907a7faa9fffea57efa0d8c24497e5dad2"
-    },
-    "skill-comply": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/skill-comply/SKILL.md",
-      "computedHash": "418121e3554622e25c4624170e20835309730b9416138b26ca413dceba2ddece"
-    },
-    "skill-scout": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/skill-scout/SKILL.md",
-      "computedHash": "2f66a689c3479b15c2b7d8faa33415ed11fd370cb69947d2f776194ca2547f2b"
-    },
-    "skill-stocktake": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/skill-stocktake/SKILL.md",
-      "computedHash": "268cabc1564164b9ce4444ef7faf4cc1cf7148ece094e021f169038523193cb7"
-    },
-    "social-graph-ranker": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/social-graph-ranker/SKILL.md",
-      "computedHash": "74c298349b52dc0bffe0cc53c223991f7377de8ce8de6b75e432ac950e5f410e"
-    },
-    "springboot-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/springboot-patterns/SKILL.md",
-      "computedHash": "15fe91e6fdca18ec9a4322c78010fc6788ee2df0f6828b5fd07a05c869c8b79f"
-    },
-    "springboot-security": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/springboot-security/SKILL.md",
-      "computedHash": "974845d84516b792408e7e9bccfe861e3b678423f90eea9b479d219c36f64cdd"
-    },
-    "springboot-tdd": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/springboot-tdd/SKILL.md",
-      "computedHash": "ff44f4d2e2044957ec39f7f28b87fe4eda18531cbed47c9e9360f82fba676258"
-    },
-    "springboot-verification": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/springboot-verification/SKILL.md",
-      "computedHash": "4d3b3ad668a5f0a2806f65b345df6f7bb646e3a2d33c16309d13b8af88aa0345"
-    },
-    "stock-analysis": {
-      "source": "liusai0820/stock-analysis-skill",
-      "sourceType": "github",
-      "skillPath": "SKILL.md",
-      "computedHash": "de015af9de451e2babb3ad119447d8bba47ac2373f788d4a1a45fe3cfe0bc0da"
-    },
-    "stock-analyst": {
-      "source": "chengzuopeng/stock-sdk-mcp",
-      "sourceType": "github",
-      "skillPath": "skills/stock-analyst/SKILL.md",
-      "computedHash": "8ff07f522cfce376d3e87936824ae985c391c9bd5181a73e44985287fc5476e0"
-    },
-    "strategic-compact": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/strategic-compact/SKILL.md",
-      "computedHash": "8a8693690de936ab543a8412330bdff12552cc9d4067e3b5d663f1782dcd7893"
-    },
-    "supabase-postgres-best-practices": {
-      "source": "supabase/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/supabase-postgres-best-practices/SKILL.md",
-      "computedHash": "38fb49d3b57c46cba18b07a44254bd42c4c93903fda1d8cb683429615d32fec4"
-    },
-    "swift-actor-persistence": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/swift-actor-persistence/SKILL.md",
-      "computedHash": "a5d98ca568b8eb29f8dc4a9b73f5c9687ebaaf437dcdfaeead76b7963ad7c89a"
-    },
-    "swift-concurrency-6-2": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/swift-concurrency-6-2/SKILL.md",
-      "computedHash": "b16d9d55604976701e662494f9f4c8c0d26f860a3e6bf4e2f6679faad8c65d7a"
-    },
-    "swift-protocol-di-testing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/swift-protocol-di-testing/SKILL.md",
-      "computedHash": "128fda8f4fec3ce54aed84c4782ae8b8f51f8f8b890ed46621a403ac7ff5b4e6"
-    },
-    "swiftui-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/swiftui-patterns/SKILL.md",
-      "computedHash": "96b1b0c829f8dab31779c7c23183fb0c415676aa037a13ff5ce08f0e363c09fe"
-    },
-    "tdd-workflow": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/tdd-workflow/SKILL.md",
-      "computedHash": "c03b44b81e6baa41000b3ce8305640900721becc1e707f4dbdf65b1c6d76d300"
-    },
-    "team-builder": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/team-builder/SKILL.md",
-      "computedHash": "338dbc772fd45377b651f340c28e116d34936bf25b0d380d915663a1ed1ddac8"
-    },
-    "terminal-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/terminal-ops/SKILL.md",
-      "computedHash": "0d8b5cfd394dbeb20d8d9d781984fa6e92ad0a0d090843440b7b0e5491407c47"
-    },
-    "terraform-aws-modules": {
-      "source": "sickn33/antigravity-awesome-skills",
-      "sourceType": "github",
-      "skillPath": "skills/terraform-aws-modules/SKILL.md",
-      "computedHash": "c6d6bcc8c1aba7f7ea66a51d987925d3ffa9f3432904894d15e77a023e4ca57c"
-    },
-    "tinystruct-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/tinystruct-patterns/SKILL.md",
-      "computedHash": "ad6b37de8130d4ac04c69efa58ef3f178512248b0144038f2ac7dfac5a32b0ad"
-    },
-    "token-budget-advisor": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/token-budget-advisor/SKILL.md",
-      "computedHash": "5f43675c751f81610d3aa2d33d0c220349111b5528404b0b41fd47ae5aa1ba8c"
-    },
-    "ui-demo": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ui-demo/SKILL.md",
-      "computedHash": "c76e71afaf194fe147f3f9b3298c8d38105a44ef42295a8ff3a7bc99ea836517"
-    },
-    "ui-to-vue": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/ui-to-vue/SKILL.md",
-      "computedHash": "5ef727b248c3e128202a40724488f9d01139cad3e90d1679d34ea8aa70791696"
-    },
-    "uncloud": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/uncloud/SKILL.md",
-      "computedHash": "02cb9bfa6aad5966951c629c688f765574268ca5c4892633fa6a7dfed4ef4f54"
-    },
-    "unified-notifications-ops": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/unified-notifications-ops/SKILL.md",
-      "computedHash": "a1ee5688672c3871afbbea3220f2a3bc0880581a7da0b1abafec884ed5f178b2"
-    },
-    "uspto-database": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/scientific-db-uspto-database/SKILL.md",
-      "computedHash": "51250046c77d31be4ccf089d6a5a5389b300f5035c4afa1d1318b200571b0b4e"
-    },
-    "verification-loop": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/verification-loop/SKILL.md",
-      "computedHash": "c936d8f1c28920133a6dd6b4c70e9784315f64f71b8d8bb69e61fa8e044cb175"
-    },
-    "video-editing": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/video-editing/SKILL.md",
-      "computedHash": "4c0a0e2a3d3a3d2c8265e62ef83c0f93d02f36bffe44ddd9ce40645f114d1676"
-    },
-    "videodb": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/videodb/SKILL.md",
-      "computedHash": "a5ae7dbf651c05b0b53040f9979a07368f212e34b290ad10942d142b0ee3a81f"
-    },
-    "visa-doc-translate": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/visa-doc-translate/SKILL.md",
-      "computedHash": "101d6c216dd734936feca42329944b589b9773dcac2f5faf5b73c66038de5361"
-    },
-    "vite-patterns": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/vite-patterns/SKILL.md",
-      "computedHash": "bdffebece745e85a0a733d7c624c01c0a21b9f4d94f8251b8ee920483e8e2456"
-    },
-    "vulnerability-scanning": {
-      "source": "secondsky/claude-skills",
-      "sourceType": "github",
-      "skillPath": "plugins/vulnerability-scanning/skills/vulnerability-scanning/SKILL.md",
-      "computedHash": "0b6a17f4e9d8a5cb5dcba894707ee5c6ac8933e84b9a1491e881fd7fb3f9edfd"
-    },
-    "windows-desktop-e2e": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/windows-desktop-e2e/SKILL.md",
-      "computedHash": "a66ad1008a68fb10752dd1aaf0343608495e73c4ae3069d3e0ababe77c4318cf"
-    },
-    "workspace-surface-audit": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/workspace-surface-audit/SKILL.md",
-      "computedHash": "28db15c8e576482be9c7ecba5f086f8893af04c4f379532044bd7806a9b19d28"
-    },
-    "x-api": {
-      "source": "affaan-m/everything-claude-code",
-      "sourceType": "github",
-      "skillPath": "skills/x-api/SKILL.md",
-      "computedHash": "2096ea4523f62bb4435f9a1a3ad99347e5687d64fbbf198836a39e2e3c8792a6"
-    },
-    "xlsx": {
-      "source": "anthropics/skills",
-      "sourceType": "github",
-      "skillPath": "skills/xlsx/SKILL.md",
-      "computedHash": "cb7fba2177d0d35d14b3244272b25d1b05246e99b3468a087fe06c84193dbd20"
-    }
-  }
+  "version": "1.0",
+  "updated_at": "2026-06-28 03:30:00",
+  "source": "https://github.com/mecallsun/skills-backup",
+  "source_commit": "origin/master (848f88a)",
+  "categories": {
+    "01-AI工作流": [
+      {
+        "name": "agent-architecture-audit",
+        "description": "Full-stack diagnostic for agent and LLM applications. Audits the 12-layer agent stack for wrapper regression, memory pollution, tool discipline failures, hidden repair loops, and rendering corruption. Produces severity-ranked findings with code-first fixes. Essential for develope",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agent-eval",
+        "description": "Head-to-head comparison of coding agents (Claude Code, Aider, Codex, etc.) on custom tasks with pass rate, cost, time, and consistency metrics",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agent-harness-construction",
+        "description": "Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agent-introspection-debugging",
+        "description": "Structured self-debugging workflow for AI agent failures using capture, diagnosis, contained recovery, and introspection reports.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agent-payment-x402",
+        "description": "Add x402 payment execution to AI agents with per-task budgets, spending controls, and non-custodial wallets. Supports Base through agentwallet-sdk and X Layer through OKX Payments / OKX Agent Payments Protocol.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agent-sort",
+        "description": "Build an evidence-backed ECC install plan for a specific repo by sorting skills, commands, rules, hooks, and extras into DAILY vs LIBRARY buckets using parallel repo-aware review passes. Use when ECC should be trimmed to what a project actually needs instead of loading the full b",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agentic-engineering",
+        "description": "Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "agentic-os",
+        "description": "Build persistent multi-agent operating systems on Claude Code. Covers kernel architecture, specialist agents, slash commands, file-based memory, scheduled automation, and state management without external databases.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ai-first-engineering",
+        "description": "Engineering operating model for teams where AI agents generate a large share of implementation output.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "autonomous-agent-harness",
+        "description": "Transform Claude Code into a fully autonomous agent system with persistent memory, scheduled operations, computer use, and task queuing. Replaces standalone agent frameworks (Hermes, AutoGPT) by leveraging Claude Code's native crons, dispatch, MCP tools, and memory. Use when the ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "autonomous-loops",
+        "description": "Patterns and architectures for autonomous Claude Code loops — from simple sequential pipelines to RFC-driven multi-agent DAG systems.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "context-budget",
+        "description": "Audits Claude Code context window consumption across agents, skills, MCP servers, and rules. Identifies bloat, redundant components, and produces prioritized token-savings recommendations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "continuous-agent-loop",
+        "description": "Patterns for continuous autonomous agent loops with quality gates, evals, and recovery controls.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "continuous-learning",
+        "description": "[DEPRECATED - use continuous-learning-v2] Legacy v1 stop-hook skill extractor. v2 is a strict superset with instinct-based, project-scoped, hook-reliable learning. Do not invoke v1; route continuous learning, session learning, and pattern extraction requests to continuous-learnin",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "continuous-learning-v2",
+        "description": "Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cost-aware-llm-pipeline",
+        "description": "Cost optimization patterns for LLM API usage — model routing by task complexity, budget tracking, retry logic, and prompt caching.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cost-tracking",
+        "description": "Track and report Claude Code token usage, spending, and budgets from a local cost-tracking database. Use when the user asks about costs, spending, usage, tokens, budgets, or cost breakdowns by project, tool, session, or date.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "council",
+        "description": "Convene a four-voice council for ambiguous decisions, tradeoffs, and go/no-go calls. Use when multiple valid paths exist and you need structured disagreement before choosing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cowork",
+        "description": "Claude leads planning and execution; Codex and Gemini serve as advisors whose input Claude reads and integrates before making final decisions",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "deep-agents-memory",
+        "description": "INVOKE THIS SKILL when your Deep Agent needs memory, persistence, or filesystem access. Covers StateBackend (ephemeral), StoreBackend (persistent), FilesystemMiddleware, and CompositeBackend for routing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "deep-research",
+        "description": "Multi-source deep research using firecrawl and exa MCPs. Searches the web, synthesizes findings, and delivers cited reports with source attribution. Use when the user wants thorough research on any topic with evidence and citations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "enterprise-agent-ops",
+        "description": "Operate long-lived agent workloads with observability, security boundaries, and lifecycle management.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "error-handling",
+        "description": "Patterns for robust error handling across TypeScript, Python, and Go. Covers typed errors, error boundaries, retries, circuit breakers, and user-facing error messages.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "eval-harness",
+        "description": "Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "foundation-models-on-device",
+        "description": "Apple FoundationModels framework for on-device LLM — text generation, guided generation with @Generable, tool calling, and snapshot streaming in iOS 26+.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "gan-style-harness",
+        "description": "GAN-inspired Generator-Evaluator agent harness for building high-quality applications autonomously. Based on Anthropic's March 2026 harness design paper.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "iterative-retrieval",
+        "description": "Pattern for progressively refining context retrieval to solve the subagent context problem",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "make-interfaces-feel-better",
+        "description": "Apply concrete design-engineering details that make interfaces feel polished. Use when reviewing or improving UI spacing, typography, borders, shadows, motion, hit areas, icons, text wrapping, and interaction states.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "mle-workflow",
+        "description": "Production machine-learning engineering workflow for data contracts, reproducible training, model evaluation, deployment, monitoring, and rollback. Use when building, reviewing, or hardening ML systems beyond one-off notebooks.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "parallel-deep-research",
+        "description": "ONLY use when user explicitly says 'deep research', 'exhaustive', 'comprehensive report', or 'thorough investigation'. Slower and more expensive than parallel-web-search. For normal research/lookup requests, use parallel-web-search instead. Supports multi-turn: pass --previous-in",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "plan-orchestrate",
+        "description": "Read a plan document, decompose it into steps, design a per-step agent chain from the ECC catalogue, and emit ready-to-paste /orchestrate custom prompts. Generative only — never invokes /orchestrate itself. Use when the user has a multi-step plan and wants to drive it through orc",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "R2R",
+        "description": "/R2R 是一个专业的深度研究到报告生成系统。它将复杂的研究课题分解为多个子主题，通过MCP网络搜索服务进行深度研究，最终生成结构化、专业化的Word格式研究报告。系统以金字塔原理组织内容，确保报告逻辑清晰、层次分明、结论先行。",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "ralphinho-rfc-pipeline",
+        "description": "RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "report-generator",
+        "description": "Generate PDF/HTML reports from templates and data. Use when: creating client reports; generating weekly summaries; producing marketing performance reports; automating recurring reports",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "rules-distill",
+        "description": "Scan skills to extract cross-cutting principles and distill them into rules — append, revise, or create new rule files",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "safety-guard",
+        "description": "Use this skill to prevent destructive operations when working on production systems or running agents autonomously.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "santa-method",
+        "description": "Multi-agent adversarial verification with convergence loop. Two independent review agents must both pass before output ships.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "search-first",
+        "description": "Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the researcher agent.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "strategic-compact",
+        "description": "Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "tdd-workflow",
+        "description": "Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "token-budget-advisor",
+        "description": ">- Offers the user an informed choice about how much response depth to consume before answering. Use this skill when the user explicitly wants to control response length, depth, or token budget. TRIGGER when: \"token budget\", \"token count\", \"token usage\", \"token limit\", \"response ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "verification-loop",
+        "description": "A comprehensive verification system for Claude Code sessions.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "02-数据分析": [
+      {
+        "name": "backend-patterns",
+        "description": "Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "click-path-audit",
+        "description": "Trace every user-facing button/touchpoint through its full state change sequence to find bugs where functions individually work but cancel each other out, produce wrong final state, or leave the UI in an inconsistent state. Use when: systematic debugging found no bugs but users r",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "clickhouse-io",
+        "description": "ClickHouse database patterns, query optimization, analytics, and data engineering best practices for high-performance analytical workloads.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "dashboard-builder",
+        "description": "Build monitoring dashboards that answer real operator questions for Grafana, SigNoz, and similar platforms. Use when turning metrics into a working dashboard instead of a vanity board.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "data-scraper-agent",
+        "description": "Build a fully automated AI-powered data collection agent for any public source — job boards, prices, news, GitHub, sports, anything. Scrapes on a schedule, enriches data with a free LLM (Gemini Flash), stores results in Notion/Sheets/Supabase, and learns from user feedback. Runs ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "database-migrations",
+        "description": "Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, and common ORMs (Prisma, Drizzle, Kysely, Django, TypeORM, golang-migrate).",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "exa-search",
+        "description": "Neural search via Exa MCP for web, code, and company research. Use when the user needs web search, code examples, company intel, people lookup, or AI-powered deep research with Exa's neural search engine.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "excel-automation",
+        "description": ">",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "find-skills",
+        "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist a",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "gget",
+        "description": "gget CLI and Python workflow for quick genomic database queries, sequence lookup, BLAST-style searches, enrichment checks, and reproducible bioinformatics evidence logs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "jpa-patterns",
+        "description": "JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Spring Boot.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "meeting-notes",
+        "description": ">",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "mysql-patterns",
+        "description": "MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "postgres-patterns",
+        "description": "PostgreSQL database patterns for query optimization, schema design, indexing, and security. Based on Supabase best practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "prisma-database-setup",
+        "description": "Guides for configuring Prisma with different database providers (PostgreSQL, MySQL, SQLite, MongoDB, etc.). Use when setting up a new project, changing databases, or troubleshooting connection issues. Triggers on \"configure postgres\", \"connect to mysql\", \"setup mongodb\", \"sqlite ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "prisma-patterns",
+        "description": "Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, @updatedAt skipped on bulk writes, and serverless connec",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "redis-patterns",
+        "description": "Redis data structure patterns, caching strategies, distributed locks, rate limiting, pub/sub, and connection management for production applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "supabase-postgres-best-practices",
+        "description": "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "xlsx",
+        "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); cre",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "03-A股量化": [
+      {
+        "name": "a-share-flow-analyzer",
+        "description": "A-share institutional/retail flow intelligence via TuShare. Pulls margin financing (融资融券), dragon-tiger list (龙虎榜), and main-force money flow. Use when analyzing Chinese A-share tickers (6-digit codes) and need smart-money positioning signals. This is the A-share equivalent of op",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "a-stock",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "a-stock-data",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ashare",
+        "description": "A股量化交易指南，使用 Tushare Pro 获取数据，Backtrader 进行回测。当用户需要进行A股量化分析、回测策略、获取股票数据时使用此 skill。遇到不确定的接口必须用 context7 查询官方文档。",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "china-stock-analyst",
+        "description": "A股短线分析助手，聚焦“短线交易信号 + 营收质量”双轨研判。使用时机：分析单只A股、对比多只股票、验证历史报告、回测策略表现、优化参数配置。默认采用 Team-First 并行分析，支持插件化扩展、回测框架、策略优化。",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "recsys-pipeline-architect",
+        "description": "Design composable recommendation, ranking, and feed pipelines using the six-stage Source→Hydrator→Filter→Scorer→Selector→SideEffect framework popularized by xAI's open-sourced For You algorithm. Use this skill whenever the user is building any system that picks \"the top K items f",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "simonlin1212-a-stock-data",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "stock-analysis",
+        "description": "| 股票智能分析技能。输入股票代码（A股/港股/美股），自动完成： 1. 获取实时行情 + 历史K线数据 2. 计算技术指标（MA/MACD/RSI/量能/乖离率） 3. 综合评分（100分制）+ 买卖信号 4. 搜索最新新闻消息面 5. AI综合分析，输出决策看板 触发场景：用户提供股票代码要求分析、问某只股票怎么样、要求看盘分析等。 示例输入：「分析下 TSLA PLTR」「600519怎么样」「帮我看看HK00700」",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "stock-analyst",
+        "description": "股票技术分析专家 - 提供专业的 K 线形态、技术指标、资金流向与北向持仓分析",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "viekai-analyse-skills",
+        "description": "Comprehensive financial analysis system for listed companies (A-shares, Hong Kong stocks, and US stocks). Use when users want to analyze a company's investment value, business model, financial health, or industry position. Supports A-share codes (e.g., 600519, 000001), Hong Kong ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "04-VibeCoding": [
+      {
+        "name": "android-clean-architecture",
+        "description": "Clean Architecture patterns for Android and Kotlin Multiplatform projects — module structure, dependency rules, UseCases, Repositories, and data layer patterns.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "design-system",
+        "description": "Use this skill to generate or audit design systems, check visual consistency, and review PRs that touch styling.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "flutter-dart-code-review",
+        "description": "Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, GetX, MobX, Signals), Dart idioms, performance, accessibility, security, and clean architecture.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "frontend-design-direction",
+        "description": "Set an ECC-specific frontend design direction for production UI work. Use when building or improving websites, dashboards, applications, components, landing pages, visual tools, or any web UI that needs stronger product-specific design judgment.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "frontend-patterns",
+        "description": "Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "frontend-slides",
+        "description": "Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploratio",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "hyperframes",
+        "description": "Create video compositions, animations, title cards, overlays, captions, voiceovers, audio-reactive visuals, and scene transitions in HyperFrames HTML. Use when asked to build any HTML-based video content, add captions or subtitles synced to audio, generate text-to-speech narratio",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "ios-icon-gen",
+        "description": "Generate iOS app icons as PNG imagesets for Xcode asset catalogs from SF Symbols (5000+ Apple-native) or Iconify API (275k+ open source icons from 200+ collections). Use when generating icons, creating icon assets, adding icons to asset catalog, or searching for icons for iOS pro",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "liquid-glass-design",
+        "description": "iOS 26 Liquid Glass design system — dynamic glass material with blur, reflection, and interactive morphing for SwiftUI, UIKit, and WidgetKit.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "manim-video",
+        "description": "Build reusable Manim explainers for technical concepts, graphs, system diagrams, and product walkthroughs, then hand off to the wider ECC video stack if needed. Use when the user wants a clean animated explainer rather than a generic talking-head script.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "motion-advanced",
+        "description": "Advanced motion patterns for React / Next.js — drag & drop, gestures, text animations, SVG path drawing, custom hooks, imperative sequences (useAnimate), loaders, and the full API decision tree. Requires motion-foundations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "motion-foundations",
+        "description": "Motion tokens, spring presets, performance rules, device adaptation, accessibility enforcement, and SSR safety for React / Next.js using motion/react. Foundation layer — all other motion skills depend on this.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "motion-patterns",
+        "description": "Production-ready animation patterns for React / Next.js — button, modal, toast, stagger, page transitions, exit animations, scroll, and layout — built on motion-foundations tokens and springs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "motion-ui",
+        "description": "Production-ready UI motion system for React/Next.js. Use when implementing animations, transitions, or motion patterns.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nextjs-turbopack",
+        "description": "Next.js 16+ and Turbopack — incremental bundling, FS caching, dev speed, and when to use Turbopack vs webpack.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nuxt4-patterns",
+        "description": "Nuxt 4 app patterns for hydration safety, performance, route rules, lazy loading, and SSR-safe data fetching with useFetch and useAsyncData.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ppt-master",
+        "description": "> AI-driven multi-format SVG content generation system. Converts source documents (PDF/DOCX/URL/Markdown) into high-quality SVG pages and exports to PPTX through multi-role collaboration. Use when user asks to \"create PPT\", \"make presentation\", \"生成PPT\", \"做PPT\", \"制作演示文稿\", or menti",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "pptx",
+        "description": "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "remotion-video-creation",
+        "description": "Best practices for Remotion - Video creation in React. 29 domain-specific rules covering 3D, animations, audio, captions, charts, transitions, and more.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ui-demo",
+        "description": "Record polished UI demo videos using Playwright. Use when the user asks to create a demo, walkthrough, screen recording, or tutorial video of a web application. Produces WebM videos with visible cursor, natural pacing, and professional feel.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ui-to-vue",
+        "description": "Use when the user has UI screenshots or design exports that need batch conversion into Vue 3 components, especially with Vant, Element Plus, or Ant Design Vue.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "video-editing",
+        "description": "AI-assisted video editing workflows for cutting, structuring, and augmenting real footage. Covers the full pipeline from raw capture through FFmpeg, Remotion, ElevenLabs, fal.ai, and final polish in Descript or CapCut. Use when the user wants to edit video, cut footage, create vl",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "videodb",
+        "description": "See, Understand, Act on video and audio. See- ingest from local files, URLs, RTSP/live feeds, or live record desktop; return realtime context and playable stream links. Understand- extract frames, build visual/semantic/temporal indexes, and search moments with timestamps and auto",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "vite-patterns",
+        "description": "Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build optimization. Activate when working with vite.config.ts, Vite plugins, or Vite-based projects.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "05-内容创作": [
+      {
+        "name": "article-writing",
+        "description": "Write articles, guides, blog posts, tutorials, newsletter issues, and other long-form content in a distinctive voice derived from supplied examples or brand guidance. Use when the user wants polished written content longer than a paragraph, especially when voice consistency, stru",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "brand-voice",
+        "description": "Build a source-derived writing style profile from real posts, essays, launch notes, docs, or site copy, then reuse that profile across content, outreach, and social workflows. Use when the user wants voice consistency without generic AI writing tropes.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "connections-optimizer",
+        "description": "Reorganize the user's X and LinkedIn network with review-first pruning, add/follow recommendations, and channel-specific warm outreach drafted in the user's real voice. Use when the user wants to clean up following lists, grow toward current priorities, or rebalance a social grap",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "content-engine",
+        "description": "Create platform-native content systems for X, LinkedIn, TikTok, YouTube, newsletters, and repurposed multi-platform campaigns. Use when the user wants social posts, threads, scripts, content calendars, or one source asset adapted cleanly across platforms.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "content-hash-cache-pattern",
+        "description": "Cache expensive file processing results using SHA-256 content hashes — path-independent, auto-invalidating, with service layer separation.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "content-strategy",
+        "description": "When the user wants to plan a content strategy, decide what content to create, or figure out what topics to cover. Also use when the user mentions \"content strategy,\" \"what should I write about,\" \"content ideas,\" \"blog strategy,\" \"topic clusters,\" \"content planning,\" \"editorial c",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "crosspost",
+        "description": "Multi-platform content distribution across X, LinkedIn, Threads, and Bluesky. Adapts content per platform using content-engine patterns. Never posts identical content cross-platform. Use when the user wants to distribute content across social platforms.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "email-ops",
+        "description": "Evidence-first mailbox triage, drafting, send verification, and sent-mail-safe follow-up workflow for ECC. Use when the user wants to organize email, draft or send through the real mail surface, or prove what landed in Sent.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "fal-ai-media",
+        "description": "Unified media generation via fal.ai MCP — image, video, and audio. Covers text-to-image (Nano Banana), text/image-to-video (Seedance, Kling, Veo 3), text-to-speech (CSM-1B), and video-to-audio (ThinkSound). Use when the user wants to generate images, videos, or audio with AI.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "gateguard",
+        "description": "Fact-forcing gate that blocks Edit/Write/Bash (including MultiEdit) and demands concrete investigation (importers, data schemas, user instruction) before allowing the action. Measurably improves output quality by +2.25 points vs ungated agents.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "messages-ops",
+        "description": "Evidence-first live messaging workflow for ECC. Use when the user wants to read texts or DMs, recover a recent one-time code, inspect a thread before replying, or prove which message source was actually checked.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "regex-vs-llm-structured-text",
+        "description": "Decision framework for choosing between regex and LLM when parsing structured text — start with regex, add LLM only for low-confidence edge cases.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "repo-scan",
+        "description": "Cross-stack source code asset audit — classifies every file, detects embedded third-party libraries, and delivers actionable four-level verdicts per module with interactive HTML reports.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "seo",
+        "description": "Audit, plan, and implement SEO improvements across technical SEO, on-page optimization, structured data, Core Web Vitals, and content strategy. Use when the user wants better search visibility, SEO remediation, schema markup, sitemap/robots work, or keyword mapping.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "social-graph-ranker",
+        "description": "Weighted social-graph ranking for warm intro discovery, bridge scoring, and network gap analysis across X and LinkedIn. Use when the user wants the reusable graph-ranking engine itself, not the broader outreach or network-maintenance workflow layered on top of it.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "visa-doc-translate",
+        "description": "Translate visa application documents (images) to English and create a bilingual PDF with original and translation",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "06-职场效率": [
+      {
+        "name": "lead-get",
+        "description": "帮助你从公开渠道发现和筛选潜在客户信息。",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "lead-hunter",
+        "description": "Sales lead collection skill. Given a one-line requirement, automatically plans search strategy, selects execution engine (Apify / Firecrawl / 高德地图 / 天眼查 / search-guided fallback), and outputs a deduplicated structured contact table. Use when asked to find company phone numbers, i",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "lead-intelligence",
+        "description": "AI-native lead intelligence and outreach pipeline. Replaces Apollo, Clay, and ZoomInfo with agent-powered signal scoring, mutual ranking, warm path discovery, source-derived voice modeling, and channel-specific outreach across email, LinkedIn, and X. Use when the user wants to fi",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "project-flow-ops",
+        "description": "Operate execution flow across GitHub and Linear by triaging issues and pull requests, linking active work, and keeping GitHub public-facing while Linear remains the internal execution layer. Use when the user wants backlog control, PR triage, or GitHub-to-Linear coordination.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "team-builder",
+        "description": "Interactive agent picker for composing and dispatching parallel teams",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "07-研究调研": [
+      {
+        "name": "Mecall-ITReport",
+        "description": "部门级IT信息化诊断报告生成技能 — 面向业务部门（财务/行政/HR/生产/研发/销售）及外部供应商的IT信息化需求调研访谈与研究诊断报告生成器。将访谈转写文本转化为结构化议题归集报告（HTML格式），含IT现状评估、数智化转型方案建议及"致管理层"总结陈词。当用户提到：IT调研、部门访谈、信息化诊断、调研报告、IT现状评估、数字化转型、数智化升级、议题归集、咨询报告、调研访谈、需求诊断、ITReview、部门数字化、业务访谈、IT负责人访谈、外部供应商调研时触发。V4.3综合升级版整合：①部门概况与业务特征锚定②IT服务满意度评价③议题优先级P0/P1/P2/P3标签体系④综合评估表5列结构（新增责任方）⑤转型路线网格化布局⑥致管理层独立章节。基于金戈新材料6份实战报告经验沉淀。",
+        "source": "local-only",
+        "skill_file": "Mecall-ITReport.md",
+        "version": "2.3",
+        "has_skill_md": true,
+        "triggers": ["IT调研", "部门访谈", "信息化诊断", "调研报告", "IT现状评估", "数字化转型", "数智化升级", "议题归集", "咨询报告", "调研访谈", "需求诊断", "ITReview", "部门数字化", "业务访谈", "IT负责人访谈", "外部供应商调研", "生产调研", "财务调研", "行政调研", "HR调研", "杨总调研", "电信调研", "金戈新材料", "IT诊断"]
+      },
+      {
+        "name": "Mecall-Get-to-Report",
+        "description": "研究报告生成技能（Research-to-Report Skill）。将网络搜索、信息收集、深度研究与HTML报告生成整合为完整的端到端流程。适用于生成企业战略咨询报告、行业分析报告、投资研究报告等专业文档。",
+        "source": "local:user",
+        "has_skill_md": true
+      },
+      {
+        "name": "architecture-decision-records",
+        "description": "Capture architectural decisions made during Claude Code sessions as structured ADRs. Auto-detects decision moments, records context, alternatives considered, and rationale. Maintains an ADR log so future developers understand why the codebase is shaped the way it is.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "company-financial-analysis",
+        "description": "Comprehensive financial analysis system for listed companies (A-shares, Hong Kong stocks, and US stocks). Use when users want to analyze a company's investment value, business model, financial health, or industry position. Supports A-share codes (e.g., 600519, 000001), Hong Kong ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "experiments",
+        "description": ">- Guides work on `packages/frontend/editor-ui` experiments. Use when creating, extending, wiring, testing, reviewing, or retiring editor-ui experiments, PostHog feature flags, experiment key indexes, variants, stores/composables, persisted experiment state, or experiment telemet",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "geo-content-optimizer",
+        "description": "Use when the user asks to \"optimize for AI citations\"; improves citation readiness for ChatGPT, Perplexity, AI Overviews, Gemini, and Claude. AI引用优化/GEO优化/AI搜索",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "healthcare-cdss-patterns",
+        "description": "Clinical Decision Support System (CDSS) development patterns. Drug interaction checking, dose validation, clinical scoring (NEWS2, qSOFA), alert severity classification, and integration into EMR workflows.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "healthcare-emr-patterns",
+        "description": "EMR/EHR development patterns for healthcare applications. Clinical safety, encounter workflows, prescription generation, clinical decision support integration, and accessibility-first UI for medical data entry.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "healthcare-eval-harness",
+        "description": "Patient safety evaluation harness for healthcare application deployments. Automated test suites for CDSS accuracy, PHI exposure, clinical workflow integrity, and integration compliance. Blocks deployments on safety failures.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "healthcare-phi-compliance",
+        "description": "Protected Health Information (PHI) and Personally Identifiable Information (PII) compliance patterns for healthcare applications. Covers data classification, access control, audit trails, encryption, and common leak vectors.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "hexagonal-architecture",
+        "description": "Design, implement, and refactor Ports & Adapters systems with clear domain boundaries, dependency inversion, and testable use-case orchestration across TypeScript, Java, Kotlin, and Go services.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "investor-materials",
+        "description": "Create and update pitch decks, one-pagers, investor memos, accelerator applications, financial models, and fundraising materials. Use when the user needs investor-facing documents, projections, use-of-funds tables, milestone plans, or materials that must stay internally consisten",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "investor-outreach",
+        "description": "Draft cold emails, warm intro blurbs, follow-ups, update emails, and investor communications for fundraising. Use when the user wants outreach to angels, VCs, strategic investors, or accelerators and needs concise, personalized, investor-facing messaging.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "literature-review",
+        "description": "Systematic literature-review workflow for academic, biomedical, technical, and scientific topics, including search planning, source screening, synthesis, citation checks, and evidence logging.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "market-research",
+        "description": "Conduct market research, competitive analysis, investor due diligence, and industry intelligence with source attribution and decision-oriented summaries. Use when the user wants market sizing, competitor comparisons, fund research, technology scans, or research that informs busin",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "prd-development",
+        "description": "Build a structured PRD that connects problem, users, solution, and success criteria. Use when turning discovery notes into an engineering-ready document for a major initiative.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "product-capability",
+        "description": "Translate PRD intent, roadmap asks, or product discussions into an implementation-ready capability plan that exposes constraints, invariants, interfaces, and unresolved decisions before multi-service work starts. Use when the user needs an ECC-native PRD-to-SRS lane instead of va",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "product-lens",
+        "description": "Use this skill to validate the \"why\" before building, run product diagnostics, and pressure-test product direction before the request becomes an implementation contract.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "production-audit",
+        "description": "Local-evidence production readiness audit for shipped apps, pre-launch reviews, post-merge checks, and \"what breaks in prod?\" questions without sending repo data to an external audit service.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "production-scheduling",
+        "description": "> Codified expertise for production scheduling, job sequencing, line balancing, changeover optimization, and bottleneck resolution in discrete and batch manufacturing. Informed by production schedulers with 15+ years experience. Includes TOC/drum-buffer-rope, SMED, OEE analysis, ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "pubmed-database",
+        "description": "Direct PubMed and NCBI E-utilities search workflows for biomedical literature, MeSH queries, PMID lookup, citation retrieval, and API-backed literature monitoring.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "research-ops",
+        "description": "Evidence-first current-state research workflow for ECC. Use when the user wants fresh facts, comparisons, enrichment, or a recommendation built from current public evidence and any supplied local context.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "scholar-evaluation",
+        "description": "Structured scholarly-work evaluation for papers, proposals, literature reviews, methods sections, evidence quality, citation support, and research-writing feedback.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "uspto-database",
+        "description": "USPTO patent and trademark data workflow for official record lookup, PatentSearch queries, TSDR checks, assignment data, and reproducible IP research logs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "windows-desktop-e2e",
+        "description": "E2E testing for Windows native desktop apps (WPF, WinForms, Win32/MFC, Qt) using pywinauto and Windows UI Automation.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "08-基础设施": [
+      {
+        "name": "api-connector-builder",
+        "description": "Build a new API connector or provider by matching the target repo's existing integration pattern exactly. Use when adding one more integration without inventing a second architecture.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "api-design",
+        "description": "REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for production APIs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "automation-audit-ops",
+        "description": "Evidence-first automation inventory and overlap audit workflow for ECC. Use when the user wants to know which jobs, hooks, connectors, MCP servers, or wrappers are live, broken, redundant, or missing before fixing anything.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "canary-watch",
+        "description": "Use this skill to monitor and verify a deployed URL after releases — checks HTTP endpoints, SSE streams, static assets, console errors, and performance regressions after deploys, merges, or dependency upgrades. Smoke / canary / post-deploy verification.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "carrier-relationship-management",
+        "description": "> Codified expertise for managing carrier portfolios, negotiating freight rates, tracking carrier performance, allocating freight, and maintaining strategic carrier relationships. Informed by transportation managers with 15+ years experience. Includes scorecarding frameworks, RFP",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cisco-ios-patterns",
+        "description": "Cisco IOS and IOS-XE review patterns for show commands, config hierarchy, wildcard masks, ACL placement, interface hygiene, and safe change-window verification.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "deployment-patterns",
+        "description": "Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "dmux-workflows",
+        "description": "Multi-agent orchestration using dmux (tmux pane manager for AI agents). Patterns for parallel agent workflows across Claude Code, Codex, OpenCode, and other harnesses. Use when running multiple agent sessions in parallel or coordinating multi-agent development workflows.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "docker-compose-orchestration",
+        "description": "Container orchestration with Docker Compose for multi-container applications, networking, volumes, and production deployment",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "docker-patterns",
+        "description": "Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ecc-tools-cost-audit",
+        "description": "Evidence-first ECC Tools burn and billing audit workflow. Use when investigating runaway PR creation, quota bypass, premium-model leakage, duplicate jobs, or GitHub App cost spikes in the ECC Tools repo.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "energy-procurement",
+        "description": "> Codified expertise for electricity and gas procurement, tariff optimization, demand charge management, renewable PPA evaluation, and multi-facility energy cost management. Informed by energy procurement managers with 15+ years experience at large commercial and industrial consu",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "finance-billing-ops",
+        "description": "Evidence-first revenue, pricing, refunds, team-billing, and billing-model truth workflow for ECC. Use when the user wants a sales snapshot, pricing comparison, duplicate-charge diagnosis, or code-backed billing reality instead of generic payments advice.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "firecrawl-build-interact",
+        "description": "Integrate Firecrawl `/interact` into product code for dynamic pages and browser actions after scraping. Use when a feature needs clicks, form fills, pagination, authentication-aware flows, or other multi-step interactions that plain `/scrape` cannot complete.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "firecrawl-build-onboarding",
+        "description": "Get Firecrawl credentials and SDK setup into a project. Use when an application needs `FIRECRAWL_API_KEY`, when an agent should add Firecrawl to `.env`, when the user wants to authenticate Firecrawl for app code, or when choosing the first SDK and docs for a new Firecrawl integra",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "firecrawl-build-scrape",
+        "description": "Integrate Firecrawl `/scrape` into product code for single-page extraction. Use when an app already has a URL and needs markdown, HTML, links, screenshots, metadata, or structured page output. Prefer this skill over broader crawl patterns when the feature is page-level.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "firecrawl-build-search",
+        "description": "Integrate Firecrawl `/search` into product code and agent workflows. Use when an app needs discovery before extraction, when the feature starts with a query instead of a URL, or when the system should search the web and optionally hydrate result content.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "git-workflow",
+        "description": "Git workflow patterns including branching strategies, commit conventions, merge vs rebase, conflict resolution, and collaborative development best practices for teams of all sizes.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "github-actions-docs",
+        "description": "Use when users ask how to write, explain, customize, migrate, secure, or troubleshoot GitHub Actions workflows, workflow syntax, triggers, matrices, runners, reusable workflows, artifacts, caching, secrets, OIDC, deployments, custom actions, or Actions Runner Controller, especial",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "github-ops",
+        "description": "GitHub repository operations, automation, and management. Issue triage, PR management, CI/CD operations, release management, and security monitoring using the gh CLI. Use when the user wants to manage GitHub issues, PRs, CI status, releases, contributors, stale items, or any GitH",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "google-workspace-ops",
+        "description": "Operate across Google Drive, Docs, Sheets, and Slides as one workflow surface for plans, trackers, decks, and shared documents. Use when the user needs to find, summarize, edit, migrate, or clean up Google Workspace assets without dropping to raw tool calls.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "grafana-oss",
+        "description": "> Grafana OSS core features — dashboards, panels, visualization types, data sources, template variables, alerting, annotations, provisioning, RBAC, service accounts, and configuration. Use when building dashboards, configuring data sources, setting up provisioning YAML, managing ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "helm-chart-scaffolding",
+        "description": "Design, organize, and manage Helm charts for templating and packaging Kubernetes applications with reusable configurations. Use when creating Helm charts, packaging Kubernetes applications, or implementing templated deployments.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "homelab-network-readiness",
+        "description": "Readiness checklist for homelab VLAN segmentation, local DNS filtering, and WireGuard-style remote access before changing router, firewall, DHCP, or VPN configuration.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "homelab-network-setup",
+        "description": "Practical home and homelab network planning for gateways, switches, access points, IP ranges, DHCP reservations, DNS, cabling, and common beginner mistakes.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "homelab-pihole-dns",
+        "description": "Pi-hole installation, blocklist management, DNS-over-HTTPS setup, DHCP integration, local DNS records, and troubleshooting broken DNS resolution on a home network.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "homelab-vlan-segmentation",
+        "description": "Segmenting home networks into VLANs for IoT, guest, trusted, and server traffic using UniFi, pfSense/OPNsense, and MikroTik — including switch trunk config, firewall rules, and wireless SSID mapping.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "homelab-wireguard-vpn",
+        "description": "WireGuard VPN server setup, peer configuration, key generation, split tunneling vs full tunnel routing, and remote access to a home network from mobile and laptop clients.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "inventory-demand-planning",
+        "description": "> Codified expertise for demand forecasting, safety stock optimization, replenishment planning, and promotional lift estimation at multi-location retailers. Informed by demand planners with 15+ years experience managing hundreds of SKUs. Includes forecasting method selection, ABC",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "jira-integration",
+        "description": "Use this skill when retrieving Jira tickets, analyzing requirements, updating ticket status, adding comments, or transitioning issues. Provides Jira API patterns via MCP or direct REST calls.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "logistics-exception-management",
+        "description": "> Codified expertise for handling freight exceptions, shipment delays, damages, losses, and carrier disputes. Informed by logistics professionals with 15+ years operational experience. Includes escalation protocols, carrier-specific behaviors, claims procedures, and judgment fram",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "mcp-server-patterns",
+        "description": "Build MCP servers with Node/TypeScript SDK — tools, resources, prompts, Zod validation, stdio vs Streamable HTTP. Use Context7 or official MCP docs for latest API.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-cli",
+        "description": "Use the n8n CLI to manage workflows, credentials, executions, and more on an n8n instance. Use when the user asks to interact with n8n, automate workflows, manage credentials, or operate their instance from the command line.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-content-design",
+        "description": "> Product content designer for UI copy. Use when writing, reviewing, or auditing user-facing text: button labels, error messages, tooltips, empty states, modal copy, placeholder text, confirmation dialogs, onboarding flows, or i18n strings. Also use when the user says /copy, /con",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-conventions",
+        "description": "Quick reference for n8n patterns. Full docs /AGENTS.md",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-create-community-node-lint-rule",
+        "description": ">- Create new ESLint rules for the @n8n/eslint-plugin-community-nodes package. Use when adding a lint rule, creating a community node lint, or working on eslint-plugin-community-nodes. Guides rule implementation, tests, docs, and plugin registration.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-create-issue",
+        "description": "Create Linear tickets or GitHub issues following n8n conventions. Use when the user asks to create a ticket, file a bug, open an issue, or says /create-issue.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-create-pr",
+        "description": "Creates GitHub pull requests with properly formatted titles that pass the check-pr-title CI validation. Use when creating PRs, submitting changes for review, or when the user says /pr or asks to create a pull request.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-create-skill",
+        "description": ">- Guides users through creating effective Agent Skills. Use when you want to create, write, or author a new skill, or asks about skill structure, best practices, or SKILL.md format.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-db-migrations",
+        "description": "Authors n8n database migrations. Use when creating or modifying files under packages/@n8n/db/src/migrations/, when the user asks to add a column, table, index, foreign key, or backfill, or when the user mentions DB migrations or TypeORM migrations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-design-system",
+        "description": "Guidelines on using Design System styles and components. Use when working on .vue files in packages/frontend. Triggers for tasks that include component architecture, styling, UI changes, or feature work.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-linear-issue",
+        "description": "Fetch and analyze Linear issue with all related context. Use when starting work on a Linear ticket, analyzing issues, or gathering context about a Linear issue.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-loom-transcript",
+        "description": "Fetch and display the full transcript from a Loom video URL. Use when the user wants to get or read a Loom transcript.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-node-add-oauth",
+        "description": "Add OAuth2 credential support to an existing n8n node — creates the credential file, updates the node, adds tests, and keeps the CLI constant in sync. Use when the user says /node-add-oauth.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-protect-endpoints",
+        "description": "Applies n8n's RBAC scope decorators to REST endpoints. Use when creating a new @RestController, adding any @Get/@Post/@Put/@Patch/@Delete route to an existing controller, or reviewing endpoint authorization. Every authenticated endpoint must be gated by @ProjectScope or @GlobalSc",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-reproduce-bug",
+        "description": "Reproduce a bug from a Linear ticket with a failing test. Expects the full ticket context (title, description, comments) to be provided as input.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-setup-mcps",
+        "description": ">- Configure MCP servers for n8n development. Use when the user says /setup-mcps or asks to set up MCP servers for n8n.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "n8n-spec-driven-development",
+        "description": "Keeps implementation and specs in sync. Use when working on a feature that has a spec in .claude/specs/, when the user says /spec, or when starting implementation of a documented feature. Also use when the user asks to verify implementation against a spec or update a spec after c",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nanoclaw-repl",
+        "description": "Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on claude -p.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "netmiko-ssh-automation",
+        "description": "Safe Python Netmiko patterns for read-only collection, bounded batch SSH, TextFSM parsing, guarded config changes, timeouts, and network automation error handling.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "network-bgp-diagnostics",
+        "description": "Diagnostics-only BGP troubleshooting patterns for neighbor state, route exchange, prefix policy, AS path inspection, and safe evidence collection.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "network-config-validation",
+        "description": "Pre-deployment checks for router and switch configuration, including dangerous commands, duplicate addresses, subnet overlaps, stale references, management-plane risk, and IOS-style security hygiene.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "network-interface-health",
+        "description": "Diagnose interface errors, drops, CRCs, duplex mismatches, flapping, speed negotiation issues, and counter trends on routers, switches, and Linux hosts.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "opensource-pipeline",
+        "description": "Open-source pipeline: fork, sanitize, and package private projects for safe public release. Chains 3 agents (forker, sanitizer, packager). Triggers: '/opensource', 'open source this', 'make this public', 'prepare for open source'.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "quality-nonconformance",
+        "description": "> Codified expertise for quality control, non-conformance investigation, root cause analysis, corrective action, and supplier quality management in regulated manufacturing. Informed by quality engineers with 15+ years experience across FDA, IATF 16949, and AS9100 environments. In",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "returns-reverse-logistics",
+        "description": "> Codified expertise for returns authorization, receipt and inspection, disposition decisions, refund processing, fraud detection, and warranty claims management. Informed by returns operations managers with 15+ years experience. Includes grading frameworks, disposition economics",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "terminal-ops",
+        "description": "Evidence-first repo execution workflow for ECC. Use when the user wants a command run, a repo checked, a CI failure debugged, or a narrow fix pushed with exact proof of what was executed and verified.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "terraform-aws-modules",
+        "description": "Terraform module creation for AWS — reusable modules, state management, and HCL best practices. Use when building or reviewing Terraform AWS infrastructure.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "uncloud",
+        "description": "Use when managing an Uncloud cluster — deploying services, configuring Caddy ingress, adding static proxy routes for non-cluster devices, publishing ports, scaling, inspecting logs, or managing machines and volumes with the `uc` CLI.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "unified-notifications-ops",
+        "description": "Operate notifications as one ECC-native workflow across GitHub, Linear, desktop alerts, hooks, and connected communication surfaces. Use when the real problem is alert routing, deduplication, escalation, or inbox collapse.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "09-开发框架": [
+      {
+        "name": "accessibility",
+        "description": "Design, implement, and audit inclusive digital products using WCAG 2.2 Level AA standards. Use this skill to generate semantic ARIA for Web and accessibility traits for Web and Native platforms (iOS/Android).",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "angular-developer",
+        "description": "Generates Angular code and provides architectural guidance. Trigger when creating projects, components, or services, or for best practices on reactivity (signals, linkedSignal, resource), forms, dependency injection, routing, SSR, accessibility (ARIA), animations, styling (compon",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "blender-motion-state-inspection",
+        "description": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where screenshots alone are not enough.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "blueprint",
+        "description": ">- Turn a one-line objective into a step-by-step construction plan for multi-session, multi-agent engineering projects. Each step has a self-contained context brief so a fresh agent can execute it cold. Includes adversarial review gate, dependency graph, parallel step detection, ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "browser-automation",
+        "description": "浏览器自动化控制。【优先使用此 skill，不要用内置 browser 工具】当用户说\"打开网页\"、\"点击\"、\"填写表单\"、\"截图\"、\"网页操作\"、\"自动填表\"、\"浏览器\"时使用。基于 Playwright，支持连接已有 Chrome（CDP 模式）或启动新 Chromium。",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "browser-qa",
+        "description": "Use this skill to automate visual testing and UI interaction verification using browser automation after deploying features.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "bun-runtime",
+        "description": "Bun as runtime, package manager, bundler, and test runner. When to choose Bun vs Node, migration notes, and Vercel support.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ck",
+        "description": "Persistent per-project memory for Claude Code. Auto-loads project context on session start, tracks sessions with git activity, and writes to native memory. Commands run deterministic Node.js scripts — behavior is consistent across model versions.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "coding-standards",
+        "description": "Baseline cross-project coding conventions for naming, readability, immutability, and code-quality review. Use detailed frontend or backend skills for framework-specific patterns.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "compose-multiplatform-patterns",
+        "description": "Compose Multiplatform and Jetpack Compose patterns for KMP projects — state management, navigation, theming, performance, and platform-specific UI.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "configure-ecc",
+        "description": "Interactive installer for Everything Claude Code — guides users through selecting and installing skills and rules to user-level or project-level directories, verifies paths, and optionally optimizes installed files.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cpp-coding-standards",
+        "description": "C++ coding standards based on the C++ Core Guidelines (isocpp.github.io). Use when writing, reviewing, or refactoring C++ code to enforce modern, safe, and idiomatic practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "cpp-testing",
+        "description": "Use only when writing/updating/fixing C++ tests, configuring GoogleTest/CTest, diagnosing failing or flaky tests, or adding coverage/sanitizers.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "csharp-testing",
+        "description": "C# and .NET testing patterns with xUnit, FluentAssertions, mocking, integration tests, and test organization best practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "dart-flutter-patterns",
+        "description": "Production-ready Dart and Flutter patterns covering null safety, immutable state, async composition, widget architecture, popular state management frameworks (BLoC, Riverpod, Provider), GoRouter navigation, Dio networking, Freezed code generation, and clean architecture.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "django-celery",
+        "description": "Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use when adding background jobs, scheduled tasks, or async processing to a Django app.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "django-patterns",
+        "description": "Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "django-security",
+        "description": "Django security best practices, authentication, authorization, CSRF protection, SQL injection prevention, XSS prevention, and secure deployment configurations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "django-tdd",
+        "description": "Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "django-verification",
+        "description": "Verification loop for Django projects: migrations, linting, tests with coverage, security scans, and deployment readiness checks before release or PR.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-patterns",
+        "description": "Idiomatic C# and .NET patterns, conventions, dependency injection, async/await, and best practices for building robust, maintainable .NET applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "e2e-testing",
+        "description": "Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "fastapi-patterns",
+        "description": "FastAPI patterns for async APIs, dependency injection, Pydantic request and response models, OpenAPI docs, tests, security, and production readiness.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "fastapi-python",
+        "description": "Expert in FastAPI Python development with best practices for APIs and async operations",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "flox-environments",
+        "description": "Create reproducible, cross-platform development environments with Flox — a declarative environment manager built on Nix. ALWAYS use this skill when the user needs to: set up a project with system-level dependencies (compilers, databases, native libraries like openssl, libvips, BL",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "fsharp-testing",
+        "description": "F# testing patterns with xUnit, FsUnit, Unquote, FsCheck property-based testing, integration tests, and test organization best practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "golang-patterns",
+        "description": "Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "golang-testing",
+        "description": "Go testing patterns including table-driven tests, subtests, benchmarks, fuzzing, and test coverage. Follows TDD methodology with idiomatic Go practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "hermes-imports",
+        "description": "Convert local Hermes operator workflows into sanitized ECC skills and release-pack artifacts. Use when preparing a Hermes workflow for public ECC reuse without leaking private workspace state, credentials, or local-only paths.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "hookify-rules",
+        "description": "This skill should be used when the user asks to create a hookify rule, write a hook rule, configure hookify, add a hookify rule, or needs guidance on hookify rule syntax and patterns.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "java-coding-standards",
+        "description": "Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reactive patterns, and project layout. Automatically applies framework-specific conventions.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "kotlin-coroutines-flows",
+        "description": "Kotlin Coroutines and Flow patterns for Android and KMP — structured concurrency, Flow operators, StateFlow, error handling, and testing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "kotlin-exposed-patterns",
+        "description": "JetBrains Exposed ORM patterns including DSL queries, DAO pattern, transactions, HikariCP connection pooling, Flyway migrations, and repository pattern.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "kotlin-ktor-patterns",
+        "description": "Ktor server patterns including routing DSL, plugins, authentication, Koin DI, kotlinx.serialization, WebSockets, and testApplication testing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "kotlin-patterns",
+        "description": "Idiomatic Kotlin patterns, best practices, and conventions for building robust, efficient, and maintainable Kotlin applications with coroutines, null safety, and DSL builders.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "kotlin-testing",
+        "description": "Kotlin testing patterns with Kotest, MockK, coroutine testing, property-based testing, and Kover coverage. Follows TDD methodology with idiomatic Kotlin practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "laravel-patterns",
+        "description": "Laravel architecture patterns, routing/controllers, Eloquent ORM, service layers, queues, events, caching, and API resources for production apps.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "laravel-plugin-discovery",
+        "description": "Discover and evaluate Laravel packages via LaraPlugins.io MCP. Use when the user wants to find plugins, check package health, or assess Laravel/PHP compatibility.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "laravel-security",
+        "description": "Laravel security best practices for authn/authz, validation, CSRF, mass assignment, file uploads, secrets, rate limiting, and secure deployment.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "laravel-tdd",
+        "description": "Test-driven development for Laravel with PHPUnit and Pest, factories, database testing, fakes, and coverage targets.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "laravel-verification",
+        "description": "Verification loop for Laravel projects: env checks, linting, static analysis, tests with coverage, security scans, and deployment readiness.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nestjs-patterns",
+        "description": "NestJS architecture patterns for modules, controllers, providers, DTO validation, guards, interceptors, config, and production-grade TypeScript backends.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nodejs-keccak256",
+        "description": "Prevent Ethereum hashing bugs in JavaScript and TypeScript. Node's sha3-256 is NIST SHA3, not Ethereum Keccak-256, and silently breaks selectors, signatures, storage slots, and address derivation.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "openclaw-persona-forge",
+        "description": "为 OpenClaw AI Agent 锻造完整的龙虾灵魂方案。根据用户偏好或随机抽卡， 输出身份定位、灵魂描述(SOUL.md)、角色化底线规则、名字和头像生图提示词。 如当前环境提供已审核的生图 skill，可自动生成统一风格头像图片。 当用户需要创建、设计或定制 OpenClaw 龙虾灵魂时使用。 不适用于：微调已有 SOUL.md、非 OpenClaw 平台的角色设计、纯工具型无性格 Agent。 触发词：龙虾灵魂、虾魂、OpenClaw 灵魂、养虾灵魂、龙虾角色、龙虾定位、 龙虾剧本杀角色、龙虾游戏角色、龙虾 NPC、龙虾性格、龙虾背景故事、 ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "perl-patterns",
+        "description": "Modern Perl 5.36+ idioms, best practices, and conventions for building robust, maintainable Perl applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "perl-security",
+        "description": "Comprehensive Perl security covering taint mode, input validation, safe process execution, DBI parameterized queries, web security (XSS/SQLi/CSRF), and perlcritic security policies.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "perl-testing",
+        "description": "Perl testing patterns using Test2::V0, Test::More, prove runner, mocking, coverage with Devel::Cover, and TDD methodology.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "python-patterns",
+        "description": "Pythonic idioms, PEP 8 standards, type hints, and best practices for building robust, efficient, and maintainable Python applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "python-testing",
+        "description": "Python testing strategies using pytest, TDD methodology, fixtures, mocking, parametrization, and coverage requirements.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "pytorch-patterns",
+        "description": "PyTorch deep learning patterns and best practices for building robust, efficient, and reproducible training pipelines, model architectures, and data loading.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "quarkus-patterns",
+        "description": "Quarkus 3.x LTS architecture patterns with Camel for messaging, RESTful API design, CDI services, data access with Panache, and async processing. Use for Java Quarkus backend work with event-driven architectures.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "quarkus-security",
+        "description": "Quarkus Security best practices for authentication, authorization, JWT/OIDC, RBAC, input validation, CSRF, secrets management, and dependency security.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "quarkus-tdd",
+        "description": "Test-driven development for Quarkus 3.x LTS using JUnit 5, Mockito, REST Assured, Camel testing, and JaCoCo. Use when adding features, fixing bugs, or refactoring event-driven services.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "quarkus-verification",
+        "description": "Verification loop for Quarkus projects: build, static analysis, tests with coverage, security scans, native compilation, and diff review before release or PR.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "rust-patterns",
+        "description": "Idiomatic Rust patterns, ownership, error handling, traits, concurrency, and best practices for building safe, performant applications.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "rust-testing",
+        "description": "Rust testing patterns including unit tests, integration tests, async testing, property-based testing, mocking, and coverage. Follows TDD methodology.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "springboot-patterns",
+        "description": "Spring Boot architecture patterns, REST API design, layered services, data access, caching, async processing, and logging. Use for Java Spring Boot backend work.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "springboot-security",
+        "description": "Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Boot services.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "springboot-tdd",
+        "description": "Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, or refactoring.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "springboot-verification",
+        "description": "Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or PR.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "swift-actor-persistence",
+        "description": "Thread-safe data persistence in Swift using actors — in-memory cache with file-backed storage, eliminating data races by design.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "swift-concurrency-6-2",
+        "description": "Swift 6.2 Approachable Concurrency — single-threaded by default, @concurrent for explicit background offloading, isolated conformances for main actor types.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "swift-protocol-di-testing",
+        "description": "Protocol-based dependency injection for testable Swift code — mock file system, network, and external APIs using focused protocols and Swift Testing.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "swiftui-patterns",
+        "description": "SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "tinystruct-patterns",
+        "description": "Expert guidance for developing with the tinystruct Java framework. Use when working on the tinystruct codebase or any project built on tinystruct — including creating Application classes, @Action-mapped routes, unit tests, ActionRegistry, HTTP/CLI dual-mode handling, the built-in",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "x-api",
+        "description": "X/Twitter API integration for posting tweets, threads, reading timelines, search, and analytics. Covers OAuth auth patterns, rate limits, and platform-native content posting. Use when the user wants to interact with X programmatically.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "10-知识库": [
+      {
+        "name": "code-tour",
+        "description": "Create CodeTour `.tour` files — persona-targeted, step-by-step walkthroughs with real file and line anchors. Use for onboarding tours, architecture walkthroughs, PR tours, RCA tours, and structured \"explain how this works\" requests.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "codebase-onboarding",
+        "description": "Analyze an unfamiliar codebase and generate a structured onboarding guide with architecture map, key entry points, conventions, and a starter CLAUDE.md. Use when joining a new project or setting up Claude Code for the first time in a repo.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "documentation-lookup",
+        "description": "Use up-to-date library and framework docs via Context7 MCP instead of training data. Activates for setup questions, API references, code examples, or when the user names a framework (e.g. React, Next.js, Prisma).",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "knowledge-ops",
+        "description": "Knowledge base management, ingestion, sync, and retrieval across multiple storage layers (local files, MCP memory, vector stores, Git repos). Use when the user wants to save, organize, sync, deduplicate, or search across their knowledge systems.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "markitdown",
+        "description": "Convert files to Markdown.",
+        "source": "local-only",
+        "has_skill_md": true
+      },
+      {
+        "name": "notion-research-documentation",
+        "description": "Research across Notion and synthesize into structured documentation; use when gathering info from multiple Notion sources to produce briefs, comparisons, or reports with citations.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "nutrient-document-processing",
+        "description": "Process, convert, OCR, extract, redact, sign, and fill documents using the Nutrient DWS API. Works with PDFs, DOCX, XLSX, PPTX, HTML, and images.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "pdf",
+        "description": "Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "11-安全防护": [
+      {
+        "name": "customer-billing-ops",
+        "description": "Operate customer billing workflows such as subscriptions, refunds, churn triage, billing-portal recovery, and plan analysis using connected billing tools like Stripe. Use when the user needs to help a customer, inspect subscription state, or manage revenue-impacting billing opera",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "customs-trade-compliance",
+        "description": "> Codified expertise for customs documentation, tariff classification, duty optimization, restricted party screening, and regulatory compliance across multiple jurisdictions. Informed by trade compliance specialists with 15+ years experience. Includes HS classification logic, Inc",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "defi-amm-security",
+        "description": "Security checklist for Solidity AMM contracts, liquidity pools, and swap flows. Covers reentrancy, CEI ordering, donation or inflation attacks, oracle manipulation, slippage, admin controls, and integer math.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "evm-token-decimals",
+        "description": "Prevent silent decimal mismatch bugs across EVM chains. Covers runtime decimal lookup, chain-aware caching, bridged-token precision drift, and safe normalization for bots, dashboards, and DeFi tools.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "hipaa-compliance",
+        "description": "HIPAA-specific entrypoint for healthcare privacy and security work. Use when a task is explicitly framed around HIPAA, PHI handling, covered entities, BAAs, breach posture, or US healthcare compliance requirements.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "llm-trading-agent-security",
+        "description": "Security patterns for autonomous trading agents with wallet or transaction authority. Covers prompt injection, spend limits, pre-send simulation, circuit breakers, MEV protection, and key handling.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "prompt-guard",
+        "description": "Meta's 86M prompt injection and jailbreak detector. Filters malicious prompts and third-party data for LLM apps. 99%+ TPR, <1% FPR. Fast (<2ms GPU). Multilingual (8 languages). Deploy with HuggingFace or batch processing for RAG security.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "prompt-optimizer",
+        "description": ">- Analyze raw prompts, identify intent and gaps, match ECC components (skills/commands/agents/hooks), and output a ready-to-paste optimized prompt. Advisory role only — never executes the task itself. TRIGGER when: user says \"optimize prompt\", \"improve my prompt\", \"how to write ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "security-bounty-hunter",
+        "description": "Hunt for exploitable, bounty-worthy security issues in repositories. Focuses on remotely reachable vulnerabilities that qualify for real reports instead of noisy local-only findings.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "security-review",
+        "description": "Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist and patterns.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "security-scan",
+        "description": "Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks CLAUDE.md, settings.json, MCP servers, hooks, and agent definitions.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "skill-comply",
+        "description": "Visualize whether skills, rules, and agent definitions are actually followed — auto-generates scenarios at 3 prompt strictness levels, runs agents, classifies behavioral sequences, and reports compliance rates with full tool call timelines",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "skill-scout",
+        "description": "Search existing local, marketplace, GitHub, and web skill sources before creating a new skill. Use when the user wants to create, build, fork, or find a skill for a workflow.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "skill-stocktake",
+        "description": "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "vulnerability-scanning",
+        "description": "Automated security scanning for dependencies, code, containers with Trivy, Snyk, npm audit. Use for CI/CD security gates, pre-deployment audits, compliance requirements, or encountering CVE detection, outdated packages, license compliance, SBOM generation errors.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "workspace-surface-audit",
+        "description": "Audit the active repo, MCP servers, plugins, connectors, env surfaces, and harness setup, then recommend the highest-value ECC-native skills, hooks, agents, and operator workflows. Use when the user wants help setting up Claude Code or understanding what capabilities are actually",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ],
+    "12-Claude原厂": [
+      {
+        "name": "ai-regression-testing",
+        "description": "Regression testing strategies for AI-assisted development. Sandbox-mode API testing without database dependencies, automated bug-check workflows, and patterns to catch AI blind spots where the same model writes and reviews code.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "algorithmic-art",
+        "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "benchmark",
+        "description": "Use this skill to measure performance baselines, detect regressions before/after PRs, and compare stack alternatives.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "brand-guidelines",
+        "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "canvas-design",
+        "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright vi",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "claude-api",
+        "description": "Build, debug, and optimize Claude API / Anthropic SDK apps. Apps built with this skill should include prompt caching. Also handles migrating existing Claude API code between Claude model versions (4.5 → 4.6, 4.6 → 4.7, retired-model replacements). TRIGGER when: code imports `anth",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "claude-devfleet",
+        "description": "Orchestrate multi-agent coding tasks via Claude DevFleet — plan projects, dispatch parallel agents in isolated worktrees, monitor progress, and read structured reports.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "doc-coauthoring",
+        "description": "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "docx",
+        "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', or requests to produce professional documents with formatting like tables of contents, headings, page n",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "ecc-guide",
+        "description": "Guide users through ECC's current agents, skills, commands, hooks, rules, install profiles, and project onboarding by reading the live repository surface before answering.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "everything-claude-code",
+        "description": "Development conventions and patterns for everything-claude-code. JavaScript project with conventional commits.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "everything-claude-code-conventions",
+        "description": "Development conventions and patterns for everything-claude-code. JavaScript project with conventional commits.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "frontend-design",
+        "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or w",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "internal-comms",
+        "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "mcp-builder",
+        "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "pdf",
+        "description": "Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "plankton-code-quality",
+        "description": "Write-time code quality enforcement using Plankton — auto-formatting, linting, and Claude-powered fixes on every file edit via hooks.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "pptx",
+        "description": "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an ",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "skill-creator",
+        "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's desc",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "slack-gif-creator",
+        "description": "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a GIF of X doing Y for Slack.\"",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "template",
+        "description": "Replace with description of the skill and when Claude should use it.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "theme-factory",
+        "description": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "web-artifacts-builder",
+        "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX ar",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "webapp-testing",
+        "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      },
+      {
+        "name": "xlsx",
+        "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); cre",
+        "source": "remote:agents/skills",
+        "has_skill_md": true
+      }
+    ]
+  },
+  "total_skills": 314
 }
