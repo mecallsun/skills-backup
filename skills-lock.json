@@ -1,260 +1,259 @@
 {
-  "version": "1.0",
-  "updated_at": "2026-06-28 03:40:00",
-  "source": "https://github.com/mecallsun/skills-backup",
-  "source_commit": "origin/master (848f88a)",
+  "version": 2,
+  "updated_at": "2026-07-10T08:30:00Z",
+  "source": "local-managed",
   "categories": {
     "01-AI工作流": [
       {
+        "name": "R2R",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
         "name": "agent-architecture-audit",
-        "description": "Full-stack diagnostic for agent and LLM applications. Audits the 12-layer agent stack for wrapper regression, memory pollution, tool discipline failures, hidden repair loops, and rendering corruption. Produces severity-ranked findings with code-first fixes. Essential for develope",
-        "source": "remote:agents/skills",
+        "description": "Full-stack diagnostic for agent and LLM applications. Audits the 12-layer agent stack for wrapper regression, memory pollution, tool discipline failures, hidden repair loops, and rendering corruption.",
+        "source": "local:oh-my-agent-check",
         "has_skill_md": true
       },
       {
         "name": "agent-eval",
         "description": "Head-to-head comparison of coding agents (Claude Code, Aider, Codex, etc.) on custom tasks with pass rate, cost, time, and consistency metrics",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "agent-harness-construction",
         "description": "Design and optimize AI agent action spaces, tool definitions, and observation formatting for higher completion rates.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "agent-introspection-debugging",
         "description": "Structured self-debugging workflow for AI agent failures using capture, diagnosis, contained recovery, and introspection reports.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "agent-payment-x402",
-        "description": "Add x402 payment execution to AI agents with per-task budgets, spending controls, and non-custodial wallets. Supports Base through agentwallet-sdk and X Layer through OKX Payments / OKX Agent Payments Protocol.",
-        "source": "remote:agents/skills",
+        "description": "Add x402 payment execution to AI agents with per-task budgets, spending controls, and non-custodial wallets. Supports Base through agentwallet-sdk and X Layer through OKX Payments / OKX Agent Payments",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "agent-sort",
-        "description": "Build an evidence-backed ECC install plan for a specific repo by sorting skills, commands, rules, hooks, and extras into DAILY vs LIBRARY buckets using parallel repo-aware review passes. Use when ECC should be trimmed to what a project actually needs instead of loading the full b",
-        "source": "remote:agents/skills",
+        "description": "Build an evidence-backed ECC install plan for a specific repo by sorting skills, commands, rules, hooks, and extras into DAILY vs LIBRARY buckets using parallel repo-aware review passes. Use when ECC ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "agentic-engineering",
         "description": "Operate as an agentic engineer using eval-first execution, decomposition, and cost-aware model routing.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "agentic-os",
-        "description": "Build persistent multi-agent operating systems on Claude Code. Covers kernel architecture, specialist agents, slash commands, file-based memory, scheduled automation, and state management without external databases.",
-        "source": "remote:agents/skills",
+        "description": "Build persistent multi-agent operating systems on Claude Code. Covers kernel architecture, specialist agents, slash commands, file-based memory, scheduled automation, and state management without exte",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "ai-first-engineering",
         "description": "Engineering operating model for teams where AI agents generate a large share of implementation output.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "autonomous-agent-harness",
-        "description": "Transform Claude Code into a fully autonomous agent system with persistent memory, scheduled operations, computer use, and task queuing. Replaces standalone agent frameworks (Hermes, AutoGPT) by leveraging Claude Code's native crons, dispatch, MCP tools, and memory. Use when the ",
-        "source": "remote:agents/skills",
+        "description": "Transform Claude Code into a fully autonomous agent system with persistent memory, scheduled operations, computer use, and task queuing. Replaces standalone agent frameworks (Hermes, AutoGPT) by lever",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "autonomous-loops",
-        "description": "Patterns and architectures for autonomous Claude Code loops — from simple sequential pipelines to RFC-driven multi-agent DAG systems.",
-        "source": "remote:agents/skills",
+        "description": "\"Patterns and architectures for autonomous Claude Code loops — from simple sequential pipelines to RFC-driven multi-agent DAG systems.\"",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "context-budget",
         "description": "Audits Claude Code context window consumption across agents, skills, MCP servers, and rules. Identifies bloat, redundant components, and produces prioritized token-savings recommendations.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "continuous-agent-loop",
         "description": "Patterns for continuous autonomous agent loops with quality gates, evals, and recovery controls.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "continuous-learning",
-        "description": "[DEPRECATED - use continuous-learning-v2] Legacy v1 stop-hook skill extractor. v2 is a strict superset with instinct-based, project-scoped, hook-reliable learning. Do not invoke v1; route continuous learning, session learning, and pattern extraction requests to continuous-learnin",
-        "source": "remote:agents/skills",
+        "description": "\"[DEPRECATED - use continuous-learning-v2] Legacy v1 stop-hook skill extractor. v2 is a strict superset with instinct-based, project-scoped, hook-reliable learning. Do not invoke v1; route continuous ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "continuous-learning-v2",
-        "description": "Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to prevent cross-project contamination.",
-        "source": "remote:agents/skills",
+        "description": "Instinct-based learning system that observes sessions via hooks, creates atomic instincts with confidence scoring, and evolves them into skills/commands/agents. v2.1 adds project-scoped instincts to p",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "cost-aware-llm-pipeline",
         "description": "Cost optimization patterns for LLM API usage — model routing by task complexity, budget tracking, retry logic, and prompt caching.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "cost-tracking",
-        "description": "Track and report Claude Code token usage, spending, and budgets from a local cost-tracking database. Use when the user asks about costs, spending, usage, tokens, budgets, or cost breakdowns by project, tool, session, or date.",
-        "source": "remote:agents/skills",
+        "description": "Track and report Claude Code token usage, spending, and budgets from a local cost-tracking database. Use when the user asks about costs, spending, usage, tokens, budgets, or cost breakdowns by project",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "council",
         "description": "Convene a four-voice council for ambiguous decisions, tradeoffs, and go/no-go calls. Use when multiple valid paths exist and you need structured disagreement before choosing.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "cowork",
         "description": "Claude leads planning and execution; Codex and Gemini serve as advisors whose input Claude reads and integrates before making final decisions",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "deep-agents-memory",
-        "description": "INVOKE THIS SKILL when your Deep Agent needs memory, persistence, or filesystem access. Covers StateBackend (ephemeral), StoreBackend (persistent), FilesystemMiddleware, and CompositeBackend for routing.",
-        "source": "remote:agents/skills",
+        "description": "\"INVOKE THIS SKILL when your Deep Agent needs memory, persistence, or filesystem access. Covers StateBackend (ephemeral), StoreBackend (persistent), FilesystemMiddleware, and CompositeBackend for rout",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "deep-research",
-        "description": "Multi-source deep research using firecrawl and exa MCPs. Searches the web, synthesizes findings, and delivers cited reports with source attribution. Use when the user wants thorough research on any topic with evidence and citations.",
-        "source": "remote:agents/skills",
+        "description": "Multi-source deep research using firecrawl and exa MCPs. Searches the web, synthesizes findings, and delivers cited reports with source attribution. Use when the user wants thorough research on any to",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "enterprise-agent-ops",
         "description": "Operate long-lived agent workloads with observability, security boundaries, and lifecycle management.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "error-handling",
         "description": "Patterns for robust error handling across TypeScript, Python, and Go. Covers typed errors, error boundaries, retries, circuit breakers, and user-facing error messages.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "eval-harness",
         "description": "Formal evaluation framework for Claude Code sessions implementing eval-driven development (EDD) principles",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "foundation-models-on-device",
         "description": "Apple FoundationModels framework for on-device LLM — text generation, guided generation with @Generable, tool calling, and snapshot streaming in iOS 26+.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "gan-style-harness",
-        "description": "GAN-inspired Generator-Evaluator agent harness for building high-quality applications autonomously. Based on Anthropic's March 2026 harness design paper.",
-        "source": "remote:agents/skills",
+        "description": "\"GAN-inspired Generator-Evaluator agent harness for building high-quality applications autonomously. Based on Anthropic's March 2026 harness design paper.\"",
+        "source": "local:ECC-community",
         "has_skill_md": true
       },
       {
         "name": "iterative-retrieval",
         "description": "Pattern for progressively refining context retrieval to solve the subagent context problem",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "make-interfaces-feel-better",
-        "description": "Apply concrete design-engineering details that make interfaces feel polished. Use when reviewing or improving UI spacing, typography, borders, shadows, motion, hit areas, icons, text wrapping, and interaction states.",
-        "source": "remote:agents/skills",
+        "description": "Apply concrete design-engineering details that make interfaces feel polished. Use when reviewing or improving UI spacing, typography, borders, shadows, motion, hit areas, icons, text wrapping, and int",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "mle-workflow",
-        "description": "Production machine-learning engineering workflow for data contracts, reproducible training, model evaluation, deployment, monitoring, and rollback. Use when building, reviewing, or hardening ML systems beyond one-off notebooks.",
-        "source": "remote:agents/skills",
+        "description": "Production machine-learning engineering workflow for data contracts, reproducible training, model evaluation, deployment, monitoring, and rollback. Use when building, reviewing, or hardening ML system",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "parallel-deep-research",
-        "description": "ONLY use when user explicitly says 'deep research', 'exhaustive', 'comprehensive report', or 'thorough investigation'. Slower and more expensive than parallel-web-search. For normal research/lookup requests, use parallel-web-search instead. Supports multi-turn: pass --previous-in",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "plan-orchestrate",
-        "description": "Read a plan document, decompose it into steps, design a per-step agent chain from the ECC catalogue, and emit ready-to-paste /orchestrate custom prompts. Generative only — never invokes /orchestrate itself. Use when the user has a multi-step plan and wants to drive it through orc",
-        "source": "remote:agents/skills",
-        "has_skill_md": true
-      },
-      {
-        "name": "R2R",
-        "description": "/R2R 是一个专业的深度研究到报告生成系统。它将复杂的研究课题分解为多个子主题，通过MCP网络搜索服务进行深度研究，最终生成结构化、专业化的Word格式研究报告。系统以金字塔原理组织内容，确保报告逻辑清晰、层次分明、结论先行。",
-        "source": "local-only",
+        "description": "Read a plan document, decompose it into steps, design a per-step agent chain from the ECC catalogue, and emit ready-to-paste /orchestrate custom prompts. Generative only — never invokes /orchestrate i",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "ralphinho-rfc-pipeline",
         "description": "RFC-driven multi-agent DAG execution pattern with quality gates, merge queues, and work unit orchestration.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "report-generator",
-        "description": "Generate PDF/HTML reports from templates and data. Use when: creating client reports; generating weekly summaries; producing marketing performance reports; automating recurring reports",
-        "source": "remote:agents/skills",
+        "description": "\"Generate PDF/HTML reports from templates and data. Use when: creating client reports; generating weekly summaries; producing marketing performance reports; automating recurring reports\"",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "rules-distill",
-        "description": "Scan skills to extract cross-cutting principles and distill them into rules — append, revise, or create new rule files",
-        "source": "remote:agents/skills",
+        "description": "\"Scan skills to extract cross-cutting principles and distill them into rules — append, revise, or create new rule files\"",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "safety-guard",
         "description": "Use this skill to prevent destructive operations when working on production systems or running agents autonomously.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "santa-method",
-        "description": "Multi-agent adversarial verification with convergence loop. Two independent review agents must both pass before output ships.",
-        "source": "remote:agents/skills",
+        "description": "\"Multi-agent adversarial verification with convergence loop. Two independent review agents must both pass before output ships.\"",
+        "source": "local:\"Ronald Skelton - Founder, RapportScore.ai\"",
         "has_skill_md": true
       },
       {
         "name": "search-first",
         "description": "Research-before-coding workflow. Search for existing tools, libraries, and patterns before writing custom code. Invokes the researcher agent.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "strategic-compact",
         "description": "Suggests manual context compaction at logical intervals to preserve context through task phases rather than arbitrary auto-compaction.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "tdd-workflow",
         "description": "Use this skill when writing new features, fixing bugs, or refactoring code. Enforces test-driven development with 80%+ coverage including unit, integration, and E2E tests.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "token-budget-advisor",
-        "description": ">- Offers the user an informed choice about how much response depth to consume before answering. Use this skill when the user explicitly wants to control response length, depth, or token budget. TRIGGER when: \"token budget\", \"token count\", \"token usage\", \"token limit\", \"response ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "verification-loop",
-        "description": "A comprehensive verification system for Claude Code sessions.",
-        "source": "remote:agents/skills",
+        "description": "\"A comprehensive verification system for Claude Code sessions.\"",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
@@ -262,177 +261,177 @@
       {
         "name": "backend-patterns",
         "description": "Backend architecture patterns, API design, database optimization, and server-side best practices for Node.js, Express, and Next.js API routes.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "click-path-audit",
-        "description": "Trace every user-facing button/touchpoint through its full state change sequence to find bugs where functions individually work but cancel each other out, produce wrong final state, or leave the UI in an inconsistent state. Use when: systematic debugging found no bugs but users r",
-        "source": "remote:agents/skills",
+        "description": "\"Trace every user-facing button/touchpoint through its full state change sequence to find bugs where functions individually work but cancel each other out, produce wrong final state, or leave the UI i",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "clickhouse-io",
         "description": "ClickHouse database patterns, query optimization, analytics, and data engineering best practices for high-performance analytical workloads.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "dashboard-builder",
         "description": "Build monitoring dashboards that answer real operator questions for Grafana, SigNoz, and similar platforms. Use when turning metrics into a working dashboard instead of a vanity board.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "data-scraper-agent",
-        "description": "Build a fully automated AI-powered data collection agent for any public source — job boards, prices, news, GitHub, sports, anything. Scrapes on a schedule, enriches data with a free LLM (Gemini Flash), stores results in Notion/Sheets/Supabase, and learns from user feedback. Runs ",
-        "source": "remote:agents/skills",
+        "description": "Build a fully automated AI-powered data collection agent for any public source — job boards, prices, news, GitHub, sports, anything. Scrapes on a schedule, enriches data with a free LLM (Gemini Flash)",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "database-migrations",
-        "description": "Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, and common ORMs (Prisma, Drizzle, Kysely, Django, TypeORM, golang-migrate).",
-        "source": "remote:agents/skills",
+        "description": "Database migration best practices for schema changes, data migrations, rollbacks, and zero-downtime deployments across PostgreSQL, MySQL, and common ORMs (Prisma, Drizzle, Kysely, Django, TypeORM, gol",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "exa-search",
-        "description": "Neural search via Exa MCP for web, code, and company research. Use when the user needs web search, code examples, company intel, people lookup, or AI-powered deep research with Exa's neural search engine.",
-        "source": "remote:agents/skills",
+        "description": "Neural search via Exa MCP for web, code, and company research. Use when the user needs web search, code examples, company intel, people lookup, or AI-powered deep research with Exa's neural search eng",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "excel-automation",
-        "description": ">",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "find-skills",
-        "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This skill should be used when the user is looking for functionality that might exist a",
-        "source": "remote:agents/skills",
+        "description": "Helps users discover and install agent skills when they ask questions like \"how do I do X\", \"find a skill for X\", \"is there a skill that can...\", or express interest in extending capabilities. This sk",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "gget",
         "description": "gget CLI and Python workflow for quick genomic database queries, sequence lookup, BLAST-style searches, enrichment checks, and reproducible bioinformatics evidence logs.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "jpa-patterns",
         "description": "JPA/Hibernate patterns for entity design, relationships, query optimization, transactions, auditing, indexing, pagination, and pooling in Spring Boot.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "meeting-notes",
-        "description": ">",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "mysql-patterns",
         "description": "MySQL and MariaDB schema, query, indexing, transaction, replication, and connection-pool patterns for production backends.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "postgres-patterns",
         "description": "PostgreSQL database patterns for query optimization, schema design, indexing, and security. Based on Supabase best practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "prisma-database-setup",
-        "description": "Guides for configuring Prisma with different database providers (PostgreSQL, MySQL, SQLite, MongoDB, etc.). Use when setting up a new project, changing databases, or troubleshooting connection issues. Triggers on \"configure postgres\", \"connect to mysql\", \"setup mongodb\", \"sqlite ",
-        "source": "remote:agents/skills",
+        "description": "Guides for configuring Prisma with different database providers (PostgreSQL, MySQL, SQLite, MongoDB, etc.). Use when setting up a new project, changing databases, or troubleshooting connection issues.",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "prisma-patterns",
-        "description": "Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrate dev resetting the DB, @updatedAt skipped on bulk writes, and serverless connec",
-        "source": "remote:agents/skills",
+        "description": "Prisma ORM patterns for TypeScript backends — schema design, query optimization, transactions, pagination, and critical traps like updateMany returning count not records, $transaction timeouts, migrat",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "redis-patterns",
         "description": "Redis data structure patterns, caching strategies, distributed locks, rate limiting, pub/sub, and connection management for production applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "supabase-postgres-best-practices",
-        "description": "Postgres performance optimization and best practices from Supabase. Use this skill when writing, reviewing, or optimizing Postgres queries, schema designs, or database configurations.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "xlsx",
-        "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); cre",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       }
     ],
     "03-A股量化": [
       {
         "name": "a-share-flow-analyzer",
-        "description": "A-share institutional/retail flow intelligence via TuShare. Pulls margin financing (融资融券), dragon-tiger list (龙虎榜), and main-force money flow. Use when analyzing Chinese A-share tickers (6-digit codes) and need smart-money positioning signals. This is the A-share equivalent of op",
-        "source": "remote:agents/skills",
+        "description": "A-share institutional/retail flow intelligence via TuShare. Pulls margin financing (融资融券), dragon-tiger list (龙虎榜), and main-force money flow. Use when analyzing Chinese A-share tickers (6-digit codes",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "a-stock",
-        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
-        "source": "local-only",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因",
+        "source": "local:custom",
         "has_skill_md": true
       },
       {
         "name": "a-stock-data",
-        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
-        "source": "remote:agents/skills",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因",
+        "source": "local:custom",
         "has_skill_md": true
       },
       {
         "name": "ashare",
         "description": "A股量化交易指南，使用 Tushare Pro 获取数据，Backtrader 进行回测。当用户需要进行A股量化分析、回测策略、获取股票数据时使用此 skill。遇到不确定的接口必须用 context7 查询官方文档。",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "china-stock-analyst",
         "description": "A股短线分析助手，聚焦“短线交易信号 + 营收质量”双轨研判。使用时机：分析单只A股、对比多只股票、验证历史报告、回测策略表现、优化参数配置。默认采用 Team-First 并行分析，支持插件化扩展、回测框架、策略优化。",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "recsys-pipeline-architect",
-        "description": "Design composable recommendation, ranking, and feed pipelines using the six-stage Source→Hydrator→Filter→Scorer→Selector→SideEffect framework popularized by xAI's open-sourced For You algorithm. Use this skill whenever the user is building any system that picks \"the top K items f",
-        "source": "remote:agents/skills",
+        "description": "Design composable recommendation, ranking, and feed pipelines using the six-stage Source→Hydrator→Filter→Scorer→Selector→SideEffect framework popularized by xAI's open-sourced For You algorithm. Use t",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "simonlin1212-a-stock-data",
-        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因、龙虎榜跟踪、解禁预警、行业轮动、融资融券跟踪、筹码分析、产业链调研、批量筛选等场景。",
-        "source": "remote:agents/skills",
+        "description": "A股全栈数据工具包 — 覆盖行情(mootdx+腾讯+百度K线)、研报(东财+同花顺+iwencai)、信号(同花顺热点+北向+龙虎榜+解禁+行业)、资金面(融资融券+大宗交易+股东户数+分红+资金流分钟级+资金流120日)、新闻(东财+财联社)、基础数据(mootdx财务/F10+东财+新浪三表)、公告(巨潮)七层数据源，内嵌全部调用代码，自包含零依赖外部文件。适用于个股估值、研报检索、题材归因",
+        "source": "local:custom",
         "has_skill_md": true
       },
       {
         "name": "stock-analysis",
-        "description": "| 股票智能分析技能。输入股票代码（A股/港股/美股），自动完成： 1. 获取实时行情 + 历史K线数据 2. 计算技术指标（MA/MACD/RSI/量能/乖离率） 3. 综合评分（100分制）+ 买卖信号 4. 搜索最新新闻消息面 5. AI综合分析，输出决策看板 触发场景：用户提供股票代码要求分析、问某只股票怎么样、要求看盘分析等。 示例输入：「分析下 TSLA PLTR」「600519怎么样」「帮我看看HK00700」",
-        "source": "remote:agents/skills",
+        "description": "股票智能分析技能。输入股票代码（A股/港股/美股），自动完成：",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "stock-analyst",
         "description": "股票技术分析专家 - 提供专业的 K 线形态、技术指标、资金流向与北向持仓分析",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "viekai-analyse-skills",
-        "description": "Comprehensive financial analysis system for listed companies (A-shares, Hong Kong stocks, and US stocks). Use when users want to analyze a company's investment value, business model, financial health, or industry position. Supports A-share codes (e.g., 600519, 000001), Hong Kong ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       }
     ],
@@ -440,431 +439,415 @@
       {
         "name": "android-clean-architecture",
         "description": "Clean Architecture patterns for Android and Kotlin Multiplatform projects — module structure, dependency rules, UseCases, Repositories, and data layer patterns.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "design-system",
         "description": "Use this skill to generate or audit design systems, check visual consistency, and review PRs that touch styling.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "flutter-dart-code-review",
-        "description": "Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, GetX, MobX, Signals), Dart idioms, performance, accessibility, security, and clean architecture.",
-        "source": "remote:agents/skills",
+        "description": "Library-agnostic Flutter/Dart code review checklist covering widget best practices, state management patterns (BLoC, Riverpod, Provider, GetX, MobX, Signals), Dart idioms, performance, accessibility, ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "frontend-design-direction",
-        "description": "Set an ECC-specific frontend design direction for production UI work. Use when building or improving websites, dashboards, applications, components, landing pages, visual tools, or any web UI that needs stronger product-specific design judgment.",
-        "source": "remote:agents/skills",
+        "description": "Set an ECC-specific frontend design direction for production UI work. Use when building or improving websites, dashboards, applications, components, landing pages, visual tools, or any web UI that nee",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "frontend-patterns",
         "description": "Frontend development patterns for React, Next.js, state management, performance optimization, and UI best practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "frontend-slides",
-        "description": "Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a talk/pitch. Helps non-designers discover their aesthetic through visual exploratio",
-        "source": "remote:agents/skills",
+        "description": "Create stunning, animation-rich HTML presentations from scratch or by converting PowerPoint files. Use when the user wants to build a presentation, convert a PPT/PPTX to web, or create slides for a ta",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "hyperframes",
-        "description": "Create video compositions, animations, title cards, overlays, captions, voiceovers, audio-reactive visuals, and scene transitions in HyperFrames HTML. Use when asked to build any HTML-based video content, add captions or subtitles synced to audio, generate text-to-speech narratio",
-        "source": "local-only",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "ios-icon-gen",
-        "description": "Generate iOS app icons as PNG imagesets for Xcode asset catalogs from SF Symbols (5000+ Apple-native) or Iconify API (275k+ open source icons from 200+ collections). Use when generating icons, creating icon assets, adding icons to asset catalog, or searching for icons for iOS pro",
-        "source": "remote:agents/skills",
+        "description": "Generate iOS app icons as PNG imagesets for Xcode asset catalogs from SF Symbols (5000+ Apple-native) or Iconify API (275k+ open source icons from 200+ collections). Use when generating icons, creatin",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "liquid-glass-design",
         "description": "iOS 26 Liquid Glass design system — dynamic glass material with blur, reflection, and interactive morphing for SwiftUI, UIKit, and WidgetKit.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "manim-video",
-        "description": "Build reusable Manim explainers for technical concepts, graphs, system diagrams, and product walkthroughs, then hand off to the wider ECC video stack if needed. Use when the user wants a clean animated explainer rather than a generic talking-head script.",
-        "source": "remote:agents/skills",
+        "description": "Build reusable Manim explainers for technical concepts, graphs, system diagrams, and product walkthroughs, then hand off to the wider ECC video stack if needed. Use when the user wants a clean animate",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "motion-advanced",
-        "description": "Advanced motion patterns for React / Next.js — drag & drop, gestures, text animations, SVG path drawing, custom hooks, imperative sequences (useAnimate), loaders, and the full API decision tree. Requires motion-foundations.",
-        "source": "remote:agents/skills",
+        "description": "Advanced motion patterns for React / Next.js — drag & drop, gestures, text animations, SVG path drawing, custom hooks, imperative sequences (useAnimate), loaders, and the full API decision tree. Requi",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "motion-foundations",
-        "description": "Motion tokens, spring presets, performance rules, device adaptation, accessibility enforcement, and SSR safety for React / Next.js using motion/react. Foundation layer — all other motion skills depend on this.",
-        "source": "remote:agents/skills",
+        "description": "Motion tokens, spring presets, performance rules, device adaptation, accessibility enforcement, and SSR safety for React / Next.js using motion/react. Foundation layer — all other motion skills depend",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "motion-patterns",
         "description": "Production-ready animation patterns for React / Next.js — button, modal, toast, stagger, page transitions, exit animations, scroll, and layout — built on motion-foundations tokens and springs.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "motion-ui",
-        "description": "Production-ready UI motion system for React/Next.js. Use when implementing animations, transitions, or motion patterns.",
-        "source": "remote:agents/skills",
+        "description": "\"Production-ready UI motion system for React/Next.js. Use when implementing animations, transitions, or motion patterns.\"",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "nextjs-turbopack",
         "description": "Next.js 16+ and Turbopack — incremental bundling, FS caching, dev speed, and when to use Turbopack vs webpack.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "nuxt4-patterns",
         "description": "Nuxt 4 app patterns for hydration safety, performance, route rules, lazy loading, and SSR-safe data fetching with useFetch and useAsyncData.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "ppt-master",
-        "description": "> AI-driven multi-format SVG content generation system. Converts source documents (PDF/DOCX/URL/Markdown) into high-quality SVG pages and exports to PPTX through multi-role collaboration. Use when user asks to \"create PPT\", \"make presentation\", \"生成PPT\", \"做PPT\", \"制作演示文稿\", or menti",
-        "source": "local-only",
+        "description": "AI-driven multi-format SVG content generation system. Converts source documents",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "pptx",
-        "description": "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "remotion-video-creation",
         "description": "Best practices for Remotion - Video creation in React. 29 domain-specific rules covering 3D, animations, audio, captions, charts, transitions, and more.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "ui-demo",
-        "description": "Record polished UI demo videos using Playwright. Use when the user asks to create a demo, walkthrough, screen recording, or tutorial video of a web application. Produces WebM videos with visible cursor, natural pacing, and professional feel.",
-        "source": "remote:agents/skills",
+        "description": "Record polished UI demo videos using Playwright. Use when the user asks to create a demo, walkthrough, screen recording, or tutorial video of a web application. Produces WebM videos with visible curso",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "ui-to-vue",
         "description": "Use when the user has UI screenshots or design exports that need batch conversion into Vue 3 components, especially with Vant, Element Plus, or Ant Design Vue.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "video-editing",
-        "description": "AI-assisted video editing workflows for cutting, structuring, and augmenting real footage. Covers the full pipeline from raw capture through FFmpeg, Remotion, ElevenLabs, fal.ai, and final polish in Descript or CapCut. Use when the user wants to edit video, cut footage, create vl",
-        "source": "remote:agents/skills",
+        "description": "AI-assisted video editing workflows for cutting, structuring, and augmenting real footage. Covers the full pipeline from raw capture through FFmpeg, Remotion, ElevenLabs, fal.ai, and final polish in D",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "videodb",
-        "description": "See, Understand, Act on video and audio. See- ingest from local files, URLs, RTSP/live feeds, or live record desktop; return realtime context and playable stream links. Understand- extract frames, build visual/semantic/temporal indexes, and search moments with timestamps and auto",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "vite-patterns",
-        "description": "Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build optimization. Activate when working with vite.config.ts, Vite plugins, or Vite-based projects.",
-        "source": "remote:agents/skills",
+        "description": "Vite build tool patterns including config, plugins, HMR, env variables, proxy setup, SSR, library mode, dependency pre-bundling, and build optimization. Activate when working with vite.config.ts, Vite",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
     "05-内容创作": [
       {
         "name": "article-writing",
-        "description": "Write articles, guides, blog posts, tutorials, newsletter issues, and other long-form content in a distinctive voice derived from supplied examples or brand guidance. Use when the user wants polished written content longer than a paragraph, especially when voice consistency, stru",
-        "source": "remote:agents/skills",
+        "description": "Write articles, guides, blog posts, tutorials, newsletter issues, and other long-form content in a distinctive voice derived from supplied examples or brand guidance. Use when the user wants polished ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "brand-voice",
-        "description": "Build a source-derived writing style profile from real posts, essays, launch notes, docs, or site copy, then reuse that profile across content, outreach, and social workflows. Use when the user wants voice consistency without generic AI writing tropes.",
-        "source": "remote:agents/skills",
+        "description": "Build a source-derived writing style profile from real posts, essays, launch notes, docs, or site copy, then reuse that profile across content, outreach, and social workflows. Use when the user wants ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "connections-optimizer",
-        "description": "Reorganize the user's X and LinkedIn network with review-first pruning, add/follow recommendations, and channel-specific warm outreach drafted in the user's real voice. Use when the user wants to clean up following lists, grow toward current priorities, or rebalance a social grap",
-        "source": "remote:agents/skills",
+        "description": "Reorganize the user's X and LinkedIn network with review-first pruning, add/follow recommendations, and channel-specific warm outreach drafted in the user's real voice. Use when the user wants to clea",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "content-engine",
-        "description": "Create platform-native content systems for X, LinkedIn, TikTok, YouTube, newsletters, and repurposed multi-platform campaigns. Use when the user wants social posts, threads, scripts, content calendars, or one source asset adapted cleanly across platforms.",
-        "source": "remote:agents/skills",
+        "description": "Create platform-native content systems for X, LinkedIn, TikTok, YouTube, newsletters, and repurposed multi-platform campaigns. Use when the user wants social posts, threads, scripts, content calendars",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "content-hash-cache-pattern",
         "description": "Cache expensive file processing results using SHA-256 content hashes — path-independent, auto-invalidating, with service layer separation.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "content-strategy",
-        "description": "When the user wants to plan a content strategy, decide what content to create, or figure out what topics to cover. Also use when the user mentions \"content strategy,\" \"what should I write about,\" \"content ideas,\" \"blog strategy,\" \"topic clusters,\" \"content planning,\" \"editorial c",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "crosspost",
-        "description": "Multi-platform content distribution across X, LinkedIn, Threads, and Bluesky. Adapts content per platform using content-engine patterns. Never posts identical content cross-platform. Use when the user wants to distribute content across social platforms.",
-        "source": "remote:agents/skills",
+        "description": "Multi-platform content distribution across X, LinkedIn, Threads, and Bluesky. Adapts content per platform using content-engine patterns. Never posts identical content cross-platform. Use when the user",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "email-ops",
-        "description": "Evidence-first mailbox triage, drafting, send verification, and sent-mail-safe follow-up workflow for ECC. Use when the user wants to organize email, draft or send through the real mail surface, or prove what landed in Sent.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first mailbox triage, drafting, send verification, and sent-mail-safe follow-up workflow for ECC. Use when the user wants to organize email, draft or send through the real mail surface, or pr",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "fal-ai-media",
-        "description": "Unified media generation via fal.ai MCP — image, video, and audio. Covers text-to-image (Nano Banana), text/image-to-video (Seedance, Kling, Veo 3), text-to-speech (CSM-1B), and video-to-audio (ThinkSound). Use when the user wants to generate images, videos, or audio with AI.",
-        "source": "remote:agents/skills",
+        "description": "Unified media generation via fal.ai MCP — image, video, and audio. Covers text-to-image (Nano Banana), text/image-to-video (Seedance, Kling, Veo 3), text-to-speech (CSM-1B), and video-to-audio (ThinkS",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "gateguard",
-        "description": "Fact-forcing gate that blocks Edit/Write/Bash (including MultiEdit) and demands concrete investigation (importers, data schemas, user instruction) before allowing the action. Measurably improves output quality by +2.25 points vs ungated agents.",
-        "source": "remote:agents/skills",
+        "description": "Fact-forcing gate that blocks Edit/Write/Bash (including MultiEdit) and demands concrete investigation (importers, data schemas, user instruction) before allowing the action. Measurably improves outpu",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "messages-ops",
-        "description": "Evidence-first live messaging workflow for ECC. Use when the user wants to read texts or DMs, recover a recent one-time code, inspect a thread before replying, or prove which message source was actually checked.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first live messaging workflow for ECC. Use when the user wants to read texts or DMs, recover a recent one-time code, inspect a thread before replying, or prove which message source was actual",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "regex-vs-llm-structured-text",
         "description": "Decision framework for choosing between regex and LLM when parsing structured text — start with regex, add LLM only for low-confidence edge cases.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "repo-scan",
         "description": "Cross-stack source code asset audit — classifies every file, detects embedded third-party libraries, and delivers actionable four-level verdicts per module with interactive HTML reports.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "seo",
-        "description": "Audit, plan, and implement SEO improvements across technical SEO, on-page optimization, structured data, Core Web Vitals, and content strategy. Use when the user wants better search visibility, SEO remediation, schema markup, sitemap/robots work, or keyword mapping.",
-        "source": "remote:agents/skills",
+        "description": "Audit, plan, and implement SEO improvements across technical SEO, on-page optimization, structured data, Core Web Vitals, and content strategy. Use when the user wants better search visibility, SEO re",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "social-graph-ranker",
-        "description": "Weighted social-graph ranking for warm intro discovery, bridge scoring, and network gap analysis across X and LinkedIn. Use when the user wants the reusable graph-ranking engine itself, not the broader outreach or network-maintenance workflow layered on top of it.",
-        "source": "remote:agents/skills",
+        "description": "Weighted social-graph ranking for warm intro discovery, bridge scoring, and network gap analysis across X and LinkedIn. Use when the user wants the reusable graph-ranking engine itself, not the broade",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "visa-doc-translate",
         "description": "Translate visa application documents (images) to English and create a bilingual PDF with original and translation",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       }
     ],
     "06-职场效率": [
       {
         "name": "lead-get",
-        "description": "帮助你从公开渠道发现和筛选潜在客户信息。",
-        "source": "local-only",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "lead-hunter",
-        "description": "Sales lead collection skill. Given a one-line requirement, automatically plans search strategy, selects execution engine (Apify / Firecrawl / 高德地图 / 天眼查 / search-guided fallback), and outputs a deduplicated structured contact table. Use when asked to find company phone numbers, i",
-        "source": "local-only",
+        "description": "Sales lead collection skill. Given a one-line requirement, automatically plans search strategy, selects execution engine (Apify / Firecrawl / 高德地图 / 天眼查 / search-guided fallback), and outputs a dedupl",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "lead-intelligence",
-        "description": "AI-native lead intelligence and outreach pipeline. Replaces Apollo, Clay, and ZoomInfo with agent-powered signal scoring, mutual ranking, warm path discovery, source-derived voice modeling, and channel-specific outreach across email, LinkedIn, and X. Use when the user wants to fi",
-        "source": "remote:agents/skills",
+        "description": "AI-native lead intelligence and outreach pipeline. Replaces Apollo, Clay, and ZoomInfo with agent-powered signal scoring, mutual ranking, warm path discovery, source-derived voice modeling, and channe",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "project-flow-ops",
-        "description": "Operate execution flow across GitHub and Linear by triaging issues and pull requests, linking active work, and keeping GitHub public-facing while Linear remains the internal execution layer. Use when the user wants backlog control, PR triage, or GitHub-to-Linear coordination.",
-        "source": "remote:agents/skills",
+        "description": "Operate execution flow across GitHub and Linear by triaging issues and pull requests, linking active work, and keeping GitHub public-facing while Linear remains the internal execution layer. Use when ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "team-builder",
         "description": "Interactive agent picker for composing and dispatching parallel teams",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       }
     ],
     "07-研究调研": [
       {
-        "name": "Mecall-ITReport",
-        "description": "部门级IT信息化诊断报告生成技能 — 面向业务部门（财务/行政/HR/生产/研发/销售）及外部供应商的IT信息化需求调研访谈与研究诊断报告生成器。将访谈转写文本转化为结构化议题归集报告（HTML格式），含IT现状评估、数智化转型方案建议及"致管理层"总结陈词。当用户提到：IT调研、部门访谈、信息化诊断、调研报告、IT现状评估、数字化转型、数智化升级、议题归集、咨询报告、调研访谈、需求诊断、ITReview、部门数字化、业务访谈、IT负责人访谈、外部供应商调研时触发。V4.3综合升级版整合：①部门概况与业务特征锚定②IT服务满意度评价③议题优先级P0/P1/P2/P3标签体系④综合评估表5列结构（新增责任方）⑤转型路线网格化布局⑥致管理层独立章节。基于金戈新材料6份实战报告经验沉淀。",
-        "source": "local-only",
-        "skill_file": "Mecall-ITReport.md",
-        "template_file": "ITReport-HTML-Template.html",
-        "version": "2.4",
-        "has_skill_md": true,
-        "triggers": ["IT调研", "部门访谈", "信息化诊断", "调研报告", "IT现状评估", "数字化转型", "数智化升级", "议题归集", "咨询报告", "调研访谈", "需求诊断", "ITReview", "部门数字化", "业务访谈", "IT负责人访谈", "外部供应商调研", "生产调研", "财务调研", "行政调研", "HR调研", "杨总调研", "电信调研", "金戈新材料", "IT诊断", "调研与诊断报告"]
-      },
-      {
-        "name": "Mecall-Get-to-Report",
-        "description": "研究报告生成技能（Research-to-Report Skill）。将网络搜索、信息收集、深度研究与HTML报告生成整合为完整的端到端流程。适用于生成企业战略咨询报告、行业分析报告、投资研究报告等专业文档。",
-        "source": "local:user",
-        "has_skill_md": true
-      },
-      {
         "name": "architecture-decision-records",
-        "description": "Capture architectural decisions made during Claude Code sessions as structured ADRs. Auto-detects decision moments, records context, alternatives considered, and rationale. Maintains an ADR log so future developers understand why the codebase is shaped the way it is.",
-        "source": "remote:agents/skills",
+        "description": "Capture architectural decisions made during Claude Code sessions as structured ADRs. Auto-detects decision moments, records context, alternatives considered, and rationale. Maintains an ADR log so fut",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "company-financial-analysis",
-        "description": "Comprehensive financial analysis system for listed companies (A-shares, Hong Kong stocks, and US stocks). Use when users want to analyze a company's investment value, business model, financial health, or industry position. Supports A-share codes (e.g., 600519, 000001), Hong Kong ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "experiments",
-        "description": ">- Guides work on `packages/frontend/editor-ui` experiments. Use when creating, extending, wiring, testing, reviewing, or retiring editor-ui experiments, PostHog feature flags, experiment key indexes, variants, stores/composables, persisted experiment state, or experiment telemet",
-        "source": "remote:agents/skills",
+        "description": "-",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "geo-content-optimizer",
-        "description": "Use when the user asks to \"optimize for AI citations\"; improves citation readiness for ChatGPT, Perplexity, AI Overviews, Gemini, and Claude. AI引用优化/GEO优化/AI搜索",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "healthcare-cdss-patterns",
-        "description": "Clinical Decision Support System (CDSS) development patterns. Drug interaction checking, dose validation, clinical scoring (NEWS2, qSOFA), alert severity classification, and integration into EMR workflows.",
-        "source": "remote:agents/skills",
+        "description": "Clinical Decision Support System (CDSS) development patterns. Drug interaction checking, dose validation, clinical scoring (NEWS2, qSOFA), alert severity classification, and integration into EMR workf",
+        "source": "local:Health1 Super Speciality Hospitals — contributed by Dr. Keyur Patel",
         "has_skill_md": true
       },
       {
         "name": "healthcare-emr-patterns",
-        "description": "EMR/EHR development patterns for healthcare applications. Clinical safety, encounter workflows, prescription generation, clinical decision support integration, and accessibility-first UI for medical data entry.",
-        "source": "remote:agents/skills",
+        "description": "EMR/EHR development patterns for healthcare applications. Clinical safety, encounter workflows, prescription generation, clinical decision support integration, and accessibility-first UI for medical d",
+        "source": "local:Health1 Super Speciality Hospitals — contributed by Dr. Keyur Patel",
         "has_skill_md": true
       },
       {
         "name": "healthcare-eval-harness",
-        "description": "Patient safety evaluation harness for healthcare application deployments. Automated test suites for CDSS accuracy, PHI exposure, clinical workflow integrity, and integration compliance. Blocks deployments on safety failures.",
-        "source": "remote:agents/skills",
+        "description": "Patient safety evaluation harness for healthcare application deployments. Automated test suites for CDSS accuracy, PHI exposure, clinical workflow integrity, and integration compliance. Blocks deploym",
+        "source": "local:Health1 Super Speciality Hospitals — contributed by Dr. Keyur Patel",
         "has_skill_md": true
       },
       {
         "name": "healthcare-phi-compliance",
-        "description": "Protected Health Information (PHI) and Personally Identifiable Information (PII) compliance patterns for healthcare applications. Covers data classification, access control, audit trails, encryption, and common leak vectors.",
-        "source": "remote:agents/skills",
+        "description": "Protected Health Information (PHI) and Personally Identifiable Information (PII) compliance patterns for healthcare applications. Covers data classification, access control, audit trails, encryption, ",
+        "source": "local:Health1 Super Speciality Hospitals — contributed by Dr. Keyur Patel",
         "has_skill_md": true
       },
       {
         "name": "hexagonal-architecture",
         "description": "Design, implement, and refactor Ports & Adapters systems with clear domain boundaries, dependency inversion, and testable use-case orchestration across TypeScript, Java, Kotlin, and Go services.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "investor-materials",
-        "description": "Create and update pitch decks, one-pagers, investor memos, accelerator applications, financial models, and fundraising materials. Use when the user needs investor-facing documents, projections, use-of-funds tables, milestone plans, or materials that must stay internally consisten",
-        "source": "remote:agents/skills",
+        "description": "Create and update pitch decks, one-pagers, investor memos, accelerator applications, financial models, and fundraising materials. Use when the user needs investor-facing documents, projections, use-of",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "investor-outreach",
-        "description": "Draft cold emails, warm intro blurbs, follow-ups, update emails, and investor communications for fundraising. Use when the user wants outreach to angels, VCs, strategic investors, or accelerators and needs concise, personalized, investor-facing messaging.",
-        "source": "remote:agents/skills",
+        "description": "Draft cold emails, warm intro blurbs, follow-ups, update emails, and investor communications for fundraising. Use when the user wants outreach to angels, VCs, strategic investors, or accelerators and ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "literature-review",
         "description": "Systematic literature-review workflow for academic, biomedical, technical, and scientific topics, including search planning, source screening, synthesis, citation checks, and evidence logging.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "market-research",
-        "description": "Conduct market research, competitive analysis, investor due diligence, and industry intelligence with source attribution and decision-oriented summaries. Use when the user wants market sizing, competitor comparisons, fund research, technology scans, or research that informs busin",
-        "source": "remote:agents/skills",
+        "description": "Conduct market research, competitive analysis, investor due diligence, and industry intelligence with source attribution and decision-oriented summaries. Use when the user wants market sizing, competi",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "prd-development",
-        "description": "Build a structured PRD that connects problem, users, solution, and success criteria. Use when turning discovery notes into an engineering-ready document for a major initiative.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "product-capability",
-        "description": "Translate PRD intent, roadmap asks, or product discussions into an implementation-ready capability plan that exposes constraints, invariants, interfaces, and unresolved decisions before multi-service work starts. Use when the user needs an ECC-native PRD-to-SRS lane instead of va",
-        "source": "remote:agents/skills",
+        "description": "Translate PRD intent, roadmap asks, or product discussions into an implementation-ready capability plan that exposes constraints, invariants, interfaces, and unresolved decisions before multi-service ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "product-lens",
         "description": "Use this skill to validate the \"why\" before building, run product diagnostics, and pressure-test product direction before the request becomes an implementation contract.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "production-audit",
         "description": "Local-evidence production readiness audit for shipped apps, pre-launch reviews, post-merge checks, and \"what breaks in prod?\" questions without sending repo data to an external audit service.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "production-scheduling",
-        "description": "> Codified expertise for production scheduling, job sequencing, line balancing, changeover optimization, and bottleneck resolution in discrete and batch manufacturing. Informed by production schedulers with 15+ years experience. Includes TOC/drum-buffer-rope, SMED, OEE analysis, ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "pubmed-database",
         "description": "Direct PubMed and NCBI E-utilities search workflows for biomedical literature, MeSH queries, PMID lookup, citation retrieval, and API-backed literature monitoring.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "research-ops",
-        "description": "Evidence-first current-state research workflow for ECC. Use when the user wants fresh facts, comparisons, enrichment, or a recommendation built from current public evidence and any supplied local context.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first current-state research workflow for ECC. Use when the user wants fresh facts, comparisons, enrichment, or a recommendation built from current public evidence and any supplied local cont",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "scholar-evaluation",
         "description": "Structured scholarly-work evaluation for papers, proposals, literature reviews, methods sections, evidence quality, citation support, and research-writing feedback.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "uspto-database",
         "description": "USPTO patent and trademark data workflow for official record lookup, PatentSearch queries, TSDR checks, assignment data, and reproducible IP research logs.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "windows-desktop-e2e",
         "description": "E2E testing for Windows native desktop apps (WPF, WinForms, Win32/MFC, Qt) using pywinauto and Windows UI Automation.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
@@ -872,1062 +855,1488 @@
       {
         "name": "api-connector-builder",
         "description": "Build a new API connector or provider by matching the target repo's existing integration pattern exactly. Use when adding one more integration without inventing a second architecture.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "api-design",
         "description": "REST API design patterns including resource naming, status codes, pagination, filtering, error responses, versioning, and rate limiting for production APIs.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "automation-audit-ops",
-        "description": "Evidence-first automation inventory and overlap audit workflow for ECC. Use when the user wants to know which jobs, hooks, connectors, MCP servers, or wrappers are live, broken, redundant, or missing before fixing anything.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first automation inventory and overlap audit workflow for ECC. Use when the user wants to know which jobs, hooks, connectors, MCP servers, or wrappers are live, broken, redundant, or missing ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "canary-watch",
-        "description": "Use this skill to monitor and verify a deployed URL after releases — checks HTTP endpoints, SSE streams, static assets, console errors, and performance regressions after deploys, merges, or dependency upgrades. Smoke / canary / post-deploy verification.",
-        "source": "remote:agents/skills",
+        "description": "Use this skill to monitor and verify a deployed URL after releases — checks HTTP endpoints, SSE streams, static assets, console errors, and performance regressions after deploys, merges, or dependency",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "carrier-relationship-management",
-        "description": "> Codified expertise for managing carrier portfolios, negotiating freight rates, tracking carrier performance, allocating freight, and maintaining strategic carrier relationships. Informed by transportation managers with 15+ years experience. Includes scorecarding frameworks, RFP",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "cisco-ios-patterns",
         "description": "Cisco IOS and IOS-XE review patterns for show commands, config hierarchy, wildcard masks, ACL placement, interface hygiene, and safe change-window verification.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "deployment-patterns",
         "description": "Deployment workflows, CI/CD pipeline patterns, Docker containerization, health checks, rollback strategies, and production readiness checklists for web applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "dmux-workflows",
-        "description": "Multi-agent orchestration using dmux (tmux pane manager for AI agents). Patterns for parallel agent workflows across Claude Code, Codex, OpenCode, and other harnesses. Use when running multiple agent sessions in parallel or coordinating multi-agent development workflows.",
-        "source": "remote:agents/skills",
+        "description": "Multi-agent orchestration using dmux (tmux pane manager for AI agents). Patterns for parallel agent workflows across Claude Code, Codex, OpenCode, and other harnesses. Use when running multiple agent ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "docker-compose-orchestration",
         "description": "Container orchestration with Docker Compose for multi-container applications, networking, volumes, and production deployment",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "docker-patterns",
         "description": "Docker and Docker Compose patterns for local development, container security, networking, volume strategies, and multi-service orchestration.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "ecc-tools-cost-audit",
-        "description": "Evidence-first ECC Tools burn and billing audit workflow. Use when investigating runaway PR creation, quota bypass, premium-model leakage, duplicate jobs, or GitHub App cost spikes in the ECC Tools repo.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first ECC Tools burn and billing audit workflow. Use when investigating runaway PR creation, quota bypass, premium-model leakage, duplicate jobs, or GitHub App cost spikes in the ECC Tools re",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "energy-procurement",
-        "description": "> Codified expertise for electricity and gas procurement, tariff optimization, demand charge management, renewable PPA evaluation, and multi-facility energy cost management. Informed by energy procurement managers with 15+ years experience at large commercial and industrial consu",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "finance-billing-ops",
-        "description": "Evidence-first revenue, pricing, refunds, team-billing, and billing-model truth workflow for ECC. Use when the user wants a sales snapshot, pricing comparison, duplicate-charge diagnosis, or code-backed billing reality instead of generic payments advice.",
-        "source": "remote:agents/skills",
+        "description": "Evidence-first revenue, pricing, refunds, team-billing, and billing-model truth workflow for ECC. Use when the user wants a sales snapshot, pricing comparison, duplicate-charge diagnosis, or code-back",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "firecrawl-build-interact",
-        "description": "Integrate Firecrawl `/interact` into product code for dynamic pages and browser actions after scraping. Use when a feature needs clicks, form fills, pagination, authentication-aware flows, or other multi-step interactions that plain `/scrape` cannot complete.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "firecrawl-build-onboarding",
-        "description": "Get Firecrawl credentials and SDK setup into a project. Use when an application needs `FIRECRAWL_API_KEY`, when an agent should add Firecrawl to `.env`, when the user wants to authenticate Firecrawl for app code, or when choosing the first SDK and docs for a new Firecrawl integra",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "firecrawl-build-scrape",
-        "description": "Integrate Firecrawl `/scrape` into product code for single-page extraction. Use when an app already has a URL and needs markdown, HTML, links, screenshots, metadata, or structured page output. Prefer this skill over broader crawl patterns when the feature is page-level.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "firecrawl-build-search",
-        "description": "Integrate Firecrawl `/search` into product code and agent workflows. Use when an app needs discovery before extraction, when the feature starts with a query instead of a URL, or when the system should search the web and optionally hydrate result content.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "git-workflow",
         "description": "Git workflow patterns including branching strategies, commit conventions, merge vs rebase, conflict resolution, and collaborative development best practices for teams of all sizes.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "github-actions-docs",
-        "description": "Use when users ask how to write, explain, customize, migrate, secure, or troubleshoot GitHub Actions workflows, workflow syntax, triggers, matrices, runners, reusable workflows, artifacts, caching, secrets, OIDC, deployments, custom actions, or Actions Runner Controller, especial",
-        "source": "remote:agents/skills",
+        "description": "Use when users ask how to write, explain, customize, migrate, secure, or troubleshoot GitHub Actions workflows, workflow syntax, triggers, matrices, runners, reusable workflows, artifacts, caching, se",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "github-ops",
-        "description": "GitHub repository operations, automation, and management. Issue triage, PR management, CI/CD operations, release management, and security monitoring using the gh CLI. Use when the user wants to manage GitHub issues, PRs, CI status, releases, contributors, stale items, or any GitH",
-        "source": "remote:agents/skills",
+        "description": "GitHub repository operations, automation, and management. Issue triage, PR management, CI/CD operations, release management, and security monitoring using the gh CLI. Use when the user wants to manage",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "google-workspace-ops",
-        "description": "Operate across Google Drive, Docs, Sheets, and Slides as one workflow surface for plans, trackers, decks, and shared documents. Use when the user needs to find, summarize, edit, migrate, or clean up Google Workspace assets without dropping to raw tool calls.",
-        "source": "remote:agents/skills",
+        "description": "Operate across Google Drive, Docs, Sheets, and Slides as one workflow surface for plans, trackers, decks, and shared documents. Use when the user needs to find, summarize, edit, migrate, or clean up G",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "grafana-oss",
-        "description": "> Grafana OSS core features — dashboards, panels, visualization types, data sources, template variables, alerting, annotations, provisioning, RBAC, service accounts, and configuration. Use when building dashboards, configuring data sources, setting up provisioning YAML, managing ",
-        "source": "remote:agents/skills",
+        "description": "Grafana OSS core features — dashboards, panels, visualization types, data sources, template variables,",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "helm-chart-scaffolding",
-        "description": "Design, organize, and manage Helm charts for templating and packaging Kubernetes applications with reusable configurations. Use when creating Helm charts, packaging Kubernetes applications, or implementing templated deployments.",
-        "source": "remote:agents/skills",
+        "description": "Design, organize, and manage Helm charts for templating and packaging Kubernetes applications with reusable configurations. Use when creating Helm charts, packaging Kubernetes applications, or impleme",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "homelab-network-readiness",
         "description": "Readiness checklist for homelab VLAN segmentation, local DNS filtering, and WireGuard-style remote access before changing router, firewall, DHCP, or VPN configuration.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "homelab-network-setup",
         "description": "Practical home and homelab network planning for gateways, switches, access points, IP ranges, DHCP reservations, DNS, cabling, and common beginner mistakes.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "homelab-pihole-dns",
         "description": "Pi-hole installation, blocklist management, DNS-over-HTTPS setup, DHCP integration, local DNS records, and troubleshooting broken DNS resolution on a home network.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "homelab-vlan-segmentation",
         "description": "Segmenting home networks into VLANs for IoT, guest, trusted, and server traffic using UniFi, pfSense/OPNsense, and MikroTik — including switch trunk config, firewall rules, and wireless SSID mapping.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "homelab-wireguard-vpn",
         "description": "WireGuard VPN server setup, peer configuration, key generation, split tunneling vs full tunnel routing, and remote access to a home network from mobile and laptop clients.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "inventory-demand-planning",
-        "description": "> Codified expertise for demand forecasting, safety stock optimization, replenishment planning, and promotional lift estimation at multi-location retailers. Informed by demand planners with 15+ years experience managing hundreds of SKUs. Includes forecasting method selection, ABC",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "jira-integration",
         "description": "Use this skill when retrieving Jira tickets, analyzing requirements, updating ticket status, adding comments, or transitioning issues. Provides Jira API patterns via MCP or direct REST calls.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "logistics-exception-management",
-        "description": "> Codified expertise for handling freight exceptions, shipment delays, damages, losses, and carrier disputes. Informed by logistics professionals with 15+ years operational experience. Includes escalation protocols, carrier-specific behaviors, claims procedures, and judgment fram",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "mcp-server-patterns",
         "description": "Build MCP servers with Node/TypeScript SDK — tools, resources, prompts, Zod validation, stdio vs Streamable HTTP. Use Context7 or official MCP docs for latest API.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "n8n-cli",
-        "description": "Use the n8n CLI to manage workflows, credentials, executions, and more on an n8n instance. Use when the user asks to interact with n8n, automate workflows, manage credentials, or operate their instance from the command line.",
-        "source": "remote:agents/skills",
+        "description": "Use the n8n CLI to manage workflows, credentials, executions, and more on an n8n instance. Use when the user asks to interact with n8n, automate workflows, manage credentials, or operate their instanc",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-content-design",
-        "description": "> Product content designer for UI copy. Use when writing, reviewing, or auditing user-facing text: button labels, error messages, tooltips, empty states, modal copy, placeholder text, confirmation dialogs, onboarding flows, or i18n strings. Also use when the user says /copy, /con",
-        "source": "remote:agents/skills",
+        "description": "Product content designer for UI copy. Use when writing, reviewing, or auditing",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-conventions",
         "description": "Quick reference for n8n patterns. Full docs /AGENTS.md",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-create-community-node-lint-rule",
-        "description": ">- Create new ESLint rules for the @n8n/eslint-plugin-community-nodes package. Use when adding a lint rule, creating a community node lint, or working on eslint-plugin-community-nodes. Guides rule implementation, tests, docs, and plugin registration.",
-        "source": "remote:agents/skills",
+        "description": "-",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-create-issue",
         "description": "Create Linear tickets or GitHub issues following n8n conventions. Use when the user asks to create a ticket, file a bug, open an issue, or says /create-issue.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-create-pr",
-        "description": "Creates GitHub pull requests with properly formatted titles that pass the check-pr-title CI validation. Use when creating PRs, submitting changes for review, or when the user says /pr or asks to create a pull request.",
-        "source": "remote:agents/skills",
+        "description": "Creates GitHub pull requests with properly formatted titles that pass the check-pr-title CI validation. Use when creating PRs, submitting changes for review, or when the user says /pr or asks to creat",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-create-skill",
-        "description": ">- Guides users through creating effective Agent Skills. Use when you want to create, write, or author a new skill, or asks about skill structure, best practices, or SKILL.md format.",
-        "source": "remote:agents/skills",
+        "description": "-",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-db-migrations",
-        "description": "Authors n8n database migrations. Use when creating or modifying files under packages/@n8n/db/src/migrations/, when the user asks to add a column, table, index, foreign key, or backfill, or when the user mentions DB migrations or TypeORM migrations.",
-        "source": "remote:agents/skills",
+        "description": "Authors n8n database migrations. Use when creating or modifying files under packages/@n8n/db/src/migrations/, when the user asks to add a column, table, index, foreign key, or backfill, or when the us",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-design-system",
-        "description": "Guidelines on using Design System styles and components. Use when working on .vue files in packages/frontend. Triggers for tasks that include component architecture, styling, UI changes, or feature work.",
-        "source": "remote:agents/skills",
+        "description": "Guidelines on using Design System styles and components. Use when working on .vue files in packages/frontend. Triggers for tasks that include component architecture, styling, UI changes, or feature wo",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-linear-issue",
-        "description": "Fetch and analyze Linear issue with all related context. Use when starting work on a Linear ticket, analyzing issues, or gathering context about a Linear issue.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-loom-transcript",
         "description": "Fetch and display the full transcript from a Loom video URL. Use when the user wants to get or read a Loom transcript.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-node-add-oauth",
         "description": "Add OAuth2 credential support to an existing n8n node — creates the credential file, updates the node, adds tests, and keeps the CLI constant in sync. Use when the user says /node-add-oauth.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-protect-endpoints",
-        "description": "Applies n8n's RBAC scope decorators to REST endpoints. Use when creating a new @RestController, adding any @Get/@Post/@Put/@Patch/@Delete route to an existing controller, or reviewing endpoint authorization. Every authenticated endpoint must be gated by @ProjectScope or @GlobalSc",
-        "source": "remote:agents/skills",
+        "description": "Applies n8n's RBAC scope decorators to REST endpoints. Use when creating a new @RestController, adding any @Get/@Post/@Put/@Patch/@Delete route to an existing controller, or reviewing endpoint authori",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-reproduce-bug",
         "description": "Reproduce a bug from a Linear ticket with a failing test. Expects the full ticket context (title, description, comments) to be provided as input.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-setup-mcps",
-        "description": ">- Configure MCP servers for n8n development. Use when the user says /setup-mcps or asks to set up MCP servers for n8n.",
-        "source": "remote:agents/skills",
+        "description": "-",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "n8n-spec-driven-development",
-        "description": "Keeps implementation and specs in sync. Use when working on a feature that has a spec in .claude/specs/, when the user says /spec, or when starting implementation of a documented feature. Also use when the user asks to verify implementation against a spec or update a spec after c",
-        "source": "remote:agents/skills",
+        "description": "Keeps implementation and specs in sync. Use when working on a feature that has a spec in .claude/specs/, when the user says /spec, or when starting implementation of a documented feature. Also use whe",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "nanoclaw-repl",
         "description": "Operate and extend NanoClaw v2, ECC's zero-dependency session-aware REPL built on claude -p.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "netmiko-ssh-automation",
         "description": "Safe Python Netmiko patterns for read-only collection, bounded batch SSH, TextFSM parsing, guarded config changes, timeouts, and network automation error handling.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "network-bgp-diagnostics",
         "description": "Diagnostics-only BGP troubleshooting patterns for neighbor state, route exchange, prefix policy, AS path inspection, and safe evidence collection.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "network-config-validation",
         "description": "Pre-deployment checks for router and switch configuration, including dangerous commands, duplicate addresses, subnet overlaps, stale references, management-plane risk, and IOS-style security hygiene.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "network-interface-health",
         "description": "Diagnose interface errors, drops, CRCs, duplex mismatches, flapping, speed negotiation issues, and counter trends on routers, switches, and Linux hosts.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "opensource-pipeline",
-        "description": "Open-source pipeline: fork, sanitize, and package private projects for safe public release. Chains 3 agents (forker, sanitizer, packager). Triggers: '/opensource', 'open source this', 'make this public', 'prepare for open source'.",
-        "source": "remote:agents/skills",
+        "description": "\"Open-source pipeline: fork, sanitize, and package private projects for safe public release. Chains 3 agents (forker, sanitizer, packager). Triggers: '/opensource', 'open source this', 'make this publ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "quality-nonconformance",
-        "description": "> Codified expertise for quality control, non-conformance investigation, root cause analysis, corrective action, and supplier quality management in regulated manufacturing. Informed by quality engineers with 15+ years experience across FDA, IATF 16949, and AS9100 environments. In",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "returns-reverse-logistics",
-        "description": "> Codified expertise for returns authorization, receipt and inspection, disposition decisions, refund processing, fraud detection, and warranty claims management. Informed by returns operations managers with 15+ years experience. Includes grading frameworks, disposition economics",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "terminal-ops",
         "description": "Evidence-first repo execution workflow for ECC. Use when the user wants a command run, a repo checked, a CI failure debugged, or a narrow fix pushed with exact proof of what was executed and verified.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "terraform-aws-modules",
-        "description": "Terraform module creation for AWS — reusable modules, state management, and HCL best practices. Use when building or reviewing Terraform AWS infrastructure.",
-        "source": "remote:agents/skills",
+        "description": "\"Terraform module creation for AWS — reusable modules, state management, and HCL best practices. Use when building or reviewing Terraform AWS infrastructure.\"",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "uncloud",
-        "description": "Use when managing an Uncloud cluster — deploying services, configuring Caddy ingress, adding static proxy routes for non-cluster devices, publishing ports, scaling, inspecting logs, or managing machines and volumes with the `uc` CLI.",
-        "source": "remote:agents/skills",
+        "description": "Use when managing an Uncloud cluster — deploying services, configuring Caddy ingress, adding static proxy routes for non-cluster devices, publishing ports, scaling, inspecting logs, or managing machin",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "unified-notifications-ops",
-        "description": "Operate notifications as one ECC-native workflow across GitHub, Linear, desktop alerts, hooks, and connected communication surfaces. Use when the real problem is alert routing, deduplication, escalation, or inbox collapse.",
-        "source": "remote:agents/skills",
+        "description": "Operate notifications as one ECC-native workflow across GitHub, Linear, desktop alerts, hooks, and connected communication surfaces. Use when the real problem is alert routing, deduplication, escalati",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
     "09-开发框架": [
       {
         "name": "accessibility",
-        "description": "Design, implement, and audit inclusive digital products using WCAG 2.2 Level AA standards. Use this skill to generate semantic ARIA for Web and accessibility traits for Web and Native platforms (iOS/Android).",
-        "source": "remote:agents/skills",
+        "description": "Design, implement, and audit inclusive digital products using WCAG 2.2 Level AA",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "akka-aspire-configuration",
+        "description": "Configure Akka.NET with .NET Aspire for local development and production deployments. Covers actor system setup, clustering, persistence, Akka.Management integration, and Aspire orchestration patterns",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "akka-best-practices",
+        "description": "Critical Akka.NET best practices including EventStream vs DistributedPubSub, supervision strategies, error handling, Props vs DependencyResolver, work distribution patterns, and cluster/local mode abs",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "akka-hosting-actor-patterns",
+        "description": "Patterns for building entity actors with Akka.Hosting - GenericChildPerEntityParent, message extractors, cluster sharding abstraction, akka-reminders, and ITimeProvider. Supports both local testing an",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "akka-management",
+        "description": "Akka.Management for cluster bootstrapping, service discovery (Kubernetes, Azure, Config), health checks, and dynamic cluster formation without static seed nodes.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "akka-testing-patterns",
+        "description": "Write unit and integration tests for Akka.NET actors using modern Akka.Hosting.TestKit patterns. Covers dependency injection, TestProbes, persistence testing, and actor interaction verification. Inclu",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "angular-developer",
-        "description": "Generates Angular code and provides architectural guidance. Trigger when creating projects, components, or services, or for best practices on reactivity (signals, linkedSignal, resource), forms, dependency injection, routing, SSR, accessibility (ARIA), animations, styling (compon",
-        "source": "remote:agents/skills",
+        "description": "Generates Angular code and provides architectural guidance. Trigger when creating projects, components, or services, or for best practices on reactivity (signals, linkedSignal, resource), forms, depen",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "architecture-advisor",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "aspire",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "aspire-integration-testing",
+        "description": "Write integration tests using .NET Aspire's testing facilities with xUnit. Covers test fixtures, distributed application setup, endpoint discovery, and patterns for testing ASP.NET Core apps with real",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "aspire-mailpit-integration",
+        "description": "Test email sending locally using Mailpit with .NET Aspire. Captures all outgoing emails without sending them. View rendered HTML, inspect headers, and verify delivery in integration tests.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "aspire-service-defaults",
+        "description": "Create a shared ServiceDefaults project for Aspire applications. Centralizes OpenTelemetry, health checks, resilience, and service discovery configuration across all services.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "authentication",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "blender-motion-state-inspection",
         "description": "Use this skill when inspecting Blender characters, rigs, poses, animation retargeting, ground contact, facing direction, or model-vs-motion alignment where screenshots alone are not enough.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "blueprint",
-        "description": ">- Turn a one-line objective into a step-by-step construction plan for multi-session, multi-agent engineering projects. Each step has a self-contained context brief so a fresh agent can execute it cold. Includes adversarial review gate, dependency graph, parallel step detection, ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "browser-automation",
         "description": "浏览器自动化控制。【优先使用此 skill，不要用内置 browser 工具】当用户说\"打开网页\"、\"点击\"、\"填写表单\"、\"截图\"、\"网页操作\"、\"自动填表\"、\"浏览器\"时使用。基于 Playwright，支持连接已有 Chrome（CDP 模式）或启动新 Chromium。",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "browser-qa",
         "description": "Use this skill to automate visual testing and UI interaction verification using browser automation after deploying features.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "bun-runtime",
         "description": "Bun as runtime, package manager, bundler, and test runner. When to choose Bun vs Node, migration notes, and Vercel support.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "caching",
+        "description": "Caching strategies for .NET 10 applications. Covers HybridCache (the default),",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "ci-cd",
+        "description": "CI/CD pipelines for .NET applications. Covers GitHub Actions and Azure DevOps",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "ck",
-        "description": "Persistent per-project memory for Claude Code. Auto-loads project context on session start, tracks sessions with git activity, and writes to native memory. Commands run deterministic Node.js scripts — behavior is consistent across model versions.",
-        "source": "remote:agents/skills",
+        "description": "Persistent per-project memory for Claude Code. Auto-loads project context on session start, tracks sessions with git activity, and writes to native memory. Commands run deterministic Node.js scripts —",
+        "source": "local:community",
+        "has_skill_md": true
+      },
+      {
+        "name": "clean-architecture",
+        "description": "Clean Architecture for .NET applications. Covers the 4-project layout (Domain,",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "code-review",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "code-review-skill",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "coding-standards",
         "description": "Baseline cross-project coding conventions for naming, readability, immutability, and code-quality review. Use detailed frontend or backend skills for framework-specific patterns.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "compose-multiplatform-patterns",
         "description": "Compose Multiplatform and Jetpack Compose patterns for KMP projects — state management, navigation, theming, performance, and platform-specific UI.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "configuration",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "configure-ecc",
-        "description": "Interactive installer for Everything Claude Code — guides users through selecting and installing skills and rules to user-level or project-level directories, verifies paths, and optionally optimizes installed files.",
-        "source": "remote:agents/skills",
+        "description": "Interactive installer for Everything Claude Code — guides users through selecting and installing skills and rules to user-level or project-level directories, verifies paths, and optionally optimizes i",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "container-publish",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "cpp-coding-standards",
         "description": "C++ coding standards based on the C++ Core Guidelines (isocpp.github.io). Use when writing, reviewing, or refactoring C++ code to enforce modern, safe, and idiomatic practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "cpp-testing",
         "description": "Use only when writing/updating/fixing C++ tests, configuring GoogleTest/CTest, diagnosing failing or flaky tests, or adding coverage/sanitizers.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "crap-analysis",
+        "description": "Analyze code coverage and CRAP (Change Risk Anti-Patterns) scores to identify high-risk code. Use OpenCover format with ReportGenerator for Risk Hotspots showing cyclomatic complexity and untested cod",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "csharp-api-design",
+        "description": "Design stable, compatible public APIs using extend-only design principles. Manage API compatibility, wire compatibility, and versioning for NuGet packages and distributed systems.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "csharp-coding-standards",
+        "description": "Write modern, high-performance C# code using records, pattern matching, value objects, async/await, Span<T>/Memory<T>, and best-practice API design patterns. Emphasizes functional-style programming wi",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "csharp-concurrency-patterns",
+        "description": "Choosing the right concurrency abstraction in .NET - from async/await for I/O to Channels for producer/consumer to Akka.NET for stateful entity management. Avoid locks and manual synchronization unles",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "csharp-testing",
         "description": "C# and .NET testing patterns with xUnit, FluentAssertions, mocking, integration tests, and test organization best practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "csharp-type-design-performance",
+        "description": "Design .NET types for performance. Seal classes, use readonly structs, prefer static pure functions, avoid premature enumeration, and choose the right collection types.",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "dart-flutter-patterns",
-        "description": "Production-ready Dart and Flutter patterns covering null safety, immutable state, async composition, widget architecture, popular state management frameworks (BLoC, Riverpod, Provider), GoRouter navigation, Dio networking, Freezed code generation, and clean architecture.",
-        "source": "remote:agents/skills",
+        "description": "Production-ready Dart and Flutter patterns covering null safety, immutable state, async composition, widget architecture, popular state management frameworks (BLoC, Riverpod, Provider), GoRouter navig",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "database-performance",
+        "description": "Database access patterns for performance. Separate read/write models, avoid N+1 queries, use AsNoTracking, apply row limits, and never do application-side joins. Works with EF Core and Dapper.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "ddd",
+        "description": "Domain-Driven Design tactical patterns for .NET applications. Covers aggregates,",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "de-sloppify",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dependency-injection",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "django-celery",
-        "description": "Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use when adding background jobs, scheduled tasks, or async processing to a Django app.",
-        "source": "remote:agents/skills",
+        "description": "Django + Celery async task patterns — configuration, task design, beat scheduling, retries, canvas workflows, monitoring, and testing. Use when adding background jobs, scheduled tasks, or async proces",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "django-patterns",
         "description": "Django architecture patterns, REST API design with DRF, ORM best practices, caching, signals, middleware, and production-grade Django apps.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "django-security",
         "description": "Django security best practices, authentication, authorization, CSRF protection, SQL injection prevention, XSS prevention, and secure deployment configurations.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "django-tdd",
         "description": "Django testing strategies with pytest-django, TDD methodology, factory_boy, mocking, coverage, and testing Django REST Framework APIs.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "django-verification",
-        "description": "Verification loop for Django projects: migrations, linting, tests with coverage, security scans, and deployment readiness checks before release or PR.",
-        "source": "remote:agents/skills",
+        "description": "\"Verification loop for Django projects: migrations, linting, tests with coverage, security scans, and deployment readiness checks before release or PR.\"",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "docker",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-advisor",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-api",
+        "description": "Builds ASP.NET Core APIs, EF Core data access, gRPC, SignalR, and backend services with middleware, security (OAuth, JWT, OWASP), resilience, messaging, OpenAPI, .NET Aspire, Semantic Kernel, HybridCa",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-csharp",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-debugging",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-devops",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-init",
+        "description": "Interactive project initialization. Detects project type, asks architecture",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "dotnet-patterns",
         "description": "Idiomatic C# and .NET patterns, conventions, dependency injection, async/await, and best practices for building robust, maintainable .NET applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-tooling",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "dotnet-ui",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "e2e-testing",
         "description": "Playwright E2E testing patterns, Page Object Model, configuration, CI/CD integration, artifact management, and flaky test strategies.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "ef-core",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "efcore-patterns",
+        "description": "Entity Framework Core best practices including NoTracking by default, query splitting for navigation collections, migration management, dedicated migration services, and common pitfalls to avoid.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "error-handling",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "fastapi-patterns",
         "description": "FastAPI patterns for async APIs, dependency injection, Pydantic request and response models, OpenAPI docs, tests, security, and production readiness.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "fastapi-python",
         "description": "Expert in FastAPI Python development with best practices for APIs and async operations",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "flox-environments",
-        "description": "Create reproducible, cross-platform development environments with Flox — a declarative environment manager built on Nix. ALWAYS use this skill when the user needs to: set up a project with system-level dependencies (compilers, databases, native libraries like openssl, libvips, BL",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "fsharp-testing",
         "description": "F# testing patterns with xUnit, FsUnit, Unquote, FsCheck property-based testing, integration tests, and test organization best practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "golang-patterns",
         "description": "Idiomatic Go patterns, best practices, and conventions for building robust, efficient, and maintainable Go applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "golang-testing",
         "description": "Go testing patterns including table-driven tests, subtests, benchmarks, fuzzing, and test coverage. Follows TDD methodology with idiomatic Go practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "hermes-imports",
-        "description": "Convert local Hermes operator workflows into sanitized ECC skills and release-pack artifacts. Use when preparing a Hermes workflow for public ECC reuse without leaking private workspace state, credentials, or local-only paths.",
-        "source": "remote:agents/skills",
+        "description": "Convert local Hermes operator workflows into sanitized ECC skills and release-pack artifacts. Use when preparing a Hermes workflow for public ECC reuse without leaking private workspace state, credent",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "hookify-rules",
         "description": "This skill should be used when the user asks to create a hookify rule, write a hook rule, configure hookify, add a hookify rule, or needs guidance on hookify rule syntax and patterns.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "httpclient-factory",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "ilspy-decompile",
+        "description": "Understand implementation details of .NET code by decompiling assemblies. Use when you want to see how a .NET API works internally, inspect NuGet package source, view framework implementation, or unde",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "java-coding-standards",
-        "description": "Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reactive patterns, and project layout. Automatically applies framework-specific conventions.",
-        "source": "remote:agents/skills",
+        "description": "\"Java coding standards for Spring Boot and Quarkus services: naming, immutability, Optional usage, streams, exceptions, generics, CDI, reactive patterns, and project layout. Automatically applies fram",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "kotlin-coroutines-flows",
         "description": "Kotlin Coroutines and Flow patterns for Android and KMP — structured concurrency, Flow operators, StateFlow, error handling, and testing.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "kotlin-exposed-patterns",
         "description": "JetBrains Exposed ORM patterns including DSL queries, DAO pattern, transactions, HikariCP connection pooling, Flyway migrations, and repository pattern.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "kotlin-ktor-patterns",
         "description": "Ktor server patterns including routing DSL, plugins, authentication, Koin DI, kotlinx.serialization, WebSockets, and testApplication testing.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "kotlin-patterns",
         "description": "Idiomatic Kotlin patterns, best practices, and conventions for building robust, efficient, and maintainable Kotlin applications with coroutines, null safety, and DSL builders.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "kotlin-testing",
         "description": "Kotlin testing patterns with Kotest, MockK, coroutine testing, property-based testing, and Kover coverage. Follows TDD methodology with idiomatic Kotlin practices.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "laravel-patterns",
         "description": "Laravel architecture patterns, routing/controllers, Eloquent ORM, service layers, queues, events, caching, and API resources for production apps.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "laravel-plugin-discovery",
         "description": "Discover and evaluate Laravel packages via LaraPlugins.io MCP. Use when the user wants to find plugins, check package health, or assess Laravel/PHP compatibility.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "laravel-security",
         "description": "Laravel security best practices for authn/authz, validation, CSRF, mass assignment, file uploads, secrets, rate limiting, and secure deployment.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "laravel-tdd",
         "description": "Test-driven development for Laravel with PHPUnit and Pest, factories, database testing, fakes, and coverage targets.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "laravel-verification",
-        "description": "Verification loop for Laravel projects: env checks, linting, static analysis, tests with coverage, security scans, and deployment readiness.",
-        "source": "remote:agents/skills",
+        "description": "\"Verification loop for Laravel projects: env checks, linting, static analysis, tests with coverage, security scans, and deployment readiness.\"",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "local-tools",
+        "description": "Managing local .NET tools with dotnet-tools.json for consistent tooling across development environments and CI/CD pipelines.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "logging",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "messaging",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "migrate",
+        "description": "Guided, safe migration workflow covering EF Core schema migrations, .NET",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "minimal-api",
+        "description": ".NET 10 minimal APIs — the default for building HTTP endpoints. Covers MapGroup,",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "mjml-email-templates",
+        "description": "Build responsive email templates using MJML markup language. Compiles to cross-client HTML that works in Outlook, Gmail, and Apple Mail. Includes template renderer, layout patterns, and variable subst",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "modern-csharp",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "nestjs-patterns",
         "description": "NestJS architecture patterns for modules, controllers, providers, DTO validation, guards, interceptors, config, and production-grade TypeScript backends.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "nodejs-keccak256",
         "description": "Prevent Ethereum hashing bugs in JavaScript and TypeScript. Node's sha3-256 is NIST SHA3, not Ethereum Keccak-256, and silently breaks selectors, signatures, storage slots, and address derivation.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
+        "has_skill_md": true
+      },
+      {
+        "name": "openapi",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "openclaw-persona-forge",
-        "description": "为 OpenClaw AI Agent 锻造完整的龙虾灵魂方案。根据用户偏好或随机抽卡， 输出身份定位、灵魂描述(SOUL.md)、角色化底线规则、名字和头像生图提示词。 如当前环境提供已审核的生图 skill，可自动生成统一风格头像图片。 当用户需要创建、设计或定制 OpenClaw 龙虾灵魂时使用。 不适用于：微调已有 SOUL.md、非 OpenClaw 平台的角色设计、纯工具型无性格 Agent。 触发词：龙虾灵魂、虾魂、OpenClaw 灵魂、养虾灵魂、龙虾角色、龙虾定位、 龙虾剧本杀角色、龙虾游戏角色、龙虾 NPC、龙虾性格、龙虾背景故事、 ",
-        "source": "remote:agents/skills",
+        "description": "\"为 OpenClaw AI Agent 锻造完整的龙虾灵魂方案。根据用户偏好或随机抽卡， 输出身份定位、灵魂描述(SOUL.md)、角色化底线规则、名字和头像生图提示词。 如当前环境提供已审核的生图 skill，可自动生成统一风格头像图片。 当用户需要创建、设计或定制 OpenClaw 龙虾灵魂时使用。 不适用于：微调已有 SOUL.md、非 OpenClaw 平台的角色设计、纯工具型无性格 A",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "perl-patterns",
         "description": "Modern Perl 5.36+ idioms, best practices, and conventions for building robust, maintainable Perl applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "perl-security",
         "description": "Comprehensive Perl security covering taint mode, input validation, safe process execution, DBI parameterized queries, web security (XSS/SQLi/CSRF), and perlcritic security policies.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "perl-testing",
         "description": "Perl testing patterns using Test2::V0, Test::More, prove runner, mocking, coverage with Devel::Cover, and TDD methodology.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "plan",
+        "description": "Enter plan mode for .NET projects with architecture awareness. Analyzes tasks",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "playwright-blazor",
+        "description": "Write UI tests for Blazor applications (Server or WebAssembly) using Playwright. Covers navigation, interaction, authentication, selectors, and common Blazor-specific patterns.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "playwright-ci-caching",
+        "description": "Cache Playwright browser binaries in CI/CD pipelines (GitHub Actions, Azure DevOps) to avoid 1-2 minute download overhead on every build.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "project-setup",
+        "description": "Interactive project setup, health check, and migration workflows.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "project-structure",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "python-patterns",
         "description": "Pythonic idioms, PEP 8 standards, type hints, and best practices for building robust, efficient, and maintainable Python applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "python-testing",
         "description": "Python testing strategies using pytest, TDD methodology, fixtures, mocking, parametrization, and coverage requirements.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "pytorch-patterns",
         "description": "PyTorch deep learning patterns and best practices for building robust, efficient, and reproducible training pipelines, model architectures, and data loading.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "quarkus-patterns",
-        "description": "Quarkus 3.x LTS architecture patterns with Camel for messaging, RESTful API design, CDI services, data access with Panache, and async processing. Use for Java Quarkus backend work with event-driven architectures.",
-        "source": "remote:agents/skills",
+        "description": "Quarkus 3.x LTS architecture patterns with Camel for messaging, RESTful API design, CDI services, data access with Panache, and async processing. Use for Java Quarkus backend work with event-driven ar",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "quarkus-security",
         "description": "Quarkus Security best practices for authentication, authorization, JWT/OIDC, RBAC, input validation, CSRF, secrets management, and dependency security.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "quarkus-tdd",
         "description": "Test-driven development for Quarkus 3.x LTS using JUnit 5, Mockito, REST Assured, Camel testing, and JaCoCo. Use when adding features, fixing bugs, or refactoring event-driven services.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "quarkus-verification",
-        "description": "Verification loop for Quarkus projects: build, static analysis, tests with coverage, security scans, native compilation, and diff review before release or PR.",
-        "source": "remote:agents/skills",
+        "description": "\"Verification loop for Quarkus projects: build, static analysis, tests with coverage, security scans, native compilation, and diff review before release or PR.\"",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "r3-reactive-extensions",
+        "description": "Build reactive/event-driven C# with R3 (Cysharp's modern reimplementation of Reactive Extensions). Covers the Observable<T>/Observer<T> model, the OnErrorResume error contract, async dispatch with Awa",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "resilience",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "rust-patterns",
         "description": "Idiomatic Rust patterns, ownership, error handling, traits, concurrency, and best practices for building safe, performant applications.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "rust-testing",
         "description": "Rust testing patterns including unit tests, integration tests, async testing, property-based testing, mocking, and coverage. Follows TDD methodology.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
+        "has_skill_md": true
+      },
+      {
+        "name": "scaffold",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "scalar",
+        "description": "Scalar API documentation UI for .NET 10 applications. Covers setup, themes,",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "security-scan",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "serialization",
+        "description": "Choose the right serialization format for .NET applications. Prefer schema-based formats (Protobuf, MessagePack) over reflection-based (Newtonsoft.Json). Use System.Text.Json with AOT source generator",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "serilog",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "snapshot-testing",
+        "description": "Use Verify for snapshot testing in .NET. Approve API surfaces, HTTP responses, rendered emails, and serialized outputs. Detect unintended changes through human-reviewed baseline files.",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "springboot-patterns",
         "description": "Spring Boot architecture patterns, REST API design, layered services, data access, caching, async processing, and logging. Use for Java Spring Boot backend work.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "springboot-security",
         "description": "Spring Security best practices for authn/authz, validation, CSRF, secrets, headers, rate limiting, and dependency security in Java Spring Boot services.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "springboot-tdd",
         "description": "Test-driven development for Spring Boot using JUnit 5, Mockito, MockMvc, Testcontainers, and JaCoCo. Use when adding features, fixing bugs, or refactoring.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "springboot-verification",
-        "description": "Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or PR.",
-        "source": "remote:agents/skills",
+        "description": "\"Verification loop for Spring Boot projects: build, static analysis, tests with coverage, security scans, and diff review before release or PR.\"",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "swift-actor-persistence",
         "description": "Thread-safe data persistence in Swift using actors — in-memory cache with file-backed storage, eliminating data races by design.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "swift-concurrency-6-2",
         "description": "Swift 6.2 Approachable Concurrency — single-threaded by default, @concurrent for explicit background offloading, isolated conformances for main actor types.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "swift-protocol-di-testing",
         "description": "Protocol-based dependency injection for testable Swift code — mock file system, network, and external APIs using focused protocols and Swift Testing.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "swiftui-patterns",
         "description": "SwiftUI architecture patterns, state management with @Observable, view composition, navigation, performance optimization, and modern iOS/macOS UI best practices.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "tdd",
+        "description": "Guided test-driven development workflow for .NET 10 using xUnit v3,",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "testcontainers",
+        "description": "Write integration tests using TestContainers for .NET with xUnit. Covers infrastructure testing with real databases, message queues, and caches in Docker containers instead of mocks.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "testing",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "tinystruct-patterns",
-        "description": "Expert guidance for developing with the tinystruct Java framework. Use when working on the tinystruct codebase or any project built on tinystruct — including creating Application classes, @Action-mapped routes, unit tests, ActionRegistry, HTTP/CLI dual-mode handling, the built-in",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "using-dotnet",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "verify",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "verify-email-snapshots",
+        "description": "Snapshot test email templates using Verify to catch regressions. Validates rendered HTML output matches approved baseline. Works with MJML templates and any email renderer.",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "vertical-slice",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "workflow-mastery",
+        "description": "",
+        "source": "local:local",
+        "has_skill_md": true
+      },
+      {
+        "name": "wrap-up",
+        "description": "Owns the session handoff lifecycle: the end-of-session ritual that captures",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "x-api",
-        "description": "X/Twitter API integration for posting tweets, threads, reading timelines, search, and analytics. Covers OAuth auth patterns, rate limits, and platform-native content posting. Use when the user wants to interact with X programmatically.",
-        "source": "remote:agents/skills",
+        "description": "X/Twitter API integration for posting tweets, threads, reading timelines, search, and analytics. Covers OAuth auth patterns, rate limits, and platform-native content posting. Use when the user wants t",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
     "10-知识库": [
       {
         "name": "code-tour",
-        "description": "Create CodeTour `.tour` files — persona-targeted, step-by-step walkthroughs with real file and line anchors. Use for onboarding tours, architecture walkthroughs, PR tours, RCA tours, and structured \"explain how this works\" requests.",
-        "source": "remote:agents/skills",
+        "description": "Create CodeTour `.tour` files — persona-targeted, step-by-step walkthroughs with real file and line anchors. Use for onboarding tours, architecture walkthroughs, PR tours, RCA tours, and structured \"e",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "codebase-onboarding",
-        "description": "Analyze an unfamiliar codebase and generate a structured onboarding guide with architecture map, key entry points, conventions, and a starter CLAUDE.md. Use when joining a new project or setting up Claude Code for the first time in a repo.",
-        "source": "remote:agents/skills",
+        "description": "Analyze an unfamiliar codebase and generate a structured onboarding guide with architecture map, key entry points, conventions, and a starter CLAUDE.md. Use when joining a new project or setting up Cl",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "documentation-lookup",
-        "description": "Use up-to-date library and framework docs via Context7 MCP instead of training data. Activates for setup questions, API references, code examples, or when the user names a framework (e.g. React, Next.js, Prisma).",
-        "source": "remote:agents/skills",
+        "description": "Use up-to-date library and framework docs via Context7 MCP instead of training data. Activates for setup questions, API references, code examples, or when the user names a framework (e.g. React, Next.",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "knowledge-ops",
-        "description": "Knowledge base management, ingestion, sync, and retrieval across multiple storage layers (local files, MCP memory, vector stores, Git repos). Use when the user wants to save, organize, sync, deduplicate, or search across their knowledge systems.",
-        "source": "remote:agents/skills",
+        "description": "Knowledge base management, ingestion, sync, and retrieval across multiple storage layers (local files, MCP memory, vector stores, Git repos). Use when the user wants to save, organize, sync, deduplica",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "markitdown",
         "description": "Convert files to Markdown.",
-        "source": "local-only",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "notion-research-documentation",
         "description": "Research across Notion and synthesize into structured documentation; use when gathering info from multiple Notion sources to produce briefs, comparisons, or reports with citations.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "nutrient-document-processing",
         "description": "Process, convert, OCR, extract, redact, sign, and fill documents using the Nutrient DWS API. Works with PDFs, DOCX, XLSX, PPTX, HTML, and images.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "pdf",
-        "description": "Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       }
     ],
     "11-安全防护": [
       {
         "name": "customer-billing-ops",
-        "description": "Operate customer billing workflows such as subscriptions, refunds, churn triage, billing-portal recovery, and plan analysis using connected billing tools like Stripe. Use when the user needs to help a customer, inspect subscription state, or manage revenue-impacting billing opera",
-        "source": "remote:agents/skills",
+        "description": "Operate customer billing workflows such as subscriptions, refunds, churn triage, billing-portal recovery, and plan analysis using connected billing tools like Stripe. Use when the user needs to help a",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "customs-trade-compliance",
-        "description": "> Codified expertise for customs documentation, tariff classification, duty optimization, restricted party screening, and regulatory compliance across multiple jurisdictions. Informed by trade compliance specialists with 15+ years experience. Includes HS classification logic, Inc",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "defi-amm-security",
-        "description": "Security checklist for Solidity AMM contracts, liquidity pools, and swap flows. Covers reentrancy, CEI ordering, donation or inflation attacks, oracle manipulation, slippage, admin controls, and integer math.",
-        "source": "remote:agents/skills",
+        "description": "Security checklist for Solidity AMM contracts, liquidity pools, and swap flows. Covers reentrancy, CEI ordering, donation or inflation attacks, oracle manipulation, slippage, admin controls, and integ",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "evm-token-decimals",
         "description": "Prevent silent decimal mismatch bugs across EVM chains. Covers runtime decimal lookup, chain-aware caching, bridged-token precision drift, and safe normalization for bots, dashboards, and DeFi tools.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "hipaa-compliance",
-        "description": "HIPAA-specific entrypoint for healthcare privacy and security work. Use when a task is explicitly framed around HIPAA, PHI handling, covered entities, BAAs, breach posture, or US healthcare compliance requirements.",
-        "source": "remote:agents/skills",
+        "description": "HIPAA-specific entrypoint for healthcare privacy and security work. Use when a task is explicitly framed around HIPAA, PHI handling, covered entities, BAAs, breach posture, or US healthcare compliance",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "llm-trading-agent-security",
         "description": "Security patterns for autonomous trading agents with wallet or transaction authority. Covers prompt injection, spend limits, pre-send simulation, circuit breakers, MEV protection, and key handling.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "prompt-guard",
-        "description": "Meta's 86M prompt injection and jailbreak detector. Filters malicious prompts and third-party data for LLM apps. 99%+ TPR, <1% FPR. Fast (<2ms GPU). Multilingual (8 languages). Deploy with HuggingFace or batch processing for RAG security.",
-        "source": "remote:agents/skills",
+        "description": "Meta's 86M prompt injection and jailbreak detector. Filters malicious prompts and third-party data for LLM apps. 99%+ TPR, <1% FPR. Fast (<2ms GPU). Multilingual (8 languages). Deploy with HuggingFace",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "prompt-optimizer",
-        "description": ">- Analyze raw prompts, identify intent and gaps, match ECC components (skills/commands/agents/hooks), and output a ready-to-paste optimized prompt. Advisory role only — never executes the task itself. TRIGGER when: user says \"optimize prompt\", \"improve my prompt\", \"how to write ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "security-bounty-hunter",
         "description": "Hunt for exploitable, bounty-worthy security issues in repositories. Focuses on remotely reachable vulnerabilities that qualify for real reports instead of noisy local-only findings.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC direct-port adaptation",
         "has_skill_md": true
       },
       {
         "name": "security-review",
-        "description": "Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist and patterns.",
-        "source": "remote:agents/skills",
+        "description": "Use this skill when adding authentication, handling user input, working with secrets, creating API endpoints, or implementing payment/sensitive features. Provides comprehensive security checklist and ",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "security-scan",
-        "description": "Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks CLAUDE.md, settings.json, MCP servers, hooks, and agent definitions.",
-        "source": "remote:agents/skills",
+        "description": "Scan your Claude Code configuration (.claude/ directory) for security vulnerabilities, misconfigurations, and injection risks using AgentShield. Checks CLAUDE.md, settings.json, MCP servers, hooks, an",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "skill-comply",
-        "description": "Visualize whether skills, rules, and agent definitions are actually followed — auto-generates scenarios at 3 prompt strictness levels, runs agents, classifies behavioral sequences, and reports compliance rates with full tool call timelines",
-        "source": "remote:agents/skills",
+        "description": "Visualize whether skills, rules, and agent definitions are actually followed — auto-generates scenarios at 3 prompt strictness levels, runs agents, classifies behavioral sequences, and reports complia",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "skill-scout",
         "description": "Search existing local, marketplace, GitHub, and web skill sources before creating a new skill. Use when the user wants to create, build, fork, or find a skill for a workflow.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "skill-stocktake",
-        "description": "Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation.",
-        "source": "remote:agents/skills",
+        "description": "\"Use when auditing Claude skills and commands for quality. Supports Quick Scan (changed skills only) and Full Stocktake modes with sequential subagent batch evaluation.\"",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "vulnerability-scanning",
-        "description": "Automated security scanning for dependencies, code, containers with Trivy, Snyk, npm audit. Use for CI/CD security gates, pre-deployment audits, compliance requirements, or encountering CVE detection, outdated packages, license compliance, SBOM generation errors.",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "workspace-surface-audit",
-        "description": "Audit the active repo, MCP servers, plugins, connectors, env surfaces, and harness setup, then recommend the highest-value ECC-native skills, hooks, agents, and operator workflows. Use when the user wants help setting up Claude Code or understanding what capabilities are actually",
-        "source": "remote:agents/skills",
+        "description": "Audit the active repo, MCP servers, plugins, connectors, env surfaces, and harness setup, then recommend the highest-value ECC-native skills, hooks, agents, and operator workflows. Use when the user w",
+        "source": "local:ECC",
         "has_skill_md": true
       }
     ],
     "12-Claude原厂": [
       {
         "name": "ai-regression-testing",
-        "description": "Regression testing strategies for AI-assisted development. Sandbox-mode API testing without database dependencies, automated bug-check workflows, and patterns to catch AI blind spots where the same model writes and reviews code.",
-        "source": "remote:agents/skills",
+        "description": "Regression testing strategies for AI-assisted development. Sandbox-mode API testing without database dependencies, automated bug-check workflows, and patterns to catch AI blind spots where the same mo",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "algorithmic-art",
-        "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing ",
-        "source": "remote:agents/skills",
+        "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "benchmark",
         "description": "Use this skill to measure performance baselines, detect regressions before/after PRs, and compare stack alternatives.",
-        "source": "remote:agents/skills",
+        "source": "local:ECC",
         "has_skill_md": true
       },
       {
         "name": "brand-guidelines",
-        "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.",
-        "source": "remote:agents/skills",
+        "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "canvas-design",
-        "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright vi",
-        "source": "remote:agents/skills",
+        "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create ori",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "claude-api",
-        "description": "Build, debug, and optimize Claude API / Anthropic SDK apps. Apps built with this skill should include prompt caching. Also handles migrating existing Claude API code between Claude model versions (4.5 → 4.6, 4.6 → 4.7, retired-model replacements). TRIGGER when: code imports `anth",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "claude-devfleet",
         "description": "Orchestrate multi-agent coding tasks via Claude DevFleet — plan projects, dispatch parallel agents in isolated worktrees, monitor progress, and read structured reports.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "doc-coauthoring",
-        "description": "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This workflow helps users efficiently transfer context, refine content through iteration",
-        "source": "remote:agents/skills",
+        "description": "Guide users through a structured workflow for co-authoring documentation. Use when user wants to write documentation, proposals, technical specs, decision docs, or similar structured content. This wor",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "docx",
-        "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', or requests to produce professional documents with formatting like tables of contents, headings, page n",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "ecc-guide",
         "description": "Guide users through ECC's current agents, skills, commands, hooks, rules, install profiles, and project onboarding by reading the live repository surface before answering.",
-        "source": "remote:agents/skills",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "everything-claude-code",
         "description": "Development conventions and patterns for everything-claude-code. JavaScript project with conventional commits.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "everything-claude-code-conventions",
         "description": "Development conventions and patterns for everything-claude-code. JavaScript project with conventional commits.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "frontend-design",
-        "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples include websites, landing pages, dashboards, React components, HTML/CSS layouts, or w",
-        "source": "remote:agents/skills",
+        "description": "Create distinctive, production-grade frontend interfaces with high design quality. Use this skill when the user asks to build web components, pages, artifacts, posters, or applications (examples inclu",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "internal-comms",
-        "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters",
-        "source": "remote:agents/skills",
+        "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal com",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "mcp-builder",
-        "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
-        "source": "remote:agents/skills",
+        "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate externa",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "pdf",
-        "description": "Use this skill whenever the user wants to do anything with PDF files. This includes reading or extracting text/tables from PDFs, combining or merging multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks, creating new PDFs, filling PDF forms, encrypting/",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "plankton-code-quality",
-        "description": "Write-time code quality enforcement using Plankton — auto-formatting, linting, and Claude-powered fixes on every file edit via hooks.",
-        "source": "remote:agents/skills",
+        "description": "\"Write-time code quality enforcement using Plankton — auto-formatting, linting, and Claude-powered fixes on every file edit via hooks.\"",
+        "source": "local:community",
         "has_skill_md": true
       },
       {
         "name": "pptx",
-        "description": "Use this skill any time a .pptx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx file (even if the extracted content will be used elsewhere, like in an ",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "skill-creator",
-        "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's desc",
-        "source": "remote:agents/skills",
+        "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "slack-gif-creator",
-        "description": "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a GIF of X doing Y for Slack.\"",
-        "source": "remote:agents/skills",
+        "description": "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a G",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "template",
         "description": "Replace with description of the skill and when Claude should use it.",
-        "source": "remote:agents/skills",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "theme-factory",
-        "description": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.",
-        "source": "remote:agents/skills",
+        "description": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact t",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "web-artifacts-builder",
-        "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX ar",
-        "source": "remote:agents/skills",
+        "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state manag",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "webapp-testing",
-        "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
-        "source": "remote:agents/skills",
+        "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser l",
+        "source": "local:local",
         "has_skill_md": true
       },
       {
         "name": "xlsx",
-        "description": "Use this skill any time a spreadsheet file is the primary input or output. This means any task where the user wants to: open, read, edit, or fix an existing .xlsx, .xlsm, .csv, or .tsv file (e.g., adding columns, computing formulas, formatting, charting, cleaning messy data); cre",
-        "source": "remote:agents/skills",
+        "description": "",
+        "source": "local:local",
         "has_skill_md": true
       }
     ]
   },
-  "total_skills": 314
+  "total_skills": 385
 }
