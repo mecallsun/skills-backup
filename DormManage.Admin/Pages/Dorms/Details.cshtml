@@ -5,6 +5,26 @@
     Layout = "_Layout";
 }
 
+@section Styles {
+    <style>
+        /* v2.11.4 (s) 时间线样式 */
+        .timeline { border-left: 2px solid #1976d2; padding-left: 20px; margin-left: 10px; min-height: 100px; }
+        .timeline-item { position: relative; padding: 10px 0; border-bottom: 1px dashed #dee2e6; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1976d2;
+        }
+        .timeline-item.left::before { background: #6c757d; }
+    </style>
+}
+
 <div class="container-fluid">
     <!-- 页头 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -23,55 +43,43 @@
 
     @if (Model.Dorm != null)
     {
-        <!-- 基本信息卡片 -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
+        <!-- v2.12.21 布局调整：基本信息 250px + 操作 250px（上下对齐） | 右侧入住人员+历史 -->
+        <div class="row">
+            <!-- 基本信息卡片（250px） -->
+            <div style="width: 250px; flex-shrink: 0;">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                    </div>
+                    <div class="card-body">
                         <dl class="mb-0">
                             <dt class="text-muted small">宿舍号</dt>
                             <dd class="fw-bold fs-5">@Model.Dorm.DormCode</dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
+                        <hr class="my-2">
                         <dl class="mb-0">
                             <dt class="text-muted small">楼栋</dt>
                             <dd class="fw-bold">@Model.Dorm.BuildingName</dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
                         <dl class="mb-0">
                             <dt class="text-muted small">楼层</dt>
                             <dd class="fw-bold">@Model.Dorm.FloorId 楼</dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
                         <dl class="mb-0">
                             <dt class="text-muted small">地址</dt>
                             <dd class="fw-bold">@Model.Dorm.AddressText</dd>
                         </dl>
-                    </div>
-                </div>
-                <hr>
-                <div class="row">
-                    <div class="col-md-3">
+                        <hr class="my-2">
                         <dl class="mb-0">
                             <dt class="text-muted small">容量</dt>
                             <dd class="fw-bold">@Model.Dorm.Capacity 人</dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
                         <dl class="mb-0">
                             <dt class="text-muted small">当前入住</dt>
                             <dd class="fw-bold @(Model.Dorm.CurrentCount >= Model.Dorm.Capacity ? "text-danger" : "text-success")">
                                 @Model.Dorm.CurrentCount / @Model.Dorm.Capacity 人
                             </dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
                         <dl class="mb-0">
                             <dt class="text-muted small">性别</dt>
                             <dd class="fw-bold">
@@ -85,8 +93,6 @@
                                 }
                             </dd>
                         </dl>
-                    </div>
-                    <div class="col-md-3">
                         <dl class="mb-0">
                             <dt class="text-muted small">状态</dt>
                             <dd class="fw-bold">
@@ -100,27 +106,44 @@
                                 }
                             </dd>
                         </dl>
+                        @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
+                        {
+                            <hr class="my-2">
+                            <dl class="mb-0">
+                                <dt class="text-muted small">备注</dt>
+                                <dd class="fw-bold">@Model.Dorm.Remark</dd>
+                            </dl>
+                        }
                     </div>
                 </div>
-                @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
-                {
-                    <hr>
-                    <dl class="row mb-0">
-                        <dt class="col-md-1 text-muted small">备注</dt>
-                        <dd class="col-md-11">@Model.Dorm.Remark</dd>
-                    </dl>
-                }
             </div>
-        </div>
 
-        <!-- 当前入住人员 -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-people"></i> 当前入住人员
-                    <span class="badge bg-primary ms-2">@Model.CurrentResidents.Count</span>
-                </h5>
+            <!-- 操作卡片（250px，与基本信息上下对齐） -->
+            <div style="width: 250px; flex-shrink: 0;">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-tools"></i> 操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="btnToggleHistory" class="btn btn-outline-secondary w-100 mb-2" onclick="toggleHistory()">
+                            <i class="bi bi-clock-history"></i> 查看住宿历史
+                        </button>
+                        <a href="/Dorms" class="btn btn-link w-100"><i class="bi bi-arrow-left"></i> 返回宿舍列表</a>
+                    </div>
+                </div>
             </div>
+
+            <!-- 当前入住人员 + 住宿历史（右侧，剩余空间） -->
+            <div style="flex: 1 1 0;">
+                <!-- 当前入住人员 -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people"></i> 当前入住人员
+                            <span class="badge bg-primary ms-2">@Model.CurrentResidents.Count</span>
+                        </h5>
+                        <span class="text-muted small">容量上限：@Model.Dorm?.Capacity 人</span>
+                    </div>
             <div class="card-body">
                 @if (Model.CurrentResidents.Count > 0)
                 {
@@ -160,74 +183,88 @@
             </div>
         </div>
 
-        <!-- 历史记录 -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="bi bi-clock-history"></i> 历史记录
-                    <span class="badge bg-secondary ms-2">@Model.HistoryRecords.Count</span>
-                </h5>
-            </div>
-            <div class="card-body">
-                @if (Model.HistoryRecords.Count > 0)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60" class="text-center">序号</th>
-                                    <th>工号</th>
-                                    <th>姓名</th>
-                                    <th>部门</th>
-                                    <th class="text-center">类型</th>
-                                    <th class="text-center">状态</th>
-                                    <th>入退日期</th>
-                                    <th>登记人</th>
-                                    <th class="text-center">登记时间</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (int i = 0; i < Model.HistoryRecords.Count; i++)
-                                {
-                                    var record = Model.HistoryRecords[i];
-                                    <tr>
-                                        <td class="text-center text-muted">@(i + 1)</td>
-                                        <td><strong>@record.EmployeeCode</strong></td>
-                                        <td>@record.EmployeeName</td>
-                                        <td>@(record.Department ?? "-")</td>
-                                        <td class="text-center">
-                                            @if (record.Type == 1)
-                                            {
-                                                <span class="badge bg-success">入住</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-warning text-dark">退房</span>
-                                            }
-                                        </td>
-                                        <td class="text-center">
-                                            @switch (record.Status)
-                                            {
-                                                case 1: <span class="badge bg-warning text-dark">预约</span>; break;
-                                                case 2: <span class="badge bg-success">在宿</span>; break;
-                                                case 3: <span class="badge bg-secondary">已退房</span>; break;
-                                                case 4: <span class="badge bg-danger">已取消</span>; break;
-                                            }
-                                        </td>
-                                        <td>@record.BookingDate.ToString("yyyy-MM-dd")</td>
-                                        <td><small class="text-muted">@record.Registrar</small></td>
-                                        <td class="text-center"><small class="text-muted">@record.RegistrationDate.ToString("yyyy-MM-dd HH:mm")</small></td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                <!-- v2.11.4 (s) 历史记录区域（默认隐藏，timeline 时间线样式） -->
+                <div id="historySection" class="card" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 住宿历史记录
+                            <span class="badge bg-secondary ms-2" id="historyCount">0</span>
+                        </h5>
+                        <button class="btn btn-sm btn-link" onclick="toggleHistory()">收起 ▲</button>
                     </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">暂无历史记录</p>
-                }
+                    <div class="card-body">
+                        <div class="timeline" id="historyTimeline"></div>
+                    </div>
+                </div>
             </div>
-        </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        // v2.11.4 (s) 查看住宿历史开关效果
+        let historyVisible = false;
+
+        function toggleHistory() {
+            historyVisible = !historyVisible;
+            const section = document.getElementById('historySection');
+            const btn = document.getElementById('btnToggleHistory');
+
+            if (historyVisible) {
+                section.style.display = 'block';
+                btn.innerHTML = '<i class="bi bi-x-circle"></i> 关闭历史';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-secondary');
+                renderHistory();
+            } else {
+                section.style.display = 'none';
+                btn.innerHTML = '<i class="bi bi-clock-history"></i> 查看住宿历史';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        function formatDate(d) {
+            if (!d) return '-';
+            return d instanceof Date ? d.toISOString().slice(0, 10) : String(d);
+        }
+
+        function renderHistory() {
+            // 从后端传入的历史数据渲染时间线
+            const history = @(Html.Raw(Json.Serialize(Model.HistoryRecords.Where(r => r.Type != 1 || r.Status != 2).OrderByDescending(r => r.BookingDate).Take(50))));
+            document.getElementById('historyCount').textContent = history.length;
+            const timeline = document.getElementById('historyTimeline');
+
+            if (history.length === 0) {
+                timeline.innerHTML = '<div class="text-muted text-center py-4">暂无历史记录</div>';
+                return;
+            }
+
+            timeline.innerHTML = history.map(r => {
+                const isCheckedOut = r.type === 2 && r.status === 3;
+                const checkInDate = r.checkInDate ? new Date(r.checkInDate) : new Date();
+                const leaveDate = r.checkOutDate ? new Date(r.checkOutDate) : null;
+                const stayDays = leaveDate
+                    ? Math.floor((leaveDate - checkInDate) / (1000 * 60 * 60 * 24))
+                    : Math.floor((new Date() - checkInDate) / (1000 * 60 * 60 * 24));
+
+                return `
+                <div class="timeline-item ${isCheckedOut ? 'left' : ''}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${r.employeeName || '-'}</strong>
+                            <small class="text-muted ms-2">${r.employeeCode || '-'} | ${r.department || '-'}</small>
+                            ${isCheckedOut ? '<span class="badge bg-secondary ms-2">已退宿</span>' : '<span class="badge bg-success ms-2">在宿</span>'}
+                        </div>
+                        <small class="text-muted">${r.registrar || ''}</small>
+                    </div>
+                    <div class="mt-1 text-muted small">
+                        <i class="bi bi-box-arrow-in-right"></i> 入住：${formatDate(r.checkInDate)}
+                        ${r.checkOutDate ? `<i class="bi bi-box-arrow-right ms-3"></i> 退宿：${formatDate(r.checkOutDate)}` : '<i class="bi bi-hourglass-split ms-3"></i> 至今'}
+                        <i class="bi bi-clock ms-3"></i> 共 ${stayDays} 天
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    </script>
+}

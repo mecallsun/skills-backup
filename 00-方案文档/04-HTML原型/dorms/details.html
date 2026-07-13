@@ -47,14 +47,15 @@
 
         <div class="row">
             <!-- v2.11.4 (r) 左侧宽度从 col-md-5 减少到 col-md-3 -->
+            <!-- v2.12.21 布局调整：基本信息 250px + 操作 250px（上下对齐） | 右侧入住人员+历史 -->
             <div class="filter-item">
-                <!-- 基本信息卡 -->
-                <div class="card mb-3">
+                <!-- 基本信息卡（250px） -->
+                <div class="card mb-3" style="width: 250px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 基本信息</strong></div>
                     <div class="card-body" id="basicInfo"></div>
                 </div>
-                <!-- 操作（v2.11.4 (s) 查看住宿历史按钮移至此处） -->
-                <div class="card">
+                <!-- 操作（250px，与基本信息上下对齐） -->
+                <div class="card" style="width: 250px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-tools"></i> 操作</strong></div>
                     <div class="card-body">
                         <button id="btnToggleHistory" class="btn btn-outline-secondary w-100 mb-2" onclick="toggleHistory()">
