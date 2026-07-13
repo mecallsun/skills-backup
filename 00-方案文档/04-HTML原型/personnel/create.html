@@ -21,6 +21,7 @@
         .form-control, .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
         .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: 0.75rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; }
         .form-actions .btn { min-width: 100px; }
+        .form-readonly { background: #f5f7fa; cursor: not-allowed; }
         /* 一屏完整展示：去掉规范信息卡片（v2.12.26） */
     </style>
 </head>
@@ -54,6 +55,7 @@
         <div class="page-header d-flex justify-content-between align-items-center">
             <h1 class="page-title">
                 <i class="bi bi-person-plus"></i>新增人员
+                <small class="text-muted ms-2 fs-6">录入新员工的基本信息与住宿初始状态</small>
             </h1>
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb mb-0">
@@ -96,7 +98,7 @@
                         </div>
                     </div>
 
-                    <!-- 区块 2：组织与岗位（4 字段，关联引用基础资料字典） -->
+                    <!-- 区块 2：组织与岗位（5 字段，关联引用基础资料字典） -->
                     <div class="form-section">
                         <div class="form-section-title">组织与岗位</div>
                         <div class="row g-2">
@@ -119,6 +121,12 @@
                                 </select>
                             </div>
                             <div class="col-md-3 form-field">
+                                <label class="form-label">班组</label>
+                                <select id="teamId" class="form-select">
+                                    <option value="">请选择班组</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-field">
                                 <label class="form-label">在职状态<span class="required">*</span></label>
                                 <select id="employmentStatusId" class="form-select" required>
                                     <option value="">请选择在职状态</option>
@@ -127,7 +135,18 @@
                         </div>
                     </div>
 
-                    <!-- 区块 3：备注（跨整行） -->
+                    <!-- 区块 3：住宿信息（房号只读，通过办理登记分配） -->
+                    <div class="form-section">
+                        <div class="form-section-title">住宿信息</div>
+                        <div class="row g-2">
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">房号</label>
+                                <input type="text" id="dormCode" class="form-control form-readonly" readonly placeholder="通过办理登记分配">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 4：备注（跨整行） -->
                     <div class="form-section" style="margin-bottom: 0;">
                         <div class="form-section-title">其他信息</div>
                         <div class="form-field" style="margin-bottom: 0;">
@@ -183,6 +202,15 @@
             });
             statusSel.value = '1';
         }
+
+        // 班组（关联引用基础资料-员工班组字典 v2.12.2）
+        var teamSel = document.getElementById('teamId');
+        if (teamSel && typeof TEAMS !== 'undefined') {
+            TEAMS.forEach(function (t) {
+                teamSel.appendChild(new Option(t.name, t.id));
+            });
+            teamSel.value = '1'; // 默认=1 默认班组
+        }
     }
 
     // ========== 表单提交 ==========
@@ -219,6 +247,7 @@
         document.getElementById('departmentId').value = '';
         document.getElementById('employeeTypeId').value = '';
         document.getElementById('attendanceTypeId').value = '';
+        document.getElementById('teamId').value = '1';
         document.getElementById('employmentStatusId').value = '1';
         document.getElementById('remark').value = '';
     }
