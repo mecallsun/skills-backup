@@ -22,6 +22,22 @@
             background: #1976d2;
         }
         .timeline-item.left::before { background: #6c757d; }
+
+        /* v2.12.24 布局固定：左右两栏严格并排，禁止换行 */
+        .details-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .details-left {
+            width: 300px;
+            flex-shrink: 0;
+        }
+        .details-right {
+            flex: 1 1 0;
+            min-width: 0;
+        }
     </style>
 }
 
@@ -43,10 +59,10 @@
 
     @if (Model.Dorm != null)
     {
-        <!-- v2.12.24 布局：左栏基本信息+操作各300px固定宽度上下堆叠 | 右栏入住人员+历史等宽上下堆叠 | 左右栏顶部对齐 -->
-        <div class="row">
+        <!-- v2.12.24 布局：左右两栏严格并排，左栏300px固定宽度，右栏自适应剩余空间 -->
+        <div class="details-row">
             <!-- 左栏：基本信息 + 操作（各300px固定宽度，上下堆叠，左边框对齐） -->
-            <div style="width: 300px; flex-shrink: 0;">
+            <div class="details-left">
                 <!-- 基本信息卡片 -->
                 <div class="card mb-3">
                     <div class="card-header">
@@ -133,9 +149,9 @@
             </div>
 
             <!-- 右栏：当前入住人员 + 住宿历史（与左侧栏顶部对齐，上下堆叠） -->
-            <div style="flex: 1 1 0;">
+            <div class="details-right">
                 <!-- 当前入住人员（与左侧栏顶部对齐） -->
-                <div class="card mb-3" style="margin-top: 0;">
+                <div class="card mb-3">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="bi bi-people"></i> 当前入住人员
