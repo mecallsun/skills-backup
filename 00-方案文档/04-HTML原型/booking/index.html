@@ -309,7 +309,7 @@
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="modal_empType_in"></span></span>
                             <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="modal_empAtt_in"></span></span>
                         </div>
-                        <div id="modal_empWarn_in" class="alert alert-warning mt-2 mb-0 py-2" style="display:none; font-size: 0.85rem;"></div>
+                        <!-- 校验信息已合并到下方"操作类型与校验"区块的右侧 -->
                     </div>
 
                     <!-- 区块 2：入住日期 + 原因 + 登记人（操作类型仅为"入住"） -->
@@ -337,10 +337,19 @@
                         </div>
                     </div>
 
-                    <!-- 区块 3：操作类型（仅"入住"项） -->
+                    <!-- 区块 3：操作类型 + 校验信息（同行两栏：左操作类型固定 100px，右校验信息） -->
                     <div class="form-section">
-                        <div class="form-section-title">操作类型</div>
-                        <span class="badge bg-success px-3 py-2"><i class="bi bi-box-arrow-in-right"></i> 入住</span>
+                        <div class="form-section-title">操作类型与校验</div>
+                        <div class="d-flex align-items-start gap-2">
+                            <!-- 左栏：操作类型（固定 100px） -->
+                            <div style="width: 100px; flex-shrink: 0;">
+                                <span class="badge bg-success px-3 py-2 w-100 d-block text-center"><i class="bi bi-box-arrow-in-right"></i> 入住</span>
+                            </div>
+                            <!-- 右栏：校验信息（校验未通过时显示禁止提交） -->
+                            <div id="modal_validationBox_in" style="flex: 1 1 0; min-width: 0;">
+                                <div id="modal_validationText_in" class="text-muted small">请先选择员工</div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 区块 4：选择房间（仅入住） -->
@@ -408,16 +417,24 @@
                                 <input type="text" id="modal_registrar_out" class="form-control" disabled>
                             </div>
                             <div class="col-md-3 form-field">
-                                <label class="form-label">校验提示</label>
-                                <div id="modal_dateHint" class="form-control" style="background: #f8f9fa; font-size: 0.85rem;">请选择员工</div>
+                                <label class="form-label">退房校验</label>
+                                <div id="modal_dateHint_inline" class="form-control" style="background: #f8f9fa; font-size: 0.85rem;">请先选择员工</div>
                             </div>
-                        </div>
                     </div>
 
-                    <!-- 区块 3：操作类型（仅"退房"项） -->
+                    <!-- 区块 3：操作类型 + 校验信息（同行两栏：左操作类型固定 100px，右校验信息） -->
                     <div class="form-section">
-                        <div class="form-section-title">操作类型</div>
-                        <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-box-arrow-right"></i> 退房</span>
+                        <div class="form-section-title">操作类型与校验</div>
+                        <div class="d-flex align-items-start gap-2">
+                            <!-- 左栏：操作类型（固定 100px） -->
+                            <div style="width: 100px; flex-shrink: 0;">
+                                <span class="badge bg-warning text-dark px-3 py-2 w-100 d-block text-center"><i class="bi bi-box-arrow-right"></i> 退房</span>
+                            </div>
+                            <!-- 右栏：校验信息（校验未通过时显示禁止提交） -->
+                            <div id="modal_validationBox_out" style="flex: 1 1 0; min-width: 0;">
+                                <div id="modal_validationText_out" class="text-muted small">请先选择员工</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -700,7 +717,7 @@
             return `<span class="badge ${ATTENDANCE_BADGE_MODAL[t] || 'bg-secondary'}">${ATTENDANCE_NAME_MODAL[t] || t || '默认'}</span>`;
         }
 
-        let modalSel = { in: null, out: null };
+        let modalSel = { in: null, out: null, inValid: { blocked: true, msg: '' }, outValid: { blocked: true, msg: '' } };
 
         // 模态弹窗显示时设置默认日期 = 服务端当前日期
         document.getElementById('modalCheckIn').addEventListener('show.bs.modal', function () {
@@ -710,16 +727,18 @@
             modalSel.in = null;
             document.getElementById('modal_empKeyword').value = '';
             document.getElementById('modal_empInfo_in').style.display = 'none';
-            document.getElementById('modal_empWarn_in').style.display = 'none';
+            updateValidationIn();
         });
         document.getElementById('modalCheckOut').addEventListener('show.bs.modal', function () {
             const today = new Date().toISOString().slice(0, 10);
             document.getElementById('modal_checkoutDate').value = today;
             document.getElementById('modal_registrar_out').value = 'admin';
             modalSel.out = null;
+            modalSel.outValid = { blocked: true, msg: '' };
             document.getElementById('modal_empKeyword_out').value = '';
             document.getElementById('modal_empInfo_out').style.display = 'none';
-            document.getElementById('modal_dateHint').innerHTML = '请选择员工';
+            document.getElementById('modal_dateHint_inline').innerHTML = '请先选择员工';
+            updateValidationOut();
         });
 
         // 姓名/工号/手机号 动态模糊筛选
@@ -774,7 +793,6 @@
         });
 
         function modalSelectEmp(emp, mode) {
-            modalSel[mode] = emp;
             const kwId = mode === 'in' ? 'modal_empKeyword' : 'modal_empKeyword_out';
             const sugId = mode === 'in' ? 'modal_empSuggestions_in' : 'modal_empSuggestions_out';
             document.getElementById(kwId).value = emp.realName;
@@ -797,9 +815,10 @@
             document.getElementById('modal_empAtt' + suffix).innerHTML = attendanceBadgeModal(attCode);
 
             if (mode === 'in') {
+                modalSel.in = emp;
                 validateEmpIn();
-                refreshDormsIn();
             } else {
+                modalSel.out = emp;
                 validateEmpOut();
             }
         }
@@ -807,30 +826,87 @@
         function validateEmpIn() {
             const emp = modalSel.in;
             if (!emp) return;
-            const warn = document.getElementById('modal_empWarn_in');
             const active = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2) : [];
             if (active.length > 0) {
-                warn.className = 'alert alert-danger mt-2 mb-0 py-2';
-                warn.innerHTML = '员工当前已在宿 ' + active[0].dormCode + '，请先办理退房';
+                modalSel.inValid = { blocked: true, msg: '员工当前已在宿 ' + active[0].dormCode + '，请先办理退房' };
             } else {
-                warn.className = 'alert alert-success mt-2 mb-0 py-2';
-                warn.innerHTML = '员工状态正常，可办理入住';
+                modalSel.inValid = { blocked: false, msg: '✓ 员工状态正常，可办理入住' };
             }
-            warn.style.display = 'block';
+            updateValidationIn();
+            refreshDormsIn();
         }
 
         function validateEmpOut() {
-            const emp = modalSel.out;
-            if (!emp) return;
-            const actives = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2 && b.type === 1) : [];
+            const emp = modalSel.out && modalSel.out.emp ? modalSel.out.emp : (modalSel.out || null);
+            // modalSel.out 在 modalSelectEmp 中可能直接是 emp 对象
+            const empObj = (modalSel.out && modalSel.out.emp) ? modalSel.out.emp : modalSel.out;
+            if (!empObj) return;
+            const actives = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === empObj.id && b.status === 2 && b.type === 1) : [];
             if (actives.length === 0) {
-                alert(emp.realName + ' 当前未在宿');
+                modalSel.outValid = { blocked: true, msg: '员工 ' + empObj.realName + ' 当前未在宿' };
                 modalSel.out = null;
                 document.getElementById('modal_empInfo_out').style.display = 'none';
+                updateValidationOut();
                 return;
             }
-            modalSel.out = { emp: emp, record: actives[0] };
+            modalSel.out = { emp: empObj, record: actives[0] };
+            modalSel.outValid = { blocked: false, msg: '✓ 员工当前在宿 ' + actives[0].dormCode + '，可办理退房' };
+            updateValidationOut();
             onModalDateChange();
+        }
+
+        function updateValidationIn() {
+            const box = document.getElementById('modal_validationText_in');
+            const dormSelect = document.getElementById('modal_dormSelect');
+            const submitBtn = document.querySelector('#modalCheckIn .btn-primary');
+            if (!modalSel.in) {
+                box.innerHTML = '<span class="text-muted small">请先选择员工</span>';
+                lockActionIn(true);
+                return;
+            }
+            const v = modalSel.inValid;
+            if (v && v.blocked) {
+                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：' + v.msg + '</span>';
+                lockActionIn(true);
+            } else {
+                box.innerHTML = '<span class="text-success">' + (v ? v.msg : '员工状态正常') + '</span>';
+                lockActionIn(false);
+            }
+        }
+
+        function updateValidationOut() {
+            const box = document.getElementById('modal_validationText_out');
+            const submitBtn = document.querySelector('#modalCheckOut .btn-warning');
+            if (!modalSel.out) {
+                box.innerHTML = '<span class="text-muted small">请先选择员工</span>';
+                lockActionOut(true);
+                return;
+            }
+            const v = modalSel.outValid;
+            if (v && v.blocked) {
+                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：' + v.msg + '</span>';
+                lockActionOut(true);
+            } else {
+                box.innerHTML = '<span class="text-success">' + (v ? v.msg : '员工状态正常') + '</span>';
+                lockActionOut(false);
+            }
+        }
+
+        function lockActionIn(locked) {
+            const dormSelect = document.getElementById('modal_dormSelect');
+            const submitBtn = document.querySelector('#modalCheckIn .modal-footer .btn-primary');
+            if (dormSelect) {
+                dormSelect.disabled = locked;
+                if (locked) dormSelect.value = '';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = locked;
+            }
+        }
+
+        function lockActionOut(locked) {
+            const submitBtn = document.querySelector('#modalCheckOut .modal-footer .btn-warning');
+            if (submitBtn) submitBtn.disabled = locked;
         }
 
         function refreshDormsIn() {
@@ -853,18 +929,28 @@
                           .sort((a, b) => a.bookingDate.localeCompare(b.bookingDate))[0]
                 : null;
             let html = '';
+            let blocked = false;
             if (date < record.bookingDate) {
-                html = '<span class="text-danger">退房日期不能早于入住 ' + record.bookingDate + '</span>';
+                html = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：退房日期不能早于入住 ' + record.bookingDate + '</span>';
+                blocked = true;
             } else if (next && date >= next.bookingDate) {
-                html = '<span class="text-danger">退房日期不能晚于下次入住 ' + next.bookingDate + '</span>';
+                html = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：退房日期不能晚于下次入住 ' + next.bookingDate + '</span>';
+                blocked = true;
             } else {
                 html = '<span class="text-success">✓ 退房日期 ' + date + ' 校验通过（房间 ' + record.dormCode + '）</span>';
+                blocked = false;
             }
-            document.getElementById('modal_dateHint').innerHTML = html;
+            document.getElementById('modal_dateHint_inline').innerHTML = html;
+            modalSel.outValid = { blocked: blocked, msg: html.replace(/<[^>]+>/g, '') };
+            lockActionOut(blocked);
         }
 
         function modalSubmitIn() {
             if (!modalSel.in) { alert('请先选择员工'); return; }
+            if (modalSel.inValid && modalSel.inValid.blocked) {
+                alert('校验未通过，无法提交：' + modalSel.inValid.msg);
+                return;
+            }
             const dorm = document.getElementById('modal_dormSelect').value;
             if (!dorm) { alert('请选择房间'); return; }
             alert('✓ 原型演示：入住已办理\n员工：' + modalSel.in.realName + '\n房间：' + dorm);
@@ -873,8 +959,15 @@
         }
 
         function modalSubmitOut() {
-            if (!modalSel.out || !modalSel.out.record) { alert('请先选择员工'); return; }
-            alert('✓ 原型演示：退房已办理\n员工：' + modalSel.out.emp.realName + '\n房间：' + modalSel.out.record.dormCode);
+            if (!modalSel.out) { alert('请先选择员工'); return; }
+            if (modalSel.outValid && modalSel.outValid.blocked) {
+                alert('校验未通过，无法提交：' + modalSel.outValid.msg);
+                return;
+            }
+            const rec = modalSel.out.record;
+            const emp = modalSel.out.emp;
+            if (!rec || !emp) { alert('请先选择员工'); return; }
+            alert('✓ 原型演示：退房已办理\n员工：' + emp.realName + '\n房间：' + rec.dormCode);
             bootstrap.Modal.getInstance(document.getElementById('modalCheckOut')).hide();
             render();
         }
