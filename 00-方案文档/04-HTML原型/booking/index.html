@@ -416,10 +416,7 @@
                                 <label class="form-label">登记人</label>
                                 <input type="text" id="modal_registrar_out" class="form-control" disabled>
                             </div>
-                            <div class="col-md-3 form-field">
-                                <label class="form-label">退房校验</label>
-                                <div id="modal_dateHint_inline" class="form-control" style="background: #f8f9fa; font-size: 0.85rem;">请先选择员工</div>
-                            </div>
+                            <!-- v2.12.32 校验信息已移到下方"操作类型与校验"区块的右侧 -->
                     </div>
 
                     <!-- 区块 3：操作类型 + 校验信息（同行两栏：左操作类型固定 100px，右校验信息） -->
@@ -737,7 +734,6 @@
             modalSel.outValid = { blocked: true, msg: '' };
             document.getElementById('modal_empKeyword_out').value = '';
             document.getElementById('modal_empInfo_out').style.display = 'none';
-            document.getElementById('modal_dateHint_inline').innerHTML = '请先选择员工';
             updateValidationOut();
         });
 
@@ -843,16 +839,15 @@
             if (!empObj) return;
             const actives = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === empObj.id && b.status === 2 && b.type === 1) : [];
             if (actives.length === 0) {
-                modalSel.outValid = { blocked: true, msg: '员工 ' + empObj.realName + ' 当前未在宿' };
+                modalSel.outValid = { blocked: true, msg: '退房校验：校验未通过！员工 ' + empObj.realName + ' 当前未在宿，禁止提交' };
                 modalSel.out = null;
                 document.getElementById('modal_empInfo_out').style.display = 'none';
                 updateValidationOut();
                 return;
             }
             modalSel.out = { emp: empObj, record: actives[0] };
-            // v2.12.31 退房校验提示：员工当前已在宿，可以办理退房
-            modalSel.outValid = { blocked: false, msg: '校验提示：员工当前已在宿 ' + actives[0].dormCode + '，可以办理退房' };
-            updateValidationOut();
+            modalSel.outValid = { blocked: false, msg: '' };
+            // v2.12.32：立即触发日期校验，组合显示完整校验信息
             onModalDateChange();
         }
 
@@ -883,13 +878,15 @@
                 lockActionOut(true);
                 return;
             }
-            const v = modalSel.outValid;
-            if (v && v.blocked) {
-                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> ' + v.msg + '</span>';
-                lockActionOut(true);
-            } else {
-                box.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> ' + (v ? v.msg : '员工状态正常') + '</span>';
+            // v2.12.32：选择员工后即刻显示在宿信息，校验信息由 onModalDateChange 合并后展示
+            const record = (modalSel.out && modalSel.out.record) ? modalSel.out.record : null;
+            if (record) {
+                const today = document.getElementById('modal_checkoutDate').value;
+                box.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> 退房校验：校验通过！退房日期 ' + today + ' ，员工当前已在宿' + record.dormCode + '，可以办理退房</span>';
                 lockActionOut(false);
+            } else {
+                box.innerHTML = '<span class="text-muted small">员工当前未在宿</span>';
+                lockActionOut(true);
             }
         }
 
@@ -929,20 +926,23 @@
                 ? BOOKINGS.filter(b => b.employeeId === modalSel.out.emp.id && b.type === 1 && b.status === 1 && b.bookingDate > record.bookingDate)
                           .sort((a, b) => a.bookingDate.localeCompare(b.bookingDate))[0]
                 : null;
-            let html = '';
             let blocked = false;
+            let msg = '';
             if (date < record.bookingDate) {
-                html = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：退房日期不能早于入住 ' + record.bookingDate + '</span>';
+                msg = '退房校验：校验未通过！退房日期 ' + date + ' 早于入住日期 ' + record.bookingDate + '，禁止提交';
                 blocked = true;
             } else if (next && date >= next.bookingDate) {
-                html = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：退房日期不能晚于下次入住 ' + next.bookingDate + '</span>';
+                msg = '退房校验：校验未通过！退房日期 ' + date + ' 晚于下次入住 ' + next.bookingDate + '，禁止提交';
                 blocked = true;
             } else {
-                html = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> 校验提示：退房日期 ' + date + ' 校验通过（房间 ' + record.dormCode + '），可以办理退房</span>';
+                // v2.12.32 校验通过：合并"退房校验 + 日期 + 在宿房间 + 可以办理退房"到一行
+                msg = '退房校验：校验通过！退房日期 ' + date + ' ，员工当前已在宿' + record.dormCode + '，可以办理退房';
                 blocked = false;
             }
-            document.getElementById('modal_dateHint_inline').innerHTML = html;
-            modalSel.outValid = { blocked: blocked, msg: html.replace(/<[^>]+>/g, '') };
+            const iconCls = blocked ? 'bi-x-circle-fill text-danger' : 'bi-check-circle-fill text-success';
+            const box = document.getElementById('modal_validationText_out');
+            box.innerHTML = '<span class="' + (blocked ? 'text-danger' : 'text-success') + '"><i class="bi ' + iconCls + '"></i> ' + msg + '</span>';
+            modalSel.outValid = { blocked: blocked, msg: msg };
             lockActionOut(blocked);
         }
 
