@@ -1,0 +1,181 @@
+@page "{id:int}"
+@model DormManage.Admin.Pages.Meter.EditModel
+@{
+    ViewData["Title"] = "修正抄表读数";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .meter-card { border-left: 4px solid #fd7e14; }
+        .upload-ph {
+            height: 90px;
+            border: 2px dashed #cfd8dc;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #90a4ae;
+            cursor: pointer;
+        }
+        .usage-preview { background: #f8f9fa; border-radius: 8px; padding: 12px; }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-pencil"></i> 修正抄表读数
+            <small class="text-muted fs-6">（ID: @Model.Record?.Id）</small>
+        </h2>
+        <a href="/Meter" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回抄表记录
+        </a>
+    </div>
+
+    <div class="alert alert-warning py-2 mb-3">
+        <i class="bi bi-exclamation-triangle"></i>
+        <strong>v2.11.4：</strong>修正后记录状态将变为「已修正」（status=2），并保留修正原因。已修正记录不可再修改或删除。
+    </div>
+
+    <form method="post">
+        <div class="row">
+            <!-- 左侧：表单 -->
+            <div class="col-md-8">
+                <!-- 基本信息（只读） -->
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">宿舍</label>
+                                <input type="text" class="form-control" value="@Model.Record?.DormCode" disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">抄表月份</label>
+                                <input type="text" class="form-control" value="@Model.Record?.ReadMonth" disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">抄表员</label>
+                                <input type="text" class="form-control" value="@Model.Record?.Operator" disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">设备序列号</label>
+                                <input type="text" class="form-control" value="@(Model.Record?.DeviceSn ?? "-")" disabled>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(Model.LastReadingRef))
+                        {
+                            <div class="alert alert-secondary mt-3 mb-0">
+                                <i class="bi bi-clock-history"></i> @Model.LastReadingRef
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- 三表读数输入 -->
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="card meter-card h-100">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="bi bi-droplet"></i> 冷水</h6>
+                                <label class="form-label small">新读数（m³） <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" name="ColdMeter" value="@Model.Record?.ColdMeter" class="form-control" oninput="onReadingInput()">
+                                <div class="form-text" id="hint-cold">原读数：@(Model.Record?.ColdMeter.ToString("F2") ?? "—")</div>
+                                <div class="upload-ph mt-2" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
+                                    <i class="bi bi-camera"></i>&nbsp;重新上传照片
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card meter-card h-100">
+                            <div class="card-body">
+                                <h6 class="text-info"><i class="bi bi-steam"></i> 热水</h6>
+                                <label class="form-label small">新读数（m³） <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" name="HotMeter" value="@Model.Record?.HotMeter" class="form-control" oninput="onReadingInput()">
+                                <div class="form-text" id="hint-hot">原读数：@(Model.Record?.HotMeter.ToString("F2") ?? "—")</div>
+                                <div class="upload-ph mt-2" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
+                                    <i class="bi bi-camera"></i>&nbsp;重新上传照片
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card meter-card h-100">
+                            <div class="card-body">
+                                <h6 class="text-warning"><i class="bi bi-lightning"></i> 电</h6>
+                                <label class="form-label small">新读数（度） <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" name="ElectricMeter" value="@Model.Record?.ElectricMeter" class="form-control" oninput="onReadingInput()">
+                                <div class="form-text" id="hint-electric">原读数：@(Model.Record?.ElectricMeter.ToString("F2") ?? "—")</div>
+                                <div class="upload-ph mt-2" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
+                                    <i class="bi bi-camera"></i>&nbsp;重新上传照片
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 修正原因（必填） -->
+                <div class="card meter-card mt-3">
+                    <div class="card-body">
+                        <label class="form-label">修正原因 <span class="text-danger">*</span></label>
+                        <textarea name="Remark" class="form-control" rows="2" placeholder="请说明修正原因（必填）" required>@Model.Remark</textarea>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="d-flex gap-2 mt-3">
+                    <a href="/Meter" class="btn btn-secondary">取消</a>
+                    <button type="submit" class="btn btn-warning text-white">
+                        <i class="bi bi-check"></i> 保存修正
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右侧：用量变化 -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <strong><i class="bi bi-calculator"></i> 用量变化</strong>
+                    </div>
+                    <div class="card-body">
+                        <div id="usagePreview" class="usage-preview">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>表计</th>
+                                        <th class="text-end">原读数</th>
+                                        <th class="text-end">新读数</th>
+                                        <th class="text-end">变化</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="changeTable">
+                                    <tr>
+                                        <td>冷水</td>
+                                        <td class="text-end">@(Model.Record?.ColdMeter.ToString("F2") ?? "—")</td>
+                                        <td class="text-end" id="new-cold">—</td>
+                                        <td class="text-end" id="diff-cold">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td>热水</td>
+                                        <td class="text-end">@(Model.Record?.HotMeter.ToString("F2") ?? "—")</td>
+                                        <td class="text-end" id="new-hot">—</td>
+                                        <td class="text-end" id="diff-hot">—</td>
+                                    </tr>
+                                    <tr>
+                                        <td>电</td>
+                                        <td class="text-end">@(Model.Record?.ElectricMeter.ToString("F2") ?? "—")</td>
+                                        <td class="text-end" id="new-electric">—</td>
+                                        <td class="text-end" id="diff-electric">—</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

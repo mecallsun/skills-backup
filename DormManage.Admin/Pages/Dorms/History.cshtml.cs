@@ -1,0 +1,120 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using DormManage.Shared.Data;
+using DormManage.Shared.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace DormManage.Admin.Pages.Dorms;
+
+/// <summary>
+/// 宿舍住宿历史页面模型
+/// </summary>
+public class HistoryModel : PageModel
+{
+    private readonly DormDbContext _db;
+
+    public HistoryModel(DormDbContext db)
+    {
+        _db = db;
+    }
+
+    [BindProperty(SupportsGet = true)]
+    public int Id { get; set; }
+
+    /// <summary>
+    /// 宿舍信息
+    /// </summary>
+    public DormInfoDto? DormInfo { get; set; }
+
+    /// <summary>
+    /// 历史记录列表
+    /// </summary>
+    public List<HistoryRecordDto> HistoryRecords { get; set; } = new();
+
+    /// <summary>
+    /// 累计住宿人次
+    /// </summary>
+    public int TotalHistoryCount { get; set; }
+
+    public async Task OnGetAsync()
+    {
+        // 加载宿舍信息
+        var dorm = await _db.Dorms
+            .FirstOrDefaultAsync(d => d.Id == Id);
+
+        if (dorm == null)
+        {
+            TempData["ErrorMessage"] = "宿舍不存在";
+            return RedirectToPage("/Dorms/Index");
+        }
+
+        DormInfo = new DormInfoDto
+        {
+            DormCode = dorm.DormCode,
+            BuildingName = dorm.BuildingName ?? "-",
+            FloorName = dorm.FloorId.ToString(),
+            AddressText = dorm.AddressText ?? "-",
+            Capacity = dorm.Capacity,
+            Gender = dorm.Gender,
+            IsActive = dorm.IsActive
+        };
+
+        // 从 DormBooking 表查询该宿舍的所有办理记录
+        var bookings = await _db.DormBookings
+            .Where(b => b.DormCode == dorm.DormCode)
+            .OrderByDescending(b => b.BookingDate)
+            .ToListAsync();
+
+        TotalHistoryCount = bookings.Count;
+
+        var now = DateOnly.FromDateTime(DateTime.Now);
+        HistoryRecords = bookings.Select(b => new HistoryRecordDto
+        {
+            EmployeeId = b.EmployeeId,
+            EmployeeCode = b.EmployeeCode,
+            EmployeeName = b.EmployeeName,
+            Department = b.Department ?? "-",
+            CheckInDate = b.BookingDate,
+            LeaveDate = b.Type == 2 ? b.BookingDate : (DateOnly?)null,
+            Reason = b.Reason ?? "-",
+            Status = b.Status,
+            IsCheckedOut = b.Type == 2 && b.Status == 3,
+            StayDays = b.Type == 2 && b.Status == 3
+                ? (b.BookingDate - b.BookingDate).Days
+                : !b.IsCheckedOut && b.Status == 2
+                    ? now.DayNumber - b.BookingDate.DayNumber
+                    : 0
+        }).ToList();
+    }
+}
+
+/// <summary>
+/// 宿舍信息数据传输对象
+/// </summary>
+public class DormInfoDto
+{
+    public string DormCode { get; set; } = "";
+    public string BuildingName { get; set; } = "";
+    public string FloorName { get; set; } = "";
+    public string AddressText { get; set; } = "";
+    public int Capacity { get; set; }
+    public int Gender { get; set; }
+    public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// 住宿历史记录数据传输对象
+/// </summary>
+public class HistoryRecordDto
+{
+    public int EmployeeId { get; set; }
+    public string EmployeeCode { get; set; } = "";
+    public string EmployeeName { get; set; } = "";
+    public string Department { get; set; } = "";
+    public DateOnly CheckInDate { get; set; }
+    public DateOnly? LeaveDate { get; set; }
+    public string Reason { get; set; } = "";
+    public int Status { get; set; }
+    public bool IsCheckedOut { get; set; }
+    public int StayDays { get; set; }
+}

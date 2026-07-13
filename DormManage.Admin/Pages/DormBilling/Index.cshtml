@@ -1,0 +1,346 @@
+@page
+@model DormManage.Admin.Pages.DormBilling.IndexModel
+@{
+    ViewData["Title"] = "宿舍账单";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+@section Styles {
+    <style>
+        .filter-row { flex-wrap: nowrap; }
+        .filter-item { flex-shrink: 0; }
+        .filter-item-stats { min-width: 90px; max-width: 140px; flex: 1 1 auto; }
+        .filter-btn {
+            min-width: 100px !important;
+            max-width: 100px !important;
+            width: 100px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+        }
+        .filter-btn i { font-size: 14px !important; }
+        @media (max-width: 768px) {
+            .filter-row { flex-wrap: wrap !important; }
+            .filter-item { flex: 1 1 45% !important; min-width: 140px !important; }
+        }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-building-add"></i> 宿舍账单
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+        </h2>
+        <div class="btn-group" role="group">
+            <button class="btn btn-success" onclick="generate(false)">
+                <i class="bi bi-bar-chart"></i> 生成
+            </button>
+            <button class="btn btn-info text-white" onclick="generate(true)">
+                <i class="bi bi-arrow-repeat"></i> 重生成
+            </button>
+            <a href="#" class="btn btn-outline-success" onclick="exportBilling(event)">
+                <i class="bi bi-file-earmark-excel"></i> 导出Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域 -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">计费月份</label>
+                    <input type="month" name="BillingMonth" value="@Model.BillingMonth" class="form-control">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">房号</label>
+                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="如 D-001">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼栋</label>
+                    <select name="BuildingId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var building in Model.Buildings)
+                        {
+                            <option value="@building.Id" selected="@(Model.BuildingId == building.Id)">
+                                @building.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼层</label>
+                    <select name="FloorId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var floor in Model.Floors)
+                        {
+                            <option value="@floor.Id" selected="@(Model.FloorId == floor.Id)">
+                                @floor.FloorNo
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-stats">
+                    <label class="form-label mb-1">账单合计</label>
+                    <div class="form-control text-success fw-bold" style="min-width: 120px; background: #f8f9fa;">
+                        ¥@Model.Result?.Items.Sum(i => i.TotalAmount).ToString("N2")
+                    </div>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/DormBilling" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>房号</th>
+                            <th>楼栋</th>
+                            <th>楼层</th>
+                            <th class="text-end">冷水用量</th>
+                            <th class="text-end">热水用量</th>
+                            <th class="text-end">电用量</th>
+                            <th class="text-end">冷水费</th>
+                            <th class="text-end">热水费</th>
+                            <th class="text-end">电费</th>
+                            <th class="text-end">合计</th>
+                            <th width="80" class="text-center">在住</th>
+                            <th width="80" class="text-center">状态</th>
+                            <th width="100" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result != null && Model.Result.Items.Any())
+                        {
+                            @foreach (var item in Model.Result.Items)
+                            {
+                                <tr>
+                                    <td class="text-center">@(((PageIndex - 1) * PageSize) + item.RowIndex)</td>
+                                    <td><strong>@item.DormCode</strong></td>
+                                    <td>@item.BuildingName</td>
+                                    <td>@item.FloorName</td>
+                                    <td class="text-end">@item.ColdUsage.ToString("F2")</td>
+                                    <td class="text-end">@item.HotUsage.ToString("F2")</td>
+                                    <td class="text-end">@item.ElectricUsage.ToString("F2")</td>
+                                    <td class="text-end">¥@item.ColdAmount.ToString("F2")</td>
+                                    <td class="text-end">¥@item.HotAmount.ToString("F2")</td>
+                                    <td class="text-end">¥@item.ElectricAmount.ToString("F2")</td>
+                                    <td class="text-end fw-bold text-primary">¥@item.TotalAmount.ToString("F2")</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">@item.ResidentCount/@item.MaxCapacity</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.IsPublished)
+                                        {
+                                            <span class="badge bg-success">已发布</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">未发布</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="showDetail(@item.DormId, '@item.ReadMonth')">
+                                            <i class="bi bi-eye"></i> 详情
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="14" class="text-center text-muted py-4">暂无数据，请点击"生成"按钮创建账单</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            @if (totalPages > 1)
+            {
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="page-info">
+                            共 <strong>@totalCount</strong> 条记录，
+                            第 <strong>@currentPage</strong> / @totalPages 页
+                            @if (Model.Result?.Items.Any() == true)
+                            {
+                                <span>（显示 @startIndex - @Math.Min(startIndex + Model.Result.Items.Count - 1, totalCount)）</span>
+                            }
+                        </div>
+                        <nav>
+                            <ul class="pagination mb-0">
+                                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?@GetQueryString(1)">首页</a>
+                                </li>
+                                <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?@GetQueryString(currentPage - 1)">上一页</a>
+                                </li>
+                                @for (int i = Math.Max(1, currentPage - 2); i <= Math.Min(totalPages, currentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == currentPage ? "active" : "")">
+                                        <a class="page-link" href="?@GetQueryString(i)">@i</a>
+                                    </li>
+                                }
+                                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?@GetQueryString(currentPage + 1)">下一页</a>
+                                </li>
+                                <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?@GetQueryString(totalPages)">末页</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 宿舍账单详情弹窗 -->
+<div class="modal fade" id="dormDetailModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 1100px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-list-ul"></i> 宿舍账单明细 — <span id="modalDormCode" class="text-primary"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border mb-3">
+                    <div class="row text-center">
+                        <div class="col-3">
+                            <div class="small text-muted">宿舍</div>
+                            <div class="fw-bold" id="modalDormCode2">-</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">在住人数</div>
+                            <div class="fw-bold" id="modalResidentCapacity">
+                                <span id="modalResidentCount">-</span>/<span id="modalCapacity">-</span>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">计费月份</div>
+                            <div class="fw-bold" id="modalMonth">-</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="small text-muted">合计金额</div>
+                            <div class="fw-bold text-primary fs-5" id="modalTotal">-</div>
+                        </div>
+                    </div>
+                </div>
+                <h6 class="mb-2"><i class="bi bi-bar-chart"></i> 费用组成</h6>
+                <table class="table table-sm table-bordered mb-4">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center">冷水费</th>
+                            <th class="text-center">热水费</th>
+                            <th class="text-center">电费</th>
+                            <th class="text-center">合计</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="text-center">
+                            <td><span id="modalColdAmount">-</span></td>
+                            <td><span id="modalHotAmount">-</span></td>
+                            <td><span id="modalElecAmount">-</span></td>
+                            <td class="fw-bold text-primary" id="modalTotalAmount">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <h6 class="mb-2"><i class="bi bi-people"></i> 员工分摊明细</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>工号</th>
+                                <th>姓名</th>
+                                <th>部门</th>
+                                <th>员工类型</th>
+                                <th>考勤班次</th>
+                                <th>入住天数</th>
+                                <th class="text-end">冷水费</th>
+                                <th class="text-end">热水费</th>
+                                <th class="text-end">电费</th>
+                                <th class="text-end">分摊合计</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalEmployeeBills">
+                            <tr><td colspan="10" class="text-center text-muted py-3">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showDetail(dormId, month) {
+            // TODO: 实际项目中应通过 AJAX 加载详情数据
+            document.getElementById('modalDormCode').textContent = 'D-' + dormId.toString().padStart('3', '0');
+            document.getElementById('modalDormCode2').textContent = 'D-' + dormId.toString().padStart('3', '0');
+            document.getElementById('modalMonth').textContent = month;
+            document.getElementById('modalResidentCount').textContent = '3';
+            document.getElementById('modalCapacity').textContent = '4';
+            document.getElementById('modalTotal').textContent = '¥1,234.56';
+            document.getElementById('modalColdAmount').textContent = '¥234.56';
+            document.getElementById('modalHotAmount').textContent = '¥345.67';
+            document.getElementById('modalElecAmount').textContent = '¥654.33';
+            document.getElementById('modalTotalAmount').textContent = '¥1,234.56';
+
+            var modal = new bootstrap.Modal(document.getElementById('dormDetailModal'));
+            modal.show();
+        }
+
+        function generate(regenerate) {
+            var msg = regenerate ? '重新生成账单中...' : '生成账单中...';
+            alert(msg + '\n（实际将调用 POST /api/v1/dorm-bills/generate）');
+            location.reload();
+        }
+
+        function exportBilling(e) {
+            e.preventDefault();
+            alert('导出宿舍账单 Excel 文件\n（实际将下载 宿舍费用清单_' + '@Model.BillingMonth' + '.xlsx）');
+        }
+    </script>
+}

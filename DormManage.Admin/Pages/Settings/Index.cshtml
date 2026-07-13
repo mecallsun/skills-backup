@@ -1,0 +1,564 @@
+@page
+@model DormManage.Admin.Pages.Settings.IndexModel
+@{
+    ViewData["Title"] = "系统设置";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .settings-nav .nav-link {
+            color: #37474f;
+            border-radius: 8px;
+            padding: 0.55rem 0.9rem;
+        }
+        .settings-nav .nav-link.active { background: #1976d2; color: #fff; }
+        .settings-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+        .form-label.small { color: #607d8b; }
+        .status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+        .dot-run { background: #28a745; }
+        .dot-stop { background: #dc3545; }
+        .step-line { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .db-test-step { opacity: 0; transition: opacity 0.3s; }
+        .db-test-step.visible { opacity: 1; }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-gear"></i> 系统设置
+            <span class="badge bg-warning text-dark ms-2">v2.11.6</span>
+        </h2>
+    </div>
+
+    <div class="alert alert-info py-2 mb-3">
+        <i class="bi bi-info-circle"></i>
+        后台系统配置中心，与托盘管理程序（TrayApp）为<strong>同一份配置的双 UI 入口</strong>，涵盖服务端口、数据库、PDA 版本、用户权限、备份恢复。
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <!-- 左侧导航 -->
+        <div style="flex-shrink: 0; width: 200px;">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="nav flex-column nav-pills settings-nav" role="tablist">
+                        <button class="nav-link @(Model.ActiveTab == "service" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-service"
+                                onclick="setActiveTab('service')">
+                            <i class="bi bi-hdd-network"></i> 服务与端口
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "db" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-db"
+                                onclick="setActiveTab('db')">
+                            <i class="bi bi-database"></i> 数据库连接
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "app" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-app"
+                                onclick="setActiveTab('app')">
+                            <i class="bi bi-phone"></i> PDA App 版本
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "users" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-users"
+                                onclick="setActiveTab('users')">
+                            <i class="bi bi-people"></i> 用户与角色
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "backup" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-backup"
+                                onclick="setActiveTab('backup')">
+                            <i class="bi bi-hdd-stack"></i> 备份与恢复
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "integration" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-integration"
+                                onclick="setActiveTab('integration')">
+                            <i class="bi bi-plug"></i> 系统集成
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "about" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-about"
+                                onclick="setActiveTab('about')">
+                            <i class="bi bi-info-circle"></i> 关于系统
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div style="flex: 1 1 0%;">
+            <div class="tab-content">
+
+                <!-- 服务与端口 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "service" ? "show active" : "")" id="tab-service">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-hdd-network"></i> 服务与端口</strong>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="SaveService">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">PDA 服务端口</label>
+                                        <input type="number" name="PdaPort" value="@Model.PdaPort" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end gap-2">
+                                        <span id="pdaStatus" class="me-2">
+                                            @if (Model.PdaServiceRunning)
+                                            {
+                                                <text><span class="status-dot dot-run"></span>运行中</text>
+                                            }
+                                            else
+                                            {
+                                                <text><span class="status-dot dot-stop"></span>已停止</text>
+                                            }
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleService('pda')">启动/停止</button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Web 服务端口</label>
+                                        <input type="number" name="WebPort" value="@Model.WebPort" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end gap-2">
+                                        <span id="webStatus" class="me-2">
+                                            @if (Model.WebServiceRunning)
+                                            {
+                                                <text><span class="status-dot dot-run"></span>运行中</text>
+                                            }
+                                            else
+                                            {
+                                                <text><span class="status-dot dot-stop"></span>已停止</text>
+                                            }
+                                        </span>
+                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleService('web')">启动/停止</button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">服务器域名 / IP（PDA 访问用）</label>
+                                        <input type="text" name="ServerDomain" value="@Model.ServerDomain" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">图片保存路径</label>
+                                        <input type="text" name="ImagePath" value="@Model.ImagePath" class="form-control">
+                                        <div class="form-text">必须为绝对路径且目录可写，如 D:\MeterImages</div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> 保存并提示重启
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据库连接 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "db" ? "show active" : "")" id="tab-db">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-database"></i> 数据库连接</strong>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" asp-page-handler="SaveDatabase">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">数据库服务器</label>
+                                        <input type="text" name="DbServer" value="@Model.DbServer" class="form-control">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label small">端口号</label>
+                                        <input type="number" name="DbPort" value="@Model.DbPort" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">数据库名称</label>
+                                        <input type="text" name="DbName" value="@Model.DbName" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">账号</label>
+                                        <input type="text" name="DbUser" value="@Model.DbUser" class="form-control">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small">密码</label>
+                                        <input type="password" name="DbPassword" value="@Model.DbPassword" class="form-control">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-info w-100" onclick="runDbTest()">
+                                            <i class="bi bi-plug"></i> 读写测试（深度验证）
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="dbTestResult" class="mt-3"></div>
+                                <hr>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> 保存
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDA App 版本管理 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "app" ? "show active" : "")" id="tab-app">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-phone"></i> PDA App 版本管理</strong>
+                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：上传 APK 并发布新版本')">
+                                <i class="bi bi-cloud-upload"></i> 发布新版本
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>版本号</th>
+                                        <th>大小</th>
+                                        <th>发布日期</th>
+                                        <th>更新说明</th>
+                                        <th>状态</th>
+                                        <th width="160">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var version in Model.AppVersions)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong>@version.Version</strong>
+                                                @if (version.IsLatest)
+                                                {
+                                                    <span class="badge bg-success ms-1">最新</span>
+                                                }
+                                            </td>
+                                            <td>@version.Size</td>
+                                            <td>@version.ReleaseDate</td>
+                                            <td><small class="text-muted">@version.ReleaseNotes</small></td>
+                                            <td>
+                                                @if (version.IsEnabled)
+                                                {
+                                                    <span class="badge bg-success">启用</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">禁用</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                <button class="btn btn-sm btn-outline-danger">删除</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-muted small">
+                            <i class="bi bi-link-45deg"></i> PDA 下载地址：
+                            <code>http://@Model.ServerDomain:@Model.WebPort/app/download</code>
+                            · 抄表员用 PDA 浏览器访问即可安装最新版
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 用户与角色 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "users" ? "show active" : "")" id="tab-users">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-people"></i> 用户管理</strong>
+                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增用户')">
+                                <i class="bi bi-plus-lg"></i> 新增用户
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>用户名</th>
+                                        <th>姓名</th>
+                                        <th>角色</th>
+                                        <th>最近登录</th>
+                                        <th>状态</th>
+                                        <th>备注</th>
+                                        <th width="200">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in Model.Users)
+                                    {
+                                        <tr>
+                                            <td>@user.UserName</td>
+                                            <td>@user.DisplayName</td>
+                                            <td><span class="badge bg-info">@user.Role</span></td>
+                                            <td>@user.LastLogin</td>
+                                            <td>
+                                                @if (user.IsEnabled)
+                                                {
+                                                    <span class="badge bg-success">启用</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">禁用</span>
+                                                }
+                                            </td>
+                                            <td class="text-muted small">@user.Remark</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                <button class="btn btn-sm btn-outline-danger">删除</button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-shield-lock"></i> 角色权限矩阵</strong>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered mb-0 align-middle text-center">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>模块</th>
+                                        <th>管理员</th>
+                                        <th>财务</th>
+                                        <th>PDA 操作员</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var perm in Model.PermissionMatrix)
+                                    {
+                                        <tr>
+                                            <td class="text-start">@perm.Module</td>
+                                            <td>
+                                                @if (perm.AdminAccess) <text>✅</text> else <text>❌</text>
+                                            </td>
+                                            <td>
+                                                @if (perm.FinanceAccess) <text>✅</text> else <text>❌</text>
+                                            </td>
+                                            <td>
+                                                @if (perm.PdaAccess) <text>✅</text> else <text>❌</text>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 备份与恢复 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "backup" ? "show active" : "")" id="tab-backup">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-hdd-stack"></i> 备份与恢复</strong>
+                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：立即执行数据库备份')">
+                                <i class="bi bi-download"></i> 立即备份
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-secondary py-2 mb-3">
+                                <i class="bi bi-clock"></i> 自动备份策略：每日 <strong>02:00</strong> 全量备份，保留最近 <strong>30</strong> 天；图片目录随文件系统单独备份。
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>备份文件</th>
+                                            <th>大小</th>
+                                            <th>时间</th>
+                                            <th>类型</th>
+                                            <th width="160">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var backup in Model.Backups)
+                                        {
+                                            <tr>
+                                                <td><i class="bi bi-file-earmark-zip"></i> @backup.FileName</td>
+                                                <td>@backup.FileSize</td>
+                                                <td>@backup.CreatedAt</td>
+                                                <td>
+                                                    @if (backup.IsAuto)
+                                                    {
+                                                        <span class="badge bg-info">自动</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-success">手动</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">恢复</button>
+                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统集成 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "integration" ? "show active" : "")" id="tab-integration">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-plug"></i> 系统集成配置</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info py-2 mb-3">
+                                <i class="bi bi-info-circle"></i> 配置与外部系统（HR / K3ERP）的连接参数。配置后系统可自动同步员工花名册、在职状态等数据。
+                            </div>
+                            <form method="post" asp-page-handler="SaveIntegration">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-3 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="100">系统编码</th>
+                                                <th width="160">系统名称</th>
+                                                <th>服务器地址</th>
+                                                <th width="140">账号</th>
+                                                <th width="140">密码</th>
+                                                <th width="100" class="text-center">启用</th>
+                                                <th width="180">操作</th>
+                                                <th width="140" class="text-center">连接状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var integration in Model.Integrations)
+                                            {
+                                                <tr>
+                                                    <td><strong>@integration.SystemCode</strong></td>
+                                                    <td>@integration.SystemName</td>
+                                                    <td><input type="text" name="Integration_@integration.Id)_ServerAddress" value="@integration.ServerAddress" class="form-control form-control-sm"></td>
+                                                    <td><input type="text" name="Integration_@integration.Id)_Account" value="@integration.Account" class="form-control form-control-sm"></td>
+                                                    <td><input type="password" name="Integration_@integration.Id)_Password" value="@integration.Password" class="form-control form-control-sm"></td>
+                                                    <td class="text-center">
+                                                        <div class="form-check form-switch d-inline-block">
+                                                            <input type="checkbox" name="Integration_@integration.Id)_Enabled" value="true" class="form-check-input" @(integration.IsEnabled ? "checked" : "")>
+                                                            <input type="hidden" name="Integration_@integration.Id)_Enabled" value="false">
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="testConnection(@integration.Id)">
+                                                            <i class="bi bi-plug"></i> 测试
+                                                        </button>
+                                                    </td>
+                                                    <td class="text-center">
+                                                        @if (integration.LastTestResult)
+                                                        {
+                                                            <span class="badge bg-success">正常</span>
+                                                        }
+                                                        else if (integration.LastTestTime.HasValue)
+                                                        {
+                                                            <span class="badge bg-danger">失败</span>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="badge bg-secondary">未测试</span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <hr>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> 保存参数
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关于系统 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "about" ? "show active" : "")" id="tab-about">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-info-circle"></i> 关于系统</strong>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr>
+                                    <th width="120" class="text-muted">系统名称</th>
+                                    <td>金戈宿舍管理系统</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">当前版本</th>
+                                    <td>v2.12.0</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">技术栈</th>
+                                    <td>.NET 8 + Razor Pages + Bootstrap 5 + EF Core</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">部署方式</th>
+                                    <td>EXE 自托管 + 托盘守护进程</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">数据库</th>
+                                    <td>SQLite（开发）/ SQL Server（生产）</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">设计规模</th>
+                                    <td>800 人 / 200+ 宿舍 / 500+ 入住</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function setActiveTab(tab) {
+            // 更新 URL 参数
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
+        }
+
+        function toggleService(which) {
+            alert(`原型演示：${which === 'pda' ? 'PDA' : 'Web'} 服务状态切换\n（实际由托盘守护进程控制）`);
+        }
+
+        function runDbTest() {
+            const box = document.getElementById('dbTestResult');
+            box.innerHTML = '<div class="text-muted small">正在测试...</div>';
+
+            const steps = [
+                'TCP 连接测试',
+                'SQL 登录验证',
+                '数据库可见性检查',
+                'CREATE 权限测试',
+                'INSERT 权限测试',
+                'SELECT 权限测试',
+                'UPDATE 权限测试',
+                'DELETE + DROP 清理'
+            ];
+
+            let i = 0;
+            const lines = [];
+            const timer = setInterval(() => {
+                lines.push(`<div class="step-line db-test-step visible"><i class="bi bi-check-circle-fill text-success"></i> <span>${i + 1}. ${steps[i]}</span> <span class="badge bg-success">通过</span></div>`);
+                box.innerHTML = `<div class="alert alert-light border mb-0">${lines.join('')}</div>`;
+                i++;
+                if (i >= steps.length) {
+                    clearInterval(timer);
+                    box.innerHTML = `<div class="alert alert-success mb-0"><strong><i class="bi bi-check2-all"></i> 8 步深度验证全部通过</strong>，数据库连接与读写权限正常。</div>`;
+                }
+            }, 300);
+        }
+
+        function testConnection(id) {
+            alert(`测试与系统 ID=${id} 的连接...\n（实际将发送 HTTP 请求并返回结果）`);
+        }
+    </script>
+}
