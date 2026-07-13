@@ -1,38 +1,39 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>办理退房 — v2.11 原型</title>
+    <title>办理退房 — 金戈宿舍管理系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
-    <style>
-        :root { --primary: #1976d2; --success: #2e7d32; --warning: #e65100; --danger: #c62828; --info: #00838f; }
-        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; margin: 0; }
-
-        /* 导航栏样式 */
-        
-        .menu-bar { background: #fff; border-bottom: 1px solid #e8eaed; box-shadow: 0 2px 6px rgba(0,0,0,0.03); padding: 0 1.5rem; display: flex; align-items: stretch; overflow-x: auto; scrollbar-width: none; }
-        .menu-bar::-webkit-scrollbar { display: none; }
-        .menu-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.85rem 1.15rem; font-size: 0.9rem; font-weight: 500; color: #5f6368; text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.15s ease; }
-        .menu-item:hover { color: var(--primary); background: #f0f7ff; }
-        .menu-item.active { color: var(--primary); border-bottom-color: var(--primary); }
-        .cat-home:hover, .cat-home.active { color: var(--primary); }
-        .cat-core:hover, .cat-core.active { color: var(--primary); }
-        .cat-billing:hover, .cat-billing.active { color: var(--success); }
-        .cat-meter:hover, .cat-meter.active { color: var(--info); }
-        .cat-settings:hover, .cat-settings.active { color: #6c757d; }
-        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0; }
-
-        /* 页面样式 */
-        .step-card { border-left: 4px solid #1976d2; }
-        .suggestion-list { position: absolute; z-index: 100; background: white; border: 1px solid #dee2e6; border-radius: 4px; max-height: 240px; overflow-y: auto; width: 100%; }
-        .suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
-        .suggestion-item:hover { background-color: #f0f7ff; }
-    </style>
     <link rel="stylesheet" href="../_shared/layout-tab.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page); }
+        /* v2.12.28 紧凑一屏完整展示：去掉规范信息，减小行间距 */
+        .form-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; }
+        .form-card-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid #eee; background: #fafbfc; display: flex; align-items: center; gap: 0.5rem; }
+        .form-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1976d2; }
+        .form-card-body { padding: 1rem 1.25rem; }
+        .form-section { margin-bottom: 0.6rem; }
+        .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+        .form-field { margin-bottom: 0.5rem; }
+        .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        .form-label .required { color: #dc3545; margin-left: 2px; }
+        .form-control, .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+        .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: 0.75rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; }
+        .form-actions .btn { min-width: 100px; }
+        /* 员工模糊搜索建议 */
+        .suggestion-list { position: absolute; z-index: 100; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .suggestion-item { padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .suggestion-item:hover { background-color: #f0f7ff; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .emp-info-card { background: #f8f9fa; border-radius: 6px; padding: 0.5rem 0.75rem; margin-top: 0.5rem; font-size: 0.85rem; }
+        .emp-info-item { display: inline-block; margin-right: 1.25rem; }
+        .emp-info-item .label { color: #6c757d; margin-right: 0.25rem; }
+        .emp-info-item .value { font-weight: 500; color: #212529; }
+    </style>
 </head>
 <body>
-        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <!-- ========== Tier 1: 顶部品牌栏 ========== -->
     <div class="top-bar">
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
@@ -52,57 +53,61 @@
         </div>
     </div>
 
-    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <!-- ========== Tier 2: Tab 页签栏 ========== -->
     <div id="tab-bar"></div>
 
-    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <!-- ========== Tier 3: 页面内容区 ========== -->
     <div class="page-content">
+        <!-- 页头 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-box-arrow-right"></i>办理退房
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="index.html">办理登记</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">办理退房</li>
+                </ol>
+            </nav>
+        </div>
 
-    <h2 class="mb-3"><i class="bi bi-box-arrow-right"></i> 办理退房</h2>
+        <!-- 表单卡片 -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-clipboard-minus text-warning"></i>
+                <h3>退房信息录入</h3>
+            </div>
 
-        <div class="row">
-            <div class="filter-item">
-                <!-- 步骤 1：选择员工 -->
-                <div class="card step-card mb-3">
-                    <div class="card-body">
-                        <h5 class="text-primary"><span class="badge bg-primary me-2">1</span>选择员工（仅显示当前在宿员工）</h5>
-                        <div class="position-relative mb-3">
-                            <input type="text" id="empKeyword" class="form-control" placeholder="输入姓名/工号/手机号..." oninput="onEmpSearch()" onfocus="showSuggestions()">
+            <form onsubmit="event.preventDefault(); submitForm();">
+                <div class="form-card-body">
+
+                    <!-- 区块 1：员工选择（姓名模糊筛选，仅显示在宿员工） -->
+                    <div class="form-section">
+                        <div class="form-section-title">员工选择</div>
+                        <div class="position-relative">
+                            <input type="text" id="empKeyword" class="form-control" placeholder="姓名（模糊筛选，仅显示在宿员工）" oninput="onEmpSearch()" onfocus="showSuggestions()" autocomplete="off">
                             <div id="empSuggestions" class="suggestion-list" style="display:none;"></div>
                         </div>
-                        <div class="row g-2" id="empInfo" style="display:none;">
-                            <div class="filter-item"><label class="form-label small text-muted">工号</label><div id="empCode" class="fw-bold"></div></div>
-                            <div class="filter-item"><label class="form-label small text-muted">姓名</label><div id="empName" class="fw-bold"></div></div>
-                            <div class="filter-item"><label class="form-label small text-muted">手机号</label><div id="empPhone"></div></div>
-                            <div class="filter-item"><label class="form-label small text-muted">部门</label><div id="empDept"></div></div>
-                            <div class="filter-item"><label class="form-label small text-muted">员工类型</label><div id="empType"></div></div>
-                            <div class="filter-item"><label class="form-label small text-muted">考勤班次</label><div id="empAtt"></div></div>
+                        <div class="emp-info-card" id="empInfo" style="display:none;">
+                            <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
+                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
+                            <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                            <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
+                            <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
+                            <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
                         </div>
                     </div>
-                </div>
 
-                <!-- 步骤 2：选择退房记录 -->
-                <div class="card step-card mb-3" id="stepRecord" style="display:none;">
-                    <div class="card-body">
-                        <h5 class="text-primary"><span class="badge bg-primary me-2">2</span>选择退房记录（在宿记录）</h5>
-                        <select id="recordSelect" class="form-select">
-                            <option value="">请选择</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 步骤 3：选择退房日期 -->
-                <div class="card step-card mb-3" id="stepDate" style="display:none;">
-                    <div class="card-body">
-                        <h5 class="text-primary"><span class="badge bg-primary me-2">3</span>退房日期</h5>
+                    <!-- 区块 2：退房日期 + 原因 + 登记人 -->
+                    <div class="form-section">
+                        <div class="form-section-title">退房信息</div>
                         <div class="row g-2">
-                            <div class="filter-item">
-                                <label class="form-label small">退房日期 <span class="text-danger">*</span></label>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">退房日期<span class="required">*</span></label>
                                 <input type="date" id="checkoutDate" class="form-control" onchange="onDateChange()">
-                                <small class="text-muted">默认 = 今天</small>
                             </div>
-                            <div class="filter-item">
-                                <label class="form-label small">原因</label>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">原因</label>
                                 <select id="reason" class="form-select">
                                     <option value="离职">离职</option>
                                     <option value="调岗">调岗</option>
@@ -110,46 +115,34 @@
                                     <option value="其他">其他</option>
                                 </select>
                             </div>
-                        </div>
-                        <div id="dateHint" class="alert alert-info mt-2 small" style="display:none;"></div>
-                    </div>
-                </div>
-
-                <!-- 步骤 4：自动填充 -->
-                <div class="card step-card mb-3" id="stepAuto" style="display:none;">
-                    <div class="card-body">
-                        <h5 class="text-primary"><span class="badge bg-primary me-2">4</span>系统自动填充</h5>
-                        <div class="row g-2">
-                            <div class="filter-item"><label class="form-label small text-muted">登记日期</label><input type="text" id="regDate" class="form-control" disabled></div>
-                            <div class="filter-item"><label class="form-label small text-muted">登记人</label><input type="text" id="registrar" class="form-control" disabled></div>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">登记人</label>
+                                <input type="text" id="registrar" class="form-control" disabled>
+                            </div>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">校验提示</label>
+                                <div id="dateHint" class="form-control" style="background: #f8f9fa; font-size: 0.85rem;">请选择员工</div>
+                            </div>
                         </div>
                     </div>
+
                 </div>
 
-                <div class="d-flex gap-2">
-                    <a href="index.html" class="btn btn-secondary">取消</a>
-                    <button type="button" class="btn btn-warning" onclick="submitForm()"><i class="bi bi-check"></i> 提交退房</button>
+                <!-- 操作按钮区 -->
+                <div class="form-actions">
+                    <a href="index.html" class="btn btn-outline-secondary"><i class="bi bi-x"></i> 取消</a>
+                    <button type="submit" class="btn btn-warning text-white"><i class="bi bi-check-lg"></i> 提交退房</button>
                 </div>
-            </div>
-
-            <div class="filter-item">
-                <div class="card">
-                    <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 一进一出校验</strong></div>
-                    <div class="card-body" id="validationPanel">
-                        <p class="text-muted small">请先选择员工，校验提示将自动显示</p>
-                    </div>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../mock-data.js"></script>
+    <script src="../_shared/storage-keys.js"></script>
+    <script src="../_shared/tab-bar.js"></script>
     <script>
-        // 高亮办理登记菜单
-        document.querySelectorAll('.menu-item').forEach(item => { if (item.getAttribute('href').includes('booking/')) item.classList.add('active'); });
-
-        // v2.11.2 考勤班次 Badge
+        // 考勤班次 Badge
         const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
         const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
         function attendanceBadge(t) {
@@ -159,29 +152,26 @@
         let selectedEmp = null, activeRecord = null;
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('checkoutDate').value = today;
-        document.getElementById('regDate').value = today + ' ' + new Date().toTimeString().slice(0, 5);
         document.getElementById('registrar').value = 'admin';
 
+        // v2.12.28 姓名模糊筛选（仅显示当前在宿员工）
         function onEmpSearch() {
             const kw = document.getElementById('empKeyword').value.trim();
-            const list = activeBookingsOf.map = [];
             // 仅显示当前在宿员工
-            const allActive = BOOKINGS.filter(b => b.status === 2);
+            const allActive = (typeof BOOKINGS !== 'undefined')
+                ? BOOKINGS.filter(b => b.status === 2 && b.type === 1)
+                : [];
             const empIds = [...new Set(allActive.map(b => b.employeeId))];
             let emps = empIds.map(id => findEmployee(id)).filter(Boolean);
             if (kw) {
-                const k = kw.toLowerCase();
-                emps = emps.filter(e =>
-                    e.realName.toLowerCase().includes(k) ||
-                    e.employeeCode.toLowerCase().includes(k) ||
-                    (e.phone || '').includes(k));
+                emps = emps.filter(e => (e.realName || '').includes(kw));
             }
             const sug = document.getElementById('empSuggestions');
             if (emps.length === 0) { sug.style.display = 'none'; return; }
             sug.innerHTML = emps.slice(0, 10).map(e => `
                 <div class="suggestion-item" onclick='selectEmp(${JSON.stringify(e)})'>
                     <strong>${e.realName}</strong>
-                    <small class="text-muted ms-2">${e.employeeCode} | ${e.department} | ${e.phone || ''}</small>
+                    <small class="text-muted ms-2">${e.dormCode || '-'} | ${e.employeeCode} | ${e.department || '-'}</small>
                 </div>`).join('');
             sug.style.display = 'block';
         }
@@ -195,44 +185,33 @@
 
         function selectEmp(emp) {
             selectedEmp = emp;
-            document.getElementById('empKeyword').value = `${emp.realName}（${emp.employeeCode}）`;
+            document.getElementById('empKeyword').value = emp.realName;
             document.getElementById('empSuggestions').style.display = 'none';
-            document.getElementById('empInfo').style.display = 'flex';
+            document.getElementById('empInfo').style.display = 'block';
             document.getElementById('empCode').textContent = emp.employeeCode;
             document.getElementById('empName').textContent = emp.realName;
             document.getElementById('empPhone').textContent = emp.phone || '-';
-            // v2.11.7 BUG 修复：员工类型支持 FK（employeeTypeId）和字符串双格式
+            document.getElementById('empDept').textContent = emp.department || '-';
+
             var empTypeName = (emp.employeeTypeId != null)
                 ? (EMPLOYEE_TYPES.find(function(t){return t.id === emp.employeeTypeId;}) || {}).name
                 : (emp.employeeType || '-');
             document.getElementById('empType').textContent = empTypeName;
-            // v2.11.7 BUG 修复：考勤班次支持 FK（attendanceTypeId）和字符串双格式
+
             var attCode = (emp.attendanceTypeId != null)
                 ? (ATTENDANCE_TYPES.find(function(t){return t.id === emp.attendanceTypeId;}) || {}).code
                 : (emp.attendanceType || 'DEFAULT');
             document.getElementById('empAtt').innerHTML = attendanceBadge(attCode);
 
-            // 列出在宿记录
-            const actives = BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2 && b.type === 1);
+            // 当前在宿记录（用于校验）
+            const actives = (typeof BOOKINGS !== 'undefined')
+                ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2 && b.type === 1)
+                : [];
             if (actives.length === 0) {
                 alert(`${emp.realName} 当前未在宿`);
-                document.getElementById('stepRecord').style.display = 'none';
-                document.getElementById('stepDate').style.display = 'none';
-                document.getElementById('stepAuto').style.display = 'none';
                 return;
             }
-            const sel = document.getElementById('recordSelect');
-            sel.innerHTML = '<option value="">请选择</option>' + actives.map(b =>
-                `<option value="${b.id}">${b.dormCode}（${b.bookingDate} 入住）</option>`
-            ).join('');
-            document.getElementById('stepRecord').style.display = 'block';
-            document.getElementById('stepDate').style.display = 'block';
-            document.getElementById('stepAuto').style.display = 'block';
-
-            // 默认选中第一条
-            sel.value = actives[0].id;
             activeRecord = actives[0];
-
             renderValidation();
         }
 
@@ -241,42 +220,34 @@
         function renderValidation() {
             if (!selectedEmp || !activeRecord) return;
             const date = document.getElementById('checkoutDate').value;
-            // 找下一次预约入住
-            const nextCheckIn = BOOKINGS
-                .filter(b => b.employeeId === selectedEmp.id && b.type === 1 && b.status === 1 && b.bookingDate > activeRecord.bookingDate)
-                .sort((a, b) => a.bookingDate.localeCompare(b.bookingDate))[0];
-            let hint = '';
+            const nextCheckIn = (typeof BOOKINGS !== 'undefined')
+                ? BOOKINGS.filter(b => b.employeeId === selectedEmp.id && b.type === 1 && b.status === 1 && b.bookingDate > activeRecord.bookingDate)
+                          .sort((a, b) => a.bookingDate.localeCompare(b.bookingDate))[0]
+                : null;
+            let html = '';
             if (date < activeRecord.bookingDate) {
-                hint = `<span class="text-danger">⚠️ 退房日期不能早于入住日期 ${activeRecord.bookingDate}</span>`;
+                html = `<span class="text-danger">退房日期不能早于入住 ${activeRecord.bookingDate}</span>`;
             } else if (nextCheckIn && date >= nextCheckIn.bookingDate) {
-                hint = `<span class="text-danger">⚠️ 退房日期不能晚于下次入住 ${nextCheckIn.bookingDate}</span>`;
+                html = `<span class="text-danger">退房日期不能晚于下次入住 ${nextCheckIn.bookingDate}</span>`;
             } else {
-                hint = `<span class="text-success">✓ 退房日期 ${date} 校验通过</span>`;
+                html = `<span class="text-success">✓ 退房日期 ${date} 校验通过（房间 ${activeRecord.dormCode}）</span>`;
             }
-            document.getElementById('dateHint').innerHTML = hint;
-            document.getElementById('dateHint').style.display = 'block';
+            document.getElementById('dateHint').innerHTML = html;
         }
-
-        document.getElementById('recordSelect')?.addEventListener('change', e => {
-            activeRecord = BOOKINGS.find(b => b.id == e.target.value);
-            renderValidation();
-        });
 
         function submitForm() {
             if (!selectedEmp || !activeRecord) { alert('请先选择员工'); return; }
             const date = document.getElementById('checkoutDate').value;
             const reason = document.getElementById('reason').value;
             if (date < activeRecord.bookingDate) { alert('退房日期不能早于入住日期'); return; }
-            alert(`✓ 原型演示：退房已办理\n员工：${selectedEmp.realName}\n房间：${activeRecord.dormCode}\n退房日期：${date}\n原因：${reason}\n（实际将 POST /api/v1/bookings/${activeRecord.id}/check-out）`);
+            alert(`✓ 原型演示：退房已办理\n员工：${selectedEmp.realName}\n房间：${activeRecord.dormCode}\n退房日期：${date}\n原因：${reason}`);
             location.href = 'index.html';
         }
-    </script>
-    <script src="../_shared/storage-keys.js"></script>
-<script src="../_shared/tab-bar.js"></script>
-    <script>
 
         document.addEventListener('DOMContentLoaded', function() {
-            mountTabBar({ basePath: '..', currentUrl: 'booking/check-out.html' });
+            if (typeof mountTabBar === 'function') {
+                mountTabBar({ basePath: '..', currentUrl: 'booking/check-out.html' });
+            }
         });
     </script>
 </body>
