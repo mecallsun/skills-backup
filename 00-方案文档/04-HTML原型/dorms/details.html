@@ -49,13 +49,15 @@
             <!-- v2.11.4 (r) 左侧宽度从 col-md-5 减少到 col-md-3 -->
             <!-- v2.12.21 布局调整：基本信息 250px + 操作 250px（上下对齐） | 右侧入住人员+历史 -->
             <!-- v2.12.22 布局优化：宽度 250px → 300px；当前入住人员列表顶端与基本信息顶端水平对齐 -->
+            <!-- v2.12.23 布局回归：左右两栏，左栏基本信息+操作上下堆叠 | 右栏入住人员+历史上下堆叠 -->
+            <!-- v2.12.24 布局固定：左栏基本信息+操作各300px固定宽度，上下堆叠左边框对齐 | 右栏入住人员+历史等宽上下堆叠 | 左右栏顶部对齐 -->
             <div class="filter-item">
-                <!-- 基本信息卡（300px） -->
+                <!-- 基本信息卡（300px固定宽度） -->
                 <div class="card mb-3" style="width: 300px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 基本信息</strong></div>
                     <div class="card-body" id="basicInfo"></div>
                 </div>
-                <!-- 操作（300px，与基本信息上下对齐） -->
+                <!-- 操作（300px固定宽度，与基本信息上下对齐） -->
                 <div class="card" style="width: 300px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-tools"></i> 操作</strong></div>
                     <div class="card-body">
@@ -67,7 +69,7 @@
                 </div>
             </div>
             <div class="filter-item">
-                <!-- 当前入住人员（顶部与基本信息卡片顶部水平对齐） -->
+                <!-- 当前入住人员（与左侧栏顶部对齐） -->
                 <div class="card mb-3" style="margin-top: 0;">
                     <div class="card-header bg-light d-flex justify-content-between">
                         <strong><i class="bi bi-people"></i> 当前入住人员（<span id="residentCount">0</span>）</strong>

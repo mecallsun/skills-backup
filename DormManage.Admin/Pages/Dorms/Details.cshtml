@@ -43,11 +43,11 @@
 
     @if (Model.Dorm != null)
     {
-        <!-- v2.12.21 布局调整：基本信息 250px + 操作 250px（上下对齐） | 右侧入住人员+历史 -->
-        <!-- v2.12.22 布局优化：宽度 250px → 300px；当前入住人员列表顶端与基本信息顶端水平对齐 -->
+        <!-- v2.12.24 布局：左栏基本信息+操作各300px固定宽度上下堆叠 | 右栏入住人员+历史等宽上下堆叠 | 左右栏顶部对齐 -->
         <div class="row">
-            <!-- 基本信息卡片（300px） -->
+            <!-- 左栏：基本信息 + 操作（各300px固定宽度，上下堆叠，左边框对齐） -->
             <div style="width: 300px; flex-shrink: 0;">
+                <!-- 基本信息卡片 -->
                 <div class="card mb-3">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
@@ -117,10 +117,8 @@
                         }
                     </div>
                 </div>
-            </div>
 
-            <!-- 操作卡片（300px，与基本信息上下对齐） -->
-            <div style="width: 300px; flex-shrink: 0;">
+                <!-- 操作卡片 -->
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-tools"></i> 操作</h5>
@@ -134,10 +132,10 @@
                 </div>
             </div>
 
-            <!-- 当前入住人员 + 住宿历史（右侧，剩余空间） -->
+            <!-- 右栏：当前入住人员 + 住宿历史（与左侧栏顶部对齐，上下堆叠） -->
             <div style="flex: 1 1 0;">
-                <!-- 当前入住人员（顶部与基本信息卡片顶部水平对齐） -->
-                <div class="card">
+                <!-- 当前入住人员（与左侧栏顶部对齐） -->
+                <div class="card mb-3" style="margin-top: 0;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
                             <i class="bi bi-people"></i> 当前入住人员
@@ -145,46 +143,46 @@
                         </h5>
                         <span class="text-muted small">容量上限：@Model.Dorm?.Capacity 人</span>
                     </div>
-            <div class="card-body">
-                @if (Model.CurrentResidents.Count > 0)
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60" class="text-center">序号</th>
-                                    <th>工号</th>
-                                    <th>姓名</th>
-                                    <th>部门</th>
-                                    <th>手机</th>
-                                    <th>入住日期</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for (int i = 0; i < Model.CurrentResidents.Count; i++)
-                                {
-                                    var resident = Model.CurrentResidents[i];
-                                    <tr>
-                                        <td class="text-center text-muted">@(i + 1)</td>
-                                        <td><strong>@resident.EmployeeCode</strong></td>
-                                        <td>@resident.EmployeeName</td>
-                                        <td>@(resident.Department ?? "-")</td>
-                                        <td>@(resident.Phone ?? "-")</td>
-                                        <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                    <div class="card-body">
+                        @if (Model.CurrentResidents.Count > 0)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60" class="text-center">序号</th>
+                                            <th>工号</th>
+                                            <th>姓名</th>
+                                            <th>部门</th>
+                                            <th>手机</th>
+                                            <th>入住日期</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (int i = 0; i < Model.CurrentResidents.Count; i++)
+                                        {
+                                            var resident = Model.CurrentResidents[i];
+                                            <tr>
+                                                <td class="text-center text-muted">@(i + 1)</td>
+                                                <td><strong>@resident.EmployeeCode</strong></td>
+                                                <td>@resident.EmployeeName</td>
+                                                <td>@(resident.Department ?? "-")</td>
+                                                <td>@(resident.Phone ?? "-")</td>
+                                                <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">暂无入住人员</p>
+                        }
                     </div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">暂无入住人员</p>
-                }
-            </div>
-        </div>
+                </div>
 
-                <!-- v2.11.4 (s) 历史记录区域（默认隐藏，timeline 时间线样式） -->
+                <!-- 住宿历史记录（默认隐藏，timeline 时间线样式） -->
                 <div id="historySection" class="card" style="display: none;">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">
@@ -198,6 +196,7 @@
                     </div>
                 </div>
             </div>
+        </div>
     }
 </div>
 
