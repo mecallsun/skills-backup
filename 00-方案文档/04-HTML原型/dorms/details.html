@@ -48,14 +48,15 @@
         <div class="row">
             <!-- v2.11.4 (r) 左侧宽度从 col-md-5 减少到 col-md-3 -->
             <!-- v2.12.21 布局调整：基本信息 250px + 操作 250px（上下对齐） | 右侧入住人员+历史 -->
+            <!-- v2.12.22 布局优化：宽度 250px → 300px；当前入住人员列表顶端与基本信息顶端水平对齐 -->
             <div class="filter-item">
-                <!-- 基本信息卡（250px） -->
-                <div class="card mb-3" style="width: 250px; flex-shrink: 0;">
+                <!-- 基本信息卡（300px） -->
+                <div class="card mb-3" style="width: 300px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 基本信息</strong></div>
                     <div class="card-body" id="basicInfo"></div>
                 </div>
-                <!-- 操作（250px，与基本信息上下对齐） -->
-                <div class="card" style="width: 250px; flex-shrink: 0;">
+                <!-- 操作（300px，与基本信息上下对齐） -->
+                <div class="card" style="width: 300px; flex-shrink: 0;">
                     <div class="card-header bg-light"><strong><i class="bi bi-tools"></i> 操作</strong></div>
                     <div class="card-body">
                         <button id="btnToggleHistory" class="btn btn-outline-secondary w-100 mb-2" onclick="toggleHistory()">
@@ -66,8 +67,8 @@
                 </div>
             </div>
             <div class="filter-item">
-                <!-- 当前入住人员 -->
-                <div class="card mb-3">
+                <!-- 当前入住人员（顶部与基本信息卡片顶部水平对齐） -->
+                <div class="card mb-3" style="margin-top: 0;">
                     <div class="card-header bg-light d-flex justify-content-between">
                         <strong><i class="bi bi-people"></i> 当前入住人员（<span id="residentCount">0</span>）</strong>
                         <span class="text-muted small">容量上限：<span id="capacity"></span> 人</span>
