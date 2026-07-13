@@ -850,7 +850,8 @@
                 return;
             }
             modalSel.out = { emp: empObj, record: actives[0] };
-            modalSel.outValid = { blocked: false, msg: '✓ 员工当前在宿 ' + actives[0].dormCode + '，可办理退房' };
+            // v2.12.31 退房校验提示：员工当前已在宿，可以办理退房
+            modalSel.outValid = { blocked: false, msg: '校验提示：员工当前已在宿 ' + actives[0].dormCode + '，可以办理退房' };
             updateValidationOut();
             onModalDateChange();
         }
@@ -884,10 +885,10 @@
             }
             const v = modalSel.outValid;
             if (v && v.blocked) {
-                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：' + v.msg + '</span>';
+                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> ' + v.msg + '</span>';
                 lockActionOut(true);
             } else {
-                box.innerHTML = '<span class="text-success">' + (v ? v.msg : '员工状态正常') + '</span>';
+                box.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> ' + (v ? v.msg : '员工状态正常') + '</span>';
                 lockActionOut(false);
             }
         }
@@ -937,7 +938,7 @@
                 html = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：退房日期不能晚于下次入住 ' + next.bookingDate + '</span>';
                 blocked = true;
             } else {
-                html = '<span class="text-success">✓ 退房日期 ' + date + ' 校验通过（房间 ' + record.dormCode + '）</span>';
+                html = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> 校验提示：退房日期 ' + date + ' 校验通过（房间 ' + record.dormCode + '），可以办理退房</span>';
                 blocked = false;
             }
             document.getElementById('modal_dateHint_inline').innerHTML = html;
