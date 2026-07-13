@@ -128,6 +128,22 @@
         /* 按钮 */
         .btn i { margin-right: 0.25rem; }
 
+        /* v2.12.29 模态弹窗表单样式（紧凑规范） */
+        .modal-body .form-section { margin-bottom: 0.6rem; }
+        .modal-body .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+        .modal-body .form-field { margin-bottom: 0.5rem; }
+        .modal-body .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        .modal-body .form-label .required { color: #dc3545; margin-left: 2px; }
+        .modal-body .form-control, .modal-body .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+        .suggestion-list { position: absolute; z-index: 1050; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .suggestion-item { padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .suggestion-item:hover { background-color: #f0f7ff; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .emp-info-card { background: #f8f9fa; border-radius: 6px; padding: 0.5rem 0.75rem; margin-top: 0.5rem; font-size: 0.85rem; }
+        .emp-info-item { display: inline-block; margin-right: 1.25rem; }
+        .emp-info-item .label { color: #6c757d; margin-right: 0.25rem; }
+        .emp-info-item .value { font-weight: 500; color: #212529; }
+
         /* 筛选区查询/重置按钮统一风格 */
         .filter-btn {
             min-width: 100px !important;
@@ -191,8 +207,9 @@
                 <i class="bi bi-clipboard-check"></i>办理登记（共 <span id="totalCount">0</span> 条）
             </h1>
             <div>
-                <a href="check-in.html" class="btn btn-success"><i class="bi bi-box-arrow-in-right"></i> 办理入住</a>
-                <a href="check-out.html" class="btn btn-info text-white"><i class="bi bi-box-arrow-right"></i> 办理退房</a>
+                <!-- v2.12.29 办理登记按钮：弹出独占窗口（模态对话框） -->
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalCheckIn"><i class="bi bi-box-arrow-in-right"></i> 办理入住</button>
+                <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalCheckOut"><i class="bi bi-box-arrow-right"></i> 办理退房</button>
                 <button class="btn btn-outline-secondary" onclick="exportExcel()"><i class="bi bi-download"></i> 导出</button>
             </div>
         </div>
@@ -265,6 +282,149 @@
                 </table>
             </div>
             <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <!-- v2.12.29 办理入住 模态弹窗 -->
+    <div class="modal fade" id="modalCheckIn" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalCheckInLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 900px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="modalCheckInLabel"><i class="bi bi-box-arrow-in-right text-success"></i> 办理入住</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 区块 1：员工选择（姓名/工号/手机号 动态模糊筛选） -->
+                    <div class="form-section">
+                        <div class="form-section-title">员工选择</div>
+                        <div class="position-relative">
+                            <input type="text" id="modal_empKeyword" class="form-control" placeholder="姓名 / 工号 / 手机号" oninput="onModalEmpSearch('in')" onfocus="showModalSuggestions('in')" autocomplete="off">
+                            <div id="modal_empSuggestions_in" class="suggestion-list" style="display:none;"></div>
+                        </div>
+                        <div class="emp-info-card" id="modal_empInfo_in" style="display:none;">
+                            <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="modal_empCode_in"></span></span>
+                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="modal_empName_in"></span></span>
+                            <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="modal_empPhone_in"></span></span>
+                            <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="modal_empDept_in"></span></span>
+                            <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="modal_empType_in"></span></span>
+                            <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="modal_empAtt_in"></span></span>
+                        </div>
+                        <div id="modal_empWarn_in" class="alert alert-warning mt-2 mb-0 py-2" style="display:none; font-size: 0.85rem;"></div>
+                    </div>
+
+                    <!-- 区块 2：入住日期 + 原因 + 登记人（操作类型仅为"入住"） -->
+                    <div class="form-section">
+                        <div class="form-section-title">入住信息</div>
+                        <div class="row g-2">
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">入住日期<span class="required">*</span></label>
+                                <input type="date" id="modal_bookingDate" class="form-control">
+                            </div>
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">原因</label>
+                                <select id="modal_reason_in" class="form-select">
+                                    <option value="入职">入职</option>
+                                    <option value="调岗">调岗</option>
+                                    <option value="换房">换房</option>
+                                    <option value="预约">预约</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">登记人</label>
+                                <input type="text" id="modal_registrar_in" class="form-control" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 3：操作类型（仅"入住"项） -->
+                    <div class="form-section">
+                        <div class="form-section-title">操作类型</div>
+                        <span class="badge bg-success px-3 py-2"><i class="bi bi-box-arrow-in-right"></i> 入住</span>
+                    </div>
+
+                    <!-- 区块 4：选择房间（仅入住） -->
+                    <div class="form-section">
+                        <div class="form-section-title">选择房间</div>
+                        <select id="modal_dormSelect" class="form-select">
+                            <option value="">请先选择员工</option>
+                        </select>
+                        <small class="text-muted mt-1 d-block" id="modal_dormHint">系统自动过滤余量 > 0 的房间</small>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                    <button type="button" class="btn btn-primary" onclick="modalSubmitIn()"><i class="bi bi-check-lg"></i> 提交入住</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- v2.12.29 办理退房 模态弹窗 -->
+    <div class="modal fade" id="modalCheckOut" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalCheckOutLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 900px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="modalCheckOutLabel"><i class="bi bi-box-arrow-right text-warning"></i> 办理退房</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 区块 1：员工选择（仅显示在宿员工） -->
+                    <div class="form-section">
+                        <div class="form-section-title">员工选择（仅显示当前在宿员工）</div>
+                        <div class="position-relative">
+                            <input type="text" id="modal_empKeyword_out" class="form-control" placeholder="姓名 / 工号 / 手机号" oninput="onModalEmpSearch('out')" onfocus="showModalSuggestions('out')" autocomplete="off">
+                            <div id="modal_empSuggestions_out" class="suggestion-list" style="display:none;"></div>
+                        </div>
+                        <div class="emp-info-card" id="modal_empInfo_out" style="display:none;">
+                            <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="modal_empCode_out"></span></span>
+                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="modal_empName_out"></span></span>
+                            <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="modal_empPhone_out"></span></span>
+                            <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="modal_empDept_out"></span></span>
+                            <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="modal_empType_out"></span></span>
+                            <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="modal_empAtt_out"></span></span>
+                        </div>
+                    </div>
+
+                    <!-- 区块 2：退房日期 + 原因 + 登记人 + 校验（操作类型仅为"退房"项） -->
+                    <div class="form-section">
+                        <div class="form-section-title">退房信息</div>
+                        <div class="row g-2">
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">退房日期<span class="required">*</span></label>
+                                <input type="date" id="modal_checkoutDate" class="form-control" onchange="onModalDateChange()">
+                            </div>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">原因</label>
+                                <select id="modal_reason_out" class="form-select">
+                                    <option value="离职">离职</option>
+                                    <option value="调岗">调岗</option>
+                                    <option value="换房">换房</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">登记人</label>
+                                <input type="text" id="modal_registrar_out" class="form-control" disabled>
+                            </div>
+                            <div class="col-md-3 form-field">
+                                <label class="form-label">校验提示</label>
+                                <div id="modal_dateHint" class="form-control" style="background: #f8f9fa; font-size: 0.85rem;">请选择员工</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 3：操作类型（仅"退房"项） -->
+                    <div class="form-section">
+                        <div class="form-section-title">操作类型</div>
+                        <span class="badge bg-warning text-dark px-3 py-2"><i class="bi bi-box-arrow-right"></i> 退房</span>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                    <button type="button" class="btn btn-warning text-white" onclick="modalSubmitOut()"><i class="bi bi-check-lg"></i> 提交退房</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -530,6 +690,193 @@
 
         function exportExcel() {
             alert("原型演示：导出 Excel");
+        }
+
+        // ========== v2.12.29 办理入住/退房 模态弹窗逻辑 ==========
+        const ATTENDANCE_NAME_MODAL = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        const ATTENDANCE_BADGE_MODAL = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
+
+        function attendanceBadgeModal(t) {
+            return `<span class="badge ${ATTENDANCE_BADGE_MODAL[t] || 'bg-secondary'}">${ATTENDANCE_NAME_MODAL[t] || t || '默认'}</span>`;
+        }
+
+        let modalSel = { in: null, out: null };
+
+        // 模态弹窗显示时设置默认日期 = 服务端当前日期
+        document.getElementById('modalCheckIn').addEventListener('show.bs.modal', function () {
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('modal_bookingDate').value = today;
+            document.getElementById('modal_registrar_in').value = 'admin';
+            modalSel.in = null;
+            document.getElementById('modal_empKeyword').value = '';
+            document.getElementById('modal_empInfo_in').style.display = 'none';
+            document.getElementById('modal_empWarn_in').style.display = 'none';
+        });
+        document.getElementById('modalCheckOut').addEventListener('show.bs.modal', function () {
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('modal_checkoutDate').value = today;
+            document.getElementById('modal_registrar_out').value = 'admin';
+            modalSel.out = null;
+            document.getElementById('modal_empKeyword_out').value = '';
+            document.getElementById('modal_empInfo_out').style.display = 'none';
+            document.getElementById('modal_dateHint').innerHTML = '请选择员工';
+        });
+
+        // 姓名/工号/手机号 动态模糊筛选
+        function onModalEmpSearch(mode) {
+            const kw = document.getElementById(mode === 'in' ? 'modal_empKeyword' : 'modal_empKeyword_out').value.trim();
+            const k = kw.toLowerCase();
+            let list = [];
+            if (mode === 'in') {
+                list = (typeof PERSONNEL !== 'undefined')
+                    ? PERSONNEL.filter(e => !kw ||
+                        (e.realName && e.realName.toLowerCase().includes(k)) ||
+                        (e.employeeCode && e.employeeCode.toLowerCase().includes(k)) ||
+                        (e.phone && e.phone.toLowerCase().includes(k)))
+                    : [];
+            } else {
+                // 退房：仅显示当前在宿员工
+                const allActive = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.status === 2 && b.type === 1) : [];
+                const empIds = [...new Set(allActive.map(b => b.employeeId))];
+                let emps = empIds.map(id => (typeof findEmployee === 'function' ? findEmployee(id) : null)).filter(Boolean);
+                if (kw) {
+                    emps = emps.filter(e =>
+                        (e.realName && e.realName.toLowerCase().includes(k)) ||
+                        (e.employeeCode && e.employeeCode.toLowerCase().includes(k)) ||
+                        (e.phone && e.phone.toLowerCase().includes(k)));
+                }
+                list = emps;
+            }
+            const sug = document.getElementById(mode === 'in' ? 'modal_empSuggestions_in' : 'modal_empSuggestions_out');
+            if (list.length === 0) { sug.style.display = 'none'; return; }
+            sug.innerHTML = list.slice(0, 10).map(e => `
+                <div class="suggestion-item" onclick='modalSelectEmp(${JSON.stringify(e).replace(/'/g, "\\'")}, "${mode}")'>
+                    <strong>${e.realName}</strong>
+                    <small class="text-muted ms-2">${e.employeeCode} | ${e.department || '-'} | ${e.phone || '-'}</small>
+                </div>
+            `).join('');
+            sug.style.display = 'block';
+        }
+
+        function showModalSuggestions(mode) {
+            const sug = document.getElementById(mode === 'in' ? 'modal_empSuggestions_in' : 'modal_empSuggestions_out');
+            sug.style.display = 'block';
+        }
+
+        // 点击外部关闭建议
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#modal_empKeyword') && !e.target.closest('#modal_empSuggestions_in')) {
+                document.getElementById('modal_empSuggestions_in').style.display = 'none';
+            }
+            if (!e.target.closest('#modal_empKeyword_out') && !e.target.closest('#modal_empSuggestions_out')) {
+                document.getElementById('modal_empSuggestions_out').style.display = 'none';
+            }
+        });
+
+        function modalSelectEmp(emp, mode) {
+            modalSel[mode] = emp;
+            const kwId = mode === 'in' ? 'modal_empKeyword' : 'modal_empKeyword_out';
+            const sugId = mode === 'in' ? 'modal_empSuggestions_in' : 'modal_empSuggestions_out';
+            document.getElementById(kwId).value = emp.realName;
+            document.getElementById(sugId).style.display = 'none';
+            const suffix = '_' + mode;
+            document.getElementById('modal_empInfo' + suffix).style.display = 'block';
+            document.getElementById('modal_empCode' + suffix).textContent = emp.employeeCode;
+            document.getElementById('modal_empName' + suffix).textContent = emp.realName;
+            document.getElementById('modal_empPhone' + suffix).textContent = emp.phone || '-';
+            document.getElementById('modal_empDept' + suffix).textContent = emp.department || '-';
+
+            var empTypeName = (emp.employeeTypeId != null)
+                ? ((typeof EMPLOYEE_TYPES !== 'undefined' && EMPLOYEE_TYPES.find(t => t.id === emp.employeeTypeId)) || {}).name
+                : (emp.employeeType || '-');
+            document.getElementById('modal_empType' + suffix).textContent = empTypeName || '-';
+
+            var attCode = (emp.attendanceTypeId != null)
+                ? ((typeof ATTENDANCE_TYPES !== 'undefined' && ATTENDANCE_TYPES.find(t => t.id === emp.attendanceTypeId)) || {}).code
+                : (emp.attendanceType || 'DEFAULT');
+            document.getElementById('modal_empAtt' + suffix).innerHTML = attendanceBadgeModal(attCode);
+
+            if (mode === 'in') {
+                validateEmpIn();
+                refreshDormsIn();
+            } else {
+                validateEmpOut();
+            }
+        }
+
+        function validateEmpIn() {
+            const emp = modalSel.in;
+            if (!emp) return;
+            const warn = document.getElementById('modal_empWarn_in');
+            const active = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2) : [];
+            if (active.length > 0) {
+                warn.className = 'alert alert-danger mt-2 mb-0 py-2';
+                warn.innerHTML = '员工当前已在宿 ' + active[0].dormCode + '，请先办理退房';
+            } else {
+                warn.className = 'alert alert-success mt-2 mb-0 py-2';
+                warn.innerHTML = '员工状态正常，可办理入住';
+            }
+            warn.style.display = 'block';
+        }
+
+        function validateEmpOut() {
+            const emp = modalSel.out;
+            if (!emp) return;
+            const actives = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2 && b.type === 1) : [];
+            if (actives.length === 0) {
+                alert(emp.realName + ' 当前未在宿');
+                modalSel.out = null;
+                document.getElementById('modal_empInfo_out').style.display = 'none';
+                return;
+            }
+            modalSel.out = { emp: emp, record: actives[0] };
+            onModalDateChange();
+        }
+
+        function refreshDormsIn() {
+            const emp = modalSel.in;
+            if (!emp) return;
+            const date = document.getElementById('modal_bookingDate').value;
+            const list = (typeof availableDorms === 'function') ? availableDorms(date) : [];
+            const sel = document.getElementById('modal_dormSelect');
+            sel.innerHTML = '<option value="">请选择房间</option>' +
+                list.map(d => `<option value="${d.dormCode}">${d.dormCode} | 余量 ${d.available}/${d.capacity}</option>`).join('');
+            document.getElementById('modal_dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间`;
+        }
+
+        function onModalDateChange() {
+            if (!modalSel.out || !modalSel.out.record) return;
+            const date = document.getElementById('modal_checkoutDate').value;
+            const record = modalSel.out.record;
+            const next = (typeof BOOKINGS !== 'undefined')
+                ? BOOKINGS.filter(b => b.employeeId === modalSel.out.emp.id && b.type === 1 && b.status === 1 && b.bookingDate > record.bookingDate)
+                          .sort((a, b) => a.bookingDate.localeCompare(b.bookingDate))[0]
+                : null;
+            let html = '';
+            if (date < record.bookingDate) {
+                html = '<span class="text-danger">退房日期不能早于入住 ' + record.bookingDate + '</span>';
+            } else if (next && date >= next.bookingDate) {
+                html = '<span class="text-danger">退房日期不能晚于下次入住 ' + next.bookingDate + '</span>';
+            } else {
+                html = '<span class="text-success">✓ 退房日期 ' + date + ' 校验通过（房间 ' + record.dormCode + '）</span>';
+            }
+            document.getElementById('modal_dateHint').innerHTML = html;
+        }
+
+        function modalSubmitIn() {
+            if (!modalSel.in) { alert('请先选择员工'); return; }
+            const dorm = document.getElementById('modal_dormSelect').value;
+            if (!dorm) { alert('请选择房间'); return; }
+            alert('✓ 原型演示：入住已办理\n员工：' + modalSel.in.realName + '\n房间：' + dorm);
+            bootstrap.Modal.getInstance(document.getElementById('modalCheckIn')).hide();
+            render();
+        }
+
+        function modalSubmitOut() {
+            if (!modalSel.out || !modalSel.out.record) { alert('请先选择员工'); return; }
+            alert('✓ 原型演示：退房已办理\n员工：' + modalSel.out.emp.realName + '\n房间：' + modalSel.out.record.dormCode);
+            bootstrap.Modal.getInstance(document.getElementById('modalCheckOut')).hide();
+            render();
         }
 
         // 页面初始化
