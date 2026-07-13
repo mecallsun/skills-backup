@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>费用标准 - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --danger: #c62828;
+            --info: #00838f;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --bg-page: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e8eaed;
+        }
+        body {
+            font-family: "Microsoft YaHei UI", sans-serif;
+            background: var(--bg-page);
+            margin: 0;
+        }
+
+        /* 顶部品牌栏 */
+        
+
+        /* 菜单导航栏 */
+        .menu-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+        }
+        .menu-bar::-webkit-scrollbar { display: none; }
+
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { color: #1976d2; background: #f0f7ff; }
+        .menu-item.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+        .menu-item i { font-size: 1.1rem; }
+
+        /* 菜单分隔符 */
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0.25rem; flex-shrink: 0; }
+
+        /* 页面标题 */
+        .page-header {
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-title i { color: var(--primary); }
+
+        /* 筛选区卡片 */
+        .filter-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+            padding: 1rem 1.25rem;
+        }
+
+        /* 内容卡片 */
+        .content-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+
+        /* 表格 */
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+
+        /* 按钮 */
+        .btn i { margin-right: 0.25rem; }
+
+        /* 筛选区查询/重置按钮统一风格 */
+        .filter-btn {
+            min-width: 100px !important;
+            max-width: 100px !important;
+            width: 100px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .filter-btn i { font-size: 14px !important; }
+
+        /* 分页器 */
+        .pagination-wrap { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid #f0f0f0; }
+        .page-info { font-size: 0.85rem; color: #666; }
+        .pagination .page-link { color: var(--primary); }
+        .pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+<div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+<!-- 页面标题 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-cash-stack"></i>费用标准管理（共 <span id="totalCount">0</span> 条）
+            </h1>
+            <div>
+                <a href="standard-form.html" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增标准</a>
+            </div>
+        </div>
+
+        <!-- 筛选区 -->
+        <div class="filter-card mb-3">
+            <form class="filter-row flex-nowrap" onsubmit="event.preventDefault(); render();">
+                <div class="filter-item">
+                    <label class="form-label small text-muted">适用类型</label>
+                    <select id="applicableType" class="form-select">
+                        <option value="">全部</option>
+                        <option value="合同工">合同工</option>
+                        <option value="临时工">临时工</option>
+                        <option value="外包">外包</option>
+                        <option value="实习生">实习生</option>
+                        <option value="驻场">驻场</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label small text-muted">状态</label>
+                    <select id="status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="active">生效</option>
+                        <option value="expired">已过期</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label small text-muted">关键词</label>
+                    <input type="text" id="keyword" class="form-control" placeholder="标准名称">
+                </div>
+                <div class="filter-item">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                    <button class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('billing')"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">序号</th>
+                            <th>标准名称</th>
+                            <th>生效开始</th>
+                            <th>生效结束</th>
+                            <th>热水单价</th>
+                            <th>冷水单价</th>
+                            <th>电单价</th>
+                            <th>适用类型</th>
+                            <th>状态</th>
+                            <th width="160">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // 高亮当前菜单项
+        document.querySelectorAll('.menu-item').forEach(function(item) {
+            if (item.getAttribute('href').indexOf('billing/') > -1) item.classList.add('active');
+        });
+
+        function getFiltered() {
+            const type = document.getElementById('applicableType').value;
+            const status = document.getElementById('status').value;
+            const kw = document.getElementById('keyword').value.trim().toLowerCase();
+            return BILLING_STANDARDS.filter(s => {
+                // 类型筛选
+                if (type && s.applicableType !== type) return false;
+                // 状态筛选
+                const isActive = s.isActive && !s.effectiveTo;
+                if (status === 'active' && !isActive) return false;
+                if (status === 'expired' && isActive) return false;
+                // 关键词筛选
+                if (kw && !s.standardName.toLowerCase().includes(kw)) return false;
+                return true;
+            });
+        }
+
+        const list = registerList({
+            key: 'standards',
+            footId: 'pager',
+            totalId: 'totalCount',
+            getData: getFiltered,
+            renderRows: (items, total, start) => {
+                const tbody = document.getElementById('tbody');
+                if (total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">暂无费用标准</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map((s, idx) => {
+                    const isActive = s.isActive && !s.effectiveTo;
+                    const serialNum = start + idx + 1; // 按总记录数显示序号
+                    return `
+                    <tr>
+                        <td class="text-center text-muted">${serialNum}</td>
+                        <td><strong>${s.standardName}</strong></td>
+                        <td>${s.effectiveFrom}</td>
+                        <td>${s.effectiveTo || '<span class="text-success">当前生效</span>'}</td>
+                        <td>¥${s.hotWaterPrice.toFixed(2)}/m³</td>
+                        <td>¥${s.coldWaterPrice.toFixed(2)}/m³</td>
+                        <td>¥${s.electricityPrice.toFixed(4)}/度</td>
+                        <td><span class="badge bg-info">${s.applicableType}</span></td>
+                        <td>${isActive ? '<span class="badge bg-success">生效</span>' : '<span class="badge bg-secondary">已过期</span>'}</td>
+                        <td>
+                            <a href="standard-form.html?id=${s.id}" class="btn btn-sm btn-outline-primary">编辑</a>
+                            <button class="btn btn-sm btn-outline-danger" onclick="del(${s.id}, '${s.standardName}')">删除</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+        });
+
+        function render() { list.reset(); }
+
+        function del(id, name) {
+            if (!confirm(`确定删除费用标准 "${name}" 吗？\n（若该标准已被账单引用则不能删除）`)) return;
+            alert(`✓ 原型演示：标准 ${name} 已删除\n（实际将 DELETE /api/v1/billing/standards/${id}）`);
+            render();
+        }
+
+        render();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'billing/standards.html' });
+        });
+    </script>
+    <!-- 筛选条件持久化（v2.12.10 新增） -->
+    <script src="../_shared/filter-persistence.js"></script>
+</body>
+</html>

@@ -1,0 +1,361 @@
+@page
+@model DormManage.Admin.Pages.Personnel.IndexModel
+@{
+    ViewData["Title"] = "人员清单";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-people"></i> 人员清单
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 人）</small>
+        </h2>
+        <div>
+            <a href="/Personnel/Create" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> 新增员工
+            </a>
+            <button class="btn btn-info text-white" onclick="alert('原型演示：将下载 Excel 文件')">
+                <i class="bi bi-download"></i> 导出
+            </button>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域（flex-nowrap 一行排列，响应式） -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">部门</label>
+                    <select name="DepartmentId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var dept in Model.Departments)
+                        {
+                            <option value="@dept.Id" selected="@(Model.DepartmentId == dept.Id)">
+                                @dept.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">员工类型</label>
+                    <select name="EmployeeTypeId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var et in Model.EmployeeTypes)
+                        {
+                            <option value="@et.Id" selected="@(Model.EmployeeTypeId == et.Id)">
+                                @et.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">考勤班次</label>
+                    <select name="AttendanceTypeId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var at in Model.AttendanceTypes)
+                        {
+                            <option value="@at.Id" selected="@(Model.AttendanceTypeId == at.Id)">
+                                @at.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="Status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="1" selected="@(Model.Status == 1)">在职</option>
+                        <option value="2" selected="@(Model.Status == 2)">待入职</option>
+                        <option value="3" selected="@(Model.Status == 3)">已离职</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item" style="flex: 2 1 auto; max-width: 280px;">
+                    <label class="form-label mb-1">关键词</label>
+                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="姓名/工号/手机">
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/Personnel" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>手机号</th>
+                            <th>部门</th>
+                            <th>员工类型</th>
+                            <th>考勤班次</th>
+                            <th>入职日期</th>
+                            <th>在职状态</th>
+                            <th>宿舍</th>
+                            <th width="140" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+    // v2.11.7.CORRECT 员工类型 Badge 颜色映射（仅 5 种，与基础资料-员工类型列表一致）
+                                string empTypeClass = item.EmployeeTypeCode switch
+                                {
+                                    "CONTRACT" => "bg-secondary",
+                                    "TEMPORARY" => "bg-warning text-dark",
+                                    "OUTSOURCE" => "bg-info text-dark",
+                                    "INTERN" => "bg-success",
+                                    "ONSITE" => "bg-dark",
+                                    _ => "bg-light text-dark border"
+                                };
+
+                                // 考勤班次 Badge 颜色映射
+                                string attClass = item.AttendanceTypeCode switch
+                                {
+                                    "DEFAULT" => "bg-secondary",
+                                    "MORNING" => "bg-primary",
+                                    "MIDDLE" => "bg-info",
+                                    "EVENING" => "bg-warning text-dark",
+                                    "NIGHT" => "bg-dark",
+                                    "OTHER" => "bg-light text-dark border",
+                                    _ => "bg-secondary"
+                                };
+
+                                <tr>
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.EmployeeCode</strong></td>
+                                    <td>@item.RealName</td>
+                                    <td>@item.Phone</td>
+                                    <td>@item.Department</td>
+                                    <td>
+                                        <span class="badge @empTypeClass" title="FK: EmployeeType.Id = @item.EmployeeTypeId">
+                                            @item.EmployeeTypeName
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @attClass">@item.AttendanceTypeName</span>
+                                    </td>
+                                    <td>@item.HireDate</td>
+                                    <td>
+                                        @if (item.Status == 1)
+                                        {
+                                            <span class="badge bg-success">在职</span>
+                                        }
+                                        else if (item.Status == 2)
+                                        {
+                                            <span class="badge bg-warning text-dark">待入职</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">已离职</span>
+                                        }
+                                    </td>
+                                    <td>@item.DormCode</td>
+                                    <td class="text-center">
+                                        <a href="/Personnel/Edit/@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                        @if (item.Status == 1)
+                                        {
+                                            <button class="btn btn-sm btn-outline-warning" onclick="markLeft(@item.Id, '@item.RealName')">离职</button>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="11" class="text-center text-muted py-4">暂无人员数据</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页 -->
+            @if (totalPages > 0)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@totalCount</strong> 条记录，第 <strong>@currentPage</strong> / <strong>@totalPages</strong> 页
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
+                            @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@p">@p</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Styles {
+<style>
+    /* ==================== 筛选按钮强制38px高度 ==================== */
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        min-width: 100px !important;
+        max-width: 100px !important;
+        width: 100px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 16px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        border-radius: 6px !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+    }
+
+    .filter-card .filter-btn i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    .filter-card .filter-item-btn {
+        display: flex !important;
+        align-items: flex-end !important;
+        min-height: 60px !important;
+    }
+
+    /* 响应式筛选条件区域 */
+    .filter-card .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+    }
+
+    .filter-card .filter-item {
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .filter-card .filter-item:first-child {
+        min-width: 140px;
+    }
+
+    /* 关键词输入框 */
+    .filter-card .filter-item:nth-child(5) {
+        flex: 2 1 auto;
+        min-width: 200px !important;
+        max-width: 280px !important;
+    }
+
+    /* 适配小屏幕 */
+    @@media (max-width: 768px) {
+        .filter-card .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-card .filter-item {
+            min-width: calc(50% - 8px);
+        }
+
+        .filter-card .filter-item:first-child,
+        .filter-card .filter-item:nth-child(5) {
+            min-width: 100%;
+        }
+    }
+
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+    function markLeft(id, name) {
+        if (!confirm('确定将员工 ' + name + ' 标记为离职吗？')) return;
+        alert('原型演示：已将 ' + name + ' 标记为离职');
+    }
+</script>
+}

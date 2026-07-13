@@ -1,0 +1,300 @@
+@page
+@model DormManage.Admin.Pages.Dorms.IndexModel
+@{
+    ViewData["Title"] = "宿舍管理";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-building"></i> 宿舍管理
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+        </h2>
+        <div>
+            <a href="/Dorms/Create" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> 新增宿舍
+            </a>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域（一行排列，响应式） -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto flex-grow-1 filter-item">
+                    <label class="form-label mb-1">宿舍号</label>
+                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼栋</label>
+                    <select name="BuildingId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var item in Model.Buildings)
+                        {
+                            <option value="@item.Id" selected="@(Model.BuildingId == item.Id)">@item.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼层</label>
+                    <select name="FloorId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var item in Model.Floors)
+                        {
+                            <option value="@item.Id" selected="@(Model.FloorId == item.Id)">@item.FloorNo 楼</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">地址</label>
+                    <select name="AddressId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var item in Model.Addresses)
+                        {
+                            <option value="@item.Id" selected="@(Model.AddressId == item.Id)">@item.AddressText</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/Dorms" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>宿舍号</th>
+                            <th>楼栋</th>
+                            <th>楼层</th>
+                            <th>地址</th>
+                            <th class="text-center">容量</th>
+                            <th class="text-center">性别</th>
+                            <th class="text-center">当前入住</th>
+                            <th class="text-center">状态</th>
+                            <th width="120" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+                                <tr>
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.DormCode</strong></td>
+                                    <td>@item.BuildingName</td>
+                                    <td>@item.FloorNo 楼</td>
+                                    <td>@item.AddressText</td>
+                                    <td class="text-center">@item.Capacity 人</td>
+                                    <td class="text-center">
+                                        @if (item.Gender == 1)
+                                        {
+                                            <span class="badge bg-primary">男</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">女</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(item.CurrentCount >= item.Capacity ? "text-danger fw-bold" : "text-success")">
+                                            @item.CurrentCount / @item.Capacity
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (item.IsActive)
+                                        {
+                                            <span class="badge bg-success">启用</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">停用</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        <a href="/Dorms/Details/@item.Id" class="btn btn-sm btn-outline-info">详情</a>
+                                        <a href="/Dorms/Edit/@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">暂无宿舍数据</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页 -->
+            @if (totalPages > 0)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@totalCount</strong> 条记录，第 <strong>@currentPage</strong> / <strong>@totalPages</strong> 页
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
+                            @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@p">@p</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
+    /* 使用更高优先级选择器，覆盖 Bootstrap 默认 btn 样式 */
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        min-width: 100px !important;
+        max-width: 100px !important;
+        width: 100px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+    }
+
+    .filter-card .filter-btn i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    .filter-card .filter-item-btn {
+        display: flex !important;
+        align-items: flex-end !important;
+        min-height: 60px !important;
+    }
+
+    /* 响应式筛选条件区域 */
+    .filter-card .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+    }
+
+    .filter-card .filter-item {
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .filter-card .filter-item:first-child {
+        min-width: 180px;
+    }
+
+    /* 适配小屏幕 */
+    @@media (max-width: 768px) {
+        .filter-card .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-card .filter-item {
+            min-width: calc(50% - 8px);
+        }
+
+        .filter-card .filter-item:first-child {
+            min-width: 100%;
+        }
+    }
+
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+</style>

@@ -1,0 +1,15 @@
+nul
+.dotnet-templates/
+05-Standalone/
+publish-final/
+*.user
+*.suo
+logs/
+DormManage.Api/bin/
+DormManage.Api/obj/
+DormManage.Admin/bin/
+DormManage.Admin/obj/
+DormManage.Shared/bin/
+DormManage.Shared/obj/
+.agents/
+.claude/settings.local.json

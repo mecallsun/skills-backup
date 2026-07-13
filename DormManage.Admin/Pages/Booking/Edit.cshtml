@@ -1,0 +1,250 @@
+@page "/Booking/Edit/{id:int}"
+@model DormManage.Admin.Pages.Booking.EditModel
+@{
+    ViewData["Title"] = "修改办理登记";
+    Layout = "_Layout";
+}
+
+@if (Model.Booking == null)
+{
+    <div class="alert alert-danger">记录不存在</div>
+    <a href="/Booking" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+}
+else
+{
+    <!-- 顶部只读信息摘要卡片 -->
+    <div class="card mb-3 info-summary-card">
+        <div class="card-body py-3">
+            <h6 class="text-muted mb-3"><i class="bi bi-info-circle"></i> 办理登记信息</h6>
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <span class="text-muted small"><i class="bi bi-person-badge"></i> 员工</span>
+                    <div class="fw-bold">@Model.EmployeeName <small class="text-muted">（@Model.EmployeeCode）</small></div>
+                </div>
+                <div class="col-md-2">
+                    <span class="text-muted small"><i class="bi bi-building"></i> 宿舍</span>
+                    <div class="fw-bold">@Model.Booking.DormCode</div>
+                </div>
+                <div class="col-md-2">
+                    <span class="text-muted small"><i class="bi bi-tag"></i> 类型</span>
+                    <div>
+                        <span class="badge @(Model.Booking.Type == 1 ? "bg-success" : "bg-warning text-dark")">
+                            @(Model.Booking.Type == 1 ? "入住" : "退房")
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <span class="text-muted small"><i class="bi bi-circle"></i> 状态</span>
+                    <div>
+                        <span class="badge @(Model.Booking.Status == 1 ? "bg-info text-dark" : Model.Booking.Status == 2 ? "bg-success" : Model.Booking.Status == 3 ? "bg-secondary" : "bg-warning text-dark")">
+                            @(Model.Booking.Status == 1 ? "预约" : Model.Booking.Status == 2 ? "在宿" : Model.Booking.Status == 3 ? "已退房" : "已取消")
+                        </span>
+                    </div>
+                </div>
+                <div class="col-md-3 text-end">
+                    <span class="text-muted small"><i class="bi bi-person-check"></i> 登记人</span>
+                    <div class="fw-bold">@Model.Booking.Registrar <small class="text-muted">（@Model.Booking.RegistrationDate.ToString("yyyy-MM-dd HH:mm") ?? "-")</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工基本信息卡片（只读） -->
+    <div class="card mb-3 employee-info-card">
+        <div class="card-header py-2" style="background:#f8f9fa;border-bottom:1px solid #e8eaed;">
+            <h6 class="mb-0 text-muted"><i class="bi bi-person-lines-fill"></i> 员工基本信息</h6>
+        </div>
+        <div class="card-body py-3">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">工号</label>
+                    <input type="text" class="form-control form-control-sm" value="@Model.EmployeeCode" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">姓名</label>
+                    <input type="text" class="form-control form-control-sm" value="@Model.EmployeeName" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">部门</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.Department ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">手机号</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.Phone ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">员工类型</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.EmployeeTypeName ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">考勤班次</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.AttendanceTypeName ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">在职状态</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.EmploymentStatusName ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-muted">入职日期</label>
+                    <input type="text" class="form-control form-control-sm" value="@(Model.HireDate?.ToString("yyyy-MM-dd") ?? "-")" readonly disabled style="background:#f8f9fa;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 表单卡片 -->
+    <div class="card">
+        <div class="card-body">
+            <form id="editForm">
+                <input type="hidden" name="id" value="@Model.Booking.Id" />
+
+                <div class="row g-4">
+                    <!-- 第一行：入退日期 + 原因 -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            入退日期 <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" id="bookingDate" name="bookingDate" class="form-control" value="@(Model.Booking.BookingDate.ToString("yyyy-MM-dd"))" required>
+                        <small class="text-muted">修改后会触发一进一出日期重叠校验</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">原因</label>
+                        <select id="reason" name="reason" class="form-select">
+                            <option value="入职" selected="@(Model.Booking.Reason == "入职")">入职</option>
+                            <option value="调岗" selected="@(Model.Booking.Reason == "调岗")">调岗</option>
+                            <option value="换房" selected="@(Model.Booking.Reason == "换房")">换房</option>
+                            <option value="预约" selected="@(Model.Booking.Reason == "预约")">预约</option>
+                            <option value="离职" selected="@(Model.Booking.Reason == "离职")">离职</option>
+                            <option value="其他" selected="@(string.IsNullOrEmpty(Model.Booking.Reason) || Model.Booking.Reason == "其他")">其他</option>
+                        </select>
+                        <small class="text-muted">入住/退房原因说明</small>
+                    </div>
+
+                    <!-- 第二行：状态（仅预约状态可修改） -->
+                    @if (Model.Booking.Status == 1)
+                    {
+                        <div class="col-md-6">
+                            <label class="form-label">状态 <span class="text-danger">*</span></label>
+                            <select id="status" name="status" class="form-select">
+                                <option value="1" selected>预约</option>
+                                <option value="2">在宿</option>
+                                <option value="4">已取消</option>
+                            </select>
+                            <small class="text-muted">仅预约状态可修改状态</small>
+                        </div>
+                    }
+
+                    <!-- 第三行：备注 -->
+                    <div class="col-md-12">
+                        <label class="form-label">备注</label>
+                        <textarea id="remark" name="remark" class="form-control" rows="2" maxlength="500">@Model.Booking.Remark</textarea>
+                        <small class="text-muted"><span id="remarkCount">@((Model.Booking.Remark ?? "").Length)</span> / 500 字</small>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- 系统自动记录 -->
+                <div class="row g-3 mb-3">
+                    <div class="col-12">
+                        <label class="form-label text-muted small">
+                            <i class="bi bi-lock"></i> 系统自动记录（不可修改）
+                        </label>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">登记日期</label>
+                        <input type="text" class="form-control" value="@(Model.Booking.RegistrationDate.ToString("yyyy-MM-dd HH:mm"))" readonly disabled style="background:#f8f9fa;">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small text-muted">登记人</label>
+                        <input type="text" class="form-control" value="@Model.Booking.Registrar" readonly disabled style="background:#f8f9fa;">
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="/Booking" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="submitUpdate()">
+                        <i class="bi bi-check-lg"></i> 保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+const API_BASE = '/api/v1/bookings';
+
+// 备注字数统计
+document.addEventListener('DOMContentLoaded', function() {
+    const remarkEl = document.getElementById('remark');
+    const countEl = document.getElementById('remarkCount');
+    if (remarkEl && countEl) {
+        remarkEl.addEventListener('input', function() {
+            countEl.textContent = this.value.length;
+        });
+    }
+});
+
+async function submitUpdate() {
+    const id = @Model.Booking?.Id ?? 0;
+    const bookingDate = document.getElementById('bookingDate').value;
+    const reason = document.getElementById('reason').value;
+    const remark = document.getElementById('remark').value;
+
+    if (!bookingDate) { alert('请选择入退日期'); return; }
+
+    // 获取状态（如果存在状态下拉）
+    const statusEl = document.getElementById('status');
+    const status = statusEl ? parseInt(statusEl.value) : @Model.Booking.Status;
+
+    if (!confirm('确定保存修改？\n（修改会触发一进一出日期重叠校验）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bookingDate, reason, remark, status })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('修改成功');
+            location.href = '/Booking';
+        } else {
+            alert(result.message || '修改失败');
+        }
+    } catch (err) { console.error(err); alert('修改失败'); }
+}
+</script>
+}
+
+<style>
+    /* 信息摘要卡片 */
+    .info-summary-card {
+        border: 1px solid #e8eaed;
+        border-radius: 12px;
+        background: #f8f9fa;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .info-summary-card .badge {
+        font-size: 0.8rem;
+    }
+    /* 员工信息卡片 */
+    .employee-info-card {
+        border: 1px solid #e8eaed;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .employee-info-card .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+    /* 只读字段样式 */
+    .form-control[readonly], .form-control[disabled] {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+</style>

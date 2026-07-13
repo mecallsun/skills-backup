@@ -1,0 +1,311 @@
+@page
+@model DormManage.Admin.Pages.EmployeeBilling.IndexModel
+@{
+    ViewData["Title"] = "员工账单";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-wallet2"></i> 员工账单
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+        </h2>
+        <div class="btn-group" role="group">
+            <button class="btn btn-success" onclick="generateBilling()">
+                <i class="bi bi-plus-circle"></i> 生成分摊
+            </button>
+            <button class="btn btn-warning text-white" onclick="regenerateBilling()">
+                <i class="bi bi-arrow-clockwise"></i> 重新生成
+            </button>
+            <button class="btn btn-primary" onclick="publishAll()">
+                <i class="bi bi-check2-all"></i> 全部发布
+            </button>
+            <a href="#" class="btn btn-outline-success" onclick="exportBilling(event)">
+                <i class="bi bi-file-earmark-excel"></i> 导出Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域（一行排列，响应式） -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">计费月份</label>
+                    <input type="month" name="BillingMonth" value="@Model.BillingMonth" class="form-control">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">宿舍房号</label>
+                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto flex-grow-1 filter-item">
+                    <label class="form-label mb-1">员工（工号/姓名）</label>
+                    <input type="text" name="EmpKeyword" value="@Model.EmpKeyword" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">分摊合计</label>
+                    <div class="form-control text-success fw-bold" style="min-width: 120px;">¥@Model.Result?.Items.Sum(i => i.ShareAmount).ToString("N2")</div>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/EmployeeBilling" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>部门</th>
+                            <th>宿舍</th>
+                            <th class="text-center">计费月份</th>
+                            <th class="text-center">分摊金额</th>
+                            <th class="text-center">发布状态</th>
+                            <th width="120" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+                                <tr>
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.EmployeeCode</strong></td>
+                                    <td>@item.EmployeeName</td>
+                                    <td>@item.Department</td>
+                                    <td>@item.DormCode</td>
+                                    <td class="text-center">@item.BillingMonth</td>
+                                    <td class="text-center text-success fw-bold">¥@item.ShareAmount.ToString("N2")</td>
+                                    <td class="text-center">
+                                        @if (item.IsPublished)
+                                        {
+                                            <span class="badge bg-success">已发布</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">未发布</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @if (!item.IsPublished)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" onclick="publishOne(@item.Id)">发布</button>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">暂无员工账单</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页 -->
+            @if (totalPages > 0)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@totalCount</strong> 条记录，第 <strong>@currentPage</strong> / <strong>@totalPages</strong> 页
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
+                            @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&PageIndex=@p">@p</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ==================== 筛选按钮强制38px高度（高优先级版） ==================== */
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        min-width: 100px !important;
+        max-width: 100px !important;
+        width: 100px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+    }
+
+    .filter-card .filter-btn i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    .filter-card .filter-item-btn {
+        display: flex !important;
+        align-items: flex-end !important;
+        min-height: 60px !important;
+    }
+
+    /* 响应式筛选条件区域 */
+    .filter-card .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+    }
+
+    .filter-card .filter-item {
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .filter-card .filter-item:first-child {
+        min-width: 140px;
+    }
+
+    .filter-card .filter-item.flex-grow-1 {
+        min-width: 200px;
+    }
+
+    /* 适配小屏幕 */
+    @@media (max-width: 768px) {
+        .filter-card .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-card .filter-item {
+            min-width: calc(50% - 8px);
+        }
+
+        .filter-card .filter-item:first-child,
+        .filter-card .filter-item.flex-grow-1 {
+            min-width: 100%;
+        }
+    }
+
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+</style>
+
+@section Scripts {
+<script>
+function generateBilling() {
+    if (!confirm('确定要生成本月员工分摊账单吗？')) return;
+    alert('✓ 原型演示：已生成本月员工分摊账单');
+}
+
+function regenerateBilling() {
+    if (!confirm('确定要重新生成员工分摊账单吗？\n已存在的账单将被覆盖！')) return;
+    alert('✓ 原型演示：已重新生成本月员工分摊账单');
+}
+
+function publishAll() {
+    if (!confirm('确定要发布全部员工账单吗？')) return;
+    alert('✓ 原型演示：已发布全部员工账单');
+}
+
+function publishOne(id) {
+    if (!confirm('确定要发布该员工账单吗？')) return;
+    alert(`✓ 原型演示：账单 ${id} 已发布`);
+}
+
+function exportBilling(event) {
+    event.preventDefault();
+    alert('✓ 原型演示：将下载 员工分摊费用_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+}
+</script>
+}

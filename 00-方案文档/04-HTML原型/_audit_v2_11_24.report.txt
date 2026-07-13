@@ -1,0 +1,19 @@
+[v2.11.24 FK 归一审计报告]
+生成时间: 2026-07-13T05:24:16.414Z
+关联规范: 00-方案文档/43-无效FK归一通用规范-v2.11.24.md
+
+[归一明细]
+  EmployeeType:     归一 197 条
+  AttendanceType:   归一 0 条
+  Department:       归一 0 条
+  EmploymentStatus: 归一 619 条
+  ResidenceStatus:  归一 650 条（预留）
+  合计:             1466 条
+
+[JS 对象]: {
+  "employeeType": 197,
+  "attendanceType": 0,
+  "department": 0,
+  "employmentStatus": 619,
+  "residenceStatus": 650
+}

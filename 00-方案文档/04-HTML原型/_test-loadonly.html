@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html><body>
+<div id="dbg">BEFORE</div>
+<script src="http://localhost:8765/mock-data.js" onload="document.getElementById('dbg').textContent='MockScriptLoaded'"></script>
+<script>
+document.getElementById('dbg').textContent += '|SyncCheck PERSONNEL=' + (typeof PERSONNEL !== 'undefined' ? PERSONNEL.length : 'undef');
+</script>
+</body></html>

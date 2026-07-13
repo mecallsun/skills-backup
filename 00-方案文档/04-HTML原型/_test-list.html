@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>List Test</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div id="result"></div>
+<table class="table"><tbody id="tbody"></tbody></table>
+<div id="pager"></div>
+<script src="http://localhost:8765/mock-data.js"></script>
+<script>
+function attendanceBadge(id) {
+    const t = ATTENDANCE_TYPES_FULL.find(x => x.id === id);
+    if (!t) return '<span class="text-muted">-</span>';
+    const cls = ATTENDANCE_BADGE[t.code] || 'bg-secondary';
+    return '<span class="badge ' + cls + '">' + t.name + '</span>';
+}
+function employmentBadge(id) {
+    if (id === 1) return '<span class="badge bg-success">在职</span>';
+    if (id === 2) return '<span class="badge bg-warning text-dark">待入职</span>';
+    if (id === 3) return '<span class="badge bg-secondary">已离职</span>';
+    return '<span class="text-muted">-</span>';
+}
+function typeBadge(id) {
+    const t = EMPLOYEE_TYPES.find(x => x.id === id);
+    if (!t) return '<span class="text-muted">-</span>';
+    const colors = { 1: 'bg-secondary', 2: 'bg-warning text-dark', 3: 'bg-info text-dark', 4: 'bg-success', 5: 'bg-primary' };
+    return '<span class="badge ' + (colors[id] || 'bg-secondary') + '">' + t.name + '</span>';
+}
+function resideBadge(code) {
+    if (code) return '<span class="badge bg-primary">已分配</span>';
+    return '<span class="badge bg-light text-dark">未分配</span>';
+}
+const list = registerList({
+    key: 'test',
+    footId: 'pager',
+    totalId: 'result',
+    getData: () => PERSONNEL,
+    renderRows: (items, total, start) => {
+        const tbody = document.getElementById('tbody');
+        if (total === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">暂无数据</td></tr>';
+            return;
+        }
+        const html = items.slice(0, 5).map((p, idx) => {
+            return '<tr>'
+                + '<td>' + (start + idx + 1) + '</td>'
+                + '<td>' + p.employeeCode + '</td>'
+                + '<td>' + p.realName + '</td>'
+                + '<td>' + p.phone + '</td>'
+                + '<td>' + getDepartmentName(p.departmentId) + '</td>'
+                + '<td>' + typeBadge(p.employeeTypeId) + '</td>'
+                + '<td>' + attendanceBadge(p.attendanceTypeId) + '</td>'
+                + '<td>' + p.hireDate + '</td>'
+                + '<td>' + employmentBadge(p.employmentStatusId) + '</td>'
+                + '<td>' + resideBadge(p.dormCode) + '</td>'
+                + '</tr>';
+        }).join('');
+        tbody.innerHTML = html;
+        document.getElementById('result').textContent = 'total=' + total + ' shown=5';
+    }
+});
+list.draw();
+</script>
+</body></html>

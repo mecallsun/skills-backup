@@ -1,0 +1,798 @@
+@page
+@model DormManage.Admin.Pages.Meter.IndexModel
+@{
+    ViewData["Title"] = "抄表记录";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-gauge"></i> 抄表记录
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+        </h2>
+        <div class="btn-group" role="group">
+            <button class="btn btn-success" onclick="showAddModal()">
+                <i class="bi bi-plus-lg"></i> 新增记录
+            </button>
+            <button class="btn btn-primary" onclick="showManualEntryModal()">
+                <i class="bi bi-pencil-square"></i> 手动补录
+            </button>
+            <button class="btn btn-info text-white" onclick="showBatchImportModal()">
+                <i class="bi bi-upload"></i> 批量导入
+            </button>
+            <a href="/api/meter/export?@((Model.DormCode != null ? "dormCode=" + Model.DormCode : ""))@((Model.ReadMonth != null ? "&readMonth=" + Model.ReadMonth : ""))@((Model.Status.HasValue ? "&status=" + Model.Status.Value : ""))" class="btn btn-outline-success">
+                <i class="bi bi-file-earmark-excel"></i> 导出Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域（一行排列，响应式） -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto flex-grow-1 filter-item">
+                    <label class="form-label mb-1">宿舍号</label>
+                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">抄表月份</label>
+                    <select name="ReadMonth" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var month in Model.Months)
+                        {
+                            <option value="@month" selected="@(Model.ReadMonth == month)">@month</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="Status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="0" selected="@(Model.Status == 0)">未完成</option>
+                        <option value="1" selected="@(Model.Status == 1)">正常</option>
+                        <option value="2" selected="@(Model.Status == 2)">已修正</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/Meter" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>宿舍号</th>
+                            <th>月份</th>
+                            <th class="text-center">冷水(m³)</th>
+                            <th class="text-center">热水(m³)</th>
+                            <th class="text-center">电(度)</th>
+                            <th class="text-center">状态</th>
+                            <th>操作员</th>
+                            <th width="140" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+                                <tr class="@(item.Status == 0 ? "table-warning" : "")">
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.DormCode</strong></td>
+                                    <td>@item.ReadMonth</td>
+                                    <td class="text-center">
+                                        <span class="@(item.ColdMeter == 0 ? "meter-zero" : "")">@item.ColdMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(item.HotMeter == 0 ? "meter-zero" : "")">@item.HotMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="@(item.ElectricMeter == 0 ? "meter-zero" : "")">@item.ElectricMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-center">
+                                        @switch (item.Status)
+                                        {
+                                            case 0: <span class="badge bg-secondary">未完成</span>; break;
+                                            case 1: <span class="badge bg-success">正常</span>; break;
+                                            case 2: <span class="badge bg-warning text-dark">已修正</span>; break;
+                                        }
+                                    </td>
+                                    <td><small class="text-muted">@item.Operator</small></td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewRecord(@item.Id)">详情</button>
+                                        @if (item.Status == 1)
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" onclick="correctRecord(@item.Id)">修正</button>
+                                        }
+                                        @if (item.Status == 0)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord(@item.Id)">删除</button>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">暂无抄表记录</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页 -->
+            @if (totalPages > 0)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@totalCount</strong> 条记录，第 <strong>@currentPage</strong> / <strong>@totalPages</strong> 页
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
+                            @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@p">@p</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 新增/编辑 Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editModalTitle">新增记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editId" />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">宿舍号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editDormCode" placeholder="如 D-001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">抄表月份 <span class="text-danger">*</span></label>
+                        <input type="month" class="form-control" id="editReadMonth" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">冷水(m³)</label>
+                        <input type="number" class="form-control" id="editColdMeter" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">热水(m³)</label>
+                        <input type="number" class="form-control" id="editHotMeter" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">电(度)</label>
+                        <input type="number" class="form-control" id="editElectricMeter" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" id="editRemark" rows="2" placeholder="可选"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 手动补录 Modal -->
+<div class="modal fade" id="manualEntryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> 手动补录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info py-2 mb-3">
+                    <i class="bi bi-info-circle"></i> 手动补录：填写单个宿舍的完整抄表数据。
+                </div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">宿舍号 <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="meDormCode" placeholder="如 D-001" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">抄表月份 <span class="text-danger">*</span></label>
+                        <input type="month" class="form-control" id="meReadMonth" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">冷水(m³)</label>
+                        <input type="number" class="form-control" id="meColdMeter" step="0.01" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">热水(m³)</label>
+                        <input type="number" class="form-control" id="meHotMeter" step="0.01" min="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">电(度)</label>
+                        <input type="number" class="form-control" id="meElectricMeter" step="0.01" min="0">
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">操作员</label>
+                        <input type="text" class="form-control" id="meOperator" placeholder="如 admin">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" id="meRemark" rows="2" placeholder="可选"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="submitManualEntry()">提交补录</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 批量导入 Modal -->
+<div class="modal fade" id="batchImportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-upload"></i> 批量导入</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="bi bi-exclamation-triangle"></i> 批量导入将按 宿舍号+月份 覆盖已有记录。请确保数据格式正确。
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">批量录入（每行一条，格式：宿舍号,月份,冷水,热水,电）</label>
+                    <textarea class="form-control font-monospace" id="batchData" rows="10" placeholder="D-001,2026-07,125.50,88.20,365.00&#10;D-002,2026-07,98.50,62.30,280.50&#10;..."></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">默认操作员（用于未指定操作员的记录）</label>
+                    <input type="text" class="form-control" id="batchOperator" placeholder="如 admin">
+                </div>
+                <div id="batchResult" class="mt-3" style="display:none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-info text-white" onclick="submitBatchImport()">开始导入</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情 Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">抄表记录详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">宿舍号</dt>
+                            <dd class="fw-bold" id="viewDormCode">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">抄表月份</dt>
+                            <dd class="fw-bold" id="viewReadMonth">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">冷水表读数</dt>
+                            <dd class="fw-bold text-primary" id="viewColdMeter">- m³</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">热水表读数</dt>
+                            <dd class="fw-bold text-danger" id="viewHotMeter">- m³</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">电表读数</dt>
+                            <dd class="fw-bold text-warning" id="viewElectricMeter">- 度</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">状态</dt>
+                            <dd id="viewStatus">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">操作员</dt>
+                            <dd class="text-muted" id="viewOperator">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-12">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">备注</dt>
+                            <dd id="viewRemark" class="text-break">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修正 Modal -->
+<div class="modal fade" id="correctModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修正记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="correctId" />
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 修正后将标记为"已修正"状态，不可再次修改。
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">修正说明</label>
+                    <textarea class="form-control" id="correctRemark" rows="3" placeholder="请输入修正原因"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="submitCorrect()">确认修正</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/meter/records';
+
+$(document).ready(function() {
+    // 初始化月份默认值
+    if (!$('#editReadMonth').val()) {
+        const now = new Date();
+        $('#editReadMonth').val(now.toISOString().slice(0, 7));
+    }
+});
+
+// 显示新增 Modal
+function showAddModal() {
+    $('#editModalTitle').text('新增记录');
+    $('#editId').val('');
+    $('#editDormCode').val('');
+    $('#editReadMonth').val(new Date().toISOString().slice(0, 7));
+    $('#editColdMeter').val('');
+    $('#editHotMeter').val('');
+    $('#editElectricMeter').val('');
+    $('#editRemark').val('');
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+}
+
+// 显示手动补录 Modal
+function showManualEntryModal() {
+    $('#meDormCode').val('');
+    $('#meReadMonth').val(new Date().toISOString().slice(0, 7));
+    $('#meColdMeter').val('');
+    $('#meHotMeter').val('');
+    $('#meElectricMeter').val('');
+    $('#meOperator').val('');
+    $('#meRemark').val('');
+    new bootstrap.Modal(document.getElementById('manualEntryModal')).show();
+}
+
+// 显示批量导入 Modal
+function showBatchImportModal() {
+    $('#batchData').val('');
+    $('#batchOperator').val('');
+    $('#batchResult').hide().html('');
+    new bootstrap.Modal(document.getElementById('batchImportModal')).show();
+}
+
+// 提交手动补录
+async function submitManualEntry() {
+    const dormCode = $('#meDormCode').val().trim();
+    const readMonth = $('#meReadMonth').val();
+
+    if (!dormCode) { alert('请输入宿舍号'); return; }
+    if (!readMonth) { alert('请选择抄表月份'); return; }
+
+    const payload = {
+        dormCode: dormCode,
+        readMonth: readMonth,
+        coldMeter: parseFloat($('#meColdMeter').val()) || 0,
+        hotMeter: parseFloat($('#meHotMeter').val()) || 0,
+        electricMeter: parseFloat($('#meElectricMeter').val()) || 0,
+        operator: $('#meOperator').val().trim() || '管理员',
+        remark: $('#meRemark').val().trim()
+    };
+
+    try {
+        const resp = await fetch('/api/meter/manual-entry', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('manualEntryModal')).hide();
+            alert('补录成功');
+            location.reload();
+        } else {
+            alert(result.message || '补录失败');
+        }
+    } catch (err) {
+        alert('补录失败：' + err.message);
+    }
+}
+
+// 提交批量导入
+async function submitBatchImport() {
+    const data = $('#batchData').val().trim();
+    const operator = $('#batchOperator').val().trim() || '管理员';
+
+    if (!data) { alert('请输入导入数据'); return; }
+
+    const lines = data.split('\n').filter(l => l.trim());
+    const records = [];
+
+    for (const line of lines) {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length < 5) {
+            alert(`格式错误：${line}\n正确格式：宿舍号,月份,冷水,热水,电`);
+            return;
+        }
+        records.push({
+            dormCode: parts[0],
+            readMonth: parts[1],
+            coldMeter: parseFloat(parts[2]) || 0,
+            hotMeter: parseFloat(parts[3]) || 0,
+            electricMeter: parseFloat(parts[4]) || 0,
+            operator: operator,
+            remark: '批量导入'
+        });
+    }
+
+    try {
+        const resp = await fetch('/api/meter/batch-import', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(records)
+        });
+        const result = await resp.json();
+        if (result.success) {
+            const data = result.data;
+            let html = `<div class="alert alert-${data.failCount === 0 ? 'success' : 'warning'}">
+                <strong>导入完成</strong><br>
+                总数：${data.totalCount} | 成功：${data.successCount} | 失败：${data.failCount}
+            </div>`;
+            if (data.failedItems && data.failedItems.length > 0) {
+                html += '<ul class="small text-danger">';
+                data.failedItems.slice(0, 10).forEach(item => {
+                    html += `<li>${item}</li>`;
+                });
+                if (data.failedItems.length > 10) {
+                    html += `<li>... 还有 ${data.failedItems.length - 10} 条</li>`;
+                }
+                html += '</ul>';
+            }
+            $('#batchResult').html(html).show();
+
+            if (data.failCount === 0) {
+                setTimeout(() => location.reload(), 1500);
+            }
+        } else {
+            alert(result.message || '导入失败');
+        }
+    } catch (err) {
+        alert('导入失败：' + err.message);
+    }
+}
+
+// 查看详情
+async function viewRecord(id) {
+    try {
+        const resp = await fetch(`${API_BASE}/${id}`);
+        const result = await resp.json();
+        if (result.success) {
+            const data = result.data;
+            $('#viewDormCode').text(data.dormCode);
+            $('#viewReadMonth').text(data.readMonth);
+            $('#viewColdMeter').text(data.coldMeter.toFixed(2) + ' m³');
+            $('#viewHotMeter').text(data.hotMeter.toFixed(2) + ' m³');
+            $('#viewElectricMeter').text(data.electricMeter.toFixed(2) + ' 度');
+
+            let statusHtml = '';
+            switch (data.status) {
+                case 0: statusHtml = '<span class="badge bg-secondary">未完成</span>'; break;
+                case 1: statusHtml = '<span class="badge bg-success">正常</span>'; break;
+                case 2: statusHtml = '<span class="badge bg-warning text-dark">已修正</span>'; break;
+            }
+            $('#viewStatus').html(statusHtml);
+            $('#viewOperator').text(data.operator);
+            $('#viewRemark').text(data.remark || '-');
+            new bootstrap.Modal(document.getElementById('viewModal')).show();
+        }
+    } catch (err) {
+        alert('获取详情失败');
+    }
+}
+
+// 修正记录
+function correctRecord(id) {
+    $('#correctId').val(id);
+    $('#correctRemark').val('');
+    new bootstrap.Modal(document.getElementById('correctModal')).show();
+}
+
+async function submitCorrect() {
+    const id = $('#correctId').val();
+    const remark = $('#correctRemark').val();
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/correct`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ remark: remark })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('correctModal')).hide();
+            alert('修正成功');
+            location.reload();
+        } else {
+            alert(result.message || '修正失败');
+        }
+    } catch (err) {
+        alert('修正失败');
+    }
+}
+
+// 删除记录
+async function deleteRecord(id) {
+    if (!confirm('确定删除该记录吗？删除后将自动生成新的占位记录。')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        const result = await resp.json();
+        if (result.success) {
+            alert('删除成功');
+            location.reload();
+        } else {
+            alert(result.message || '删除失败');
+        }
+    } catch (err) {
+        alert('删除失败');
+    }
+}
+
+// 保存记录
+async function saveRecord() {
+    const dormCode = $('#editDormCode').val().trim();
+    const readMonth = $('#editReadMonth').val();
+
+    if (!dormCode) { alert('请输入宿舍号'); return; }
+    if (!readMonth) { alert('请选择抄表月份'); return; }
+
+    const payload = {
+        dormCode: dormCode,
+        readMonth: readMonth,
+        coldMeter: parseFloat($('#editColdMeter').val()) || 0,
+        hotMeter: parseFloat($('#editHotMeter').val()) || 0,
+        electricMeter: parseFloat($('#editElectricMeter').val()) || 0,
+        remark: $('#editRemark').val().trim()
+    };
+
+    try {
+        const resp = await fetch(API_BASE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const result = await resp.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            alert('保存成功');
+            location.reload();
+        } else {
+            alert(result.message || '保存失败');
+        }
+    } catch (err) {
+        alert('保存失败');
+    }
+}
+</script>
+}
+
+<style>
+    /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
+    /* 使用更高优先级选择器，覆盖 Bootstrap 默认 btn 样式 */
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        min-width: 100px !important;
+        max-width: 100px !important;
+        width: 100px !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        box-sizing: border-box !important;
+        border-width: 1px !important;
+    }
+
+    .filter-card .filter-btn i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    .filter-card .filter-item-btn {
+        display: flex !important;
+        align-items: flex-end !important;
+        min-height: 60px !important;
+    }
+
+    /* 响应式筛选条件区域 */
+    .filter-card .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+    }
+
+    .filter-card .filter-item {
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .filter-card .filter-item:first-child {
+        min-width: 180px;
+    }
+
+    /* 适配小屏幕 */
+    @@media (max-width: 768px) {
+        .filter-card .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-card .filter-item {
+            min-width: calc(50% - 8px);
+        }
+
+        .filter-card .filter-item:first-child {
+            min-width: 100%;
+        }
+    }
+
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+
+    /* 未完成行高亮 */
+    .table-warning {
+        background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+
+    /* v2.11.15.c 样式优化：抄表数为 0 或 未抄表项的文本背景高亮
+       背景风格及高度与状态列 Badge 完全一致，背景色改为亮蓝色 #cfe2ff
+       移除旧版框线风格（border），改为纯文本背景风格
+       高度规范：padding 0.35em 0.65em + line-height 1 + font-size 0.75em（与 Bootstrap .badge 完全一致） */
+    .meter-zero {
+        display: inline-block;
+        min-width: 60px;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        color: #084c61;
+        background: #cfe2ff;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        font-variant-numeric: tabular-nums;
+    }
+</style>

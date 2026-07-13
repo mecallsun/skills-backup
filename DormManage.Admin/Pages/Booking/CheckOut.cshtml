@@ -1,0 +1,177 @@
+@page
+@model DormManage.Admin.Pages.Booking.CheckOutModel
+@{
+    ViewData["Title"] = "办理退房";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-3"><i class="bi bi-box-arrow-right"></i> 办理退房</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="checkOutForm">
+                <div class="row g-3">
+                    <!-- 步骤1：选择员工 -->
+                    <div class="col-md-6">
+                        <label class="form-label">选择员工 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" id="searchKeyword" class="form-control" placeholder="输入姓名/工号/手机号搜索">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchStayingEmployee()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <select id="employeeSelect" class="form-select mt-2" size="5" onchange="selectEmployee()">
+                            <option value="">请先搜索员工</option>
+                        </select>
+                        <input type="hidden" id="employeeId" name="employeeId" />
+                    </div>
+
+                    <!-- 在宿记录选择 -->
+                    <div class="col-md-6">
+                        <label class="form-label">选择在宿记录 <span class="text-danger">*</span></label>
+                        <select id="stayingSelect" class="form-select" onchange="selectStayingRecord()">
+                            <option value="">请先选择员工</option>
+                        </select>
+                        <input type="hidden" id="bookingId" name="bookingId" />
+                    </div>
+
+                    <!-- 宿舍信息 -->
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">在宿信息</h6>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <strong>宿舍：</strong><span id="dormCode">-</span>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <strong>入住日期：</strong><span id="checkInDate">-</span>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <strong>入住天数：</strong><span id="days">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤2：退房日期 -->
+                    <div class="col-md-6">
+                        <label class="form-label">退房日期 <span class="text-danger">*</span></label>
+                        <input type="date" id="checkOutDate" name="checkOutDate" class="form-control" required>
+                    </div>
+
+                    <!-- 步骤3：原因和备注 -->
+                    <div class="col-12">
+                        <label class="form-label">原因</label>
+                        <select id="reason" name="reason" class="form-select">
+                            <option value="">请选择原因</option>
+                            <option value="离职">离职</option>
+                            <option value="调宿">调宿</option>
+                            <option value="换房">换房</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">备注</label>
+                        <textarea id="remark" name="remark" class="form-control" rows="2" placeholder="可选"></textarea>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="button" class="btn btn-warning" onclick="submitCheckOut()">
+                            <i class="bi bi-check-lg"></i> 确认退房
+                        </button>
+                        <a href="/Booking" class="btn btn-outline-secondary ms-2">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/v1/bookings';
+
+document.getElementById('checkOutDate').valueAsDate = new Date();
+
+async function searchStayingEmployee() {
+    const keyword = document.getElementById('searchKeyword').value.trim();
+    if (!keyword) { alert('请输入搜索关键词'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/employee-search?keyword=${encodeURIComponent(keyword)}`);
+        const result = await resp.json();
+        if (result.success && result.data.length > 0) {
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = result.data
+                .filter(e => e.dormCode) // 只显示有宿舍的员工
+                .map(e => `<option value="${e.id}">${e.employeeCode} - ${e.realName} - ${e.department || '-'} - ${e.dormCode}</option>`)
+                .join('') || '<option value="">没有找到在宿员工</option>';
+        } else {
+            document.getElementById('employeeSelect').innerHTML = '<option value="">未找到匹配的员工</option>';
+        }
+    } catch (err) { console.error(err); alert('搜索失败'); }
+}
+
+async function selectEmployee() {
+    const empId = document.getElementById('employeeId').value = document.querySelector('#employeeSelect').value;
+    if (!empId) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/staying-records/${empId}`);
+        const result = await resp.json();
+        if (result.success) {
+            const select = document.getElementById('stayingSelect');
+            select.innerHTML = result.data.map(r =>
+                `<option value="${r.id}" data-dorm="${r.dormCode}" data-date="${r.bookingDate}">
+                    ${r.dormCode} - ${r.bookingDate} 入住
+                </option>`
+            ).join('') || '<option value="">该员工没有在宿记录</option>';
+        }
+    } catch (err) { console.error(err); }
+}
+
+function selectStayingRecord() {
+    const opt = document.querySelector('#stayingSelect option:checked');
+    if (!opt || !opt.value) return;
+
+    document.getElementById('bookingId').value = opt.value;
+    document.getElementById('dormCode').textContent = opt.dataset.dorm;
+
+    const checkInDate = new Date(opt.dataset.date);
+    const today = new Date();
+    const days = Math.floor((today - checkInDate) / (1000 * 60 * 60 * 24));
+
+    document.getElementById('checkInDate').textContent = opt.dataset.date;
+    document.getElementById('days').textContent = days + 1 + ' 天';
+}
+
+async function submitCheckOut() {
+    const bookingId = parseInt(document.getElementById('bookingId').value);
+    const checkOutDate = document.getElementById('checkOutDate').value;
+    const reason = document.getElementById('reason').value;
+    const remark = document.getElementById('remark').value;
+
+    if (!bookingId) { alert('请选择要退房的记录'); return; }
+    if (!checkOutDate) { alert('请选择退房日期'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/${bookingId}/check-out`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkOutDate, reason, remark })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('退房办理成功');
+            location.href = '/Booking';
+        } else {
+            alert(result.message || '退房办理失败');
+        }
+    } catch (err) { console.error(err); alert('退房办理失败'); }
+}
+</script>
+}

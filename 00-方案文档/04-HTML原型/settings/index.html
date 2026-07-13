@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>系统设置 — v2.11.6 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; }
+        .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+        .settings-nav .nav-link { color: #37474f; border-radius: 8px; padding: .55rem .9rem; }
+        .settings-nav .nav-link.active { background: #1976d2; color: #fff; }
+        .settings-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+        .form-label.small { color: #607d8b; }
+        .status-dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+        .dot-run { background:#28a745; } .dot-stop { background:#dc3545; }
+        .step-line { display:flex; align-items:center; gap:8px; padding:4px 0; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-gear"></i> 系统设置 <span class="badge bg-warning text-dark ms-2">v2.11.6</span></h2>
+        <div class="alert alert-info py-2">
+            <i class="bi bi-info-circle"></i> 后台系统配置中心，与托盘管理程序（WaterMeter.TrayApp）为<strong>同一份配置的双 UI 入口</strong>，涵盖服务端口、数据库、PDA 版本、用户权限、备份恢复。
+        </div>
+
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <!-- 左侧导航 -->
+            <div style="flex-shrink: 0; width: 200px;">
+                <div class="card" style="margin-top: 0;">
+                    <div class="card-body p-2">
+                        <div class="nav flex-column nav-pills settings-nav" role="tablist">
+                            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-service"><i class="bi bi-hdd-network"></i> 服务与端口</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-db"><i class="bi bi-database"></i> 数据库连接</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-app"><i class="bi bi-phone"></i> PDA App 版本</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-users"><i class="bi bi-people"></i> 用户与角色</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-backup"><i class="bi bi-hdd-stack"></i> 备份与恢复</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-integration"><i class="bi bi-plug"></i> 系统集成</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-about"><i class="bi bi-info-circle"></i> 关于系统</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div style="flex: 1 1 0;">
+                <div class="tab-content">
+
+                    <!-- 服务与端口 -->
+                    <div class="tab-pane fade show active" id="tab-service">
+                        <div class="card" style="margin-top: 0;">
+                            <div class="card-header bg-light"><strong><i class="bi bi-hdd-network"></i> 服务与端口</strong></div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="filter-item">
+                                        <label class="form-label small">PDA 服务端口</label>
+                                        <input type="number" id="pdaPort" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="filter-item d-flex align-items-end gap-2">
+                                        <span id="pdaStatus" class="me-2"></span>
+                                        <button class="btn btn-sm btn-outline-success" onclick="toggleService('pda')">启动/停止</button>
+                                    </div>
+                                    <div class="filter-item">
+                                        <label class="form-label small">Web 服务端口</label>
+                                        <input type="number" id="webPort" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="filter-item d-flex align-items-end gap-2">
+                                        <span id="webStatus" class="me-2"></span>
+                                        <button class="btn btn-sm btn-outline-success" onclick="toggleService('web')">启动/停止</button>
+                                    </div>
+                                    <div class="filter-item">
+                                        <label class="form-label small">服务器域名 / IP（PDA 访问用）</label>
+                                        <input type="text" id="serverDomain" class="form-control">
+                                    </div>
+                                    <div class="filter-item">
+                                        <label class="form-label small">图片保存路径</label>
+                                        <input type="text" id="imagePath" class="form-control">
+                                        <div class="form-text">必须为绝对路径且目录可写，如 D:\MeterImages</div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <button class="btn btn-primary" onclick="saveConfig('服务与端口')"><i class="bi bi-save"></i> 保存并提示重启</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 数据库 -->
+                    <div class="tab-pane fade" id="tab-db">
+                        <div class="card">
+                            <div class="card-header bg-light"><strong><i class="bi bi-database"></i> 数据库连接</strong></div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="filter-item"><label class="form-label small">数据库服务器</label><input type="text" id="dbServer" class="form-control"></div>
+                                    <div class="filter-item"><label class="form-label small">端口号</label><input type="number" id="dbPort" class="form-control"></div>
+                                    <div class="filter-item"><label class="form-label small">数据库名称</label><input type="text" id="dbName" class="form-control"></div>
+                                    <div class="filter-item"><label class="form-label small">账号</label><input type="text" id="dbUser" class="form-control"></div>
+                                    <div class="filter-item"><label class="form-label small">密码</label><input type="password" id="dbPassword" class="form-control"></div>
+                                    <div class="filter-item d-flex align-items-end">
+                                        <button class="btn btn-outline-info w-100" onclick="dbTest()"><i class="bi bi-plug"></i> 读写测试（深度验证）</button>
+                                    </div>
+                                </div>
+                                <div id="dbTestResult" class="mt-3"></div>
+                                <hr>
+                                <button class="btn btn-primary" onclick="saveConfig('数据库连接')"><i class="bi bi-save"></i> 保存</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDA App -->
+                    <div class="tab-pane fade" id="tab-app">
+                        <div class="card">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-phone"></i> PDA App 版本管理</strong>
+                                <button class="btn btn-sm btn-success" onclick="alert('原型演示：上传 APK 并发布新版本（写入 update.json）')"><i class="bi bi-cloud-upload"></i> 发布新版本</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light"><tr><th>版本号</th><th>大小</th><th>发布日期</th><th>更新说明</th><th>状态</th><th width="160">操作</th></tr></thead>
+                                    <tbody id="appBody"></tbody>
+                                </table>
+                            </div>
+                            <div class="card-footer text-muted small">
+                                <i class="bi bi-link-45deg"></i> PDA 下载地址：<code>http://<span class="dom"></span>:<span class="wp"></span>/app/download</code> · 抄表员用 PDA 浏览器访问即可安装最新版
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 用户与角色 -->
+                    <div class="tab-pane fade" id="tab-users">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-people"></i> 用户管理</strong>
+                                <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增用户（用户名/姓名/角色/初始密码）')"><i class="bi bi-plus-lg"></i> 新增用户</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light"><tr><th>用户名</th><th>姓名</th><th>角色</th><th>最近登录</th><th>状态</th><th>备注</th><th width="200">操作</th></tr></thead>
+                                    <tbody id="userBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header bg-light"><strong><i class="bi bi-shield-lock"></i> 角色权限矩阵</strong></div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0 align-middle text-center">
+                                    <thead class="table-light"><tr><th>模块</th><th>管理员</th><th>财务</th><th>PDA操作员</th></tr></thead>
+                                    <tbody id="permBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 备份与恢复 -->
+                    <div class="tab-pane fade" id="tab-backup">
+                        <div class="card">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-hdd-stack"></i> 备份与恢复</strong>
+                                <button class="btn btn-sm btn-success" onclick="alert('原型演示：立即执行数据库备份（SSMS 维护计划 / BACKUP DATABASE）')"><i class="bi bi-download"></i> 立即备份</button>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-secondary py-2 mb-3"><i class="bi bi-clock"></i> 自动备份策略：每日 <strong>02:00</strong> 全量备份，保留最近 <strong>30</strong> 天；图片目录随文件系统单独备份。</div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead class="table-light"><tr><th>备份文件</th><th>大小</th><th>时间</th><th>类型</th><th width="160">操作</th></tr></thead>
+                                        <tbody id="backupBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 系统集成 -->
+                    <div class="tab-pane fade" id="tab-integration">
+                        <div class="card">
+                            <div class="card-header bg-light"><strong><i class="bi bi-plug"></i> 系统集成配置</strong></div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle"></i> 配置与外部系统（HR / K3ERP）的连接参数。配置后系统可自动同步员工花名册、在职状态等数据。
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-3 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="100">系统编码</th>
+                                                <th width="160">系统名称</th>
+                                                <th>服务器地址</th>
+                                                <th width="140">账号</th>
+                                                <th width="140">密码</th>
+                                                <th width="100" class="text-center">启用</th>
+                                                <th width="180">操作</th>
+                                                <th width="140" class="text-center">连接状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="integrationBody"></tbody>
+                                    </table>
+                                </div>
+                                <hr>
+                                <div class="text-end">
+                                    <button class="btn btn-primary" onclick="saveIntegration()"><i class="bi bi-save"></i> 保存参数</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 关于 -->
+                    <div class="tab-pane fade" id="tab-about">
+                        <div class="card">
+                            <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 关于系统</strong></div>
+                            <div class="card-body" id="aboutBody"></div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        const cfg = SYS_CONFIG;
+
+        // 服务与端口
+        pdaPort.value = cfg.pdaPort; webPort.value = cfg.webPort;
+        serverDomain.value = cfg.serverDomain; imagePath.value = cfg.imagePath;
+        dbServer.value = cfg.dbServer; dbPort.value = cfg.dbPort; dbName.value = cfg.dbName;
+        dbUser.value = cfg.dbUser; dbPassword.value = cfg.dbPassword;
+        renderServiceStatus();
+
+        function statusHtml(s) {
+            return s === 'running'
+                ? '<span class="status-dot dot-run"></span>运行中'
+                : '<span class="status-dot dot-stop"></span>已停止';
+        }
+        function renderServiceStatus() {
+            document.getElementById('pdaStatus').innerHTML = statusHtml(cfg.pdaService);
+            document.getElementById('webStatus').innerHTML = statusHtml(cfg.webService);
+        }
+        function toggleService(which) {
+            const key = which === 'pda' ? 'pdaService' : 'webService';
+            cfg[key] = cfg[key] === 'running' ? 'stopped' : 'running';
+            renderServiceStatus();
+            alert(`原型演示：${which === 'pda' ? 'PDA' : 'Web'} 服务已${cfg[key] === 'running' ? '启动' : '停止'}\n（实际由托盘守护进程拉起/停止 EXE）`);
+        }
+        function saveConfig(area) {
+            alert(`✓ 原型演示：「${area}」配置已保存\n部分改动（端口/数据库）需重启对应服务后生效。\n（实际写入 appsettings.json 并通知托盘）`);
+        }
+
+        // 数据库深度测试（8 步）
+        function dbTest() {
+            const box = document.getElementById('dbTestResult');
+            box.innerHTML = '<div class="text-muted small">正在测试...</div>';
+            let i = 0;
+            const lines = [];
+            const timer = setInterval(() => {
+                lines.push(`<div class="step-line"><i class="bi bi-check-circle-fill text-success"></i> <span>${i + 1}. ${DB_TEST_STEPS[i]}</span> <span class="badge bg-success">通过</span></div>`);
+                box.innerHTML = `<div class="alert alert-light border mb-0">${lines.join('')}</div>`;
+                i++;
+                if (i >= DB_TEST_STEPS.length) {
+                    clearInterval(timer);
+                    box.innerHTML = `<div class="alert alert-success mb-0"><strong><i class="bi bi-check2-all"></i> 8 步深度验证全部通过</strong>，数据库连接与读写权限正常。<div class="mt-2">${lines.join('')}</div></div>`;
+                }
+            }, 180);
+        }
+
+        // PDA App 版本
+        document.getElementById('appBody').innerHTML = APP_VERSIONS.map(v => `
+            <tr>
+                <td><strong>${v.version}</strong> ${v.isLatest ? '<span class="badge bg-success">最新</span>' : ''}</td>
+                <td>${v.size}</td>
+                <td>${v.releaseDate}</td>
+                <td><small class="text-muted">${v.releaseNotes}</small></td>
+                <td>${v.isLatest ? '<span class="badge bg-primary">当前发布</span>' : '<span class="badge bg-secondary">历史</span>'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="alert('原型演示：下载 ${v.version} APK')">下载</button>
+                    ${!v.isLatest ? `<button class="btn btn-sm btn-outline-warning" onclick="alert('原型演示：回滚发布为 ${v.version}')">设为发布</button>` : ''}
+                </td>
+            </tr>`).join('');
+        document.querySelectorAll('.dom').forEach(e => e.textContent = cfg.serverDomain);
+        document.querySelectorAll('.wp').forEach(e => e.textContent = cfg.webPort);
+
+        // 用户
+        document.getElementById('userBody').innerHTML = SYS_USERS.map(u => `
+            <tr class="${u.enabled ? '' : 'text-muted'}">
+                <td><strong>${u.username}</strong></td>
+                <td>${u.realName}</td>
+                <td><span class="badge bg-info">${u.role}</span></td>
+                <td><small class="text-muted">${u.lastLogin}</small></td>
+                <td>${u.enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
+                <td><small class="text-muted">${u.remark}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="alert('原型演示：编辑用户 ${u.username}')">编辑</button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('原型演示：重置 ${u.username} 密码')">重置密码</button>
+                    <button class="btn btn-sm ${u.enabled ? 'btn-outline-danger' : 'btn-outline-success'}" onclick="alert('原型演示：${u.enabled ? '停用' : '启用'} ${u.username}')">${u.enabled ? '停用' : '启用'}</button>
+                </td>
+            </tr>`).join('');
+
+        // 权限矩阵
+        const permCell = v => v === '无'
+            ? '<span class="text-danger">✘</span>'
+            : `<span class="text-success">✔</span> <small>${v}</small>`;
+        document.getElementById('permBody').innerHTML = PERMISSION_MATRIX.map(p => `
+            <tr>
+                <td class="text-start"><strong>${p.module}</strong></td>
+                <td>${permCell(p.admin)}</td>
+                <td>${permCell(p.finance)}</td>
+                <td>${permCell(p.operator)}</td>
+            </tr>`).join('');
+
+        // 备份
+        document.getElementById('backupBody').innerHTML = BACKUPS.map(b => `
+            <tr>
+                <td><i class="bi bi-file-earmark-zip"></i> ${b.fileName}</td>
+                <td>${b.size}</td>
+                <td>${b.createdAt}</td>
+                <td>${b.type === '自动' ? '<span class="badge bg-secondary">自动</span>' : '<span class="badge bg-primary">手动</span>'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="alert('原型演示：下载 ${b.fileName}')">下载</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="if(confirm('确定用该备份恢复数据库吗？\\n恢复会覆盖当前数据！'))alert('原型演示：已从 ${b.fileName} 恢复')">恢复</button>
+                </td>
+            </tr>`).join('');
+
+        // 系统集成
+        const INTEGRATIONS = [
+            { id: 1, systemCode: "HR", systemName: "人力资源系统", serverUrl: "http://hr.company.com:8080/api", username: "hr_api_user", password: "", enabled: true, lastTestResult: "连接成功", lastTestTime: "2026-07-12 10:30" },
+            { id: 2, systemCode: "K3ERP", systemName: "K3 ERP 系统", serverUrl: "http://erp.company.com:8081/api", username: "k3_sync_user", password: "", enabled: false, lastTestResult: null, lastTestTime: null }
+        ];
+
+        // 用户是否有"修改"权限（原型演示：管理员=有，其他=无）
+        const hasModifyPermission = true;
+
+        document.getElementById('integrationBody').innerHTML = INTEGRATIONS.map(item => `
+            <tr>
+                <td><strong>${item.systemCode}</strong></td>
+                <td><input type="text" class="form-control form-control-sm" value="${item.systemName}" style="width:100%"></td>
+                <td><input type="text" class="form-control form-control-sm" value="${item.serverUrl}" style="width:100%"></td>
+                <td><input type="text" class="form-control form-control-sm" value="${item.username}" style="width:100%"></td>
+                <td><input type="password" class="form-control form-control-sm" value="${item.password}" placeholder="输入密码" style="width:100%"></td>
+                <td class="text-center">
+                    <div class="form-check form-switch d-flex justify-content-center">
+                        <input class="form-check-input" type="checkbox" ${item.enabled ? 'checked' : ''} onchange="alert('原型演示：${item.systemCode} 已${this.checked ? '启用' : '停用'}')">
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-info" onclick="testIntegration('${item.systemCode}')"><i class="bi bi-plug"></i> 连接测试</button>
+                </td>
+                <td class="text-center">
+                    <small class="text-muted">${item.lastTestResult || '未测试'}</small>
+                </td>
+            </tr>`).join('');
+
+        // 保存参数按钮：按权限控制显隐
+        (function() {
+            const btn = document.querySelector('#tab-integration .btn-primary');
+            if (!hasModifyPermission) {
+                btn.style.display = 'none';
+            }
+        })();
+
+        function testIntegration(code) {
+            alert(`原型演示：正在测试 ${code} 系统连接...\n目标：${INTEGRATIONS.find(i => i.systemCode === code)?.serverUrl}\n（实际将 POST /api/settings/integration/test/${code}）`);
+        }
+        function saveIntegration() {
+            alert('✓ 原型演示：系统集成参数已保存\n密码已 AES-256 加密后写入数据库。\n（实际将 PUT /api/settings/integration）');
+        }
+
+        // 关于
+        document.getElementById('aboutBody').innerHTML = `
+            <table class="table table-sm table-borderless mb-0">
+                <tr><th width="160" class="text-muted">系统名称</th><td>金戈新材料 · 水电抄表系统</td></tr>
+                <tr><th class="text-muted">后台版本</th><td>v2.11（Web 后台）</td></tr>
+                <tr><th class="text-muted">运行架构</th><td>.NET 8 自托管 EXE + 托盘守护（WaterMeter.Api / Admin / TrayApp）</td></tr>
+                <tr><th class="text-muted">PDA 服务</th><td>${statusHtml(cfg.pdaService)} · 端口 ${cfg.pdaPort}</td></tr>
+                <tr><th class="text-muted">Web 服务</th><td>${statusHtml(cfg.webService)} · 端口 ${cfg.webPort}</td></tr>
+                <tr><th class="text-muted">数据库</th><td>${cfg.dbServer}:${cfg.dbPort} / ${cfg.dbName}</td></tr>
+                <tr><th class="text-muted">图片存储</th><td>${cfg.imagePath}</td></tr>
+                <tr><th class="text-muted">PDA 最新版</th><td>${APP_VERSIONS[0].version}（${APP_VERSIONS[0].releaseDate}）</td></tr>
+            </table>`;
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'settings/index.html' });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!--
+  _shared/layout.html — 共用页头 + Tab 页签 模板（v2.12.0）
+
+  配套规范：37-共用页头与Tab页签导航设计规范-v2.12.md
+
+  用法（伪代码示意，实际子页面按以下结构组装）：
+  1) 引入本布局的 <head> 内容（CDN + layout-tab.css + storage-keys.js + icon-rail.js + tab-bar.js）
+  2) 在 <body> 内按顺序放置：
+     - <div id="top-bar">...</div>   ← Tier 1 顶部品牌栏
+     - <div id="icon-rail"></div>    ← Tier 2 紧凑型图标导航条
+     - <div id="tab-bar"></div>      ← Tier 3 Tab 页签栏
+     - <div class="page-content">{各页面正文}</div>  ← Tier 4 页面内容区
+
+  各子页面在 DOMContentLoaded 时调用：
+    mountIconRail({ basePath: '..', currentModule: 'dorms' });
+    mountTabBar({ basePath: '..', currentUrl: '/dorms/list.html' });
+-->
+
+<!-- ========== 顶部品牌栏 (Tier 1, 48px) ========== -->
+<div class="top-bar" id="top-bar">
+    <div class="d-flex justify-content-between align-items-center h-100">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-droplet-half brand-icon"></i>
+            <span class="brand-text">金戈宿舍管理系统</span>
+            <span class="brand-version">v2.12.0</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="user-pill">
+                <i class="bi bi-person-circle"></i>
+                <span>管理员</span>
+            </span>
+            <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                <i class="bi bi-box-arrow-right"></i> 退出
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ========== 紧凑型图标导航条 (Tier 2, 56px) ========== -->
+<!-- 渲染由 icon-rail.js#mountIconRail() 完成，目标 DOM id="icon-rail" -->
+<div id="icon-rail"></div>
+
+<!-- ========== Tab 页签栏 (Tier 3, 40px) ========== -->
+<!-- 渲染由 tab-bar.js#mountTabBar() 完成，目标 DOM id="tab-bar" -->
+<div id="tab-bar"></div>
+
+<!-- ========== 页面内容区 (Tier 4) ========== -->
+<div class="page-content">
+    <!-- {各页面正文在此} -->
+</div>

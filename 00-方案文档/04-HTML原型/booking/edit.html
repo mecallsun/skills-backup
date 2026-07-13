@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>修改办理登记 — 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --danger: #c62828;
+            --info: #00838f;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --bg-page: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e8eaed;
+        }
+        body {
+            font-family: "Microsoft YaHei UI", sans-serif;
+            background: var(--bg-page);
+            margin: 0;
+        }
+
+        /* 顶部品牌栏 */
+        
+
+        /* 菜单导航栏 */
+        .menu-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+        }
+        .menu-bar::-webkit-scrollbar { display: none; }
+
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { color: #1976d2; background: #f0f7ff; }
+        .menu-item.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+        .menu-item i { font-size: 1.1rem; }
+
+        /* 菜单分隔符 */
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0.25rem; flex-shrink: 0; }
+
+        /* 页面标题 */
+        .page-header {
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-title i { color: var(--primary); }
+
+        /* 内容卡片 */
+        .content-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+            overflow: hidden;
+            padding: 1.5rem;
+        }
+
+        /* 只读字段样式 */
+        .form-control[readonly], .form-control[disabled] {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+        /* 信息摘要区 */
+        .info-summary {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-summary .info-row {
+            display: flex;
+            align-items: center;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid #e8eaed;
+        }
+        .info-summary .info-row:last-child { border-bottom: none; }
+        .info-summary .info-label {
+            flex: 0 0 80px;
+            color: #6c757d;
+            font-size: 0.85rem;
+        }
+        .info-summary .info-value {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #212529;
+        }
+
+        /* 按钮 */
+        .btn i { margin-right: 0.25rem; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+<div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+<!-- 页面标题 + 返回列表 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-pencil-square"></i> 修改办理登记
+            </h1>
+            <a href="index.html" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+        </div>
+
+        <!-- 信息摘要（只读） -->
+        <div class="info-summary" id="infoSummary">
+            <!-- JS 动态渲染 -->
+        </div>
+
+        <!-- 表单卡片 -->
+        <div class="content-card">
+            <form onsubmit="event.preventDefault(); submitForm();">
+                <div class="row g-4">
+                    <!-- 第一行：入退日期 + 原因 -->
+                    <div class="filter-item">
+                        <label class="form-label">
+                            入退日期 <span class="text-danger">*</span>
+                        </label>
+                        <input type="date" id="bookingDate" class="form-control" required>
+                        <small class="text-muted">修改后会触发一进一出日期重叠校验</small>
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label">
+                            原因
+                        </label>
+                        <select id="reason" class="form-select">
+                            <option value="入职">入职</option>
+                            <option value="调岗">调岗</option>
+                            <option value="换房">换房</option>
+                            <option value="预约">预约</option>
+                            <option value="离职">离职</option>
+                            <option value="其他">其他</option>
+                        </select>
+                        <small class="text-muted">入住/退房原因说明</small>
+                    </div>
+
+                    <!-- 第二行：状态（条件可编辑） -->
+                    <div class="col-md-6" id="statusRow" style="display:none;">
+                        <label class="form-label">
+                            状态 <span class="text-danger">*</span>
+                        </label>
+                        <select id="status" class="form-select">
+                            <!-- JS 动态填充 -->
+                        </select>
+                        <small class="text-muted">仅预约状态可修改状态</small>
+                    </div>
+
+                    <!-- 第三行：备注 -->
+                    <div class="filter-item">
+                        <label class="form-label">备注</label>
+                        <textarea id="remark" class="form-control" rows="2" maxlength="500" placeholder="可输入备注信息，最多 500 字"></textarea>
+                        <small class="text-muted"><span id="remarkCount">0</span> / 500 字</small>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <!-- 系统自动记录 -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <label class="form-label text-muted small">
+                            <i class="bi bi-lock"></i> 系统自动记录（不可修改）
+                        </label>
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label small text-muted">登记日期</label>
+                        <input type="text" id="regDate" class="form-control" readonly disabled>
+                    </div>
+                    <div class="filter-item">
+                        <label class="form-label small text-muted">登记人</label>
+                        <input type="text" id="registrar" class="form-control" readonly disabled>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="index.html" class="btn btn-secondary">
+                        <i class="bi bi-x-lg"></i> 取消
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg"></i> 保存修改
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        document.querySelectorAll('.menu-item').forEach(item => {
+            if (item.getAttribute('href').includes('booking/')) item.classList.add('active');
+        });
+
+        // v2.11.2 考勤班次 Badge
+        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
+        function attendanceBadge(t) {
+            return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;
+        }
+
+        // ========== 加载记录 ==========
+        const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+        const b = BOOKINGS.find(x => x.id === id) || BOOKINGS[0];
+        const empRecord = findEmployee(b.employeeId);
+
+        // ========== 渲染只读信息摘要 ==========
+        function renderInfoSummary() {
+            const typeBadge = b.type === 1
+                ? '<span class="badge bg-success">入住</span>'
+                : '<span class="badge bg-warning text-dark">退房</span>';
+            const statusBadge = `<span class="badge ${BOOKING_STATUS_BADGE[b.status]}">${BOOKING_STATUSES[b.status]}</span>`;
+
+            const html = `
+                <div class="info-row">
+                    <span class="info-label">员工</span>
+                    <span class="info-value">${b.employeeName} <small class="text-muted">（${b.employeeCode}）</small></span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">宿舍</span>
+                    <span class="info-value">${b.dormCode || '-'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">类型</span>
+                    <span class="info-value">${typeBadge}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">状态</span>
+                    <span class="info-value">${statusBadge}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">考勤班次</span>
+                    <span class="info-value">${attendanceBadge(empRecord ? (empRecord.attendanceType || 'DEFAULT') : 'DEFAULT')}</span>
+                </div>
+            `;
+            document.getElementById('infoSummary').innerHTML = html;
+        }
+
+        // ========== 填充表单 ==========
+        function initForm() {
+            document.getElementById('bookingDate').value = b.bookingDate || '';
+            document.getElementById('reason').value = b.reason || '其他';
+            document.getElementById('remark').value = b.remark || '';
+            document.getElementById('regDate').value = b.registrationDate ? b.registrationDate.substring(0, 16) : '-';
+            document.getElementById('registrar').value = b.registrar || '-';
+
+            // 备注字数统计
+            document.getElementById('remark').addEventListener('input', function() {
+                document.getElementById('remarkCount').textContent = this.value.length;
+            });
+
+            // 状态行：仅预约状态（status=1）时显示
+            const statusRow = document.getElementById('statusRow');
+            const statusSel = document.getElementById('status');
+            if (b.status === 1) {
+                statusRow.style.display = 'block';
+                statusSel.innerHTML = `
+                    <option value="1" selected>预约</option>
+                    <option value="${b.type === 1 ? 2 : 3}">${b.type === 1 ? '在宿' : '已退房'}</option>
+                    <option value="4">已取消</option>
+                `;
+            } else {
+                statusRow.style.display = 'none';
+            }
+
+            renderInfoSummary();
+        }
+
+        // ========== 提交表单 ==========
+        function submitForm() {
+            const bookingDate = document.getElementById('bookingDate').value;
+            if (!bookingDate) {
+                alert('请选择入退日期');
+                return;
+            }
+
+            const statusEl = document.getElementById('status');
+            const newStatus = statusEl ? parseInt(statusEl.value) : b.status;
+
+            if (!confirm('确定保存修改？\n（修改会触发一进一出日期重叠校验）')) return;
+
+            alert(`✓ 原型演示：记录 ${id} 已修改\n入退日期：${bookingDate}\n原因：${document.getElementById('reason').value}\n状态：${BOOKING_STATUSES[newStatus]}\n（实际将 PUT /api/v1/bookings/${id}）`);
+            location.href = 'index.html';
+        }
+
+        // ========== 页面初始化 ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            initForm();
+        });
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'booking/edit.html' });
+        });
+    </script>
+</body>
+</html>

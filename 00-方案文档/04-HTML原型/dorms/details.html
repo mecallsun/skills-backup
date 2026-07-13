@@ -1,0 +1,287 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>宿舍详情 — v2.11.4 (s) 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; }
+        .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+        /* v2.11.4 (s) 时间线样式 */
+        .timeline { border-left: 2px solid #1976d2; padding-left: 20px; margin-left: 10px; }
+        .timeline-item { position: relative; padding: 10px 0 10px 0; border-bottom: 1px dashed #dee2e6; }
+        .timeline-item::before { content: ''; position: absolute; left: -28px; top: 18px; width: 12px; height: 12px; border-radius: 50%; background: #1976d2; }
+        .timeline-item.left::before { background: #6c757d; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-building"></i> 宿舍详情 <span class="text-muted">/</span> <span id="dormCode"></span></h2>
+
+        <div class="row">
+            <!-- v2.11.4 (r) 左侧宽度从 col-md-5 减少到 col-md-3 -->
+            <div class="filter-item">
+                <!-- 基本信息卡 -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 基本信息</strong></div>
+                    <div class="card-body" id="basicInfo"></div>
+                </div>
+                <!-- 操作（v2.11.4 (s) 查看住宿历史按钮移至此处） -->
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-tools"></i> 操作</strong></div>
+                    <div class="card-body">
+                        <button id="btnToggleHistory" class="btn btn-outline-secondary w-100 mb-2" onclick="toggleHistory()">
+                            <i class="bi bi-clock-history"></i> 查看住宿历史
+                        </button>
+                        <a href="list.html" class="btn btn-link w-100"><i class="bi bi-arrow-left"></i> 返回宿舍列表</a>
+                    </div>
+                </div>
+            </div>
+            <div class="filter-item">
+                <!-- 当前入住人员 -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light d-flex justify-content-between">
+                        <strong><i class="bi bi-people"></i> 当前入住人员（<span id="residentCount">0</span>）</strong>
+                        <span class="text-muted small">容量上限：<span id="capacity"></span> 人</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>工号</th><th>姓名</th><th>部门</th><th>员工类型</th><th>考勤班次</th>
+                                    <th>入住日期</th><th>已入住</th><th width="200">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- v2.11.4 (s) 历史记录区域（默认隐藏，timeline 时间线样式） -->
+                <div id="historySection" class="card" style="display: none;">
+                    <div class="card-header bg-light d-flex justify-content-between">
+                        <strong><i class="bi bi-clock-history"></i> 住宿历史记录（<span id="historyCount">0</span>）</strong>
+                        <button class="btn btn-sm btn-link" onclick="toggleHistory()">收起 ▲</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline" id="historyTimeline"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        const code = new URLSearchParams(location.search).get('code') || 'D-301';
+        const dorm = findDorm(code);
+
+        document.getElementById('dormCode').textContent = code;
+        document.getElementById('capacity').textContent = dorm.capacity;
+        document.getElementById('basicInfo').innerHTML = `
+            <table class="table table-sm table-borderless mb-0">
+                <tr><th width="60" class="text-muted">房号</th><td><strong>${dorm.dormCode}</strong></td></tr>
+                <tr><th width="60" class="text-muted">楼栋</th><td>${dorm.building}</td></tr>
+                <tr><th width="60" class="text-muted">楼层</th><td>${dorm.floor}</td></tr>
+                <tr><th width="60" class="text-muted">地址</th><td>${dorm.address || '-'}</td></tr>
+                <tr><th width="60" class="text-muted">房间数</th><td>${dorm.roomCount}</td></tr>
+                <tr><th width="60" class="text-muted">容量</th><td>${dorm.capacity} 人 / ${dorm.bedCount} 床</td></tr>
+                <tr><th width="60" class="text-muted">状态</th><td>${dorm.isActive ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td></tr>
+                <tr><th width="60" class="text-muted">备注</th><td>${dorm.remark || '-'}</td></tr>
+            </table>
+        `;
+
+        const active = RESIDENCIES.filter(r => r.dormCode === code && r.status === 1);
+        document.getElementById('residentCount').textContent = active.length;
+        const tbody = document.getElementById('tbody');
+        if (active.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">暂无入住人员</td></tr>`;
+        } else {
+            // v2.11.6 强化：员工类型按 FK 关联引用（SysEmployee.EmployeeTypeId → EmployeeType.Name）
+            // v2.11.7 BUG 修复：增加兼容逻辑 - 同时支持 FK (新格式) 和 string code (旧格式)
+            const empTypeNameByFk = (emp) => {
+                if (!emp) return '-';
+                if (emp.employeeTypeId != null) {
+                    const t = EMPLOYEE_TYPES.find(x => x.id === emp.employeeTypeId);
+                    return t ? t.name : '-';
+                }
+                if (emp.employeeType) {
+                    const t = EMPLOYEE_TYPES.find(x => x.code === emp.employeeType || x.name === emp.employeeType);
+                    return t ? t.name : emp.employeeType;
+                }
+                return '-';
+            };
+            const empTypeBadge = (emp) => {
+                if (!emp) return 'bg-secondary';
+                let code = null;
+                if (emp.employeeTypeId != null) {
+                    const t = EMPLOYEE_TYPES.find(x => x.id === emp.employeeTypeId);
+                    if (t) code = t.code;
+                }
+                if (!code && emp.employeeType) {
+                    // emp.employeeType 可能是 code 或 name
+                    const t1 = EMPLOYEE_TYPES.find(x => x.code === emp.employeeType);
+                    code = t1 ? t1.code : EMPLOYEE_TYPES.find(x => x.name === emp.employeeType)?.code || emp.employeeType;
+                }
+                const map = {
+                    'CONTRACT': 'bg-secondary',
+                    'TEMPORARY': 'bg-warning text-dark',
+                    'OUTSOURCE': 'bg-info text-dark',
+                    'INTERN': 'bg-success',
+                    'ONSITE': 'bg-dark'
+                };
+                return map[code] || 'bg-secondary';
+            };
+            // v2.11.7 BUG 修复：考勤班次同样支持双格式 fallback
+            const attendanceLabel = (emp) => {
+                if (!emp) return '-';
+                if (emp.attendanceTypeId != null) {
+                    const t = ATTENDANCE_TYPES.find(x => x.id === emp.attendanceTypeId);
+                    return t ? t.name : '-';
+                }
+                if (emp.attendanceType) {
+                    const t = ATTENDANCE_TYPES.find(x => x.code === emp.attendanceType);
+                    return t ? t.name : (ATTENDANCE_NAME[emp.attendanceType] || emp.attendanceType);
+                }
+                return '-';
+            };
+            const attendanceBadge = (emp) => {
+                if (!emp) return 'bg-secondary';
+                let code = null;
+                if (emp.attendanceTypeId != null) {
+                    const t = ATTENDANCE_TYPES.find(x => x.id === emp.attendanceTypeId);
+                    if (t) code = t.code;
+                }
+                if (!code && emp.attendanceType) code = emp.attendanceType;
+                return code ? (ATTENDANCE_BADGE[code] || 'bg-secondary') : 'bg-secondary';
+            };
+            tbody.innerHTML = active.map(r => {
+                const emp = findEmployee(r.employeeId);
+                const days = Math.floor((new Date() - new Date(r.checkInDate)) / (1000*60*60*24));
+                return `
+                <tr>
+                    <td>${emp.employeeCode}</td>
+                    <td>${emp.realName}</td>
+                    <td>${emp.department}</td>
+                    <!-- v2.11.7：员工类型 - FK 关联引用 SysEmployee → EmployeeType (含 fallback) -->
+                    <td><span class="badge ${empTypeBadge(emp)}" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">${empTypeNameByFk(emp)}</span></td>
+                    <td><span class="badge ${attendanceBadge(emp)}">${attendanceLabel(emp)}</span></td>
+                    <td>${formatDate(r.checkInDate)}</td>
+                    <td><span class="badge bg-info">${days} 天</span></td>
+                    <td>
+                        <a href="../booking/edit.html?employeeId=${emp.id}" class="btn btn-sm btn-outline-warning">调宿</a>
+                        <button class="btn btn-sm btn-outline-danger" onclick="checkout(${r.id}, '${emp.realName}')">退宿</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function checkout(rid, name) {
+            if (!confirm(`确定办理 ${name} 的退宿吗？`)) return;
+            alert(`✓ 原型演示：${name} 已退宿\n（实际将 POST /api/v1/residency/${rid}/check-out）`);
+            location.reload();
+        }
+
+        // v2.11.4 (s) 查看住宿历史开关效果
+        let historyVisible = false;
+
+        function toggleHistory() {
+            historyVisible = !historyVisible;
+            const section = document.getElementById('historySection');
+            const btn = document.getElementById('btnToggleHistory');
+
+            if (historyVisible) {
+                section.style.display = 'block';
+                btn.innerHTML = '<i class="bi bi-x-circle"></i> 关闭历史';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-secondary');
+                renderHistory();
+            } else {
+                section.style.display = 'none';
+                btn.innerHTML = '<i class="bi bi-clock-history"></i> 查看住宿历史';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        function renderHistory() {
+            // v2.11.4 (s) 使用 dormHistory 函数获取该宿舍所有历史记录
+            const history = dormHistory(code).filter(r => r.status !== 1); // 排除当前在宿
+
+            document.getElementById('historyCount').textContent = history.length;
+            const timeline = document.getElementById('historyTimeline');
+
+            if (history.length === 0) {
+                timeline.innerHTML = '<div class="text-muted text-center py-4">暂无历史记录</div>';
+                return;
+            }
+
+            const empTypeName = (code) => {
+                const t = EMPLOYEE_TYPES.find(x => x.code === code);
+                return t ? t.name : code;
+            };
+
+            timeline.innerHTML = history.map(r => {
+                const emp = findEmployee(r.employeeId);
+                const isActive = r.status === 1;
+                const stayDays = r.leaveDate
+                    ? Math.floor((new Date(r.leaveDate) - new Date(r.checkInDate)) / (1000*60*60*24))
+                    : Math.floor((new Date() - new Date(r.checkInDate)) / (1000*60*60*24));
+
+                return `
+                <div class="timeline-item ${isActive ? '' : 'left'}">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${emp?.realName || '-'}</strong>
+                            <small class="text-muted ms-2">${emp?.employeeCode || '-'} | ${emp?.department || '-'}</small>
+                            ${isActive ? '<span class="badge bg-success ms-2">在宿</span>' : '<span class="badge bg-secondary ms-2">已退宿</span>'}
+                        </div>
+                        <small class="text-muted">${r.reason || ''}</small>
+                    </div>
+                    <div class="mt-1 text-muted small">
+                        <i class="bi bi-box-arrow-in-right"></i> 入住：${formatDate(r.checkInDate)}
+                        ${r.leaveDate ? `<i class="bi bi-box-arrow-right ms-3"></i> 退宿：${formatDate(r.leaveDate)}` : '<i class="bi bi-hourglass-split ms-3"></i> 至今'}
+                        <i class="bi bi-clock ms-3"></i> 共 ${stayDays} 天
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'dorms/details.html' });
+        });
+    </script>
+</body>
+</html>

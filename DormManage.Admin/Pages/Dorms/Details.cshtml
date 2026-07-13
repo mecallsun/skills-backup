@@ -1,0 +1,233 @@
+@page
+@model DormManage.Admin.Pages.Dorms.DetailsModel
+@{
+    ViewData["Title"] = "宿舍详情";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-building"></i> 宿舍详情
+        </h2>
+        <div>
+            <a href="/Dorms" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+            <a href="/Dorms/Edit/@Model.Dorm?.Id" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 编辑
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Dorm != null)
+    {
+        <!-- 基本信息卡片 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">宿舍号</dt>
+                            <dd class="fw-bold fs-5">@Model.Dorm.DormCode</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">楼栋</dt>
+                            <dd class="fw-bold">@Model.Dorm.BuildingName</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">楼层</dt>
+                            <dd class="fw-bold">@Model.Dorm.FloorId 楼</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">地址</dt>
+                            <dd class="fw-bold">@Model.Dorm.AddressText</dd>
+                        </dl>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">容量</dt>
+                            <dd class="fw-bold">@Model.Dorm.Capacity 人</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">当前入住</dt>
+                            <dd class="fw-bold @(Model.Dorm.CurrentCount >= Model.Dorm.Capacity ? "text-danger" : "text-success")">
+                                @Model.Dorm.CurrentCount / @Model.Dorm.Capacity 人
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">性别</dt>
+                            <dd class="fw-bold">
+                                @if (Model.Dorm.Gender == 1)
+                                {
+                                    <span class="badge bg-primary">男</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">女</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-3">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">状态</dt>
+                            <dd class="fw-bold">
+                                @if (Model.Dorm.IsActive)
+                                {
+                                    <span class="badge bg-success">启用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">停用</span>
+                                }
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
+                {
+                    <hr>
+                    <dl class="row mb-0">
+                        <dt class="col-md-1 text-muted small">备注</dt>
+                        <dd class="col-md-11">@Model.Dorm.Remark</dd>
+                    </dl>
+                }
+            </div>
+        </div>
+
+        <!-- 当前入住人员 -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-people"></i> 当前入住人员
+                    <span class="badge bg-primary ms-2">@Model.CurrentResidents.Count</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.CurrentResidents.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60" class="text-center">序号</th>
+                                    <th>工号</th>
+                                    <th>姓名</th>
+                                    <th>部门</th>
+                                    <th>手机</th>
+                                    <th>入住日期</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.CurrentResidents.Count; i++)
+                                {
+                                    var resident = Model.CurrentResidents[i];
+                                    <tr>
+                                        <td class="text-center text-muted">@(i + 1)</td>
+                                        <td><strong>@resident.EmployeeCode</strong></td>
+                                        <td>@resident.EmployeeName</td>
+                                        <td>@(resident.Department ?? "-")</td>
+                                        <td>@(resident.Phone ?? "-")</td>
+                                        <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">暂无入住人员</p>
+                }
+            </div>
+        </div>
+
+        <!-- 历史记录 -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> 历史记录
+                    <span class="badge bg-secondary ms-2">@Model.HistoryRecords.Count</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                @if (Model.HistoryRecords.Count > 0)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60" class="text-center">序号</th>
+                                    <th>工号</th>
+                                    <th>姓名</th>
+                                    <th>部门</th>
+                                    <th class="text-center">类型</th>
+                                    <th class="text-center">状态</th>
+                                    <th>入退日期</th>
+                                    <th>登记人</th>
+                                    <th class="text-center">登记时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.HistoryRecords.Count; i++)
+                                {
+                                    var record = Model.HistoryRecords[i];
+                                    <tr>
+                                        <td class="text-center text-muted">@(i + 1)</td>
+                                        <td><strong>@record.EmployeeCode</strong></td>
+                                        <td>@record.EmployeeName</td>
+                                        <td>@(record.Department ?? "-")</td>
+                                        <td class="text-center">
+                                            @if (record.Type == 1)
+                                            {
+                                                <span class="badge bg-success">入住</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning text-dark">退房</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @switch (record.Status)
+                                            {
+                                                case 1: <span class="badge bg-warning text-dark">预约</span>; break;
+                                                case 2: <span class="badge bg-success">在宿</span>; break;
+                                                case 3: <span class="badge bg-secondary">已退房</span>; break;
+                                                case 4: <span class="badge bg-danger">已取消</span>; break;
+                                            }
+                                        </td>
+                                        <td>@record.BookingDate.ToString("yyyy-MM-dd")</td>
+                                        <td><small class="text-muted">@record.Registrar</small></td>
+                                        <td class="text-center"><small class="text-muted">@record.RegistrationDate.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">暂无历史记录</p>
+                }
+            </div>
+        </div>
+    }
+</div>

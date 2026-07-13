@@ -1,0 +1,195 @@
+@page
+@model DormManage.Admin.Pages.Booking.CheckInModel
+@{
+    ViewData["Title"] = "办理入住";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <h2 class="mb-3"><i class="bi bi-box-arrow-in-right"></i> 办理入住</h2>
+
+    <div class="card">
+        <div class="card-body">
+            <form id="checkInForm">
+                <div class="row g-3">
+                    <!-- 步骤1：选择员工 -->
+                    <div class="col-md-6">
+                        <label class="form-label">选择员工 <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" id="searchKeyword" class="form-control" placeholder="输入姓名/工号/手机号搜索">
+                            <button class="btn btn-outline-secondary" type="button" onclick="searchEmployee()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                        <select id="employeeSelect" class="form-select mt-2" size="5" onchange="selectEmployee()">
+                            <option value="">请先搜索员工</option>
+                        </select>
+                        <input type="hidden" id="employeeId" name="employeeId" />
+                    </div>
+
+                    <!-- 员工信息展示 -->
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">员工信息</h6>
+                                <div class="mb-2">
+                                    <strong>工号：</strong><span id="empCode">-</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>姓名：</strong><span id="empName">-</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>部门：</strong><span id="empDept">-</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>手机：</strong><span id="empPhone">-</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>入职日期：</strong><span id="empHireDate">-</span>
+                                </div>
+                                <div class="mb-2">
+                                    <strong>当前宿舍：</strong><span id="empDorm">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤2：选择宿舍 -->
+                    <div class="col-md-6">
+                        <label class="form-label">选择宿舍 <span class="text-danger">*</span></label>
+                        <select id="dormSelect" class="form-select" onchange="selectDorm()">
+                            <option value="">选择宿舍</option>
+                        </select>
+                    </div>
+
+                    <!-- 步骤3：选择日期 -->
+                    <div class="col-md-6">
+                        <label class="form-label">入住日期 <span class="text-danger">*</span></label>
+                        <input type="date" id="bookingDate" name="bookingDate" class="form-control" required>
+                    </div>
+
+                    <!-- 步骤4：原因和备注 -->
+                    <div class="col-12">
+                        <label class="form-label">原因</label>
+                        <select id="reason" name="reason" class="form-select">
+                            <option value="">请选择原因</option>
+                            <option value="入职">入职</option>
+                            <option value="调宿">调宿</option>
+                            <option value="换房">换房</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">备注</label>
+                        <textarea id="remark" name="remark" class="form-control" rows="2" placeholder="可选"></textarea>
+                    </div>
+
+                    <div class="col-12 mt-4">
+                        <button type="button" class="btn btn-success" onclick="submitCheckIn()">
+                            <i class="bi bi-check-lg"></i> 确认入住
+                        </button>
+                        <a href="/Booking" class="btn btn-outline-secondary ms-2">返回列表</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/v1/bookings';
+
+document.getElementById('bookingDate').valueAsDate = new Date();
+
+async function searchEmployee() {
+    const keyword = document.getElementById('searchKeyword').value.trim();
+    if (!keyword) { alert('请输入搜索关键词'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/employee-search?keyword=${encodeURIComponent(keyword)}`);
+        const result = await resp.json();
+        if (result.success && result.data.length > 0) {
+            const select = document.getElementById('employeeSelect');
+            select.innerHTML = result.data.map(e =>
+                `<option value="${e.id}" data-code="${e.employeeCode}" data-name="${e.realName}"
+                    data-phone="${e.phone || ''}" data-dept="${e.department || ''}"
+                    data-hire="${e.hireDate || ''}" data-dorm="${e.dormCode || ''}">
+                    ${e.employeeCode} - ${e.realName} - ${e.department || '-'}
+                </option>`
+            ).join('');
+        } else {
+            document.getElementById('employeeSelect').innerHTML = '<option value="">未找到匹配的员工</option>';
+        }
+    } catch (err) { console.error(err); alert('搜索失败'); }
+}
+
+function selectEmployee() {
+    const opt = document.querySelector('#employeeSelect option:checked');
+    if (!opt || !opt.value) return;
+
+    document.getElementById('employeeId').value = opt.value;
+    document.getElementById('empCode').textContent = opt.dataset.code;
+    document.getElementById('empName').textContent = opt.dataset.name;
+    document.getElementById('empPhone').textContent = opt.dataset.phone || '-';
+    document.getElementById('empDept').textContent = opt.dataset.dept || '-';
+    document.getElementById('empHireDate').textContent = opt.dataset.hire || '-';
+    document.getElementById('empDorm').textContent = opt.dataset.dorm || '未分配';
+
+    // 加载可选宿舍
+    loadAvailableDorms();
+}
+
+async function loadAvailableDorms() {
+    const empId = document.getElementById('employeeId').value;
+    const date = document.getElementById('bookingDate').value;
+    if (!empId || !date) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/available-dorms?employeeId=${empId}&bookingDate=${date}`);
+        const result = await resp.json();
+        if (result.success) {
+            const select = document.getElementById('dormSelect');
+            select.innerHTML = '<option value="">选择宿舍</option>' +
+                result.data.map(d =>
+                    `<option value="${d.dormCode}">${d.dormCode} - ${d.buildingName} - 余量: ${d.availableCount}/${d.capacity}</option>`
+                ).join('');
+        }
+    } catch (err) { console.error(err); }
+}
+
+function selectDorm() {
+    // 可在此添加宿舍详情展示
+}
+
+async function submitCheckIn() {
+    const employeeId = parseInt(document.getElementById('employeeId').value);
+    const dormCode = document.getElementById('dormSelect').value;
+    const bookingDate = document.getElementById('bookingDate').value;
+    const reason = document.getElementById('reason').value;
+    const remark = document.getElementById('remark').value;
+
+    if (!employeeId) { alert('请选择员工'); return; }
+    if (!dormCode) { alert('请选择宿舍'); return; }
+    if (!bookingDate) { alert('请选择入住日期'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/check-in`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                employeeId, dormCode, bookingDate, reason, remark
+            })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('入住办理成功');
+            location.href = '/Booking';
+        } else {
+            alert(result.message || '入住办理失败');
+        }
+    } catch (err) { console.error(err); alert('入住办理失败'); }
+}
+</script>
+}

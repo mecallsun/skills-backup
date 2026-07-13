@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>新增人员 — 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page); }
+        /* v2.12.14 表单设计规范：双列布局 + 字段分组 + 紧凑样式 */
+        .form-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; }
+        .form-card-header { padding: 1rem 1.25rem; border-bottom: 1px solid #eee; background: #fafbfc; display: flex; align-items: center; gap: 0.5rem; }
+        .form-card-header h3 { margin: 0; font-size: 1.1rem; font-weight: 600; color: #1976d2; }
+        .form-card-header .header-subtitle { font-size: 0.85rem; color: #6c757d; margin-left: auto; }
+        .form-card-body { padding: 1.5rem 1.5rem; }
+        .form-section { margin-bottom: 1.5rem; }
+        .form-section-title { font-size: 0.9rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.6rem; margin-bottom: 1rem; }
+        .form-field { margin-bottom: 1rem; }
+        .form-label { font-size: 0.875rem; font-weight: 500; color: #495057; margin-bottom: 0.35rem; }
+        .form-label .required { color: #dc3545; margin-left: 2px; }
+        .form-control, .form-select { border-radius: 6px; }
+        .form-hint { font-size: 0.75rem; color: #6c757d; margin-top: 0.25rem; }
+        .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; }
+        .form-actions .info { margin-right: auto; font-size: 0.85rem; color: #6c757d; }
+        .form-actions .btn { min-width: 100px; }
+        .form-info-card { background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #495057; display: flex; align-items: center; gap: 0.5rem; }
+    </style>
+</head>
+<body>
+    <!-- ========== Tier 1: 顶部品牌栏（v2.12.13 以办理登记旧风格为标准） ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 2: Tab 页签栏 ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 3: 页面内容区 ========== -->
+    <div class="page-content">
+        <!-- 页头 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-person-plus"></i>新增人员
+                <small class="text-muted ms-2 fs-6">录入新员工的基本信息与住宿初始状态</small>
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="list.html">人员清单</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">新增人员</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- 顶部提示卡片 -->
+        <div class="form-info-card">
+            <i class="bi bi-info-circle-fill text-primary"></i>
+            <span>必填字段标记 <span class="text-danger">*</span>。工号必须唯一，姓名/部门/员工类型/考勤班次为必填项。房号请通过"办理登记 → 入住"流程分配。</span>
+        </div>
+
+        <!-- 表单卡片 -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-clipboard-plus text-primary"></i>
+                <h3>人员信息录入</h3>
+                <span class="header-subtitle">所有字段均关联引用基础资料字典</span>
+            </div>
+
+            <form onsubmit="event.preventDefault(); submitForm();">
+                <div class="form-card-body">
+
+                    <!-- 区块 1：基本信息 -->
+                    <div class="form-section">
+                        <div class="form-section-title">基本信息（4 字段）</div>
+                        <div class="row g-3">
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">工号<span class="required">*</span></label>
+                                <input type="text" id="employeeCode" class="form-control" required maxlength="20" placeholder="如：EMP-2026-156">
+                                <div class="form-hint">格式：EMP-YYYY-NNN，全局唯一</div>
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">姓名<span class="required">*</span></label>
+                                <input type="text" id="realName" class="form-control" required maxlength="50">
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">手机号</label>
+                                <input type="tel" id="phone" class="form-control" maxlength="20" placeholder="11 位手机号">
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">入职日期<span class="required">*</span></label>
+                                <input type="date" id="hireDate" class="form-control" required value="2026-07-10">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 2：组织与岗位（关联引用基础资料字典） -->
+                    <div class="form-section">
+                        <div class="form-section-title">组织与岗位（4 字段，关联基础资料）</div>
+                        <div class="row g-3">
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">部门<span class="required">*</span></label>
+                                <select id="departmentId" class="form-select" required>
+                                    <option value="">请选择部门</option>
+                                </select>
+                                <div class="form-hint">关联引用基础资料 DEPARTMENTS 字典</div>
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">员工类型<span class="required">*</span></label>
+                                <select id="employeeTypeId" class="form-select" required>
+                                    <option value="">请选择员工类型</option>
+                                </select>
+                                <div class="form-hint">关联引用基础资料 EMPLOYEE_TYPES 字典</div>
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">考勤班次<span class="required">*</span></label>
+                                <select id="attendanceTypeId" class="form-select" required>
+                                    <option value="">请选择考勤班次</option>
+                                </select>
+                                <div class="form-hint">关联引用基础资料 ATTENDANCE_TYPES_FULL 字典</div>
+                            </div>
+                            <div class="col-md-6 form-field">
+                                <label class="form-label">在职状态<span class="required">*</span></label>
+                                <select id="employmentStatusId" class="form-select" required>
+                                    <option value="">请选择在职状态</option>
+                                </select>
+                                <div class="form-hint">关联引用基础资料 EMPLOYMENT_STATUSES 字典</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 3：备注（跨整行） -->
+                    <div class="form-section">
+                        <div class="form-section-title">其他信息</div>
+                        <div class="form-field">
+                            <label class="form-label">备注</label>
+                            <textarea id="remark" class="form-control" rows="3" maxlength="500" placeholder="选填，如新员工来源、入职备注等"></textarea>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- 操作按钮区 -->
+                <div class="form-actions">
+                    <span class="info"><i class="bi bi-shield-check text-success"></i> 数据将实时保存至 PERSONNEL 表</span>
+                    <a href="list.html" class="btn btn-outline-secondary"><i class="bi bi-x"></i> 取消</a>
+                    <button type="button" class="btn btn-outline-primary" onclick="resetForm()"><i class="bi bi-arrow-counterclockwise"></i> 重置</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存人员</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script src="../_shared/storage-keys.js"></script>
+    <script src="../_shared/tab-bar.js"></script>
+    <script>
+    // ========== 初始化基础资料字典下拉（v2.12.14 修复） ==========
+    function initBasicDataSelects() {
+        // 部门（关联引用 DEPARTMENTS.id）
+        var deptSel = document.getElementById('departmentId');
+        if (deptSel && typeof DEPARTMENTS !== 'undefined') {
+            DEPARTMENTS.forEach(function (d) {
+                var opt = new Option(d.name, d.id);
+                deptSel.appendChild(opt);
+            });
+        }
+
+        // 员工类型（关联引用 EMPLOYEE_TYPES.id）
+        var typeSel = document.getElementById('employeeTypeId');
+        if (typeSel && typeof EMPLOYEE_TYPES !== 'undefined') {
+            EMPLOYEE_TYPES.forEach(function (t) {
+                var opt = new Option(t.name, t.id);
+                typeSel.appendChild(opt);
+            });
+        }
+
+        // 考勤班次（关联引用 ATTENDANCE_TYPES_FULL.id）
+        var attendSel = document.getElementById('attendanceTypeId');
+        if (attendSel && typeof ATTENDANCE_TYPES_FULL !== 'undefined') {
+            ATTENDANCE_TYPES_FULL.forEach(function (a) {
+                var opt = new Option(a.name + '（' + a.workHours + '）', a.id);
+                attendSel.appendChild(opt);
+            });
+        }
+
+        // 在职状态（关联引用 EMPLOYMENT_STATUSES.id）
+        var statusSel = document.getElementById('employmentStatusId');
+        if (statusSel && typeof EMPLOYMENT_STATUSES !== 'undefined') {
+            EMPLOYMENT_STATUSES.forEach(function (s) {
+                var opt = new Option(s.name, s.id);
+                statusSel.appendChild(opt);
+            });
+            // 默认选中"在职"
+            statusSel.value = '1';
+        }
+    }
+
+    // ========== 表单提交 ==========
+    function submitForm() {
+        var code = document.getElementById('employeeCode').value.trim();
+        var name = document.getElementById('realName').value.trim();
+        var deptId = document.getElementById('departmentId').value;
+        var typeId = document.getElementById('employeeTypeId').value;
+        var attendId = document.getElementById('attendanceTypeId').value;
+        var statusId = document.getElementById('employmentStatusId').value;
+
+        if (!code) { alert('❌ 工号不能为空'); return; }
+        if (!name) { alert('❌ 姓名不能为空'); return; }
+        if (!deptId) { alert('❌ 请选择部门'); return; }
+        if (!typeId) { alert('❌ 请选择员工类型'); return; }
+        if (!attendId) { alert('❌ 请选择考勤班次'); return; }
+        if (!statusId) { alert('❌ 请选择在职状态'); return; }
+
+        if (typeof PERSONNEL !== 'undefined' && PERSONNEL.some(function (p) { return p.employeeCode === code; })) {
+            alert('❌ 工号已存在：' + code);
+            return;
+        }
+
+        alert('✅ 原型演示：员工 ' + name + ' 已保存\n  工号=' + code + ' 部门ID=' + deptId + ' 类型ID=' + typeId + ' 考勤ID=' + attendId + ' 状态ID=' + statusId + '\n（实际将 POST /api/v1/personnel/employees）');
+        location.href = 'list.html';
+    }
+
+    // 重置表单
+    function resetForm() {
+        if (!confirm('确定要重置所有已填字段吗？')) return;
+        document.getElementById('employeeCode').value = '';
+        document.getElementById('realName').value = '';
+        document.getElementById('phone').value = '';
+        document.getElementById('hireDate').value = '2026-07-10';
+        document.getElementById('departmentId').value = '';
+        document.getElementById('employeeTypeId').value = '';
+        document.getElementById('attendanceTypeId').value = '';
+        document.getElementById('employmentStatusId').value = '1';
+        document.getElementById('remark').value = '';
+    }
+
+    // ========== 页面初始化 ==========
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1) 挂载 Tab 栏
+        if (typeof mountTabBar === 'function') {
+            mountTabBar({ basePath: '..', currentUrl: 'personnel/create.html' });
+        }
+        // 2) 初始化字典下拉
+        initBasicDataSelects();
+    });
+    </script>
+</body>
+</html>

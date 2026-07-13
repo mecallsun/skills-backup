@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>批量导入抄表 — v2.11 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; } .navbar-brand { font-weight: bold; color: #1976d2 !important; } .reading { font-variant-numeric: tabular-nums; }</style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-file-earmark-arrow-up"></i> 批量导入抄表</h2>
+        <div class="alert alert-info py-2">
+            <i class="bi bi-info-circle"></i> <strong>v2.11.4 更新：</strong>所有数据操作均为覆盖模式。
+            <strong>status=0(未抄表)/4(未完成) 记录将被覆盖</strong>；status=1(正常)/2(已修正) 记录拦截，提示走修正流程。
+            文件内同月同房号重复仅首行有效。
+        </div>
+
+        <!-- 步骤 1 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>步骤 1：下载模板</h5>
+                <p class="text-muted small mb-2">模板列：房号、抄表月份(YYYY-MM)、冷水读数、热水读数、电表读数、抄表员、备注</p>
+                <button class="btn btn-primary" onclick="alert('原型演示：实际将下载 抄表导入模板.xlsx')"><i class="bi bi-download"></i> 下载 抄表导入模板.xlsx</button>
+            </div>
+        </div>
+
+        <!-- 步骤 2 -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>步骤 2：上传文件并校验</h5>
+                <form class="row g-2 align-items-end" onsubmit="event.preventDefault(); validateAndPreview();">
+                    <div class="filter-item">
+                        <input type="file" id="file" accept=".xlsx" class="form-control">
+                    </div>
+                    <div class="filter-item">
+                        <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> 校验并预览</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="loadSample()"><i class="bi bi-table"></i> 加载示例数据演示</button>
+                    </div>
+                </form>
+                <small class="text-muted d-block mt-2">💡 原型无法真正解析 Excel，可点「加载示例数据演示」查看校验效果（含各类错误示例）。</small>
+            </div>
+        </div>
+
+        <!-- 步骤 3 -->
+        <div class="card" id="resultCard" style="display:none;">
+            <div class="card-body">
+                <h5>步骤 3：校验结果</h5>
+                <div id="summary" class="mb-3"></div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>行号</th><th>房号</th><th>月份</th>
+                                <th class="text-end">冷水</th><th class="text-end">热水</th><th class="text-end">电表</th>
+                                <th>本月用量（冷/热/电）</th><th>抄表员</th><th>校验结果</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <hr>
+                <button class="btn btn-success" id="importBtn" onclick="doImport()"><i class="bi bi-upload"></i> 导入通过校验的行</button>
+                <a href="index.html" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回抄表记录</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+
+        // 示例导入数据（覆盖各类校验场景；目标月份 2026-08 为新月）
+        const SAMPLE = [
+            { row: 2, dormCode: 'D-301', readMonth: '2026-08', cold: 1245.00, hot: 236.00, electric: 5760.00, operator: '陈师傅', remark: '' },
+            { row: 3, dormCode: 'D-302', readMonth: '2026-08', cold: 918.00,  hot: 188.00, electric: 4610.00, operator: '陈师傅', remark: '' },
+            { row: 4, dormCode: 'D-303', readMonth: '2026-08', cold: 410.00,  hot: 106.00, electric: 3160.00, operator: '陈师傅', remark: '' },
+            { row: 5, dormCode: 'D-301', readMonth: '2026-07', cold: 1240.00, hot: 231.00, electric: 5655.00, operator: '陈师傅', remark: '与库中7月记录冲突' },
+            { row: 6, dormCode: 'D-201', readMonth: '2026-08', cold: 312.00,  hot: 85.00,  electric: 2110.00, operator: '刘师傅', remark: '' },
+            { row: 7, dormCode: 'D-201', readMonth: '2026-08', cold: 313.00,  hot: 86.00,  electric: 2115.00, operator: '刘师傅', remark: '文件内与第6行重复' },
+            { row: 8, dormCode: 'D-999', readMonth: '2026-08', cold: 100.00,  hot: 50.00,  electric: 800.00,  operator: '刘师傅', remark: '房号不存在' },
+            { row: 9, dormCode: 'D-101', readMonth: '2026-08', cold: 201.00,  hot: 62.00,  electric: 1540.00, operator: '刘师傅', remark: '冷水读数小于上月' },
+            { row: 10, dormCode: 'D-202', readMonth: '2026-08', cold: NaN,    hot: 125.00, electric: 2570.00, operator: '刘师傅', remark: '冷水读数缺失' }
+        ];
+
+        let lastValidated = [];
+
+        function loadSample() {
+            renderResult(validateRows(SAMPLE));
+        }
+
+        function validateAndPreview() {
+            const f = document.getElementById('file').files[0];
+            if (!f) { alert('请选择文件，或点击「加载示例数据演示」'); return; }
+            alert(`原型演示：实际将解析 ${f.name} 并执行下方相同的逐行校验逻辑`);
+            renderResult(validateRows(SAMPLE));
+        }
+
+        // 逐行校验：v2.11.4（3状态：0=未完成 1=正常 2=已修正）
+        // status=0(未完成) 可覆盖，status=1/2 拦截
+        function validateRows(rows) {
+            const seen = new Set(); // 文件内 房号|月份
+            return rows.map(r => {
+                let error = null;
+                const dorm = findDorm(r.dormCode);
+                const key = r.dormCode + '|' + r.readMonth;
+                if (!r.dormCode || !r.readMonth) {
+                    error = '房号 / 抄表月份为空';
+                } else if ([r.cold, r.hot, r.electric].some(v => v == null || isNaN(v))) {
+                    error = '读数缺失或非数字';
+                } else if (!dorm) {
+                    error = `房号不存在：${r.dormCode}`;
+                } else if (!dorm.isActive) {
+                    error = `房号已停用：${r.dormCode}`;
+                } else if (seen.has(key)) {
+                    error = '文件内同月同房号重复';
+                } else {
+                    // v2.11.4：检查库中是否有 status=1/2 记录，status=0 可覆盖
+                    const existingRecord = METER_RECORDS.find(m => m.dormCode === r.dormCode && m.readMonth === r.readMonth);
+                    if (existingRecord && (existingRecord.status === 1 || existingRecord.status === 2)) {
+                        error = '同月同房号已有正常/已修正记录，请走修正流程';
+                    } else {
+                        const prev = prevMeter(r.dormCode, r.readMonth);
+                        if (prev) {
+                            if (r.cold <= prev.coldMeter) error = `冷水读数需 > 上月 ${prev.coldMeter}`;
+                            else if (r.hot <= prev.hotMeter) error = `热水读数需 > 上月 ${prev.hotMeter}`;
+                            else if (r.electric <= prev.electricMeter) error = `电表读数需 > 上月 ${prev.electricMeter}`;
+                        }
+                    }
+                }
+                if (!error) seen.add(key); // 仅有效行占位，保证首条保留、后续判重复
+                return { ...r, error };
+            });
+        }
+
+        function usageBadges(r) {
+            const prev = prevMeter(r.dormCode, r.readMonth);
+            if (!prev) return '<span class="text-muted">首次抄表</span>';
+            const f = (v, cls) => `<span class="badge ${cls}">+${(+v.toFixed(2))}</span>`;
+            return `${f(r.cold - prev.coldMeter, 'bg-primary')} ${f(r.hot - prev.hotMeter, 'bg-danger')} ${f(r.electric - prev.electricMeter, 'bg-warning text-dark')}`;
+        }
+
+        function renderResult(validated) {
+            lastValidated = validated;
+            const ok = validated.filter(r => !r.error);
+            const bad = validated.filter(r => r.error);
+            document.getElementById('resultCard').style.display = 'block';
+            document.getElementById('summary').innerHTML = `
+                <span class="me-3">📊 总行数：<strong>${validated.length}</strong></span>
+                <span class="me-3">✅ 可导入：<strong class="text-success">${ok.length}</strong></span>
+                <span class="me-3">❌ 拦截：<strong class="text-danger">${bad.length}</strong></span>`;
+            document.getElementById('importBtn').disabled = ok.length === 0;
+            document.getElementById('previewBody').innerHTML = validated.map(r => {
+                const bad = !!r.error;
+                const fmt = v => (v == null || isNaN(v)) ? '<span class="text-danger">—</span>' : v.toFixed(2);
+                return `
+                <tr class="${bad ? 'table-danger' : 'table-success'}">
+                    <td>${r.row}</td>
+                    <td><strong>${r.dormCode}</strong></td>
+                    <td>${r.readMonth}</td>
+                    <td class="text-end reading">${fmt(r.cold)}</td>
+                    <td class="text-end reading">${fmt(r.hot)}</td>
+                    <td class="text-end reading">${fmt(r.electric)}</td>
+                    <td>${bad ? '<span class="text-muted">—</span>' : usageBadges(r)}</td>
+                    <td><small>${r.operator || '-'}</small></td>
+                    <td>${bad
+                        ? `<span class="badge bg-danger"><i class="bi bi-x-circle"></i> ${r.error}</span>`
+                        : '<span class="badge bg-success"><i class="bi bi-check-circle"></i> 可导入</span>'}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function doImport() {
+            const ok = lastValidated.filter(r => !r.error);
+            if (ok.length === 0) { alert('没有可导入的行'); return; }
+            alert(`✓ 原型演示：成功导入 ${ok.length} 条抄表记录，拦截 ${lastValidated.length - ok.length} 条\n（实际将 POST /api/meter/import）`);
+            location.href = 'index.html';
+        }
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'meter/import.html' });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>办理入住 — v2.11 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root { --primary: #1976d2; --success: #2e7d32; --warning: #e65100; --danger: #c62828; --info: #00838f; }
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; margin: 0; }
+
+        /* 导航栏样式 */
+        
+        .menu-bar { background: #fff; border-bottom: 1px solid #e8eaed; box-shadow: 0 2px 6px rgba(0,0,0,0.03); padding: 0 1.5rem; display: flex; align-items: stretch; overflow-x: auto; scrollbar-width: none; }
+        .menu-bar::-webkit-scrollbar { display: none; }
+        .menu-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.85rem 1.15rem; font-size: 0.9rem; font-weight: 500; color: #5f6368; text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; transition: all 0.15s ease; }
+        .menu-item:hover { color: var(--primary); background: #f0f7ff; }
+        .menu-item.active { color: var(--primary); border-bottom-color: var(--primary); }
+        .cat-home:hover, .cat-home.active { color: var(--primary); }
+        .cat-core:hover, .cat-core.active { color: var(--primary); }
+        .cat-billing:hover, .cat-billing.active { color: var(--success); }
+        .cat-meter:hover, .cat-meter.active { color: var(--info); }
+        .cat-settings:hover, .cat-settings.active { color: #6c757d; }
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0; }
+
+        /* 页面样式 */
+        .step-card { border-left: 4px solid #1976d2; }
+        .step-card.completed { border-left-color: #28a745; }
+        .suggestion-list { position: absolute; z-index: 100; background: white; border: 1px solid #dee2e6; border-radius: 4px; max-height: 240px; overflow-y: auto; width: 100%; }
+        .suggestion-item { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+        .suggestion-item:hover { background-color: #f0f7ff; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-box-arrow-in-right"></i> 办理入住</h2>
+
+        <div class="row">
+            <div class="filter-item">
+                <div class="card step-card mb-3">
+                    <div class="card-body">
+                        <!-- 步骤 1：选择员工 -->
+                        <h5 class="text-primary"><span class="badge bg-primary me-2">1</span>选择员工（模糊查询：姓名/工号/手机号）</h5>
+                        <div class="position-relative mb-3">
+                            <input type="text" id="empKeyword" class="form-control" placeholder="输入姓名/工号/手机号..." oninput="onEmpSearch()" onfocus="showSuggestions()">
+                            <div id="empSuggestions" class="suggestion-list" style="display:none;"></div>
+                        </div>
+                        <div class="row g-2" id="empInfo" style="display:none;">
+                            <div class="filter-item"><label class="form-label small text-muted">工号</label><div id="empCode" class="fw-bold"></div></div>
+                            <div class="filter-item"><label class="form-label small text-muted">姓名</label><div id="empName" class="fw-bold"></div></div>
+                            <div class="filter-item"><label class="form-label small text-muted">手机号</label><div id="empPhone"></div></div>
+                            <div class="filter-item"><label class="form-label small text-muted">部门</label><div id="empDept"></div></div>
+                            <div class="filter-item"><label class="form-label small text-muted">员工类型</label><div id="empType"></div></div>
+                            <div class="filter-item"><label class="form-label small text-muted">考勤班次</label><div id="empAtt"></div></div>
+                        </div>
+                        <div id="empWarn" class="alert alert-warning mt-2" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- 步骤 2：选择日期 -->
+                <div class="card step-card mb-3">
+                    <div class="card-body">
+                        <h5 class="text-primary"><span class="badge bg-primary me-2">2</span>入退日期</h5>
+                        <div class="row g-2">
+                            <div class="filter-item">
+                                <label class="form-label small">入住日期 <span class="text-danger">*</span></label>
+                                <input type="date" id="bookingDate" class="form-control" onchange="onDateChange()">
+                                <small class="text-muted">默认 = 今天</small>
+                            </div>
+                            <div class="filter-item">
+                                <label class="form-label small">原因</label>
+                                <select id="reason" class="form-select">
+                                    <option value="入职">入职</option>
+                                    <option value="调岗">调岗</option>
+                                    <option value="换房">换房</option>
+                                    <option value="预约">预约</option>
+                                    <option value="其他">其他</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤 3：选择操作类型 -->
+                <div class="card step-card mb-3">
+                    <div class="card-body">
+                        <h5 class="text-primary"><span class="badge bg-primary me-2">3</span>操作类型</h5>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="opType" id="opIn" value="1" checked onchange="onTypeChange()">
+                            <label class="btn btn-outline-success" for="opIn"><i class="bi bi-box-arrow-in-right"></i> 入住</label>
+                            <input type="radio" class="btn-check" name="opType" id="opOut" value="2" onchange="onTypeChange()">
+                            <label class="btn btn-outline-warning" for="opOut"><i class="bi bi-box-arrow-right"></i> 退房</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤 4：选择房间（仅入住） -->
+                <div class="card step-card mb-3" id="stepDorm">
+                    <div class="card-body">
+                        <h5 class="text-primary"><span class="badge bg-primary me-2">4</span>选择房间（仅显示有余量 + 日期不冲突）</h5>
+                        <select id="dormSelect" class="form-select">
+                            <option value="">请先选择员工和入住日期</option>
+                        </select>
+                        <div id="dormHint" class="form-text">💡 系统自动过滤：余量 > 0 且 与预约入住/退房日期不冲突</div>
+                    </div>
+                </div>
+
+                <!-- 步骤 5：自动填充信息 -->
+                <div class="card step-card mb-3">
+                    <div class="card-body">
+                        <h5 class="text-primary"><span class="badge bg-primary me-2">5</span>系统自动填充</h5>
+                        <div class="row g-2">
+                            <div class="filter-item">
+                                <label class="form-label small text-muted">登记日期</label>
+                                <input type="text" id="regDate" class="form-control" disabled>
+                            </div>
+                            <div class="filter-item">
+                                <label class="form-label small text-muted">登记人</label>
+                                <input type="text" id="registrar" class="form-control" disabled>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="index.html" class="btn btn-secondary">取消</a>
+                    <button type="button" class="btn btn-primary" onclick="submitForm()"><i class="bi bi-check"></i> 提交</button>
+                </div>
+            </div>
+
+            <div class="filter-item">
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 校验提示</strong></div>
+                    <div class="card-body" id="validationPanel">
+                        <p class="text-muted small">请先选择员工，校验提示将自动显示</p>
+                    </div>
+                </div>
+                <div class="card mt-3">
+                    <div class="card-header bg-light"><strong><i class="bi bi-clock-history"></i> 员工历史办理登记</strong></div>
+                    <div class="card-body" id="empHistory">
+                        <p class="text-muted small">请先选择员工</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // 高亮办理登记菜单
+        document.querySelectorAll('.menu-item').forEach(item => { if (item.getAttribute('href').includes('booking/')) item.classList.add('active'); });
+
+        // v2.11.2 考勤班次 Badge
+        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
+        function attendanceBadge(t) {
+            return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;
+        }
+
+        let selectedEmp = null;
+        const today = new Date().toISOString().slice(0, 10);
+        document.getElementById('bookingDate').value = today;
+        document.getElementById('regDate').value = today + ' ' + new Date().toTimeString().slice(0, 5);
+        document.getElementById('registrar').value = 'admin';
+
+        function onEmpSearch() {
+            const kw = document.getElementById('empKeyword').value.trim();
+            const list = searchEmployees(kw);
+            const sug = document.getElementById('empSuggestions');
+            if (list.length === 0) { sug.style.display = 'none'; return; }
+            sug.innerHTML = list.slice(0, 10).map(e => `
+                <div class="suggestion-item" onclick='selectEmp(${JSON.stringify(e)})'>
+                    <strong>${e.realName}</strong>
+                    <small class="text-muted ms-2">${e.employeeCode} | ${e.department} | ${e.phone || '无手机号'}</small>
+                </div>
+            `).join('');
+            sug.style.display = 'block';
+        }
+
+        function showSuggestions() { document.getElementById('empSuggestions').style.display = 'block'; }
+        document.addEventListener('click', e => {
+            if (!e.target.closest('#empKeyword') && !e.target.closest('#empSuggestions')) {
+                document.getElementById('empSuggestions').style.display = 'none';
+            }
+        });
+
+        function selectEmp(emp) {
+            selectedEmp = emp;
+            document.getElementById('empKeyword').value = `${emp.realName}（${emp.employeeCode}）`;
+            document.getElementById('empSuggestions').style.display = 'none';
+            document.getElementById('empInfo').style.display = 'flex';
+            document.getElementById('empCode').textContent = emp.employeeCode;
+            document.getElementById('empName').textContent = emp.realName;
+            document.getElementById('empPhone').textContent = emp.phone || '-';
+            // v2.11.7 BUG 修复：员工类型支持 FK（employeeTypeId）和字符串双格式
+            var empTypeName = (emp.employeeTypeId != null)
+                ? (EMPLOYEE_TYPES.find(function(t){return t.id === emp.employeeTypeId;}) || {}).name
+                : (emp.employeeType || '-');
+            document.getElementById('empType').textContent = empTypeName;
+            // v2.11.7 BUG 修复：考勤班次支持 FK（attendanceTypeId）和字符串双格式
+            var attCode = (emp.attendanceTypeId != null)
+                ? (ATTENDANCE_TYPES.find(function(t){return t.id === emp.attendanceTypeId;}) || {}).code
+                : (emp.attendanceType || 'DEFAULT');
+            document.getElementById('empAtt').innerHTML = attendanceBadge(attCode);
+
+            // 校验提示
+            validateEmp();
+            renderEmpHistory();
+            refreshDorms();
+        }
+
+        function validateEmp() {
+            const warn = document.getElementById('empWarn');
+            const last = lastBookingOf(selectedEmp.id);
+            const active = activeBookingsOf(selectedEmp.id);
+            const opType = document.querySelector('input[name="opType"]:checked').value;
+
+            let msgs = [];
+            if (opType === '1' && active.length > 0) {
+                msgs.push(`⚠️ 员工当前已在宿 ${active[0].dormCode}（${active[0].bookingDate} 入住），请先办理退房`);
+                warn.className = 'alert alert-danger mt-2';
+            } else if (last && last.type === 2 && last.status === 3) {
+                msgs.push(`✅ 上次退房：${last.bookingDate}（${last.dormCode}），可办理新入住`);
+                warn.className = 'alert alert-success mt-2';
+            } else {
+                msgs.push(`✅ 员工状态正常，可办理入住`);
+                warn.className = 'alert alert-success mt-2';
+            }
+            warn.innerHTML = msgs.join('<br>');
+            warn.style.display = 'block';
+
+            // 校验面板
+            const panel = document.getElementById('validationPanel');
+            panel.innerHTML = `
+                <div class="mb-2"><strong>入职日期：</strong>${selectedEmp.hireDate}</div>
+                <div class="mb-2"><strong>在宿记录：</strong>${active.length} 条</div>
+                <div class="mb-2"><strong>历史办理：</strong>${BOOKINGS.filter(b => b.employeeId === selectedEmp.id).length} 条</div>
+                <div class="mb-2"><strong>入住日期校验：</strong>≥ ${selectedEmp.hireDate} ✓</div>
+            `;
+        }
+
+        function renderEmpHistory() {
+            const list = BOOKINGS.filter(b => b.employeeId === selectedEmp.id)
+                                 .sort((a, b) => b.bookingDate.localeCompare(a.bookingDate));
+            document.getElementById('empHistory').innerHTML = list.length === 0
+                ? '<p class="text-muted small">无历史</p>'
+                : list.slice(0, 5).map(b => `
+                    <div class="border-bottom py-1 small">
+                        <span class="badge ${b.type === 1 ? 'bg-success' : 'bg-warning text-dark'}">${b.type === 1 ? '入住' : '退房'}</span>
+                        ${formatDate(b.bookingDate)} · ${b.dormCode}
+                        <span class="badge ${BOOKING_STATUS_BADGE[b.status]} ms-1">${BOOKING_STATUSES[b.status]}</span>
+                    </div>
+                `).join('');
+        }
+
+        function onTypeChange() {
+            const opType = document.querySelector('input[name="opType"]:checked').value;
+            document.getElementById('stepDorm').style.display = opType === '1' ? 'block' : 'none';
+            if (selectedEmp) validateEmp();
+        }
+
+        function onDateChange() { refreshDorms(); }
+
+        function refreshDorms() {
+            const opType = document.querySelector('input[name="opType"]:checked').value;
+            if (opType !== '1' || !selectedEmp) return;
+            const date = document.getElementById('bookingDate').value;
+            const list = availableDorms(date);
+            const sel = document.getElementById('dormSelect');
+            sel.innerHTML = '<option value="">请选择房间</option>' +
+                list.map(d => `<option value="${d.dormCode}">${d.dormCode} | ${d.building} | ${d.address}（余量 ${d.available} / ${d.capacity} 人）</option>`).join('');
+            document.getElementById('dormHint').innerHTML = `💡 共 <strong>${list.length}</strong> 间可用房间（含余量且日期不冲突）`;
+        }
+
+        function submitForm() {
+            if (!selectedEmp) { alert('请先选择员工'); return; }
+            const opType = document.querySelector('input[name="opType"]:checked').value;
+            const date = document.getElementById('bookingDate').value;
+            const reason = document.getElementById('reason').value;
+            if (opType === '1' && !document.getElementById('dormSelect').value) {
+                alert('请选择房间'); return;
+            }
+            alert(`✓ 原型演示：${opType === '1' ? '入住' : '退房'} 已办理\n员工：${selectedEmp.realName}\n日期：${date}\n（实际将 POST /api/v1/bookings/${opType === '1' ? 'check-in' : 'check-out'}）`);
+            location.href = 'index.html';
+        }
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'booking/check-in.html' });
+        });
+    </script>
+</body>
+</html>

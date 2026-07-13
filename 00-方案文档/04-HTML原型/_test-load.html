@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"></head>
+<body>
+<div id="dbg">BEFORE</div>
+<script src="http://localhost:8765/mock-data.js"></script>
+<script>
+window.addEventListener('load', function() {
+    setTimeout(function() {
+        document.getElementById('dbg').textContent = 'PERSONNEL=' + (typeof PERSONNEL !== 'undefined' ? PERSONNEL.length : 'undef');
+    }, 500);
+});
+</script>
+</body></html>

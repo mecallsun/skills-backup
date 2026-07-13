@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html><body>
+<div id="dbg">BEFORE</div>
+<script>
+window.addEventListener('error', e => {
+    document.getElementById('dbg').textContent = 'GLOBAL ERROR: ' + e.message + ' at ' + e.lineno + ':' + e.colno;
+});
+</script>
+<script src="http://localhost:8765/mock-data.js"></script>
+<script>
+window.__afterMock = 'after-mock-loaded';
+try {
+    document.getElementById('dbg').textContent = 'PERSONNEL length=' + PERSONNEL.length;
+} catch (e) {
+    document.getElementById('dbg').textContent = window.__afterMock + '|SYNC ERR: ' + e.message;
+}
+</script>
+<script>
+// 测试 mock-data.js 是否执行完
+document.getElementById('dbg').textContent += '|__LISTS=' + (typeof __LISTS);
+</script>
+</body></html>

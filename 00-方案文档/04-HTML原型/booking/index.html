@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>办理登记 - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --danger: #c62828;
+            --info: #00838f;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --bg-page: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e8eaed;
+        }
+        body {
+            font-family: "Microsoft YaHei UI", sans-serif;
+            background: var(--bg-page);
+            margin: 0;
+        }
+
+        /* 顶部品牌栏 */
+        
+
+        /* 菜单导航栏 */
+        .menu-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+        }
+        .menu-bar::-webkit-scrollbar { display: none; }
+
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { color: #1976d2; background: #f0f7ff; }
+        .menu-item.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+        .menu-item i { font-size: 1.1rem; }
+
+        /* 菜单分隔符 */
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0.25rem; flex-shrink: 0; }
+
+        /* 页面标题 */
+        .page-header {
+            padding: 1rem 0;
+            margin-bottom: 1rem;
+        }
+        .page-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-title i { color: var(--primary); }
+
+        /* 筛选区卡片 */
+        .filter-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+            padding: 1rem 1.25rem;
+        }
+        /* 筛选条件响应式宽度 */
+        .filter-item {
+            flex: 1 1 0;
+            min-width: 120px;
+        }
+        .filter-item.keyword {
+            flex: 1 1 0 !important;
+            min-width: 200px !important;
+            max-width: 240px !important;
+        }
+        .filter-item.date {
+            flex: 0 0 160px !important;
+            min-width: 160px !important;
+            max-width: 160px !important;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* 内容卡片 */
+        .content-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+
+        /* 表格 */
+        .table thead th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f8f9ff;
+        }
+
+        /* 按钮 */
+        .btn i { margin-right: 0.25rem; }
+
+        /* 筛选区查询/重置按钮统一风格 */
+        .filter-btn {
+            min-width: 100px !important;
+            max-width: 100px !important;
+            width: 100px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .filter-btn i { font-size: 14px !important; }
+
+        /* 分页器 */
+        .pagination-wrap { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid #f0f0f0; }
+        .page-info { font-size: 0.85rem; color: #666; }
+        .pagination .page-link { color: var(--primary); }
+        .pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+<div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+<!-- 页面标题 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-clipboard-check"></i>办理登记（共 <span id="totalCount">0</span> 条）
+            </h1>
+            <div>
+                <a href="check-in.html" class="btn btn-success"><i class="bi bi-box-arrow-in-right"></i> 办理入住</a>
+                <a href="check-out.html" class="btn btn-info text-white"><i class="bi bi-box-arrow-right"></i> 办理退房</a>
+                <button class="btn btn-outline-secondary" onclick="exportExcel()"><i class="bi bi-download"></i> 导出</button>
+            </div>
+        </div>
+
+        <!-- 筛选区 -->
+        <div class="filter-card mb-3">
+            <form class="filter-row flex-nowrap" onsubmit="event.preventDefault(); render();">
+                <div class="col filter-item keyword">
+                    <label class="form-label small text-muted">员工（姓名/工号/手机）</label>
+                    <input type="text" id="keyword" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col filter-item">
+                    <label class="form-label small text-muted">部门</label>
+                    <input type="text" id="department" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col filter-item">
+                    <label class="form-label small text-muted">房号</label>
+                    <input type="text" id="dormCode" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col filter-item">
+                    <label class="form-label small text-muted">类型</label>
+                    <select id="type" class="form-select">
+                        <option value="">全部</option>
+                        <option value="1">入住</option>
+                        <option value="2">退房</option>
+                    </select>
+                </div>
+                <div class="col filter-item">
+                    <label class="form-label small text-muted">状态</label>
+                    <!-- v2.11.21 修订：使用 BOOKING_STATUS_DICT 字典（4 项办理登记流水状态）-->
+                    <select id="status" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="col filter-item date">
+                    <label class="form-label small text-muted">入退日期从</label>
+                    <input type="date" id="dateFrom" class="form-control">
+                </div>
+                <div class="col filter-item date">
+                    <label class="form-label small text-muted">到</label>
+                    <input type="date" id="dateTo" class="form-control">
+                </div>
+                <div class="col filter-actions">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                    <button class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('booking')"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">序号</th>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>部门</th>
+                            <th>宿舍</th>
+                            <th>类型</th>
+                            <th>入退日期</th>
+                            <th>状态</th>
+                            <th>登记人</th>
+                            <th class="text-center" width="140">登记时间</th>
+                            <th width="220">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // v2.11.21 修订：办理登记状态字典从 mock-data.js BOOKING_STATUS_DICT 读取（单一数据源）
+        var BK_STATUS_TEXT = {};
+        var BK_STATUS_CLASS = {};
+        if (typeof BOOKING_STATUS_DICT !== 'undefined') {
+            BOOKING_STATUS_DICT.forEach(function (item) {
+                BK_STATUS_TEXT[item.id] = item.name;
+                BK_STATUS_CLASS[item.id] = item.color;
+            });
+        }
+
+        // v2.11.21 新增：初始化状态下拉选项（关联引用 BOOKING_STATUS_DICT 字典）
+        (function initStatusSelect() {
+            var sel = document.getElementById('status');
+            if (!sel || typeof BOOKING_STATUS_DICT === 'undefined') return;
+            BOOKING_STATUS_DICT.forEach(function (item) {
+                var opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = item.name;
+                sel.appendChild(opt);
+            });
+        })();
+
+        function statusBadge(s) {
+            return "<span class=\"badge " + (BK_STATUS_CLASS[s] || "bg-secondary") + "\">" + (BK_STATUS_TEXT[s] || s) + "</span>";
+        }
+
+        // 格式化登记时间：yyyy-MM-dd HH:mm
+        function formatRegDate(regDate) {
+            if (!regDate) return '-';
+            // 兼容 "2026-07-15T09:30:00" 与 "2026-07-15 09:30:00" 两种格式
+            var s = String(regDate).replace('T', ' ');
+            return s.substring(0, 16) || '-';
+        }
+
+        function getFiltered() {
+            var kw = document.getElementById("keyword").value.trim().toLowerCase();
+            var dept = document.getElementById("department").value.trim().toLowerCase();
+            var dc = document.getElementById("dormCode").value.trim().toLowerCase();
+            var tp = document.getElementById("type").value;
+            var st = document.getElementById("status").value;
+            var df = document.getElementById("dateFrom").value;
+            var dt = document.getElementById("dateTo").value;
+            return BOOKINGS.filter(function(b) {
+                // v2.11.14 BUGFIX：JS 运算符优先级修正
+                // 原代码 `!(a > -1)` 会被解析为 `(!a) > -1`，导致 indexOf=0 时误判
+                // 现改为显式 `=== -1` 判断（更安全、更易读）
+                if (kw) {
+                    var h = ((b.employeeCode || "").toLowerCase().indexOf(kw) !== -1)
+                          || ((b.employeeName || "").toLowerCase().indexOf(kw) !== -1)
+                          || ((b.phone || "").toLowerCase().indexOf(kw) !== -1);
+                    if (!h) return false;
+                }
+                if (dept && (b.department || "").toLowerCase().indexOf(dept) === -1) return false;
+                if (dc && (b.dormCode || "").toLowerCase().indexOf(dc) === -1) return false;
+                if (tp && String(b.type) !== tp) return false;
+                if (st && String(b.status) !== st) return false;
+                if (df && b.bookingDate < df) return false;
+                if (dt && b.bookingDate > dt) return false;
+                return true;
+            }).sort(function(a, b) {
+                return (b.bookingDate || "").localeCompare(a.bookingDate || "");
+            });
+        }
+
+        // 使用 registerList 实现统一分页
+        var list = registerList({
+            key: 'booking',
+            footId: 'pager',
+            getData: getFiltered,
+            totalId: 'totalCount',
+            renderRows: function(items, total, start) {
+                var tbody = document.getElementById('tbody');
+                if (total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted py-4">暂无办理登记</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = items.map(function(b, idx) {
+                    var serialNum = start + idx + 1; // 按总记录数显示序号
+                    var typeBadge = b.type === 1
+                        ? '<span class="badge bg-success">入住</span>'
+                        : '<span class="badge bg-warning text-dark">退房</span>';
+                    // v2.11.10 新增：撤销退房按钮（仅 BookingDate=今天 && Status=3 已退房时显示）
+                    var today = new Date().toISOString().slice(0, 10);
+                    var undoBtn = (b.bookingDate === today && b.status === 3)
+                        ? '<button class="btn btn-sm btn-outline-info" onclick="undoCheckout(' + b.id + ')">撤销</button> '
+                        : '';
+                    // v2.11.8 新增：入住快速确认按钮（仅 Type=1 入住 && Status=1 预约时显示）
+                    var checkinBtn = (b.type === 1 && b.status === 1)
+                        ? '<button class="btn btn-sm btn-outline-success" onclick="confirmCheckin(' + b.id + ')">入住</button> '
+                        : '';
+                    // v2.11.12 扩展：退房按钮显示条件（原仅 Status=2 在宿）→ 新增 Type=2 退房 && Status=1 预约 时也显示
+                    // v2.11.17 退房按钮行为变更：Type=1 入住 && Status=2 在宿 → 弹出确认创建退房新记录
+                    var checkoutBtn = (b.status === 2 || (b.type === 2 && b.status === 1))
+                        ? '<button class="btn btn-sm btn-outline-warning" onclick="' + (b.status === 2 ? 'checkoutCreate' : 'confirmCheckout') + '(' + b.id + ')">退房</button>'
+                        : '';
+                    // v2.11.17 新增：撤销按钮（在宿场景）— Type=1 入住 && Status=2 在宿 && BookingDate==今天
+                    var cancelTodayBtn = (b.type === 1 && b.status === 2 && b.bookingDate === today)
+                        ? '<button class="btn btn-sm btn-outline-danger" onclick="cancelToday(' + b.id + ')">撤销</button> '
+                        : '';
+                    // v2.11.11 新增：撤销预约按钮（仅 Status=1 预约时显示，位置在操作列最右侧）
+                    var cancelBtn = b.status === 1
+                        ? '<button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(' + b.id + ')">撤销</button> '
+                        : '';
+                    var editBtn = b.status === 1
+                        ? '<a href="edit.html?id=' + b.id + '" class="btn btn-sm btn-outline-primary">修改</a> '
+                        : '<button class="btn btn-sm btn-outline-secondary" disabled title="仅预约状态可修改">修改</button>';
+                    return '<tr>' +
+                        '<td class="text-center text-muted">' + serialNum + '</td>' +
+                        '<td><strong>' + b.employeeCode + '</strong></td>' +
+                        '<td>' + b.employeeName + '</td>' +
+                        '<td>' + (b.department || '-') + '</td>' +
+                        '<td>' + b.dormCode + '</td>' +
+                        '<td>' + typeBadge + '</td>' +
+                        '<td>' + (b.bookingDate || '-') + '</td>' +
+                        '<td>' + statusBadge(b.status) + '</td>' +
+                        '<td><small class="text-muted">' + (b.registrar || '-') + '</small></td>' +
+                        '<td class="text-center"><small class="text-muted">' + formatRegDate(b.registrationDate) + '</small></td>' +
+                        '<td>' +
+                            editBtn +
+                            undoBtn +
+                            checkinBtn +
+                            checkoutBtn +
+                            cancelTodayBtn +
+                            cancelBtn +
+                        '</td>' +
+                    '</tr>';
+                }).join('');
+            }
+        });
+
+        function render() { list.reset(); }
+
+        function checkoutCreate(id) {
+            // v2.11.17：Type=1 入住 && Status=2 在宿 → 弹出确认对话框创建退房新记录
+            if (!confirm('确认该员工退房？\n当前日期：' + new Date().toISOString().slice(0, 10) + '\n类型：退房\n\n确认后将在创建一条退房记录，并将原入住记录状态变更为已退房。')) return;
+            // 原型演示：模拟创建退房新记录
+            alert('✓ 原型演示：退房记录已创建\n原记录 ID：' + id + '\n新退房记录 ID：' + (id + 1) + '\n类型：退房');
+            render(); // v2.11.13 即时刷新
+            // 实际实现：
+            // fetch(`/api/v1/bookings/${id}/confirm-checkout-create`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);
+            //   });
+        }
+
+        function checkout(id) {
+            // 旧版 checkout（保留用于 Type=2 退房 && Status=1 预约 场景的 confirmCheckout 别名）
+            // v2.11.12：Type=2 退房 && Status=1 预约 → 快速确认为已退房
+            if (!confirm('确认该员工已退房？\n（状态：预约 → 已退房，登记人/登记时间将更新为当前信息）')) return;
+            alert('✓ 原型演示：退房已确认\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：
+            // fetch(`/api/v1/bookings/${id}/confirm-checkout`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => { if (res.success) render(); else alert(res.message); });
+        }
+
+        // v2.11.8 / v2.11.8.b 入住快速确认
+        // 调用 POST /api/v1/bookings/{id}/confirm-checkin
+        // 服务端先校验宿舍房号余量：
+        //   - 有余量 → Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()
+        //   - 无余量 → 返回 400 NO_CAPACITY，前端弹窗提示"床位已满，请更换其他房间"
+        // v2.11.13 成功后调用 render() 即时刷新列表
+        function confirmCheckin(id) {
+            if (!confirm('确认该员工已入住？\n（后台将先校验宿舍房号余量，有余量则状态：预约 → 在宿；无余量则提示床位已满）')) return;
+            // 原型演示：mock 50% 概率返回无余量错误
+            if (Math.random() < 0.5) {
+                alert('⚠ 床位已满，请更换其他房间');
+                return; // 失败时不刷新
+            }
+            alert('✓ 原型演示：入住已确认\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：调用接口成功后刷新列表
+            // fetch(`/api/v1/bookings/${id}/confirm-checkin`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);  // 服务端返回"床位已满，请更换其他房间"
+            //   });
+        }
+
+        // v2.11.10 新增：撤销退房
+        // 调用 POST /api/v1/bookings/{id}/undo-checkout
+        // 仅当 BookingDate == today && Status == 3 已退房 时显示
+        // 服务端先校验宿舍房号余量：
+        //   - 有余量 → Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()，联动恢复 SysEmployee.DormCode
+        //   - 无余量 → 返回 400 NO_CAPACITY，前端弹窗提示"床位已满，撤销退房失败！"，不修改任何字段
+        // v2.11.13 成功后调用 render() 即时刷新列表
+        function undoCheckout(id) {
+            if (!confirm('确认撤销该记录的退房？\n（后台将先校验宿舍房号余量，有余量则恢复状态：在宿；无余量则提示床位已满，撤销失败）')) return;
+            // 原型演示：mock 50% 概率返回无余量错误
+            if (Math.random() < 0.5) {
+                alert('⚠ 床位已满，撤销退房失败！');
+                return; // 失败时不刷新
+            }
+            alert('✓ 原型演示：退房已撤销\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：调用接口成功后刷新列表
+            // fetch(`/api/v1/bookings/${id}/undo-checkout`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);  // 服务端返回"床位已满，撤销退房失败！"
+            //   });
+        }
+
+        // v2.11.11 新增：撤销预约
+        // 调用 POST /api/v1/bookings/{id}/cancel-reservation
+        // 仅当 Status == 1 预约 时显示（位置在操作列最右侧）
+        // 服务端将 Status 即时变更为 4 已取消，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
+        // 注意：无需校验房间余量（该记录从未入住）
+        // v2.11.13 成功后调用 render() 即时刷新列表
+        function cancelReservation(id) {
+            if (!confirm('确认撤销该预约记录？\n（状态：预约 → 已取消，登记人/登记时间将更新为当前信息）')) return;
+            alert('✓ 原型演示：预约已撤销\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：调用接口成功后刷新列表
+            // fetch(`/api/v1/bookings/${id}/cancel-reservation`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);
+            //   });
+        }
+
+        // v2.11.12 新增：确认退房（针对预约退房 Type=2 && Status=1 的记录）
+        // 调用 POST /api/v1/bookings/{id}/confirm-checkout
+        // 仅当 Type == 2 退房 && Status == 1 预约 时显示（位置在"修改"与"撤销预约"之间）
+        // 服务端将 Status 即时变更为 3 已退房，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
+        // 联动 SysEmployee.DormCode=NULL（员工变为未分配宿舍）
+        // v2.11.13 成功后调用 render() 即时刷新列表
+        function confirmCheckout(id) {
+            if (!confirm('确认该员工已退房？\n（状态：预约 → 已退房，登记人/登记时间将更新为当前信息）')) return;
+            alert('✓ 原型演示：退房已确认\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：调用接口成功后刷新列表
+            // fetch(`/api/v1/bookings/${id}/confirm-checkout`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);
+            //   });
+        }
+
+        // v2.11.17 新增：撤销在宿（Type=1 入住 && Status=2 在宿 && BookingDate==今天）
+        // 调用 POST /api/v1/bookings/{id}/cancel-today
+        // 服务端将 Status 即时变更为 4 已取消，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
+        // 不创建新记录，不联动 SysEmployee.DormCode
+        // v2.11.13 成功后调用 render() 即时刷新列表
+        function cancelToday(id) {
+            if (!confirm('确认撤销该入住记录？\n（状态：在宿 → 已取消，登记人/登记时间将更新为当前信息）')) return;
+            alert('✓ 原型演示：入住已撤销\n记录：' + id);
+            render(); // v2.11.13 即时刷新
+            // 实际实现：调用接口成功后刷新列表
+            // fetch(`/api/v1/bookings/${id}/cancel-today`, { method: 'POST' })
+            //   .then(r => r.json()).then(res => {
+            //     if (res.success) render();
+            //     else alert(res.message);
+            //   });
+        }
+
+        function exportExcel() {
+            alert("原型演示：导出 Excel");
+        }
+
+        // 页面初始化
+        // v2.11.22 修复：等待 FilterPersistence 完成后再渲染（避免时序问题导致列表为空）
+        function initPage() {
+            if (document.readyState === 'loading' || typeof BOOKINGS === 'undefined') {
+                setTimeout(initPage, 50);
+                return;
+            }
+            // 等待 FilterPersistence 完成初始化（最多等待 1 秒）
+            var waitFilter = 0;
+            var tryRender = function() {
+                // 如果已加载 filter-persistence.js，等待 restore 完成
+                if (typeof FilterPersistence !== 'undefined' && !FilterPersistence._initialized) {
+                    if (waitFilter++ < 20) { setTimeout(tryRender, 50); return; }
+                }
+                render();
+            };
+            tryRender();
+        }
+        initPage();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'booking/index.html' });
+        });
+    </script>
+    <!-- 筛选条件持久化（v2.12.10 新增） -->
+    <script src="../_shared/filter-persistence.js"></script>
+</body>
+</html>

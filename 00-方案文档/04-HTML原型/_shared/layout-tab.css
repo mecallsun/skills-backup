@@ -1,0 +1,426 @@
+/**
+ * layout-tab.css — 共用页头 + Tab 页签导航样式（v2.12.0）
+ *
+ * 配套规范：37-共用页头与Tab页签导航设计规范-v2.12.md
+ * 适用场景：04-HTML原型/_shared/layout.html
+ */
+
+:root {
+    --tab-primary: #1976d2;
+    --tab-success: #2e7d32;
+    --tab-warning: #e65100;
+    --tab-danger: #c62828;
+    --tab-info: #00838f;
+    --tab-purple: #7b1fa2;
+    --tab-text-primary: #212529;
+    --tab-text-secondary: #6c757d;
+    --tab-bg-page: #f5f7fa;
+    --tab-bg-card: #ffffff;
+    --tab-border-color: #e8eaed;
+}
+
+body {
+    font-family: "Microsoft YaHei UI", sans-serif;
+    background: var(--tab-bg-page);
+    margin: 0;
+}
+
+/* ========== Tier 1: 顶部品牌栏（v2.12.13 以办理登记旧风格为标准） ========== */
+/*
+ * v2.12.13 修订：采纳办理登记页面（booking/index.html）的旧风格作为新统一标准
+ *   旧 booking 页面 CSS：
+ *     padding: 0.6rem 1.5rem
+ *     z-index: 1000
+ *     height: auto（不固定）
+ *   原 layout-tab.css 标准：
+ *     padding: 0.5rem 1.25rem
+ *     z-index: 1030
+ *     height: 48px（固定）
+ *
+ * 品牌名称（金戈宿舍管理系统）显示位置：
+ *   [Logo 图标] [品牌名称] [版本号]    ←左侧水平排列
+ *                                    ←间距
+ *                            [用户胶囊] [退出按钮] ←右侧水平排列
+ */
+.top-bar {
+    background: #fff;
+    border-bottom: 1px solid #e8eaed;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    padding: 0.6rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.top-bar .brand-icon {
+    font-size: 1.5rem;
+    color: var(--tab-primary);
+}
+
+.top-bar .brand-text {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--tab-primary);
+}
+
+.top-bar .brand-version {
+    font-size: 0.7rem;
+    color: #9e9e9e;
+    border-left: 1px solid #ccc;
+    padding-left: 0.5rem;
+    margin-left: 0.5rem;
+}
+
+.top-bar .user-pill {
+    background: #f5f7fa;
+    border-radius: 24px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.top-bar .user-pill i {
+    font-size: 1.15rem;
+    color: var(--tab-primary);
+}
+
+.top-bar .user-pill span {
+    color: #5f6368;
+    font-weight: 500;
+}
+
+.top-bar .btn-exit {
+    text-decoration: none;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    padding: 0.25rem 0.6rem;
+    color: #5f6368;
+    font-size: 0.85rem;
+    background: #fff;
+    transition: all 0.2s;
+}
+
+.top-bar .btn-exit:hover {
+    border-color: var(--tab-danger);
+    color: var(--tab-danger);
+    background: rgba(229, 57, 53, 0.04);
+}
+
+/* ⚠️ v2.12.3: Tier 2 紧凑型图标导航条已移除（视觉冗余，Tab 栏已含完整菜单项）
+ * 现保留 .icon-rail 相关样式以兼容可能的历史引用，但不主动渲染。
+ * 如需恢复图标导航条，请取消下方注释并恢复 mountIconRail() 调用。
+ */
+
+/* ========== Tier 2: Tab 页签栏（45px）========== */
+
+/* ========== Tier 2: Tab 页签栏（v2.12.3 固定菜单模式） ========== */
+/*
+ * v2.12.1 行为变更：
+ *   - Tab 直接作为"菜单项切换"使用，不可关闭
+ *   - 默认展开所有已访问页面（持久化到 localStorage）
+ *   - 不显示关闭按钮、不显示 + 号、不显示右键菜单
+ *
+ * 旧版 (v2.11) 菜单项尺寸参照：
+ *   菜单项内边距：0.85rem 1.15rem（≈ 13.6px × 18.4px）
+ *   字体大小：0.9rem (≈ 14.4px)
+ *   图标大小：1.15rem (≈ 18.4px)
+ *   激活下划线：3px solid 类别色
+ *   实际显示高度 ≈ 13.6 + 14.4 + 13.6 + 3 = 44.6px
+ *   实际显示宽度 = 自适应（标题 + 图标 + 内边距）
+ */
+.tab-bar {
+    background: #fafbfc;
+    border-bottom: 1px solid var(--tab-border-color);
+    padding: 0 0.5rem;
+    display: flex;
+    align-items: stretch;
+    overflow-x: auto;
+    height: 45px;
+    box-sizing: border-box;
+}
+
+.tab-bar::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tab-bar::-webkit-scrollbar-thumb {
+    background: #c0c0c0;
+    border-radius: 2px;
+}
+
+.tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.85rem 1.15rem;
+    min-width: 80px;
+    max-width: 200px;
+    height: 45px;
+    background: #ffffff;
+    color: #5f6368;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.tab-item i.tab-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+
+.tab-item .tab-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+}
+
+/* v2.12.1: 强制隐藏关闭按钮（即使 JS 残留也隐藏） */
+/* v2.12.3: 升级为 Tier 2（移除图标导航条后重新编号） */
+.tab-item .tab-close,
+.tab-item .tab-dot {
+    display: none !important;
+}
+
+.tab-item:hover {
+    background: rgba(25, 118, 210, 0.04);
+    color: var(--tab-primary);
+}
+
+.tab-item.active {
+    background: #ffffff;
+    color: var(--tab-primary);
+    border-bottom: 3px solid;
+    border-bottom-color: var(--tab-primary);
+    font-weight: 600;
+    z-index: 1;
+}
+
+.tab-item.active[data-module="booking"],
+.tab-item.active[data-module="dorms"] { border-bottom-color: var(--tab-primary); }
+.tab-item.active[data-module="personnel"] {
+    color: var(--tab-success);
+    border-bottom-color: var(--tab-success);
+}
+.tab-item.active[data-module="billing"],
+.tab-item.active[data-module="dorm-bills"],
+.tab-item.active[data-module="employee-bills"] {
+    color: var(--tab-warning);
+    border-bottom-color: var(--tab-warning);
+}
+.tab-item.active[data-module="meter"] {
+    color: var(--tab-info);
+    border-bottom-color: var(--tab-info);
+}
+.tab-item.active[data-module="basics"],
+.tab-item.active[data-module="settings"] {
+    color: #546e7a;
+    border-bottom-color: #546e7a;
+}
+
+/* v2.12.1: 隐藏 + 号按钮（不再需要添加新 Tab） */
+.tab-add {
+    display: none !important;
+}
+
+/* ========== Tier 3: 页面内容区 ========== */
+.page-content {
+    padding: 1rem 1.25rem;
+    min-height: calc(100vh - 48px - 45px);
+    background: var(--tab-bg-page);
+}
+
+/* 页头 */
+.page-header {
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--tab-text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.page-title i {
+    color: var(--tab-primary);
+}
+
+.page-title .total-count {
+    font-size: 0.85rem;
+    color: var(--tab-text-secondary);
+    font-weight: 400;
+    margin-left: 0.5rem;
+}
+
+/* 筛选区 */
+.filter-card {
+    background: var(--tab-bg-card);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eee;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.filter-card .filter-row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 0.5rem;
+    overflow-x: auto;
+}
+
+.filter-card .filter-item {
+    min-width: 120px;
+    flex-shrink: 0;
+    flex: 0 0 auto;
+}
+
+.filter-card .filter-item.flex-grow {
+    flex: 1 1 auto;
+    min-width: 120px;
+}
+
+.filter-card .filter-item:first-child {
+    min-width: 180px;
+}
+
+.filter-card .filter-item-stats {
+    min-width: 90px;
+    max-width: 140px;
+    flex: 0 1 auto;
+}
+
+/* 强制 90×38px 筛选按钮 */
+.filter-card .filter-btn,
+.filter-card button.btn-primary.filter-btn,
+.filter-card a.btn-outline-secondary.filter-btn {
+    min-width: 90px !important;
+    max-width: 90px !important;
+    width: 90px !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    max-height: 38px !important;
+    line-height: 38px !important;
+    padding: 0 12px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    border-radius: 6px !important;
+    white-space: nowrap !important;
+    text-decoration: none !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0;
+}
+
+.filter-card .filter-btn i {
+    font-size: 14px !important;
+    line-height: 1 !important;
+    margin: 0 !important;
+}
+
+@media (max-width: 768px) {
+    .filter-card .filter-row {
+        flex-wrap: wrap;
+    }
+    .filter-card .filter-item {
+        min-width: calc(50% - 8px);
+    }
+    .filter-card .filter-item:first-child {
+        min-width: 100%;
+    }
+}
+
+/* 内容卡片 */
+.content-card {
+    background: var(--tab-bg-card);
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border: 1px solid #eee;
+    overflow: hidden;
+}
+
+/* 表格 */
+.table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #e9ecef;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f8f9ff;
+}
+
+/* 按钮 */
+.btn i {
+    margin-right: 0.25rem;
+}
+
+/* 分页器 */
+.pagination-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.page-info {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.pagination .page-link {
+    color: var(--tab-primary);
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--tab-primary);
+    border-color: var(--tab-primary);
+}
+
+/* 移动端响应式 */
+@media (max-width: 768px) {
+    .icon-rail {
+        height: 48px;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .icon-rail-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .icon-rail-btn i {
+        font-size: 1.1rem;
+    }
+
+    .icon-rail-btn .icon-label {
+        display: none !important;
+    }
+
+    .tab-item {
+        min-width: 90px;
+        max-width: 160px;
+        font-size: 0.85rem;
+        padding: 0.65rem 0.85rem;
+    }
+}

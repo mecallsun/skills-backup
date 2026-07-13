@@ -1,0 +1,731 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>基础资料 — v2.12.2 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; }
+        .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+        /* 左侧竖向导航样式（v2.11.6 新增） */
+        .basics-nav .nav-link { color: #37474f; border-radius: 8px; padding: .55rem .9rem; }
+        .basics-nav .nav-link.active { background: #1976d2; color: #fff; }
+        .basics-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+        /* Tab 样式 */
+        .nav-tabs .nav-link { border-radius: 8px 8px 0 0; border: none; color: #6c757d; font-weight: 500; padding: 0.75rem 1.5rem; }
+        .nav-tabs .nav-link.active { background: #fff; color: #1976d2; border-bottom: 3px solid #1976d2; }
+        .nav-tabs .nav-link:hover:not(.active) { background: #f0f0f0; }
+        /* 表格样式 */
+        .table-container { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <div class="container-fluid px-4 py-4">
+        <h2 class="mb-3"><i class="bi bi-database"></i> 基础资料</h2>
+
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <!-- 左侧导航 -->
+            <div style="flex-shrink: 0; width: 200px;">
+                <div class="card" style="margin-top: 0;">
+                    <div class="card-body p-2">
+                        <div class="nav flex-column nav-pills basics-nav" role="tablist">
+                            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#pane-dept"><i class="bi bi-building"></i> 部门管理</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-building"><i class="bi bi-geo-alt"></i> 楼栋管理</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-floor"><i class="bi bi-layers"></i> 楼层管理</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-address"><i class="bi bi-pin-map"></i> 地址管理</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-emptype"><i class="bi bi-person-badge"></i> 员工类型</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-attendance"><i class="bi bi-clock-history"></i> 考勤班次</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-team"><i class="bi bi-people-fill"></i> 员工班组</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-unit"><i class="bi bi-speedometer2"></i> 计量单位</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-residence"><i class="bi bi-house-door"></i> 住宿状态</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-employment"><i class="bi bi-person-check"></i> 在职状态</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div style="flex: 1 1 0;">
+                <div class="tab-content">
+
+                <!-- 部门管理 -->
+            <div class="tab-pane fade show active" id="pane-dept" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> 部门列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('dept')">
+                            <i class="bi bi-plus-lg"></i> 新增部门
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>部门编码</th>
+                                    <th>部门名称</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deptTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 楼栋管理 -->
+            <div class="tab-pane fade" id="pane-building" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 楼栋列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('building')">
+                            <i class="bi bi-plus-lg"></i> 新增楼栋
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>楼栋名称</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="buildingTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 楼层管理 -->
+            <div class="tab-pane fade" id="pane-floor" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-layers"></i> 楼层列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('floor')">
+                            <i class="bi bi-plus-lg"></i> 新增楼层
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>楼层</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="floorTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 地址管理 -->
+            <div class="tab-pane fade" id="pane-address" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-pin-map"></i> 地址列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('address')">
+                            <i class="bi bi-plus-lg"></i> 新增地址
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>地址</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="addressTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 员工类型 -->
+            <div class="tab-pane fade" id="pane-emptype" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-person-badge"></i> 员工类型列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('emptype')">
+                            <i class="bi bi-plus-lg"></i> 新增类型
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>类型编码</th>
+                                    <th>类型名称</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emptypeTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 考勤班次 -->
+            <div class="tab-pane fade" id="pane-attendance" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 考勤班次列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('attendance')">
+                            <i class="bi bi-plus-lg"></i> 新增类型
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>类型编码</th>
+                                    <th>类型名称</th>
+                                    <th>工作时段</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendanceTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 员工班组（v2.12.2 新增） -->
+            <div class="tab-pane fade" id="pane-team" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-people-fill"></i> 员工班组列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('team')">
+                            <i class="bi bi-plus-lg"></i> 新增班组
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>班组编码</th>
+                                    <th>班组名称</th>
+                                    <th>排序号</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teamTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 计量单位 -->
+            <div class="tab-pane fade" id="pane-unit" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 计量单位列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('unit')">
+                            <i class="bi bi-plus-lg"></i> 新增单位
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>单位编码</th>
+                                    <th>单位名称</th>
+                                    <th>显示单位</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unitTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 住宿状态 -->
+            <div class="tab-pane fade" id="pane-residence" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-house-door"></i> 住宿状态列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('residence')">
+                            <i class="bi bi-plus-lg"></i> 新增状态
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>状态编码</th>
+                                    <th>状态名称</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="residenceTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 在职状态 -->
+            <div class="tab-pane fade" id="pane-employment" role="tabpanel">
+                <div class="table-container p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-person-check"></i> 在职状态列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('employment')">
+                            <i class="bi bi-plus-lg"></i> 新增状态
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="60">序号</th>
+                                    <th>状态编码</th>
+                                    <th>状态名称</th>
+                                    <th>备注</th>
+                                    <th width="100">状态</th>
+                                    <th width="120">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employmentTable"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+                </div>
+            </div>
+    </div>
+
+    <!-- 新增/编辑 Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalTitle">新增</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3" id="codeField">
+                        <label class="form-label">编码</label>
+                        <input type="text" class="form-control" id="editCode" placeholder="如 CONTRACT">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" id="nameLabel">名称</label>
+                        <input type="text" class="form-control" id="editName" placeholder="请输入名称">
+                    </div>
+                    <div class="mb-3" id="hoursField" style="display:none;">
+                        <label class="form-label">工作时段</label>
+                        <input type="text" class="form-control" id="editHours" placeholder="如 09:00-18:00">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" id="editRemark" rows="2" placeholder="可选"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editActive" checked>
+                            <label class="form-check-label" for="editActive">启用</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveData()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // 渲染统一导航栏
+        if (typeof renderNav === 'function') {
+        }
+
+        // 调试信息
+        console.log('DEPARTMENTS:', typeof DEPARTMENTS !== 'undefined' ? DEPARTMENTS : 'undefined');
+        console.log('BUILDINGS:', typeof BUILDINGS !== 'undefined' ? BUILDINGS : 'undefined');
+        console.log('EMPLOYEE_TYPES:', typeof EMPLOYEE_TYPES !== 'undefined' ? EMPLOYEE_TYPES : 'undefined');
+
+        // 当前编辑类型和ID
+        let currentType = 'departments';
+        let currentId = null;
+
+        // 基础资料数据（v2.11.4）
+        const BASICS_DATA = {
+            // 部门
+            departments: [
+                { id: 1, code: 'PRODUCTION', name: '生产部', remark: '主要生产部门', isActive: true },
+                { id: 2, code: 'TECH', name: '技术部', remark: '技术研发部门', isActive: true },
+                { id: 3, code: 'ADMIN', name: '行政部', remark: '', isActive: true },
+                { id: 4, code: 'FINANCE', name: '财务部', remark: '', isActive: true },
+                { id: 5, code: 'SALES', name: '销售部', remark: '', isActive: true },
+                { id: 6, code: 'LOGISTICS', name: '后勤部', remark: '', isActive: true },
+                { id: 7, code: 'WAREHOUSE', name: '仓储部', remark: '', isActive: true },
+                { id: 8, code: 'OTHER', name: '其他', remark: '', isActive: true }
+            ],
+
+            // 楼栋
+            buildings: [
+                { id: 1, name: '1号楼', remark: '', isActive: true },
+                { id: 2, name: '2号楼', remark: '', isActive: true },
+                { id: 3, name: '3号楼', remark: '', isActive: true },
+                { id: 4, name: '4号楼', remark: '', isActive: true },
+                { id: 5, name: '5号楼', remark: '', isActive: true }
+            ],
+
+            // 楼层
+            floors: [
+                { id: 1, floorNo: 1, remark: '', isActive: true },
+                { id: 2, floorNo: 2, remark: '', isActive: true },
+                { id: 3, floorNo: 3, remark: '', isActive: true },
+                { id: 4, floorNo: 4, remark: '', isActive: true },
+                { id: 5, floorNo: 5, remark: '', isActive: true },
+                { id: 6, floorNo: 6, remark: '', isActive: true }
+            ],
+
+            // 地址
+            addresses: [
+                { id: 1, address: '园区A栋', remark: '', isActive: true },
+                { id: 2, address: '园区B栋', remark: '', isActive: true },
+                { id: 3, address: '园区C栋', remark: '', isActive: true }
+            ],
+
+            // 员工类型
+            employeeTypes: [
+                { id: 1, code: 'CONTRACT', name: '合同工', remark: '', isActive: true },
+                { id: 2, code: 'TEMPORARY', name: '临时工', remark: '', isActive: true },
+                { id: 3, code: 'OUTSOURCE', name: '外包', remark: '', isActive: true },
+                { id: 4, code: 'INTERN', name: '实习生', remark: '', isActive: true },
+                { id: 5, code: 'ONSITE', name: '驻场', remark: '', isActive: true }
+            ],
+
+            // 考勤班次
+            attendanceTypes: [
+                { id: 1, code: 'DEFAULT', name: '默认', workHours: '09:00-18:00', remark: '标准工时', isActive: true },
+                { id: 2, code: 'MORNING', name: '早班', workHours: '06:00-14:00', remark: '', isActive: true },
+                { id: 3, code: 'MIDDLE', name: '中班', workHours: '14:00-22:00', remark: '', isActive: true },
+                { id: 4, code: 'EVENING', name: '晚班', workHours: '18:00-02:00', remark: '', isActive: true },
+                { id: 5, code: 'NIGHT', name: '夜班', workHours: '22:00-06:00', remark: '', isActive: true },
+                { id: 6, code: 'OTHER', name: '其他', workHours: '不定期', remark: '', isActive: true }
+            ],
+
+            // 计量单位
+            meterUnits: [
+                { id: 1, code: 'COLD', name: '冷水', unit: 'm³', remark: '', isActive: true },
+                { id: 2, code: 'HOT', name: '热水', unit: 'm³', remark: '', isActive: true },
+                { id: 3, code: 'ELECTRIC', name: '电', unit: '度', remark: '', isActive: true }
+            ],
+
+            // 住宿状态
+            residenceStatuses: [
+                { id: 1, code: 'LIVING', name: '在宿', remark: '当前正在住宿', isActive: true },
+                { id: 2, code: 'LEFT', name: '已退宿', remark: '已办理退房', isActive: true },
+                { id: 3, code: 'BOOKED', name: '预约中', remark: '已预约尚未入住', isActive: true },
+                { id: 4, code: 'CANCELLED', name: '已取消', remark: '预约被取消', isActive: true },
+                { id: 5, code: 'NONE', name: '无记录', remark: '从未入住', isActive: true }
+            ],
+
+            // 在职状态（v2.11.19 规范：与基础资料-在职状态表 EmploymentStatus 完全一致）
+            employmentStatuses: [
+                { id: 1, code: 'ACTIVE',     name: '在职',   remark: '当前在职员工', isActive: true },
+                { id: 2, code: 'ONBOARDING', name: '待入职', remark: '已录取未入职', isActive: true },
+                { id: 3, code: 'LEFT',       name: '已离职', remark: '已办理离职',   isActive: true }
+            ],
+
+            // 员工班组（v2.12.2 新增；9 条种子数据，与基础资料-员工班组表 Team 一致）
+            teams: [
+                { id: 1, code: 'DEFAULT', name: '默认', sortOrder: 0, remark: '兜底班组（未明确分配的员工默认归属）', isActive: true },
+                { id: 2, code: 'A',       name: 'A班',  sortOrder: 1, remark: '', isActive: true },
+                { id: 3, code: 'B',       name: 'B班',  sortOrder: 2, remark: '', isActive: true },
+                { id: 4, code: 'C',       name: 'C班',  sortOrder: 3, remark: '', isActive: true },
+                { id: 5, code: 'D',       name: 'D班',  sortOrder: 4, remark: '', isActive: true },
+                { id: 6, code: 'E',       name: 'E班',  sortOrder: 5, remark: '', isActive: true },
+                { id: 7, code: 'F',       name: 'F班',  sortOrder: 6, remark: '', isActive: true },
+                { id: 8, code: 'G',       name: 'G班',  sortOrder: 7, remark: '', isActive: true },
+                { id: 9, code: 'H',       name: 'H班',  sortOrder: 8, remark: '', isActive: true }
+            ]
+        };
+
+        // 渲染表格
+        function renderTable(type) {
+            const data = BASICS_DATA[type];
+            let html = '';
+
+            data.forEach((item, idx) => {
+                const statusBadge = item.isActive
+                    ? '<span class="badge bg-success">启用</span>'
+                    : '<span class="badge bg-secondary">停用</span>';
+
+                if (type === 'departments') {
+                    html += '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td><code>' + item.code + '</code></td>' +
+                        '<td>' + item.name + '</td>' +
+                        '<td>' + (item.remark || '-') + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-outline-primary" onclick="editItem(\'' + type + '\', ' + item.id + ')">编辑</button> ' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="deleteItem(\'' + type + '\', ' + item.id + ')">删除</button>' +
+                        '</td></tr>';
+                } else if (type === 'buildings') {
+                    html += '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td>' + item.name + '</td>' +
+                        '<td>' + (item.remark || '-') + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-outline-primary" onclick="editItem(\'' + type + '\', ' + item.id + ')">编辑</button> ' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="deleteItem(\'' + type + '\', ' + item.id + ')">删除</button>' +
+                        '</td></tr>';
+                } else if (type === 'floors') {
+                    html += '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td>' + item.floorNo + ' 楼</td>' +
+                        '<td>' + (item.remark || '-') + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-outline-primary" onclick="editItem(\'' + type + '\', ' + item.id + ')">编辑</button> ' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="deleteItem(\'' + type + '\', ' + item.id + ')">删除</button>' +
+                        '</td></tr>';
+                } else if (type === 'addresses') {
+                    html += '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td>' + (item.address || item.name) + '</td>' +
+                        '<td>' + (item.remark || '-') + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-outline-primary" onclick="editItem(\'' + type + '\', ' + item.id + ')">编辑</button> ' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="deleteItem(\'' + type + '\', ' + item.id + ')">删除</button>' +
+                        '</td></tr>';
+                } else {
+                    // 员工类型、考勤班次、计量单位、住宿状态、在职状态、员工班组（v2.12.2 新增）
+                    let extraCol = '';
+                    if (type === 'attendanceTypes') {
+                        extraCol = '<td>' + (item.workHours || '-') + '</td>';
+                    } else if (type === 'meterUnits') {
+                        extraCol = '<td>' + (item.unit || '-') + '</td>';
+                    } else if (type === 'teams') {
+                        extraCol = '<td>' + (item.sortOrder != null ? item.sortOrder : '-') + '</td>';
+                    }
+                    html += '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td><code>' + item.code + '</code></td>' +
+                        '<td>' + item.name + '</td>' +
+                        extraCol +
+                        '<td>' + (item.remark || '-') + '</td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '<td>' +
+                        '<button class="btn btn-sm btn-outline-primary" onclick="editItem(\'' + type + '\', ' + item.id + ')">编辑</button> ' +
+                        '<button class="btn btn-sm btn-outline-danger" onclick="deleteItem(\'' + type + '\', ' + item.id + ')">删除</button>' +
+                        '</td></tr>';
+                }
+            });
+
+            // 表格ID映射
+            const tableIdMap = {
+                'departments': 'deptTable',
+                'buildings': 'buildingTable',
+                'floors': 'floorTable',
+                'addresses': 'addressTable',
+                'employeeTypes': 'emptypeTable',
+                'attendanceTypes': 'attendanceTable',
+                'meterUnits': 'unitTable',
+                'residenceStatuses': 'residenceTable',
+                'employmentStatuses': 'employmentTable',
+                'teams': 'teamTable'
+            };
+            const tableId = tableIdMap[type] || (type + 'Table');
+            document.getElementById(tableId).innerHTML = html || '<tr><td colspan="6" class="text-center text-muted py-4">暂无数据</td></tr>';
+        }
+
+        // 显示新增 Modal
+        function showAddModal(type) {
+            currentType = type;
+            currentId = null;
+            document.getElementById('editModalTitle').textContent = '新增';
+
+            // 清空表单
+            document.getElementById('editCode').value = '';
+            document.getElementById('editName').value = '';
+            document.getElementById('editRemark').value = '';
+            document.getElementById('editActive').checked = true;
+            document.getElementById('editHours').value = '';
+
+            // 显示/隐藏编码字段
+            const showCode = ['departments', 'employeeTypes', 'attendanceTypes', 'meterUnits', 'residenceStatuses', 'employmentStatuses', 'teams'].indexOf(type) >= 0;
+            const showHours = type === 'attendanceTypes';
+            const showUnit = type === 'meterUnits';
+            const showSortOrder = type === 'teams';
+
+            document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
+            document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
+
+            // 动态标签
+            var labels = {
+                departments: '部门名称',
+                buildings: '楼栋名称',
+                floors: '楼层',
+                addresses: '地址',
+                employeeTypes: '类型名称',
+                attendanceTypes: '类型名称',
+                meterUnits: '单位名称',
+                residenceStatuses: '状态名称',
+                employmentStatuses: '状态名称',
+                teams: '班组名称'
+            };
+            document.getElementById('nameLabel').textContent = labels[type] || '名称';
+
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        // 编辑
+        function editItem(type, id) {
+            currentType = type;
+            currentId = id;
+            const data = BASICS_DATA[type].find(function(x) { return x.id === id; });
+
+            document.getElementById('editModalTitle').textContent = '编辑';
+            document.getElementById('editCode').value = data.code || '';
+            document.getElementById('editName').value = data.name || data.floorNo || data.address || '';
+            document.getElementById('editRemark').value = data.remark || '';
+            document.getElementById('editActive').checked = data.isActive;
+            if (data.workHours) document.getElementById('editHours').value = data.workHours;
+
+            const showCode = ['departments', 'employeeTypes', 'attendanceTypes', 'meterUnits', 'residenceStatuses', 'employmentStatuses', 'teams'].indexOf(type) >= 0;
+            const showHours = type === 'attendanceTypes';
+            document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
+            document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
+
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        // 删除
+        function deleteItem(type, id) {
+            if (!confirm('确定删除该记录吗？')) return;
+            const idx = BASICS_DATA[type].findIndex(function(x) { return x.id === id; });
+            if (idx >= 0) {
+                BASICS_DATA[type].splice(idx, 1);
+                renderTable(type);
+                alert('删除成功');
+            }
+        }
+
+        // 保存
+        function saveData() {
+            const name = document.getElementById('editName').value.trim();
+            if (!name) { alert('请输入名称'); return; }
+
+            if (currentId) {
+                // 编辑
+                const item = BASICS_DATA[currentType].find(function(x) { return x.id === currentId; });
+                item.name = name;
+                item.remark = document.getElementById('editRemark').value.trim();
+                item.isActive = document.getElementById('editActive').checked;
+                if (item.code) item.code = document.getElementById('editCode').value.trim();
+                if (item.workHours !== undefined) item.workHours = document.getElementById('editHours').value.trim();
+            } else {
+                // 新增
+                const maxId = Math.max.apply(null, BASICS_DATA[currentType].map(function(x) { return x.id; }));
+                const newItem = {
+                    id: maxId + 1,
+                    name: name,
+                    remark: document.getElementById('editRemark').value.trim(),
+                    isActive: document.getElementById('editActive').checked
+                };
+                if (['departments', 'employeeTypes', 'attendanceTypes', 'meterUnits', 'residenceStatuses', 'employmentStatuses', 'teams'].indexOf(currentType) >= 0) {
+                    newItem.code = document.getElementById('editCode').value.trim();
+                }
+                if (currentType === 'attendanceTypes') {
+                    newItem.workHours = document.getElementById('editHours').value.trim();
+                }
+                if (currentType === 'teams') {
+                    newItem.sortOrder = parseInt(document.getElementById('editName').value) || (maxId + 1);
+                }
+                if (currentType === 'floors') {
+                    newItem.floorNo = parseInt(name);
+                    delete newItem.name;
+                }
+                if (currentType === 'addresses') {
+                    newItem.address = name;
+                    delete newItem.name;
+                }
+                BASICS_DATA[currentType].push(newItem);
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            renderTable(currentType);
+            alert('保存成功');
+        }
+
+        // 初始化渲染所有表格
+        var types = ['departments', 'buildings', 'floors', 'addresses', 'employeeTypes', 'attendanceTypes', 'teams', 'meterUnits', 'residenceStatuses', 'employmentStatuses'];
+        types.forEach(function(type) { renderTable(type); });
+
+        console.log('BASICS_DATA.departments:', BASICS_DATA.departments);
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'basics/index.html' });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><body>
+<div id="dbg">BEFORE</div>
+<script>
+window.addEventListener('error', function(e) {
+    document.getElementById('dbg').textContent = 'ERROR: ' + e.message + ' at ' + e.filename + ':' + e.lineno;
+});
+</script>
+<script src="http://localhost:8765/mock-data.js"></script>
+<script>
+document.getElementById('dbg').textContent = 'PERSONNEL=' + (typeof PERSONNEL !== 'undefined' ? PERSONNEL.length : 'undef');
+</script>
+</body></html>

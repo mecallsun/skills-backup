@@ -1,0 +1,6 @@
+@DormManage.Api_HostAddress = http://localhost:5256
+
+GET {{DormManage.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

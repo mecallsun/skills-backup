@@ -1,0 +1,973 @@
+@page
+@model DormManage.Admin.Pages.Booking.IndexModel
+@{
+    ViewData["Title"] = "办理记录";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-clipboard-check"></i> 办理记录
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+        </h2>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#checkInModal">
+                <i class="bi bi-box-arrow-in-right"></i> 办理入住
+            </button>
+            <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#checkOutModal">
+                <i class="bi bi-box-arrow-right"></i> 办理退房
+            </button>
+            <button class="btn btn-outline-secondary" onclick="exportExcel()">
+                <i class="bi bi-download"></i> 导出
+            </button>
+        </div>
+    </div>
+
+    <!-- 筛选表单 -->
+    <form method="get" class="card mb-3 filter-card">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item filter-item-name">
+                    <label class="form-label mb-1">员工（姓名/工号/手机）</label>
+                    <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">部门</label>
+                    <input type="text" name="department" value="@Model.Department" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">房号</label>
+                    <input type="text" name="dormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">类型</label>
+                    <select name="type" class="form-select">
+                        <option value="">全部</option>
+                        <option value="1" selected="@(Model.Type == 1)">入住</option>
+                        <option value="2" selected="@(Model.Type == 2)">退房</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="1" selected="@(Model.Status == 1)">预约</option>
+                        <option value="2" selected="@(Model.Status == 2)">在宿</option>
+                        <option value="3" selected="@(Model.Status == 3)">已退房</option>
+                        <option value="4" selected="@(Model.Status == 4)">已取消</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-date">
+                    <label class="form-label mb-1">入退日期从</label>
+                    <input type="date" name="dateFrom" value="@Model.DateFrom?.ToString("yyyy-MM-dd")" class="form-control">
+                </div>
+                <div class="col-auto filter-item filter-item-date">
+                    <label class="form-label mb-1">到</label>
+                    <input type="date" name="dateTo" value="@Model.DateTo?.ToString("yyyy-MM-dd")" class="form-control">
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/Booking" class="btn btn-outline-secondary filter-btn">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>部门</th>
+                            <th>宿舍</th>
+                            <th class="text-center">类型</th>
+                            <th class="text-center">入退日期</th>
+                            <th class="text-center">状态</th>
+                            <th class="text-center">登记人</th>
+                            <th class="text-center" width="140">登记时间</th>
+                            <th width="120" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+                                <tr>
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.EmployeeCode</strong></td>
+                                    <td>@item.EmployeeName</td>
+                                    <td>@(item.Department ?? "-")</td>
+                                    <td>@item.DormCode</td>
+                                    <td class="text-center">
+                                        @if (item.Type == 1)
+                                        {
+                                            <span class="badge bg-success">入住</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">退房</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">@item.BookingDate.ToString("yyyy-MM-dd")</td>
+                                    <td class="text-center">
+                                        @switch (item.Status)
+                                        {
+                                            case 1: <span class="badge bg-warning text-dark">预约</span>; break;
+                                            case 2: <span class="badge bg-success">在宿</span>; break;
+                                            case 3: <span class="badge bg-secondary">已退房</span>; break;
+                                            case 4: <span class="badge bg-danger">已取消</span>; break;
+                                        }
+                                    </td>
+                                    <td class="text-center"><small class="text-muted">@item.Registrar</small></td>
+                                    <td class="text-center"><small class="text-muted">@item.RegistrationDate.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                    <td class="text-center">
+                                        @* v2.11.12 操作列顺序：修改 → 撤销退房(v2.11.10) → 入住 → 退房 → 撤销预约(v2.11.11，最右侧) *@
+                                        @if (item.Status == 1)
+                                        {
+                                            <a href="/Booking/Edit/@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-sm btn-outline-secondary" disabled title="仅预约状态可修改">修改</button>
+                                        }
+                                        @* v2.11.10 新增：撤销退房按钮（仅 BookingDate=今天 && Status=3 已退房 时显示，位于修改按钮右侧） *@
+                                        @if (item.BookingDate == DateOnly.FromDateTime(DateTime.Today) && item.Status == 3)
+                                        {
+                                            <button class="btn btn-sm btn-outline-info" onclick="undoCheckout(@item.Id)">撤销</button>
+                                        }
+                                        @* v2.11.8 新增：入住快速确认按钮（仅 Type=1 入住 && Status=1 预约时显示） *@
+                                        @if (item.Type == 1 && item.Status == 1)
+                                        {
+                                            <button class="btn btn-sm btn-outline-success" onclick="confirmCheckin(@item.Id)">入住</button>
+                                        }
+                                        @* v2.11.12 退房按钮扩展：Status=2 在宿（既有）或 Type=2 退房 && Status=1 预约（新增） *@
+                                        @if (item.Status == 2)
+                                        {
+                                            <button class="btn btn-sm btn-outline-warning" onclick="checkOut(@item.Id)">退房</button>
+                                        }
+                                        else if (item.Type == 2 && item.Status == 1)
+                                        {
+                                            <button class="btn btn-sm btn-outline-warning" onclick="confirmCheckout(@item.Id)">退房</button>
+                                        }
+                                        @* v2.11.11 新增：撤销预约按钮（仅 Status=1 预约时显示，位置在操作列最右侧） *@
+                                        @if (item.Status == 1)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(@item.Id)">撤销</button>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="11" class="text-center text-muted py-4">暂无办理记录</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            @if (totalPages > 0)
+            {
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@totalCount</strong> 条记录，第 <strong>@currentPage</strong> / <strong>@totalPages</strong> 页
+                    </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            @if (currentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?keyword=@Model.Keyword&department=@Model.Department&dormCode=@Model.DormCode&type=@Model.Type&status=@Model.Status&dateFrom=@Model.DateFrom?.ToString("yyyy-MM-dd")&dateTo=@Model.DateTo?.ToString("yyyy-MM-dd")&pageIndex=@(currentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
+                            @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
+                            {
+                                <li class="page-item @(p == currentPage ? "active" : "")">
+                                    <a class="page-link" href="?keyword=@Model.Keyword&department=@Model.Department&dormCode=@Model.DormCode&type=@Model.Type&status=@Model.Status&dateFrom=@Model.DateFrom?.ToString("yyyy-MM-dd")&dateTo=@Model.DateTo?.ToString("yyyy-MM-dd")&pageIndex=@p">@p</a>
+                                </li>
+                            }
+                            @if (currentPage < totalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?keyword=@Model.Keyword&department=@Model.Department&dormCode=@Model.DormCode&type=@Model.Type&status=@Model.Status&dateFrom=@Model.DateFrom?.ToString("yyyy-MM-dd")&dateTo=@Model.DateTo?.ToString("yyyy-MM-dd")&pageIndex=@(currentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    </nav>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 办理入住弹窗 ==================== -->
+<div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#1976d2;color:#fff;border-radius:12px 12px 0 0;">
+                <h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> 办理入住</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- 左侧：员工选择 + 表单 -->
+                    <div class="col-lg-8">
+                        <!-- 步骤1：选择员工 -->
+                        <div class="card border-0 bg-light mb-3" style="border-left:4px solid #1976d2;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">1</span>选择员工</h6>
+                                <div class="position-relative">
+                                    <input type="text" id="ciEmpKeyword" class="form-control" placeholder="输入姓名/工号/手机号搜索..." oninput="onCiEmpSearch()" onfocus="showCiSuggestions()">
+                                    <div id="ciEmpSuggestions" class="suggestion-list" style="display:none;"></div>
+                                </div>
+                                <div class="row g-2 mt-2" id="ciEmpInfo" style="display:none;">
+                                    <div class="col-md-4"><label class="form-label small text-muted">工号</label><div id="ciEmpCode" class="fw-bold"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">姓名</label><div id="ciEmpName" class="fw-bold"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">手机号</label><div id="ciEmpPhone"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">部门</label><div id="ciEmpDept"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">员工类型</label><div id="ciEmpType"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">考勤班次</label><div id="ciEmpAtt"></div></div>
+                                </div>
+                                <div id="ciEmpWarn" class="mt-2" style="display:none;"></div>
+                            </div>
+                        </div>
+
+                        <!-- 步骤2：入退日期 + 原因 -->
+                        <div class="card border-0 bg-light mb-3" style="border-left:4px solid #1976d2;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">2</span>入住信息</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">入住日期 <span class="text-danger">*</span></label>
+                                        <input type="date" id="ciBookingDate" class="form-control" onchange="onCiDateChange()">
+                                        <small class="text-muted">默认 = 今天</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">原因</label>
+                                        <select id="ciReason" class="form-select">
+                                            <option value="入职">入职</option>
+                                            <option value="调岗">调岗</option>
+                                            <option value="换房">换房</option>
+                                            <option value="预约">预约</option>
+                                            <option value="其他">其他</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">登记人</label>
+                                        <input type="text" id="ciRegistrar" class="form-control" readonly disabled>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 步骤3：选择房间 -->
+                        <div class="card border-0 bg-light mb-3" style="border-left:4px solid #1976d2;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">3</span>选择房间</h6>
+                                <select id="ciDormSelect" class="form-select" onchange="onCiDormSelect()">
+                                    <option value="">请先选择员工和入住日期</option>
+                                </select>
+                                <div id="ciDormHint" class="form-text mt-1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：校验提示 + 历史记录 -->
+                    <div class="col-lg-4">
+                        <div class="card border-0 mb-3" style="border-left:4px solid #2e7d32;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-success mb-3"><i class="bi bi-shield-check"></i> 校验提示</h6>
+                                <div id="ciValidationPanel">
+                                    <p class="text-muted small">请先选择员工</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card border-0" style="border-left:4px solid #00838f;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="mb-3" style="color:#00838f;"><i class="bi bi-clock-history"></i> 员工历史办理</h6>
+                                <div id="ciEmpHistory">
+                                    <p class="text-muted small">请先选择员工</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #e8eaed;padding:1rem 2rem;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> 取消
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitCheckIn()">
+                    <i class="bi bi-check-lg"></i> 确认入住
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== 办理退房弹窗 ==================== -->
+<div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+            <div class="modal-header" style="background:#00838f;color:#fff;border-radius:12px 12px 0 0;">
+                <h5 class="modal-title"><i class="bi bi-box-arrow-right"></i> 办理退房</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <!-- 左侧：员工选择 + 表单 -->
+                    <div class="col-lg-8">
+                        <!-- 步骤1：选择员工（仅当前在宿） -->
+                        <div class="card border-0 bg-light mb-3" style="border-left:4px solid #00838f;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">1</span>选择员工（仅显示当前在宿员工）</h6>
+                                <div class="position-relative">
+                                    <input type="text" id="coEmpKeyword" class="form-control" placeholder="输入姓名/工号/手机号搜索..." oninput="onCoEmpSearch()" onfocus="showCoSuggestions()">
+                                    <div id="coEmpSuggestions" class="suggestion-list" style="display:none;"></div>
+                                </div>
+                                <div class="row g-2 mt-2" id="coEmpInfo" style="display:none;">
+                                    <div class="col-md-4"><label class="form-label small text-muted">工号</label><div id="coEmpCode" class="fw-bold"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">姓名</label><div id="coEmpName" class="fw-bold"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">手机号</label><div id="coEmpPhone"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">部门</label><div id="coEmpDept"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">员工类型</label><div id="coEmpType"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">考勤班次</label><div id="coEmpAtt"></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 步骤2：选择在宿记录 -->
+                        <div class="card border-0 bg-light mb-3" id="coStepRecord" style="display:none;border-left:4px solid #00838f;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">2</span>选择退房记录（在宿记录）</h6>
+                                <select id="coRecordSelect" class="form-select">
+                                    <option value="">请选择</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 步骤3：退房日期 + 原因 -->
+                        <div class="card border-0 bg-light mb-3" id="coStepDate" style="display:none;border-left:4px solid #00838f;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="text-primary mb-3"><span class="badge bg-primary me-2">3</span>退房信息</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">退房日期 <span class="text-danger">*</span></label>
+                                        <input type="date" id="coCheckoutDate" class="form-control" onchange="onCoDateChange()">
+                                        <small class="text-muted">默认 = 今天</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">原因</label>
+                                        <select id="coReason" class="form-select">
+                                            <option value="离职">离职</option>
+                                            <option value="调岗">调岗</option>
+                                            <option value="换房">换房</option>
+                                            <option value="其他">其他</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">登记人</label>
+                                        <input type="text" id="coRegistrar" class="form-control" readonly disabled>
+                                    </div>
+                                </div>
+                                <div id="coDateHint" class="mt-2" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧：校验提示 -->
+                    <div class="col-lg-4">
+                        <div class="card border-0" style="border-left:4px solid #2e7d32;border-radius:8px!important;">
+                            <div class="card-body">
+                                <h6 class="mb-3" style="color:#2e7d32;"><i class="bi bi-info-circle"></i> 一进一出校验</h6>
+                                <div id="coValidationPanel">
+                                    <p class="text-muted small">请先选择员工</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="border-top:1px solid #e8eaed;padding:1rem 2rem;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg"></i> 取消
+                </button>
+                <button type="button" class="btn btn-info text-white" onclick="submitCheckOut()">
+                    <i class="bi bi-check-lg"></i> 提交退房
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== CSS & JS ==================== -->
+<style>
+    /* 弹窗建议列表 */
+    .suggestion-list {
+        position: absolute;
+        z-index: 1055;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        max-height: 240px;
+        overflow-y: auto;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .suggestion-item {
+        padding: 10px 14px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.15s;
+    }
+    .suggestion-item:hover { background-color: #f0f7ff; }
+
+    /* 筛选按钮强制38px高度（修复版）*/
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
+        box-sizing: border-box !important;
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        line-height: 38px !important;
+        padding: 0 12px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        border-width: 1px !important;
+    }
+    .filter-btn i, .filter-card .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+    .filter-card .filter-item-btn { display: flex !important; align-items: flex-end !important; height: auto !important; min-height: 60px !important; }
+    .filter-card .filter-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+    .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+    .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+    .filter-card .filter-item { min-width: 120px; flex-shrink: 0; }
+    .filter-card .filter-item:first-child { min-width: 200px; }
+    .filter-card .filter-item-name { min-width: 200px !important; max-width: 240px !important; width: 200px !important; }
+    .filter-card .filter-item-date { min-width: 160px !important; max-width: 160px !important; width: 160px !important; }
+    .filter-card input[type="date"].form-control { padding: 0.375rem 0.5rem !important; font-size: 14px !important; }
+
+    @@media (max-width: 768px) {
+        .filter-card .filter-row { flex-wrap: wrap; }
+        .filter-card .filter-item { min-width: calc(50% - 8px); }
+        .filter-card .filter-item:first-child { min-width: 100%; }
+    }
+
+    .table th { white-space: nowrap; font-weight: 500; }
+    .table td { vertical-align: middle; }
+    .pagination-footer { background: transparent; border: none; padding: 0.75rem 0 0 0; }
+    .pagination .page-link { min-width: 32px; text-align: center; }
+</style>
+
+@section Scripts {
+<style>
+    /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
+    /* 使用更高优先级选择器，覆盖 Bootstrap 默认 btn 样式 */
+    button.btn-primary.filter-btn,
+    button.btn-primary.filter-btn:hover,
+    button.btn-primary.filter-btn:focus,
+    a.btn-outline-secondary.filter-btn,
+    a.btn-outline-secondary.filter-btn:hover,
+    a.btn-outline-secondary.filter-btn:focus,
+    .filter-card button.filter-btn,
+    .filter-card a.filter-btn,
+    .filter-card .filter-btn {
+        /* 固定宽度 */
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
+        box-sizing: border-box !important;
+        /* 固定高度 38px（核心修复）*/
+        height: 38px !important;
+        min-height: 38px !important;
+        max-height: 38px !important;
+        /* 行高等于高度，确保文字垂直居中 */
+        line-height: 38px !important;
+        /* 清除 Bootstrap 默认 padding 影响高度 */
+        padding: 0 12px !important;
+        /* Flex 居中 */
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 4px !important;
+        /* 文字样式 */
+        font-size: 14px !important;
+        font-weight: 400 !important;
+        vertical-align: middle !important;
+        white-space: nowrap !important;
+        text-decoration: none !important;
+        /* 覆盖 Bootstrap btn 边框 */
+        border-width: 1px !important;
+    }
+
+    /* 图标尺寸控制 */
+    .filter-btn i,
+    .filter-card .filter-btn i {
+        font-size: 14px !important;
+        line-height: 1 !important;
+        margin: 0 !important;
+    }
+
+    /* 按钮容器对齐 */
+    .filter-card .filter-item-btn {
+        display: flex !important;
+        align-items: flex-end !important;
+        height: auto !important;
+        min-height: 60px !important;
+    }
+
+    /* 响应式筛选条件区域 */
+    .filter-card .filter-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    .filter-card .filter-row::-webkit-scrollbar-thumb {
+        background: #c0c0c0;
+        border-radius: 2px;
+    }
+
+    .filter-card .filter-item {
+        min-width: 120px;
+        flex-shrink: 0;
+    }
+
+    .filter-card .filter-item:first-child {
+        min-width: 200px;
+    }
+
+    /* 员工输入框宽度 200px */
+    .filter-card .filter-item-name {
+        min-width: 200px !important;
+        max-width: 240px !important;
+        width: 200px !important;
+    }
+
+    /* 日期输入框宽度统一固定 160px */
+    .filter-card .filter-item-date {
+        min-width: 160px !important;
+        max-width: 160px !important;
+        width: 160px !important;
+    }
+
+    /* 日期输入框内容紧凑 */
+    .filter-card input[type="date"].form-control {
+        padding: 0.375rem 0.5rem !important;
+        font-size: 14px !important;
+    }
+
+    /* 适配小屏幕 */
+    @@media (max-width: 768px) {
+        .filter-card .filter-row {
+            flex-wrap: wrap;
+        }
+
+        .filter-card .filter-item {
+            min-width: calc(50% - 8px);
+        }
+
+        .filter-card .filter-item:first-child {
+            min-width: 100%;
+        }
+    }
+
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+</style>
+}
+
+@section Scripts {
+<script>
+const API_BASE = '/api/v1/bookings';
+
+async function checkOut(id) {
+    if (!confirm('确定要为该员工办理退房吗？')) return;
+
+    const date = prompt('请输入退房日期（格式：YYYY-MM-DD）', new Date().toISOString().split('T')[0]);
+    if (!date) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/check-out`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkOutDate: date })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('退房成功');
+            location.reload();
+        } else {
+            alert(result.message || '退房失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('退房失败');
+    }
+}
+
+// v2.11.8 新增：入住快速确认
+// 调用 POST /api/v1/bookings/{id}/confirm-checkin
+// 服务端将 Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()
+async function confirmCheckin(id) {
+    if (!confirm('确认该员工已入住？\n（状态：预约 → 在宿，登记人/登记时间将更新为当前信息）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/confirm-checkin`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('入住已确认（状态 → 在宿）');
+            location.reload();
+        } else {
+            alert(result.message || '入住确认失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('入住确认失败');
+    }
+}
+
+// v2.11.10 新增：撤销退房
+// 调用 POST /api/v1/bookings/{id}/undo-checkout
+// 仅当 BookingDate == today && Status == 3 已退房 时显示
+// 服务端先校验宿舍房号余量：
+//   - 有余量 → Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()，联动恢复 SysEmployee.DormCode
+//   - 无余量 → 返回 400 NO_CAPACITY，前端弹窗提示"床位已满，撤销退房失败！"，不修改任何字段
+async function undoCheckout(id) {
+    if (!confirm('确认撤销该记录的退房？\n（后台将先校验宿舍房号余量，有余量则恢复状态：在宿；无余量则提示床位已满，撤销失败）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/undo-checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('退房已撤销（状态 → 在宿）');
+            location.reload();
+        } else {
+            alert(result.message || '撤销退房失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('撤销退房失败');
+    }
+}
+
+// v2.11.11 新增：撤销预约
+// 调用 POST /api/v1/bookings/{id}/cancel-reservation
+// 仅当 Status == 1 预约 时显示（位置在操作列最右侧）
+// 服务端将 Status 即时变更为 4 已取消，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
+// 注意：无需校验房间余量（该记录从未入住）
+async function cancelReservation(id) {
+    if (!confirm('确认撤销该预约记录？\n（状态：预约 → 已取消，登记人/登记时间将更新为当前信息）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/cancel-reservation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('预约已撤销（状态 → 已取消）');
+            location.reload();
+        } else {
+            alert(result.message || '撤销预约失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('撤销预约失败');
+    }
+}
+
+// v2.11.12 新增：确认退房（针对预约退房 Type=2 && Status=1 的记录）
+// 调用 POST /api/v1/bookings/{id}/confirm-checkout
+// 仅当 Type == 2 退房 && Status == 1 预约 时显示（位置在"修改"与"撤销预约"之间）
+// 服务端将 Status 即时变更为 3 已退房，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
+// 联动 SysEmployee.DormCode=NULL（员工变为未分配宿舍）
+async function confirmCheckout(id) {
+    if (!confirm('确认该员工已退房？\n（状态：预约 → 已退房，登记人/登记时间将更新为当前信息）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/confirm-checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('退房已确认（状态 → 已退房）');
+            location.reload();
+        } else {
+            alert(result.message || '确认退房失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('确认退房失败');
+    }
+}
+
+// ==================== 办理入住弹窗逻辑 ====================
+let ciSelectedEmp = null;
+
+// 初始化入住弹窗
+document.addEventListener('DOMContentLoaded', function() {
+    const ciModal = document.getElementById('checkInModal');
+    if (ciModal) {
+        ciModal.addEventListener('show.bs.modal', function() {
+            document.getElementById('ciBookingDate').valueAsDate = new Date();
+            document.getElementById('ciRegistrar').value = 'admin'; // TODO: 从当前用户上下文获取
+            document.getElementById('ciEmpKeyword').value = '';
+            document.getElementById('ciEmpInfo').style.display = 'none';
+            document.getElementById('ciEmpWarn').style.display = 'none';
+            document.getElementById('ciDormSelect').innerHTML = '<option value="">请先选择员工和入住日期</option>';
+            document.getElementById('ciDormHint').textContent = '';
+            document.getElementById('ciValidationPanel').innerHTML = '<p class="text-muted small">请先选择员工</p>';
+            document.getElementById('ciEmpHistory').innerHTML = '<p class="text-muted small">请先选择员工</p>';
+        });
+    }
+
+    // 初始化退房弹窗
+    const coModal = document.getElementById('checkOutModal');
+    if (coModal) {
+        coModal.addEventListener('show.bs.modal', function() {
+            document.getElementById('coCheckoutDate').valueAsDate = new Date();
+            document.getElementById('coRegistrar').value = 'admin';
+            document.getElementById('coEmpKeyword').value = '';
+            document.getElementById('coEmpInfo').style.display = 'none';
+            document.getElementById('coStepRecord').style.display = 'none';
+            document.getElementById('coStepDate').style.display = 'none';
+            document.getElementById('coValidationPanel').innerHTML = '<p class="text-muted small">请先选择员工</p>';
+        });
+    }
+});
+
+// ===== 入住弹窗：员工搜索 =====
+function onCiEmpSearch() {
+    const kw = document.getElementById('ciEmpKeyword').value.trim();
+    if (!kw) { document.getElementById('ciEmpSuggestions').style.display = 'none'; return; }
+    // 调用 API 搜索员工
+    fetch(`/api/v1/bookings/employee-search?keyword=${encodeURIComponent(kw)}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data.length > 0) {
+                const sug = document.getElementById('ciEmpSuggestions');
+                sug.innerHTML = res.data.slice(0, 10).map(e =>
+                    `<div class="suggestion-item" onclick="selectCiEmp(${e.id})">
+                        <strong>${e.realName}</strong>
+                        <small class="text-muted ms-2">${e.employeeCode} | ${e.department || ''} | ${e.phone || ''}</small>
+                    </div>`
+                ).join('');
+                sug.style.display = 'block';
+            } else {
+                document.getElementById('ciEmpSuggestions').style.display = 'none';
+            }
+        }).catch(() => { document.getElementById('ciEmpSuggestions').style.display = 'none'; });
+}
+
+function showCiSuggestions() { document.getElementById('ciEmpSuggestions').style.display = 'block'; }
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#ciEmpKeyword') && !e.target.closest('#ciEmpSuggestions')) {
+        document.getElementById('ciEmpSuggestions').style.display = 'none';
+    }
+    if (!e.target.closest('#coEmpKeyword') && !e.target.closest('#coEmpSuggestions')) {
+        document.getElementById('coEmpSuggestions').style.display = 'none';
+    }
+});
+
+async function selectCiEmp(empId) {
+    document.getElementById('ciEmpSuggestions').style.display = 'none';
+    try {
+        const resp = await fetch(`/api/v1/bookings/employee-search?keyword=`);
+        // 从搜索结果中找到匹配的员工（简化：通过 API 获取员工详情）
+        // 这里先用搜索回调填充
+        onCiEmpSearch();
+    } catch(e) {}
+}
+
+function onCiDateChange() { refreshCiDorms(); }
+function onCiDormSelect() { /* TODO: 显示宿舍详情 */ }
+
+async function submitCheckIn() {
+    const employeeId = document.getElementById('ciEmpKeyword').dataset.empId;
+    const dormCode = document.getElementById('ciDormSelect').value;
+    const bookingDate = document.getElementById('ciBookingDate').value;
+    const reason = document.getElementById('ciReason').value;
+    const remark = document.getElementById('ciRemark')?.value || '';
+
+    if (!employeeId) { alert('请选择员工'); return; }
+    if (!dormCode) { alert('请选择房间'); return; }
+    if (!bookingDate) { alert('请选择入住日期'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/check-in`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ employeeId: parseInt(employeeId), dormCode, bookingDate, reason, remark })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('入住办理成功');
+            bootstrap.Modal.getInstance(document.getElementById('checkInModal')).hide();
+            location.reload();
+        } else {
+            alert(result.message || '入住办理失败');
+        }
+    } catch (err) { console.error(err); alert('入住办理失败'); }
+}
+
+function refreshCiDorms() {
+    const empId = document.getElementById('ciEmpKeyword').dataset.empId;
+    const date = document.getElementById('ciBookingDate').value;
+    if (!empId || !date) return;
+    fetch(`${API_BASE}/available-dorms?employeeId=${empId}&bookingDate=${date}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                const sel = document.getElementById('ciDormSelect');
+                sel.innerHTML = '<option value="">请选择房间</option>' +
+                    res.data.map(d => `<option value="${d.dormCode}">${d.dormCode} | ${d.buildingName}（余量 ${d.availableCount}/${d.capacity} 人）</option>`).join('');
+                document.getElementById('ciDormHint').innerHTML = `💡 共 <strong>${res.data.length}</strong> 间可用房间`;
+            }
+        }).catch(() => {});
+}
+
+// ===== 退房弹窗：员工搜索 =====
+function onCoEmpSearch() {
+    const kw = document.getElementById('coEmpKeyword').value.trim();
+    if (!kw) { document.getElementById('coEmpSuggestions').style.display = 'none'; return; }
+    fetch(`/api/v1/bookings/employee-search?keyword=${encodeURIComponent(kw)}`)
+        .then(r => r.json())
+        .then(res => {
+            if (res.success && res.data.length > 0) {
+                const sug = document.getElementById('coEmpSuggestions');
+                sug.innerHTML = res.data.slice(0, 10).map(e =>
+                    `<div class="suggestion-item" onclick="selectCoEmp(${e.id})">
+                        <strong>${e.realName}</strong>
+                        <small class="text-muted ms-2">${e.employeeCode} | ${e.department || ''} | ${e.phone || ''}</small>
+                    </div>`
+                ).join('');
+                sug.style.display = 'block';
+            } else {
+                document.getElementById('coEmpSuggestions').style.display = 'none';
+            }
+        }).catch(() => { document.getElementById('coEmpSuggestions').style.display = 'none'; });
+}
+
+function showCoSuggestions() { document.getElementById('coEmpSuggestions').style.display = 'block'; }
+
+async function selectCoEmp(empId) {
+    document.getElementById('coEmpSuggestions').style.display = 'none';
+    // 加载员工在宿记录
+    try {
+        const resp = await fetch(`${API_BASE}/staying-records/${empId}`);
+        const res = await resp.json();
+        if (res.success && res.data.length > 0) {
+            document.getElementById('coStepRecord').style.display = 'block';
+            document.getElementById('coStepDate').style.display = 'block';
+            const sel = document.getElementById('coRecordSelect');
+            sel.innerHTML = '<option value="">请选择</option>' +
+                res.data.map(r => `<option value="${r.id}">${r.dormCode}（${r.bookingDate} 入住）</option>`).join('');
+        } else {
+            alert('该员工当前没有在宿记录');
+        }
+    } catch(e) {}
+}
+
+function onCoDateChange() { /* 校验逻辑 */ }
+
+async function submitCheckOut() {
+    const recordId = document.getElementById('coRecordSelect').value;
+    const date = document.getElementById('coCheckoutDate').value;
+    const reason = document.getElementById('coReason').value;
+
+    if (!recordId) { alert('请选择退房记录'); return; }
+    if (!date) { alert('请选择退房日期'); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/${recordId}/check-out`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkOutDate: date })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('退房办理成功');
+            bootstrap.Modal.getInstance(document.getElementById('checkOutModal')).hide();
+            location.reload();
+        } else {
+            alert(result.message || '退房办理失败');
+        }
+    } catch (err) { console.error(err); alert('退房办理失败'); }
+}
+</script>
+}

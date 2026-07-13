@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>宿舍账单 - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --danger: #c62828;
+            --info: #00838f;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --bg-page: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e8eaed;
+        }
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page); margin: 0; }
+
+        /* 顶部品牌栏 */
+        
+
+        /* 菜单导航栏 */
+        .menu-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+        }
+        .menu-bar::-webkit-scrollbar { display: none; }
+
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { color: #1976d2; background: #f0f7ff; }
+        .menu-item.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+        .menu-item i { font-size: 1.1rem; }
+
+        /* 菜单分隔符 */
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0.25rem; flex-shrink: 0; }
+
+        /* 页面标题 */
+        .page-header { padding: 1rem 0; }
+        .page-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
+        .page-title i { color: var(--primary); }
+
+        /* 筛选区卡片 */
+        .filter-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; padding: 1rem 1.25rem; }
+
+        /* 内容卡片 */
+        .content-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; }
+
+        /* 表格 */
+        .table thead th { background: #f8f9fa; border-bottom: 2px solid #e9ecef; font-weight: 600; color: #333; white-space: nowrap; }
+        .table-hover tbody tr:hover { background-color: #f8f9ff; }
+        .pagination .page-link { color: var(--primary); }
+        .pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); }
+
+        /* 按钮 */
+        .btn i { margin-right: 0.25rem; }
+
+        /* 筛选区查询/重置按钮统一风格 */
+        .filter-btn {
+            min-width: 100px !important;
+            max-width: 100px !important;
+            width: 100px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .filter-btn i { font-size: 14px !important; }
+
+        /* 分页器 */
+        .pagination-wrap { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid #f0f0f0; }
+        .page-info { font-size: 0.85rem; color: #666; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+<div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+<!-- 页面标题 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-building-add"></i>宿舍账单（共 <span id="totalCount">0</span> 条）
+            </h1>
+            <div>
+                <button class="btn btn-success" onclick="generate(false)"><i class="bi bi-bar-chart"></i> 生成</button>
+                <button class="btn btn-info text-white" onclick="generate(true)"><i class="bi bi-arrow-repeat"></i> 重生成</button>
+                <button class="btn btn-outline-secondary" onclick="alert('原型演示：实际将下载 宿舍费用清单_2026-07.xlsx')"><i class="bi bi-download"></i> 导出</button>
+            </div>
+        </div>
+
+        <!-- 提示框 -->
+        <div id="summary" class="alert alert-info mb-3" style="display:none; border-radius:8px;"></div>
+
+        <!-- 筛选区 -->
+        <div class="filter-card mb-3">
+            <form class="filter-row flex-nowrap" onsubmit="event.preventDefault(); render();">
+                <div class="filter-item">
+                    <label class="form-label small text-muted">计费月份</label>
+                    <input type="month" id="billingMonth" class="form-control" value="2026-07">
+                </div>
+                <div class="filter-item">
+                    <label class="form-label small text-muted">房号</label>
+                    <input list="dormList" id="dormCodeKw" class="form-control" placeholder="如 D-001">
+                    <datalist id="dormList"></datalist>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label small text-muted">楼栋</label>
+                    <select id="building" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label small text-muted">楼层</label>
+                    <select id="floor" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                </div>
+                <div class="filter-item">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="resetFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60">序号</th>
+                            <th>房号</th><th>楼栋</th><th>楼层</th>
+                            <th>冷水用量</th><th>热水用量</th><th>电用量</th>
+                            <th>冷水费</th><th>热水费</th><th>电费</th>
+                            <th>合计</th><th width="100">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <!-- 宿舍账单详情弹窗 -->
+    <div class="modal fade" id="dormDetailModal" tabindex="-1" data-bs-backdrop="static">
+        <!-- v2.11.7：弹窗宽度 +300px（modal-lg → modal-xl + max-width: 1100px） -->
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 1100px;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-list-ul"></i> 宿舍账单明细 — <span id="modalDormCode" class="text-primary"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- v2.11.7：信息卡标题简化为"在住人数"，值仍 X/Y 格式 -->
+                    <div class="alert alert-light border mb-3">
+                        <div class="row text-center">
+                            <div class="col-3">
+                                <div class="small text-muted">宿舍</div>
+                                <div class="fw-bold" id="modalDormCode2">-</div>
+                            </div>
+                            <!-- v2.11.7：列标题简化为"在住人数" -->
+                            <div class="col-3">
+                                <div class="small text-muted">在住人数</div>
+                                <div class="fw-bold" id="modalResidentCapacity">
+                                    <span id="modalResidentCount">-</span>/<span id="modalCapacity">-</span>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div class="small text-muted">计费月份</div>
+                                <div class="fw-bold" id="modalMonth">-</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="small text-muted">合计金额</div>
+                                <div class="fw-bold text-primary fs-5" id="modalTotal">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    <h6 class="mb-2"><i class="bi bi-bar-chart"></i> 费用组成</h6>
+                    <table class="table table-sm table-bordered mb-4">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center">冷水费</th>
+                                <th class="text-center">热水费</th>
+                                <th class="text-center">电费</th>
+                                <th class="text-center">合计</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="text-center">
+                                <td><span id="modalColdAmount">-</span></td>
+                                <td><span id="modalHotAmount">-</span></td>
+                                <td><span id="modalElecAmount">-</span></td>
+                                <td class="fw-bold text-primary" id="modalTotalAmount">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <!-- v2.12.12：删除"宿舍"列（与基本信息卡重复）；在"姓名"后新增"部门"和"员工类型"两列 -->
+                    <h6 class="mb-2"><i class="bi bi-people"></i> 员工分摊明细</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>工号</th><th>姓名</th>
+                                    <th>部门</th>  <!-- v2.12.12 新增 -->
+                                    <th>员工类型</th>  <!-- v2.12.11 新增 -->
+                                    <th>考勤班次</th>  <!-- v2.11.7 新增 -->
+                                    <th>入住天数</th>
+                                    <th class="text-end">冷水费</th><th class="text-end">热水费</th>
+                                    <th class="text-end">电费</th><th class="text-end">分摊合计</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalEmployeeBills">
+                                <tr><td colspan="10" class="text-center text-muted py-3">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // 初始化筛选字典（房号/楼栋/楼层）
+        (function initFilterDicts() {
+            const dl = document.getElementById('dormList');
+            DORMS.forEach(d => { dl.innerHTML += '<option value="' + d.dormCode + '">'; });
+            const buildSel = document.getElementById('building');
+            BUILDINGS.forEach(b => { buildSel.innerHTML += '<option value="' + b + '">' + b + '</option>'; });
+            const floorSel = document.getElementById('floor');
+            const floors = [...new Set(DORMS.map(d => d.floor))].sort((a, b) => a - b);
+            floors.forEach(f => { floorSel.innerHTML += '<option value="' + f + '">' + f + ' 楼</option>'; });
+        })();
+
+        function currentData() {
+            const month = document.getElementById('billingMonth').value;
+            const dormKw = document.getElementById('dormCodeKw').value.trim();
+            const building = document.getElementById('building').value;
+            const floor = document.getElementById('floor').value;
+            return DORM_BILLS_202607
+                .filter(b => b.billingMonth === month)
+                .filter(b => !dormKw || b.dormCode.toLowerCase().includes(dormKw.toLowerCase()))
+                .filter(b => !building || b.building === building)
+                .filter(b => {
+                    if (!floor) return true;
+                    const dorm = findDorm(b.dormCode);
+                    return dorm && String(dorm.floor) === String(floor);
+                });
+        }
+
+        function resetFilter() {
+            document.getElementById('billingMonth').value = '2026-07';
+            document.getElementById('dormCodeKw').value = '';
+            document.getElementById('building').value = '';
+            document.getElementById('floor').value = '';
+            list.reset();
+            // v2.12.10 筛选条件持久化：重置时清除 localStorage
+            FilterPersistence.resetFilters('dormBills');
+        }
+
+        // 使用 registerList 统一分页
+        const list = registerList({
+            key: 'dormbills',
+            footId: 'pager',
+            totalId: 'totalCount',
+            getData: currentData,
+            renderRows: function(items, total, start) {
+                const tbody = document.getElementById('tbody');
+                if (total === 0) {
+                    tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">该月份暂无账单数据。请点击「生成」</td></tr>';
+                    return;
+                }
+                var html = '';
+                items.forEach(function(b, idx) {
+                    var dorm = findDorm(b.dormCode);
+                    var floorText = dorm ? dorm.floor + '楼' : '-';
+                    var seqNo = start + idx + 1;
+                    html += '<tr>' +
+                        '<td class="text-center text-muted">' + seqNo + '</td>' +
+                        '<td><strong>' + b.dormCode + '</strong></td>' +
+                        '<td>' + b.building + '</td>' +
+                        '<td>' + floorText + '</td>' +
+                        '<td>' + b.coldUsage.toFixed(2) + ' m³</td>' +
+                        '<td>' + b.hotUsage.toFixed(2) + ' m³</td>' +
+                        '<td>' + b.electricityUsage.toFixed(2) + ' 度</td>' +
+                        '<td>¥' + b.coldAmount.toFixed(2) + '</td>' +
+                        '<td>¥' + b.hotAmount.toFixed(2) + '</td>' +
+                        '<td>¥' + b.electricityAmount.toFixed(2) + '</td>' +
+                        '<td><strong class="text-primary">¥' + b.totalAmount.toFixed(2) + '</strong></td>' +
+                        '<td><button class="btn btn-sm btn-outline-primary" onclick="showDormDetail(\'' + b.dormCode + '\', \'' + b.billingMonth + '\')">详情</button></td>' +
+                        '</tr>';
+                });
+                tbody.innerHTML = html;
+            }
+        });
+
+        function render() {
+            var data = currentData();
+            var summary = document.getElementById('summary');
+            if (data.length === 0) {
+                summary.style.display = 'none';
+            } else {
+                var total = data.reduce(function(s, b) { return s + b.totalAmount; }, 0);
+                summary.style.display = 'block';
+                summary.innerHTML = '<i class="bi bi-info-circle"></i> 本月统计：共 <strong>' + data.length + '</strong> 间宿舍，合计 <strong>¥' + total.toFixed(2) + '</strong>';
+            }
+            list.reset();
+        }
+
+        function generate(overwrite) {
+            if (!confirm('确定' + (overwrite ? '重新生成' : '生成') + ' 2026-07 的宿舍账单吗？' + (overwrite ? '\n已存在的账单将被覆盖！' : ''))) return;
+            alert('✓ 原型演示：已生成 190 条宿舍账单\n（实际将 POST /api/v1/billing/dorm-bills/generate）');
+        }
+
+        // 宿舍账单详情弹窗
+        var dormDetailModal = null;
+
+        function showDormDetail(dormCode, billingMonth) {
+            var dormBill = DORM_BILLS_202607.find(function(b) { return b.dormCode === dormCode && b.billingMonth === billingMonth; });
+            var dorm = findDorm(dormCode);  // v2.11.7：查宿舍档案（仅用于 capacity）
+            var employeeBills = EMPLOYEE_BILLS_202607.filter(function(b) { return b.dormCode === dormCode && b.billingMonth === billingMonth; });
+
+            document.getElementById('modalDormCode').textContent = dormCode;
+            document.getElementById('modalDormCode2').textContent = dormCode;
+
+            // v2.11.7：在住人数/最大容量数填充（标题已简化为"在住人数"）
+            var residentCount = (dormBill && dormBill.residentCount !== undefined) ? dormBill.residentCount : '-';
+            var capacity = (dorm && dorm.capacity !== undefined) ? dorm.capacity : '-';
+            document.getElementById('modalResidentCount').textContent = residentCount;
+            document.getElementById('modalCapacity').textContent = capacity;
+            // 超额时高亮红色（residentCount > capacity 视为数据异常）
+            var residentCapacityEl = document.getElementById('modalResidentCapacity');
+            if (typeof residentCount === 'number' && typeof capacity === 'number' && residentCount > capacity) {
+                residentCapacityEl.classList.add('text-danger');
+            } else {
+                residentCapacityEl.classList.remove('text-danger');
+            }
+
+            document.getElementById('modalMonth').textContent = billingMonth;
+            document.getElementById('modalTotal').textContent = '¥' + dormBill.totalAmount.toFixed(2);
+            document.getElementById('modalColdAmount').textContent = '¥' + dormBill.coldAmount.toFixed(2);
+            document.getElementById('modalHotAmount').textContent = '¥' + dormBill.hotAmount.toFixed(2);
+            document.getElementById('modalElecAmount').textContent = '¥' + dormBill.electricityAmount.toFixed(2);
+            document.getElementById('modalTotalAmount').textContent = '¥' + dormBill.totalAmount.toFixed(2);
+
+            // v2.11.7：考勤班次按 FK 关联引用（SysEmployee.AttendanceTypeId → AttendanceType）
+            // v2.11.7 BUG 修复：增加兼容逻辑 - 同时支持 FK (新格式) 和 string code (旧格式)
+            var attendanceNameByFk = function(emp) {
+                if (!emp) return '-';
+                // 优先 FK 关联（v2.11.7 新格式，mock-data.js 已规范化）
+                if (emp.attendanceTypeId != null) {
+                    var t = ATTENDANCE_TYPES.find(function(x) { return x.id === emp.attendanceTypeId; });
+                    return t ? t.name : '-';
+                }
+                // 回退到字符串代码（兼容旧数据）
+                if (emp.attendanceType) {
+                    var t2 = ATTENDANCE_TYPES.find(function(x) { return x.code === emp.attendanceType; });
+                    return t2 ? t2.name : (ATTENDANCE_NAME[emp.attendanceType] || emp.attendanceType);
+                }
+                return '-';
+            };
+            var attendanceBadgeByFk = function(emp) {
+                if (!emp) return 'bg-secondary';
+                var code = null;
+                if (emp.attendanceTypeId != null) {
+                    var t = ATTENDANCE_TYPES.find(function(x) { return x.id === emp.attendanceTypeId; });
+                    if (t) code = t.code;
+                }
+                if (!code && emp.attendanceType) code = emp.attendanceType;
+                return code ? (ATTENDANCE_BADGE[code] || 'bg-secondary') : 'bg-secondary';
+            };
+
+            // v2.12.13：员工类型关联引用（FK 模式，与考勤班次一致）
+            var employeeTypeNameByFk = function(emp) {
+                if (!emp) return '-';
+                // 优先 FK 关联（PERSONNEL.employeeTypeId → EMPLOYEE_TYPES）
+                if (emp.employeeTypeId != null) {
+                    var t = EMPLOYEE_TYPES.find(function(x) { return x.id === emp.employeeTypeId; });
+                    return t ? t.name : '-';
+                }
+                // 回退到字符串 name/code（兼容旧数据）
+                if (emp.employeeTypeName) return emp.employeeTypeName;
+                if (emp.employeeType) {
+                    var t2 = EMPLOYEE_TYPES.find(function(x) { return x.code === emp.employeeType || x.name === emp.employeeType; });
+                    return t2 ? t2.name : emp.employeeType;
+                }
+                return '-';
+            };
+
+            var employeeTypeBadgeByFk = function(emp) {
+                if (!emp) return 'bg-secondary';
+                var code = null;
+                if (emp.employeeTypeId != null) {
+                    var t = EMPLOYEE_TYPES.find(function(x) { return x.id === emp.employeeTypeId; });
+                    if (t) code = t.code;
+                }
+                if (!code && emp.employeeType) code = emp.employeeType;
+                if (!code && emp.employeeTypeName) {
+                    var t3 = EMPLOYEE_TYPES.find(function(x) { return x.name === emp.employeeTypeName; });
+                    if (t3) code = t3.code;
+                }
+                return code ? (EMPLOYEE_TYPE_BADGE[code] || 'bg-secondary') : 'bg-secondary';
+            };
+
+            var tbody = document.getElementById('modalEmployeeBills');
+            if (employeeBills.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-3">该宿舍暂无员工分摊记录</td></tr>';
+            } else {
+                var html = '';
+                employeeBills.forEach(function(b) {
+                    // 通过 employeeId 关联查找 SysEmployee（人员档案）
+                    var emp = findEmployee(b.employeeId);
+                    var attName = attendanceNameByFk(emp);
+                    var attBadge = attendanceBadgeByFk(emp);
+                    // v2.12.13：员工类型通过 FK 关联（与考勤班次一致）
+                    var empTypeName = employeeTypeNameByFk(emp);
+                    var empTypeBadge = employeeTypeBadgeByFk(emp);
+                    // v2.12.12：合计行 colspan=10
+                    html += '<tr>' +
+                        '<td>' + b.employeeCode + '</td>' +
+                        '<td>' + b.employeeName + '</td>' +
+                        // v2.12.12：部门（来自 EMPLOYEE_BILLS.department）
+                        '<td>' + (b.department || '-') + '</td>' +
+                        // v2.12.13：员工类型（FK 关联 PERSONNEL.employeeTypeId → EMPLOYEE_TYPES）
+                        '<td><span class="badge ' + empTypeBadge + '">' + empTypeName + '</span></td>' +
+                        // v2.11.7：考勤班次
+                        '<td><span class="badge ' + attBadge + '" title="来源：SysEmployee.AttendanceTypeId → AttendanceType.Name">' + attName + '</span></td>' +
+                        '<td>' + b.stayDays + '天</td>' +
+                        '<td class="text-end">¥' + b.coldShareAmount.toFixed(2) + '</td>' +
+                        '<td class="text-end">¥' + b.hotShareAmount.toFixed(2) + '</td>' +
+                        '<td class="text-end">¥' + b.electricityShareAmount.toFixed(2) + '</td>' +
+                        '<td class="text-end fw-bold">¥' + b.totalShareAmount.toFixed(2) + '</td>' +
+                        '</tr>';
+                });
+                // v2.12.12：合计行 colspan 仍为 2（跨工号+姓名两列），部门/员工类型/考勤班次列为空
+                var totalCold = employeeBills.reduce(function(s, b) { return s + b.coldShareAmount; }, 0);
+                var totalHot = employeeBills.reduce(function(s, b) { return s + b.hotShareAmount; }, 0);
+                var totalElec = employeeBills.reduce(function(s, b) { return s + b.electricityShareAmount; }, 0);
+                var totalAll = employeeBills.reduce(function(s, b) { return s + b.totalShareAmount; }, 0);
+                html += '<tr class="table-secondary fw-bold">' +
+                    '<td colspan="2">合计</td>' +
+                    '<td></td>' +  // 部门列（合计行不显示）
+                    '<td></td>' +  // 员工类型列（合计行不显示）
+                    '<td></td>' +  // 考勤班次列（合计行不显示）
+                    '<td>' + employeeBills.reduce(function(s, b) { return s + b.stayDays; }, 0) + '天</td>' +
+                    '<td class="text-end">¥' + totalCold.toFixed(2) + '</td>' +
+                    '<td class="text-end">¥' + totalHot.toFixed(2) + '</td>' +
+                    '<td class="text-end">¥' + totalElec.toFixed(2) + '</td>' +
+                    '<td class="text-end">¥' + totalAll.toFixed(2) + '</td>' +
+                    '</tr>';
+                tbody.innerHTML = html;
+            }
+
+            if (!dormDetailModal) {
+                dormDetailModal = new bootstrap.Modal(document.getElementById('dormDetailModal'));
+            }
+            dormDetailModal.show();
+        }
+
+        render();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'billing/dorm-bills.html' });
+        });
+    </script>
+    <!-- 筛选条件持久化（v2.12.10 新增） -->
+    <script src="../_shared/filter-persistence.js"></script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>手动补录抄表 — v2.11 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; } .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+        .meter-card { border-left: 4px solid #1976d2; }
+        .upload-ph { height: 90px; border: 2px dashed #cfd8dc; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #90a4ae; cursor: pointer; }
+        .upload-ph:hover { border-color: #1976d2; color: #1976d2; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-pencil-square"></i> 手动补录抄表</h2>
+        <div class="alert alert-info py-2">
+            <i class="bi bi-info-circle"></i> <strong>v2.11.4 更新：</strong>所有数据操作均为覆盖模式，不新增。若同月同房号已存在记录，将覆盖旧数据并保留历史快照。
+        </div>
+
+        <div class="row">
+            <div class="filter-item">
+                <div class="card meter-card mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="filter-item">
+                                <label class="form-label">宿舍 <span class="text-danger">*</span></label>
+                                <select id="dorm" class="form-select" onchange="onDormMonthChange()">
+                                    <option value="">请选择宿舍</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <label class="form-label">抄表月份 <span class="text-danger">*</span></label>
+                                <input type="month" id="month" class="form-control" onchange="onDormMonthChange()">
+                            </div>
+                            <div class="filter-item">
+                                <label class="form-label">抄表员</label>
+                                <input type="text" id="operator" class="form-control" value="admin（后台补录）" disabled>
+                            </div>
+                        </div>
+                        <div id="dupWarn" class="alert alert-danger mt-3 mb-0" style="display:none;"></div>
+                        <div id="lastRef" class="alert alert-secondary mt-3 mb-0" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="row g-3" id="meterInputs"></div>
+
+                <div class="card meter-card mt-3">
+                    <div class="card-body">
+                        <label class="form-label">备注</label>
+                        <textarea id="remark" class="form-control" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="index.html" class="btn btn-secondary">取消</a>
+                    <button type="button" class="btn btn-primary" onclick="submitForm()"><i class="bi bi-check"></i> 提交</button>
+                </div>
+            </div>
+
+            <div class="filter-item">
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-calculator"></i> 本月用量预览</strong></div>
+                    <div class="card-body" id="usagePreview">
+                        <p class="text-muted small mb-0">请选择宿舍与月份，并录入读数</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+
+        // 初始化宿舍下拉（仅启用）
+        const dormSel = document.getElementById('dorm');
+        DORMS.filter(d => d.isActive).forEach(d => dormSel.innerHTML += `<option value="${d.dormCode}">${d.dormCode} | ${d.address}</option>`);
+        // 默认月份 = 当前月
+        document.getElementById('month').value = new Date().toISOString().slice(0, 7);
+
+        // 渲染三表输入
+        document.getElementById('meterInputs').innerHTML = METER_TYPES.map(t => `
+            <div class="filter-item">
+                <div class="card meter-card h-100">
+                    <div class="card-body">
+                        <h6 class="${t.color}"><i class="bi ${t.icon}"></i> ${t.name}</h6>
+                        <label class="form-label small">读数（${t.unit}） <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" id="read_${t.key}" class="form-control" oninput="onReadingInput()">
+                        <div class="form-text" id="hint_${t.key}">用量：—</div>
+                        <div class="upload-ph mt-2" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
+                            <i class="bi bi-camera"></i>&nbsp;上传${t.name}照片
+                        </div>
+                    </div>
+                </div>
+            </div>`).join('');
+
+        function currentPrev() {
+            const code = dormSel.value, mo = document.getElementById('month').value;
+            if (!code || !mo) return null;
+            return prevMeter(code, mo);
+        }
+
+        function existingRecord() {
+            const code = dormSel.value, mo = document.getElementById('month').value;
+            // v2.11.4：返回不可直接覆盖的记录（status=1 正常 或 status=2 已修正）
+            // status=0(未完成) 允许覆盖
+            return METER_RECORDS.find(m => m.dormCode === code && m.readMonth === mo && (m.status === 1 || m.status === 2));
+        }
+
+        // v2.11.4：检查是否有可覆盖的记录（status=0 未完成）
+        function overwriteableRecord() {
+            const code = dormSel.value, mo = document.getElementById('month').value;
+            return METER_RECORDS.find(m => m.dormCode === code && m.readMonth === mo && m.status === 0);
+        }
+
+        function onDormMonthChange() {
+            const dupWarn = document.getElementById('dupWarn');
+            const lastRef = document.getElementById('lastRef');
+            const exist = existingRecord();
+            const monthVal = document.getElementById('month').value;
+            // v2.11.4：检查是否有不可覆盖的记录（status=1/2）
+            if (exist) {
+                dupWarn.style.display = 'block';
+                dupWarn.className = 'alert alert-warning';
+                dupWarn.innerHTML = `⚠️ 该宿舍 <strong>${exist.readMonth}</strong> 已有抄表记录（状态：${METER_STATUS[exist.status]}）。如需修改请到列表中「修正」，不可重复补录。`;
+            } else {
+                // v2.11.4：检查是否有可覆盖的记录（status=0 未完成）
+                const overwriteRec = overwriteableRecord();
+                if (overwriteRec) {
+                    dupWarn.style.display = 'block';
+                    dupWarn.className = 'alert alert-info';
+                    const missing = [];
+                    if (overwriteRec.coldMeter === 0) missing.push('冷水表');
+                    if (overwriteRec.hotMeter === 0) missing.push('热水表');
+                    if (overwriteRec.electricMeter === 0) missing.push('电表');
+                    const isAllZero = overwriteRec.coldMeter === 0 && overwriteRec.hotMeter === 0 && overwriteRec.electricMeter === 0;
+                    if (isAllZero) {
+                        dupWarn.innerHTML = `ℹ️ 该宿舍本月为 <strong>未完成</strong> 状态（三表全0）。提交后将覆盖此占位记录，旧数据保留到备注历史。`;
+                    } else {
+                        dupWarn.innerHTML = `ℹ️ 该宿舍本月为 <strong>未完成</strong> 状态，缺失项：${missing.join('、')}。提交后将补全记录，旧数据保留到备注历史。`;
+                    }
+                } else {
+                    dupWarn.style.display = 'none';
+                }
+            }
+            const prev = currentPrev();
+            if (prev) {
+                lastRef.style.display = 'block';
+                lastRef.innerHTML = `📄 上月读数（${prev.readMonth}）：冷水 <strong>${prev.coldMeter}</strong> · 热水 <strong>${prev.hotMeter}</strong> · 电表 <strong>${prev.electricMeter}</strong>`;
+            } else {
+                lastRef.style.display = 'none';
+            }
+            onReadingInput();
+        }
+
+        function onReadingInput() {
+            const prev = currentPrev();
+            const preview = document.getElementById('usagePreview');
+            const rows = [];
+            let anyVal = false;
+            METER_TYPES.forEach(t => {
+                const val = parseFloat(document.getElementById('read_' + t.key).value);
+                const hint = document.getElementById('hint_' + t.key);
+                const prevVal = prev ? prev[t.key === 'cold' ? 'coldMeter' : t.key === 'hot' ? 'hotMeter' : 'electricMeter'] : null;
+                if (isNaN(val)) { hint.innerHTML = '用量：—'; hint.className = 'form-text'; return; }
+                anyVal = true;
+                if (prevVal === null) {
+                    hint.innerHTML = '首次抄表（无上月读数）';
+                    hint.className = 'form-text text-muted';
+                    rows.push(`<tr><td>${t.name}</td><td class="text-end">首次</td></tr>`);
+                } else {
+                    const usage = +(val - prevVal).toFixed(2);
+                    if (val <= prevVal) {
+                        hint.innerHTML = `<span class="text-danger">✗ 必须大于上月 ${prevVal}</span>`;
+                        hint.className = 'form-text';
+                        rows.push(`<tr class="table-danger"><td>${t.name}</td><td class="text-end">${usage} ✗</td></tr>`);
+                    } else {
+                        hint.innerHTML = `<span class="text-success">用量 +${usage} ${t.unit}</span>`;
+                        hint.className = 'form-text';
+                        rows.push(`<tr><td>${t.name}</td><td class="text-end fw-bold">+${usage} ${t.unit}</td></tr>`);
+                    }
+                }
+            });
+            preview.innerHTML = anyVal
+                ? `<table class="table table-sm mb-0"><tbody>${rows.join('')}</tbody></table>`
+                : '<p class="text-muted small mb-0">请录入读数</p>';
+        }
+
+        function submitForm() {
+            const code = dormSel.value, mo = document.getElementById('month').value;
+            if (!code) { alert('请选择宿舍'); return; }
+            if (!mo) { alert('请选择抄表月份'); return; }
+            // v2.11.4：status=1(正常)/2(已修正) 不允许直接覆盖，需走修正流程
+            if (existingRecord()) { alert('该宿舍本月已有正常/已修正记录，如需修改请走修正流程'); return; }
+
+            // v2.11.4：检查是否有可覆盖的记录（status=0/4）
+            const overwriteRec = overwriteableRecord();
+            const prev = currentPrev();
+            const vals = {};
+            for (const t of METER_TYPES) {
+                const v = parseFloat(document.getElementById('read_' + t.key).value);
+                if (isNaN(v)) { alert(`请录入${t.name}读数`); return; }
+                const prevVal = prev ? prev[t.key === 'cold' ? 'coldMeter' : t.key === 'hot' ? 'hotMeter' : 'electricMeter'] : null;
+                if (prevVal !== null && v <= prevVal) { alert(`${t.name}读数必须大于上月（${prevVal}）`); return; }
+                vals[t.key] = v;
+            }
+
+            // v2.11.4：覆盖逻辑，旧数据追加到备注
+            let overwriteNote = '';
+            if (overwriteRec) {
+                const oldData = `cold=${overwriteRec.coldMeter}, hot=${overwriteRec.hotMeter}, electric=${overwriteRec.electricMeter}, status=${overwriteRec.status}, operator=${overwriteRec.operator || '(空)'}`;
+                const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
+                overwriteNote = `\n[${now} 覆盖前数据] ${oldData}`;
+                alert(`✓ 原型演示：已覆盖原"${METER_STATUS[overwriteRec.status]}"记录\n旧数据已保存到备注历史\n新数据：冷 ${vals.cold} / 热 ${vals.hot} / 电 ${vals.electric}${overwriteNote}\n（实际将 POST/PUT /api/meter/upload 或 /api/meter/records）`);
+            } else {
+                alert(`✓ 原型演示：${code}（${mo}）抄表已补录\n冷水 ${vals.cold} / 热水 ${vals.hot} / 电表 ${vals.electric}\n（实际将 POST /api/meter/records）`);
+            }
+            location.href = 'index.html';
+        }
+
+        onDormMonthChange();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'meter/entry.html' });
+        });
+    </script>
+</body>
+</html>

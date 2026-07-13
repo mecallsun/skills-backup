@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>员工分摊 - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #1976d2;
+            --success: #2e7d32;
+            --warning: #e65100;
+            --danger: #c62828;
+            --info: #00838f;
+            --text-primary: #212529;
+            --text-secondary: #6c757d;
+            --bg-page: #f5f7fa;
+            --bg-card: #ffffff;
+            --border-color: #e8eaed;
+        }
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page); margin: 0; }
+
+        /* 顶部品牌栏 */
+        
+
+        /* 菜单导航栏 */
+        .menu-bar {
+            background: #fff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+        }
+        .menu-bar::-webkit-scrollbar { display: none; }
+
+        /* 菜单项 */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            text-decoration: none;
+            white-space: nowrap;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .menu-item:hover { color: #1976d2; background: #f0f7ff; }
+        .menu-item.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+        .menu-item i { font-size: 1.1rem; }
+
+        /* 菜单分隔符 */
+        .menu-sep { width: 1px; background: #e0e0e0; margin: 0.5rem 0.25rem; flex-shrink: 0; }
+
+        /* 页面标题 */
+        .page-header { padding: 1rem 0; }
+        .page-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
+        .page-title i { color: var(--primary); }
+
+        /* 筛选区卡片 */
+        .filter-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; padding: 1rem 1.25rem; }
+
+        /* 内容卡片 */
+        .content-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; }
+
+        /* 表格 */
+        .table thead th { background: #f8f9fa; border-bottom: 2px solid #e9ecef; font-weight: 600; color: #333; white-space: nowrap; }
+        .table-hover tbody tr:hover { background-color: #f8f9ff; }
+        .pagination .page-link { color: var(--primary); }
+        .pagination .page-item.active .page-link { background-color: var(--primary); border-color: var(--primary); }
+
+        /* 按钮 */
+        .btn i { margin-right: 0.25rem; }
+
+        /* 筛选区查询/重置按钮统一风格 */
+        .filter-btn {
+            min-width: 100px !important;
+            max-width: 100px !important;
+            width: 100px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 16px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            border-radius: 6px !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .filter-btn i { font-size: 14px !important; }
+
+        /* v2.11.6：筛选区一行排列（参照人员清单风格，flex-nowrap 强制不换行） */
+        .filter-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 0.75rem;
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+
+        .filter-row .filter-item {
+            flex: 0 0 auto;
+            min-width: 120px;
+        }
+        .filter-row .filter-item label {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        .filter-row .filter-item .form-control,
+        .filter-row .filter-item .form-select {
+            height: 32px;
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        /* v2.11.6：分摊合计最小自适应（强制，与其他字段区分） */
+        .filter-row .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+
+        /* v2.11.6：查询/重置按钮容器对齐（参照人员清单） */
+        .filter-row .filter-item-btn {
+            display: flex;
+            align-items: flex-end;
+            min-height: 60px;
+        }
+
+        /* v2.11.6：移动端 ≤768px 改为 2 列布局 */
+        @@media (max-width: 768px) {
+            .filter-row { flex-wrap: wrap; overflow-x: visible; }
+            .filter-row .filter-item { min-width: calc(50% - 8px); }
+            .filter-row .filter-item-stats {
+                min-width: calc(50% - 8px) !important;
+                max-width: none !important;
+            }
+        }
+
+        /* 分页器 */
+        .pagination-wrap { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-top: 1px solid #f0f0f0; }
+        .page-info { font-size: 0.85rem; color: #666; }
+
+        /* 统计值 */
+        .stat-value { font-size: 1.8rem; font-weight: bold; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+<div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+<!-- 页面标题 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-wallet2"></i>员工分摊（共 <span id="totalCount">0</span> 条）
+            </h1>
+            <!-- v2.11.6：业务按钮迁移到页头 btn-group -->
+            <div class="btn-group" role="group" aria-label="员工分摊操作">
+                <button class="btn btn-success" onclick="generate(false)"><i class="bi bi-bar-chart-line"></i> 生成</button>
+                <button class="btn btn-info text-white" onclick="generate(true)"><i class="bi bi-arrow-repeat"></i> 重生成</button>
+                <button class="btn btn-outline-secondary" onclick="alert('原型演示：实际将下载 员工分摊费用_2026-07.xlsx')"><i class="bi bi-download"></i> 导出</button>
+                <button class="btn btn-primary" onclick="alert('原型演示：批量发布当月员工账单')"><i class="bi bi-send"></i> 发布</button>
+            </div>
+        </div>
+
+        <!-- 提示框 -->
+        <div class="alert alert-info mb-3" style="border-radius:8px;">
+            <i class="bi bi-info-circle"></i> <strong>v2.11.2 计算规则</strong>：员工冷/热/电分摊 = (<strong>宿舍月账单 ÷ 当月天数</strong>) × <strong>该员工当月入住天数</strong> ÷ <strong>同宿舍总入住人天数</strong>。
+            空床位不参与分摊（按人天数加权）。<strong>调宿人员</strong>按每个房号入住记录的每段入住分别生成对应条数的记录，按房号汇总。
+        </div>
+
+        <!-- v2.12.10 筛选区：参照人员清单风格，flex-nowrap 一行排列 + 自适应宽度 -->
+        <div class="filter-card mb-3">
+            <form class="filter-row flex-nowrap" onsubmit="event.preventDefault(); render();">
+                <!-- ① 计费月份：自适应宽度 -->
+                <div class="filter-item flex-grow-1">
+                    <label>计费月份</label>
+                    <input type="month" id="billingMonth" class="form-control" value="2026-07">
+                </div>
+                <!-- ② 员工（工号/姓名/手机号）模糊匹配：移到计费月份后面 -->
+                <div class="filter-item flex-grow-1">
+                    <label>员工（姓名/工号/手机号）</label>
+                    <input type="text" id="empKeyword" class="form-control" placeholder="模糊匹配（姓名/工号/手机号）">
+                </div>
+                <!-- ③ 部门：关联引用 PERSONNEL.departmentId -->
+                <div class="filter-item">
+                    <label>部门</label>
+                    <select id="fDept" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <!-- ④ 员工类型：关联引用人员清单 EMPLOYEE_TYPES.name -->
+                <div class="filter-item">
+                    <label>员工类型</label>
+                    <select id="fType" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <!-- ⑤ 在职状态：v2.11.28 新增（关联引用基础资料 EMPLOYMENT_STATUSES 字典）-->
+                <div class="filter-item">
+                    <label>在职状态</label>
+                    <select id="fEmpStatus" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <!-- ⑥ 宿舍房号：combobox 模糊匹配 -->
+                <div class="filter-item flex-grow-1">
+                    <label>宿舍房号</label>
+                    <input list="dormList" id="dormCodeKw" class="form-control" placeholder="如 D-301">
+                    <datalist id="dormList"></datalist>
+                </div>
+                <!-- ⑦ 分摊合计：最小自适应（强制） -->
+                <div class="filter-item filter-item-stats">
+                    <label>分摊合计</label>
+                    <div class="form-control bg-light text-success fw-bold" id="cntTotal">¥0.00</div>
+                </div>
+                <!-- ⑧ 查询：90×38px 固定 -->
+                <div class="filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                </div>
+                <!-- ⑨ 重置：90×38px 固定 -->
+                <div class="filter-item filter-item-btn">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="resetFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 数据表格 -->
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60">序号</th>
+                            <th>工号</th><th>姓名</th><th>部门</th><th>员工类型</th>
+                            <th>在职状态</th>
+                            <th>宿舍</th><th>入住天数</th>
+                            <!-- v2.11.21 修订：原"住宿状态"列实际显示的是账单段类型，改为"账单段类型"，与基础资料 RESIDENCE_STATUS 字典区分 -->
+                            <th>账单段类型</th><th>时间段</th>
+                            <th>分摊冷水</th><th>分摊热水</th><th>分摊电费</th>
+                            <th>合计</th><th>状态</th><th width="80">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+        // v2.11.4 修改：计费月份默认=当月
+        const CURR_MONTH = '2026-07';
+
+        // v2.12.10 修改：初始化宿舍房号 datalist + 部门/员工类型/在职状态下拉
+        (function initDatalist() {
+            // 1) 宿舍房号 datalist（候选列表）
+            const dl = document.getElementById('dormList');
+            if (dl) DORMS.forEach(d => { dl.innerHTML += `<option value="${d.dormCode}">`; });
+
+            // 2) 部门下拉（关联引用基础资料/人员清单 DEPARTMENTS 字典）
+            // v2.11.28 修订：value = d.id（FK），与 PERSONNEL.departmentId 一致；筛选时通过 getDepartmentName(id) 还原 name
+            const fDept = document.getElementById('fDept');
+            if (fDept && typeof DEPARTMENTS !== 'undefined') {
+                DEPARTMENTS.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d.id;  // v2.11.28: 改为 FK 主键（与员工类型/在职状态保持一致）
+                    opt.textContent = d.name;
+                    fDept.appendChild(opt);
+                });
+            }
+
+            // 3) 员工类型下拉（关联引用人员清单 EMPLOYEE_TYPES 字典）
+            // v2.11.22 修订：value = employeeTypeId（FK），text = name（与字典一致）
+            const fType = document.getElementById('fType');
+            if (fType && typeof EMPLOYEE_TYPES !== 'undefined') {
+                EMPLOYEE_TYPES.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;  // value = id（FK，与基础资料字典一致）
+                    opt.textContent = t.name;
+                    fType.appendChild(opt);
+                });
+            }
+
+            // 4) 在职状态下拉（v2.11.28 新增）— 关联引用基础资料 EMPLOYMENT_STATUSES 字典
+            const fEmpStatus = document.getElementById('fEmpStatus');
+            if (fEmpStatus && typeof EMPLOYMENT_STATUSES !== 'undefined') {
+                EMPLOYMENT_STATUSES.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    fEmpStatus.appendChild(opt);
+                });
+            }
+        })();
+
+        // 辅助函数：通过 employeeId 获取人员的在职状态 ID（关联引用 PERSONNEL.employmentStatusId）
+        // v2.11.27 修订：优先使用 employmentStatusId（FK），回退 legacy status 字段
+        function getEmployeeEmploymentStatusId(empId) {
+            if (typeof PERSONNEL === 'undefined') return null;
+            for (var i = 0; i < PERSONNEL.length; i++) {
+                if (PERSONNEL[i].id === empId) {
+                    if (PERSONNEL[i].employmentStatusId !== undefined) return PERSONNEL[i].employmentStatusId;
+                    if (PERSONNEL[i].status !== undefined) return PERSONNEL[i].status;
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // 辅助函数：渲染在职状态 Badge（关联引用 EMPLOYMENT_STATUSES 字典）
+        // v2.11.27 修订：使用基础资料-在职状态字典（单一数据源）
+        function employmentStatusBadge(empId) {
+            var statusId = getEmployeeEmploymentStatusId(empId);
+            if (statusId === null) return '<span class="text-muted">-</span>';
+            if (typeof EMPLOYMENT_STATUSES === 'undefined') {
+                // 兜底：mock-data.js 未加载时使用旧映射
+                if (statusId === 1) return '<span class="badge bg-success">在职</span>';
+                if (statusId === 2) return '<span class="badge bg-warning text-dark">待入职</span>';
+                if (statusId === 3) return '<span class="badge bg-secondary">已离职</span>';
+                return '<span class="text-muted">-</span>';
+            }
+            for (var i = 0; i < EMPLOYMENT_STATUSES.length; i++) {
+                if (EMPLOYMENT_STATUSES[i].id === statusId) {
+                    return '<span class="badge ' + EMPLOYMENT_STATUSES[i].color + '">' + EMPLOYMENT_STATUSES[i].name + '</span>';
+                }
+            }
+            return '<span class="text-muted">-</span>';
+        }
+
+        // 辅助函数：通过 employeeId 关联引用人员清单的"员工类型"取值
+        // v2.12.11 修复：EMPLOYEE_BILLS.employeeType 字段为 undefined（mock-data.js 历史数据），
+        //              应关联引用 PERSONNEL.employeeTypeName（基础资料 EMPLOYEE_TYPES.name）
+        function getEmployeeTypeName(empId) {
+            if (typeof PERSONNEL === 'undefined') return '-';
+            for (var i = 0; i < PERSONNEL.length; i++) {
+                if (PERSONNEL[i].id === empId) {
+                    // 优先使用 employeeTypeName（新字段），fallback 到旧字段 employeeType
+                    return PERSONNEL[i].employeeTypeName || PERSONNEL[i].employeeType || '-';
+                }
+            }
+            return '-';
+        }
+
+        function currentData() {
+            const month = document.getElementById('billingMonth').value;
+            const dormKw = document.getElementById('dormCodeKw').value.trim().toUpperCase();
+            const kw = document.getElementById('empKeyword').value.trim().toLowerCase();
+            // v2.11.28 修订：fDept.value 现为 DEPARTMENTS.id（FK），需要还原为 name 用于匹配
+            const deptId = parseInt(document.getElementById('fDept').value) || null;
+            const deptName = deptId ? (typeof getDepartmentName === 'function' ? getDepartmentName(deptId) : null) : null;
+            // v2.11.22 修订：typeId 关联 EMPLOYEE_TYPES.id（FK）
+            const typeId = parseInt(document.getElementById('fType').value) || null;
+            // v2.11.28 新增：empStatusId 关联 EMPLOYMENT_STATUSES.id（FK）
+            const empStatusId = parseInt(document.getElementById('fEmpStatus').value) || null;
+
+            // v2.12.10 重构：基于 EMPLOYEE_BILLS_202607 + 关联引用 PERSONNEL
+            let data = EMPLOYEE_BILLS_202607.filter(b => !month || b.billingMonth === month);
+
+            // 员工（姓名/工号/手机号）模糊匹配
+            if (kw) {
+                data = data.filter(function (b) {
+                    var code = (b.employeeCode || '').toLowerCase();
+                    var name = (b.employeeName || '').toLowerCase();
+                    var phone = '';
+                    // 通过 employeeId 关联 PERSONNEL 取手机号
+                    if (typeof PERSONNEL !== 'undefined') {
+                        for (var i = 0; i < PERSONNEL.length; i++) {
+                            if (PERSONNEL[i].id === b.employeeId) {
+                                phone = (PERSONNEL[i].phone || '').toLowerCase();
+                                break;
+                            }
+                        }
+                    }
+                    return code.indexOf(kw) !== -1 || name.indexOf(kw) !== -1 || phone.indexOf(kw) !== -1;
+                });
+            }
+
+            // 部门筛选（v2.11.28 修订：deptName 由 deptId 关联 DEPARTMENTS.name 推导）
+            if (deptName) {
+                data = data.filter(b => (b.department || '') === deptName);
+            }
+
+            // v2.11.22 修订：员工类型筛选（关联引用 EMPLOYEE_TYPES.id）
+            if (typeId) {
+                // 通过 employeeId 关联 PERSONNEL → employeeTypeId 进行匹配
+                data = data.filter(function (b) {
+                    if (typeof PERSONNEL === 'undefined') return false;
+                    var p = PERSONNEL.find(function (emp) { return emp.id === b.employeeId; });
+                    return p && p.employeeTypeId === typeId;
+                });
+            }
+
+            // v2.11.28 新增：在职状态筛选（关联引用 EMPLOYMENT_STATUSES.id）
+            //   通过 employeeId 关联 PERSONNEL → employmentStatusId 进行匹配
+            if (empStatusId) {
+                data = data.filter(function (b) {
+                    var sid = getEmployeeEmploymentStatusId(b.employeeId);
+                    return sid === empStatusId;
+                });
+            }
+
+            // 宿舍房号模糊匹配（combobox）
+            if (dormKw) {
+                data = data.filter(b => b.dormCode && b.dormCode.toUpperCase().includes(dormKw));
+            }
+
+            return data;
+        }
+
+        function resetFilter() {
+            document.getElementById('billingMonth').value = CURR_MONTH;
+            document.getElementById('empKeyword').value = '';
+            document.getElementById('fDept').value = '';
+            document.getElementById('fType').value = '';
+            document.getElementById('fEmpStatus').value = '';
+            document.getElementById('dormCodeKw').value = '';
+            list.reset();
+            // v2.12.10 筛选条件持久化：重置时清除 localStorage
+            FilterPersistence.resetFilters('employeeBills');
+        }
+
+        // v2.11.22 修复：页面初始化 - 等待 FilterPersistence 完成后再渲染
+        // v2.11.26 修复：list 必须在 render 调用前赋值。
+        //          策略：先声明 var list，initPage 延迟 render 到 list 赋值后
+        var list;
+
+        function initPage() {
+            if (typeof EMPLOYEE_BILLS_202607 === 'undefined' || typeof PERSONNEL === 'undefined') {
+                setTimeout(initPage, 50);
+                return;
+            }
+            // v2.11.22 注册渲染回调：FilterPersistence 恢复筛选后触发渲染
+            if (typeof FilterPersistence !== 'undefined') {
+                FilterPersistence.onRestore = function() {
+                    render();
+                };
+            }
+            // v2.11.26 延迟渲染：等待下方 list = registerList(...) 赋值完成
+            setTimeout(function() { render(); }, 0);
+        }
+        initPage();
+
+        // 使用 registerList 统一分页
+        list = registerList({
+            key: 'empbills',
+            footId: 'pager',
+            totalId: 'totalCount',
+            getData: currentData,
+            renderRows: (items, total, start) => {
+                const tbody = document.getElementById('tbody');
+                if (total === 0) {
+                    tbody.innerHTML = `<tr><td colspan="16" class="text-center text-muted py-4">该月份暂无分摊数据。请先生成宿舍账单，再点击「生成」</td></tr>`;
+                    return;
+                }
+                // v2.11.21 修订：账单段类型从 EMPLOYEE_BILL_SEGMENT_TYPE 字典读取（单一数据源）
+                const SEG_LABEL = {};
+                const SEG_BADGE = {};
+                if (typeof EMPLOYEE_BILL_SEGMENT_TYPE !== 'undefined') {
+                    EMPLOYEE_BILL_SEGMENT_TYPE.forEach(function (item) {
+                        SEG_LABEL[item.code] = item.name;
+                        SEG_BADGE[item.code] = item.color;
+                    });
+                }
+                // 默认 fallback（兼容旧数据）
+                if (!SEG_LABEL['LIVING']) SEG_LABEL['LIVING'] = '在宿段';
+                if (!SEG_BADGE['LIVING']) SEG_BADGE['LIVING'] = 'bg-success';
+                if (!SEG_LABEL['TRANSFER_OUT']) SEG_LABEL['TRANSFER_OUT'] = '调出段';
+                if (!SEG_BADGE['TRANSFER_OUT']) SEG_BADGE['TRANSFER_OUT'] = 'bg-warning text-dark';
+                if (!SEG_LABEL['TRANSFER_IN']) SEG_LABEL['TRANSFER_IN'] = '调入段';
+                if (!SEG_BADGE['TRANSFER_IN']) SEG_BADGE['TRANSFER_IN'] = 'bg-info text-dark';
+                tbody.innerHTML = items.map((b, idx) => {
+                    const seqNo = start + idx + 1;
+                    const segLabel = SEG_LABEL[b.segmentType] || '在宿段';
+                    const segBadge = SEG_BADGE[b.segmentType] || 'bg-success';
+                    const dateRange = `${b.stayStartDate?.slice(5) || '-'} ~ ${b.stayEndDate?.slice(5) || '-'}`;
+                    // v2.12.11 修复：员工类型关联引用人员清单（基础资料 EMPLOYEE_TYPES.name）
+                    var empTypeName = getEmployeeTypeName(b.employeeId);
+                    return `
+                    <tr>
+                        <td class="text-center text-muted">${seqNo}</td>
+                        <td>${b.employeeCode}</td>
+                        <td><strong>${b.employeeName}</strong></td>
+                        <td>${b.department}</td>
+                        <td>${empTypeName}</td>
+                        <!-- v2.11.27 新增：在职状态列（关联引用 PERSONNEL.employmentStatusId → EMPLOYMENT_STATUSES 字典）-->
+                        <td>${employmentStatusBadge(b.employeeId)}</td>
+                        <td><strong>${b.dormCode}</strong></td>
+                        <td>${b.stayDays} 天</td>
+                        <td><span class="badge ${segBadge}">${segLabel}</span></td>
+                        <td><small class="text-monospace">${dateRange}</small></td>
+                        <td>¥${b.coldShareAmount.toFixed(2)}</td>
+                        <td>¥${b.hotShareAmount.toFixed(2)}</td>
+                        <td>¥${b.electricityShareAmount.toFixed(2)}</td>
+                        <td><strong class="text-primary">¥${b.totalShareAmount.toFixed(2)}</strong></td>
+                        <td>${b.isPublished ? '<span class="badge bg-success">已发布</span>' : '<span class="badge bg-secondary">草稿</span>'}</td>
+                        <td>${!b.isPublished ? `<button class="btn btn-sm btn-outline-success" onclick="pub(${b.id})">发布</button>` : '<span class="text-muted small">—</span>'}</td>
+                    </tr>`;
+                }).join('');
+            }
+        });
+
+        function render() {
+            const data = currentData();
+            if (data.length === 0) {
+                document.getElementById('cntTotal').textContent = '¥0.00';
+            } else {
+                const total = data.reduce((s, b) => s + b.totalShareAmount, 0);
+                document.getElementById('cntTotal').textContent = `¥${total.toFixed(2)}`;
+            }
+            list.reset();
+        }
+
+        function generate(overwrite) {
+            if (!confirm(`确定${overwrite ? '重新生成' : '生成'} 2026-07 的员工分摊账单吗？${overwrite ? '\n已存在的账单将被覆盖！' : ''}`)) return;
+            alert(`✓ 原型演示：已按"入住天数 × 日均费用 × 占比"算法生成员工分摊账单\n（实际将 POST /api/v1/billing/employee-bills/generate）`);
+        }
+        function pub(id) { if (confirm('确定发布该员工账单吗？')) alert(`✓ 原型演示：账单 ${id} 已发布`); render(); }
+
+        // v2.11.26 移除：render() 已由 initPage 的 setTimeout 调用，此处重复
+        // render();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'billing/employee-bills.html' });
+        });
+    </script>
+    <!-- 筛选条件持久化（v2.12.10 新增） -->
+    <script src="../_shared/filter-persistence.js"></script>
+</body>
+</html>

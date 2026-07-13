@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人员清单 - 金戈宿舍管理系统（v2.12.2）</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page); }
+    </style>
+</head>
+<body>
+    <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.2</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 2: Tab 页签栏 (45px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 3: 页面内容区 ========== -->
+    <div class="page-content">
+        <!-- 页面标题 -->
+        <div class="page-header d-flex justify-content-between align-items-center">
+            <h1 class="page-title">
+                <i class="bi bi-people-fill"></i>人员清单<span class="total-count">（共 <span id="totalCount">0</span> 人）</span>
+            </h1>
+            <div class="btn-group" role="group">
+                <a href="create.html" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增</a>
+                <a href="import.html" class="btn btn-info text-white"><i class="bi bi-upload"></i> 导入</a>
+                <button class="btn btn-outline-success" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i> 导出</button>
+            </div>
+        </div>
+
+        <!-- 筛选区 -->
+        <div class="filter-card">
+            <form class="filter-row flex-nowrap" onsubmit="event.preventDefault(); doFilter();">
+                <div class="filter-item">
+                    <label class="form-label mb-1">姓名/工号/手机号</label>
+                    <input type="text" id="fKw" class="form-control" placeholder="姓名/工号/手机号">
+                </div>
+                <div class="filter-item">
+                    <label class="form-label mb-1">部门</label>
+                    <select id="fDept" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label mb-1">员工类型</label>
+                    <select id="fType" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <!-- v2.12.2 新增：班组下拉（位置：员工类型 右侧），value 改为 TeamId（int） -->
+                <div class="filter-item">
+                    <label class="form-label mb-1">班组</label>
+                    <select id="fTeam" class="form-select">
+                        <option value="">全部</option>
+                        <option value="1">默认</option>
+                        <option value="2">A班</option>
+                        <option value="3">B班</option>
+                        <option value="4">C班</option>
+                        <option value="5">D班</option>
+                        <option value="6">E班</option>
+                        <option value="7">F班</option>
+                        <option value="8">G班</option>
+                        <option value="9">H班</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label mb-1">考勤班次</label>
+                    <select id="fAttend" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label mb-1">在职状态</label>
+                    <select id="fStatus" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label mb-1">宿舍（房号）</label>
+                    <input list="dormList" id="fDorm" class="form-control" placeholder="如 D-001（模糊匹配）">
+                    <datalist id="dormList"></datalist>
+                </div>
+                <div class="filter-item">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                </div>
+                <div class="filter-item">
+                    <button class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('personnel')"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 列表 -->
+        <div class="content-card">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="50">序号</th>
+                            <th>工号</th>
+                            <th>姓名</th>
+                            <th>手机号</th>
+                            <th>部门</th>
+                            <th>员工类型</th>
+                            <th>班组</th>
+                            <th>考勤班次</th>
+                            <th>入职日期</th>
+                            <th>在职状态</th>
+                            <th>离职日期</th>
+                            <th>宿舍（房号）</th>
+                            <th width="200">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script src="../_shared/storage-keys.js"></script>
+    <script src="../_shared/tab-bar.js"></script>
+    <script>
+    // 辅助函数（必须在 mock-data.js 之后定义）
+    function attendanceBadgeHtml(id) {
+        var t = null;
+        for (var i = 0; i < ATTENDANCE_TYPES_FULL.length; i++) {
+            if (ATTENDANCE_TYPES_FULL[i].id === id) { t = ATTENDANCE_TYPES_FULL[i]; break; }
+        }
+        if (!t) return '<span class="text-muted">-</span>';
+        var cls = ATTENDANCE_BADGE[t.code] || 'bg-secondary';
+        return '<span class="badge ' + cls + '">' + t.name + '</span>';
+    }
+    // v2.11.27 修订：关联引用 EMPLOYMENT_STATUSES 字典（基础资料-在职状态表）
+    //   单一数据源：mock-data.js EMPLOYMENT_STATUSES 数组（v2.11.19 规范）
+    //   字典结构：{ id, code, name, color }
+    //   Badge 颜色：取自字典 color 字段（与基础资料样式一致）
+    function employmentBadgeHtml(id) {
+        if (typeof EMPLOYMENT_STATUSES === 'undefined') {
+            // 兜底：mock-data.js 未加载时使用旧映射（不推荐，正常不会出现）
+            if (id === 1) return '<span class="badge bg-success">在职</span>';
+            if (id === 2) return '<span class="badge bg-warning text-dark">待入职</span>';
+            if (id === 3) return '<span class="badge bg-secondary">已离职</span>';
+            return '<span class="text-muted">-</span>';
+        }
+        var s = null;
+        for (var i = 0; i < EMPLOYMENT_STATUSES.length; i++) {
+            if (EMPLOYMENT_STATUSES[i].id === id) { s = EMPLOYMENT_STATUSES[i]; break; }
+        }
+        if (!s) return '<span class="text-muted">-</span>';
+        return '<span class="badge ' + s.color + '">' + s.name + '</span>';
+    }
+    function dormCellHtml(p) {
+        // v2.11.18 修订：直接使用 PERSONNEL.dormCode 作为单一数据源（与首页 KPI 1 入住人数一致）
+        // 维护规则：办理登记操作（入住/退房/预约/撤销）会同步更新此字段
+        var dc = p.dormCode;
+        if (dc && String(dc).trim() !== '') return '<strong>' + dc + '</strong>';
+        return '<span class="text-muted">-</span>';
+    }
+    function typeBadgeHtml(id) {
+        var t = null;
+        for (var i = 0; i < EMPLOYEE_TYPES.length; i++) {
+            if (EMPLOYEE_TYPES[i].id === id) { t = EMPLOYEE_TYPES[i]; break; }
+        }
+        if (!t) return '<span class="text-muted">-</span>';
+        var colors = { 1: 'bg-secondary', 2: 'bg-warning text-dark', 3: 'bg-info text-dark', 4: 'bg-success', 5: 'bg-primary' };
+        return '<span class="badge ' + (colors[id] || 'bg-secondary') + '">' + t.name + '</span>';
+    }
+
+    // v2.12.2 新增：班组单元格（关联引用 TEAMS 字典，基础资料-员工班组表 Team）
+    function teamCellHtml(id) {
+        if (id === undefined || id === null) return '<span class="text-muted">-</span>';
+        var name = (typeof getTeamName === 'function') ? getTeamName(id) : null;
+        if (!name) {
+            for (var i = 0; i < TEAMS.length; i++) {
+                if (TEAMS[i].id === id) { name = TEAMS[i].name; break; }
+            }
+        }
+        return name ? '<span class="text-muted">' + name + '</span>' : '<span class="text-muted">-</span>';
+    }
+
+    function initSelects() {
+        var fDept = document.getElementById('fDept');
+        var fType = document.getElementById('fType');
+        var fAttend = document.getElementById('fAttend');
+        var fStatus = document.getElementById('fStatus');
+        var dlDorm = document.getElementById('dormList');
+        for (var i = 0; i < DEPARTMENTS.length; i++) {
+            var opt = document.createElement('option');
+            opt.value = DEPARTMENTS[i].id;
+            opt.textContent = DEPARTMENTS[i].name;
+            fDept.appendChild(opt);
+        }
+        for (var j = 0; j < EMPLOYEE_TYPES.length; j++) {
+            var opt2 = document.createElement('option');
+            opt2.value = EMPLOYEE_TYPES[j].id;
+            opt2.textContent = EMPLOYEE_TYPES[j].name;
+            fType.appendChild(opt2);
+        }
+        for (var k = 0; k < ATTENDANCE_TYPES_FULL.length; k++) {
+            var opt3 = document.createElement('option');
+            opt3.value = ATTENDANCE_TYPES_FULL[k].id;
+            opt3.textContent = ATTENDANCE_TYPES_FULL[k].name;
+            fAttend.appendChild(opt3);
+        }
+        // v2.12.2 新增：班组下拉 → 关联引用 TEAMS 字典（基础资料-员工班组表 Team）
+        var fTeam = document.getElementById('fTeam');
+        if (fTeam && typeof TEAMS !== 'undefined') {
+            for (var t = 0; t < TEAMS.length; t++) {
+                var optTeam = document.createElement('option');
+                optTeam.value = TEAMS[t].id;
+                optTeam.textContent = TEAMS[t].name;
+                fTeam.appendChild(optTeam);
+            }
+        }
+        // v2.11.27 修订：在职状态下拉 → 关联引用 EMPLOYMENT_STATUSES 字典（基础资料-在职状态表）
+        //   字典结构：{ id, code, name, color }
+        //   单一数据源：mock-data.js EMPLOYMENT_STATUSES 数组
+        if (fStatus && typeof EMPLOYMENT_STATUSES !== 'undefined') {
+            for (var s = 0; s < EMPLOYMENT_STATUSES.length; s++) {
+                var optStatus = document.createElement('option');
+                optStatus.value = EMPLOYMENT_STATUSES[s].id;
+                optStatus.textContent = EMPLOYMENT_STATUSES[s].name;
+                fStatus.appendChild(optStatus);
+            }
+        }
+        // 宿舍（房号）下拉候选列表（datalist）：浏览器输入时弹出候选项
+        // 来源：DORMS 字典 + BOOKINGS 出现过的 dormCode
+        if (dlDorm && typeof getAllDormCodes === 'function') {
+            var codes = getAllDormCodes();
+            for (var m = 0; m < codes.length; m++) {
+                var opt4 = document.createElement('option');
+                opt4.value = codes[m];
+                dlDorm.appendChild(opt4);
+            }
+        }
+    }
+
+    function getFiltered() {
+        var kw = (document.getElementById('fKw').value || '').trim().toLowerCase();
+        var deptId = parseInt(document.getElementById('fDept').value) || null;
+        var typeId = parseInt(document.getElementById('fType').value) || null;
+        var teamId = parseInt(document.getElementById('fTeam').value) || null;
+        var attendId = parseInt(document.getElementById('fAttend').value) || null;
+        var statusId = parseInt(document.getElementById('fStatus').value) || null;
+        var dormVal = (document.getElementById('fDorm').value || '').trim();
+
+        return PERSONNEL.filter(function (p) {
+            // 模糊搜索（姓名/工号/手机号）
+            if (kw) {
+                var code = (p.employeeCode || p.code || '').toLowerCase();
+                var name = (p.realName || p.name || '').toLowerCase();
+                var phone = (p.phone || '').toLowerCase();
+                if (code.indexOf(kw) === -1 && name.indexOf(kw) === -1 && phone.indexOf(kw) === -1) return false;
+            }
+            if (deptId && p.departmentId !== deptId) return false;
+            if (typeId && p.employeeTypeId !== typeId) return false;
+            // v2.12.2 班组筛选：未迁移数据视同默认班组（teamId=1）
+            if (teamId) {
+                if (p.teamId !== undefined && p.teamId !== null) {
+                    if (p.teamId !== teamId) return false;
+                } else if (teamId !== 1) {
+                    return false;
+                }
+            }
+            if (attendId && p.attendanceTypeId !== attendId) return false;
+            if (statusId) {
+                var s = p.employmentStatusId !== undefined ? p.employmentStatusId : p.status;
+                if (s !== statusId) return false;
+            }
+            // 宿舍（房号）模糊筛选（v2.11.18 修订：使用 PERSONNEL.dormCode 单一数据源）
+            if (dormVal) {
+                var dc = p.dormCode;
+                if (!dc || String(dc).trim() === '' || dc.toLowerCase().indexOf(dormVal.toLowerCase()) === -1) return false;
+            }
+            return true;
+        });
+    }
+
+    function doFilter() { if (window.__list) window.__list.reset(); }
+
+    function buildRowHtml(p, start, idx) {
+        var code = p.employeeCode || p.code || '-';
+        var name = p.realName || p.name || '-';
+        var deptName = getDepartmentName(p.departmentId) || p.department || '-';
+        var statusId = p.employmentStatusId !== undefined ? p.employmentStatusId : p.status;
+        return '<tr>'
+            + '<td class="text-center text-muted">' + (start + idx + 1) + '</td>'
+            + '<td><strong>' + code + '</strong></td>'
+            + '<td>' + name + '</td>'
+            + '<td><small class="text-muted">' + (p.phone || '-') + '</small></td>'
+            + '<td>' + deptName + '</td>'
+            + '<td>' + typeBadgeHtml(p.employeeTypeId) + '</td>'
+            + '<td>' + teamCellHtml(p.teamId) + '</td>'
+            + '<td>' + attendanceBadgeHtml(p.attendanceTypeId) + '</td>'
+            + '<td><small class="text-muted">' + (p.hireDate || '-') + '</small></td>'
+            + '<td>' + employmentBadgeHtml(statusId) + '</td>'
+            + '<td><small class="text-muted">' + (p.leaveDate || '-') + '</small></td>'
+            + '<td>' + dormCellHtml(p) + '</td>'
+            + '<td>'
+            + '<a href="edit.html?id=' + p.id + '" class="btn btn-sm btn-outline-primary">编辑</a> '
+            + '<button class="btn btn-sm btn-outline-warning" onclick="markLeft(' + p.id + ', \'' + name + '\')">离职</button> '
+            + '<button class="btn btn-sm btn-outline-danger" onclick="del(' + p.id + ', \'' + name + '\')">删除</button>'
+            + '</td>'
+            + '</tr>';
+    }
+
+    function renderRowsFn(items, total, start) {
+        var tbody = document.getElementById('tbody');
+        if (total === 0) {
+            tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">暂无数据</td></tr>';
+            return;
+        }
+        var html = '';
+        for (var i = 0; i < items.length; i++) {
+            html += buildRowHtml(items[i], start, i);
+        }
+        tbody.innerHTML = html;
+    }
+
+    function markLeft(id, name) {
+        if (!confirm('确定将员工 ' + name + ' 标记为离职吗？')) return;
+        var p = null;
+        for (var i = 0; i < PERSONNEL.length; i++) {
+            if (PERSONNEL[i].id === id) { p = PERSONNEL[i]; break; }
+        }
+        if (p) {
+            if (p.employmentStatusId !== undefined) p.employmentStatusId = 3;
+            if (p.status !== undefined) p.status = 3;
+            p.leaveDate = new Date().toISOString().slice(0, 10);
+            alert('已标记 ' + name + ' 为离职');
+            if (window.__list) window.__list.reset();
+        }
+    }
+
+    function del(id, name) {
+        if (!confirm('确定删除员工 ' + name + ' 吗？')) return;
+        alert('原型演示：员工 ' + name + ' 已删除');
+    }
+
+    function exportExcel() { alert('原型演示：实际将下载 Excel 文件'); }
+
+    // 同步初始化（在所有 script 加载完成后立即执行，确保 PERSONNEL 已可用）
+    (function init() {
+        try {
+            // 1) 挂载 Tab 栏
+            if (typeof mountTabBar === 'function') {
+                mountTabBar({ basePath: '..', currentUrl: 'personnel/list.html' });
+            }
+
+            // 2) 初始化筛选下拉
+            if (typeof DEPARTMENTS !== 'undefined') {
+                initSelects();
+            }
+
+            // 3) 注册并渲染列表
+            if (typeof registerList === 'function' && typeof PERSONNEL !== 'undefined') {
+                window.__list = registerList({
+                    key: 'personnel',
+                    footId: 'pager',
+                    totalId: 'totalCount',
+                    getData: getFiltered,
+                    renderRows: renderRowsFn
+                });
+                window.__list.draw();
+            }
+        } catch (e) {
+            // 输出错误到调试区
+            var dbg = document.createElement('div');
+            dbg.style.cssText = 'background:red;color:white;padding:8px;font-size:14px;';
+            dbg.textContent = 'INIT ERROR: ' + e.message;
+            document.body.insertBefore(dbg, document.body.firstChild);
+        }
+    })();
+    </script>
+    <!-- 筛选条件持久化（v2.12.10 新增） -->
+    <script src="../_shared/filter-persistence.js"></script>
+</body>
+</html>

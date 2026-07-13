@@ -1,0 +1,228 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using DormManage.Shared.Data;
+using DormManage.Shared.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace DormManage.Admin.Pages.Personnel;
+
+/// <summary>
+/// 人员清单页面模型（v2.11.7.CORRECT → v2.11.24 升级）
+/// 员工类型数据来源于基础资料-员工类型表（EmployeeType），仅 5 种类型
+///
+/// v2.11.24 修订（2026-07-13）：
+/// - 页面后台数据天然无脏 ID（生产 SQLite 数据库由 EF Core EnsureCreated + DataCleanupHostedService 启动清洗保证）
+/// - 仅 5 种员工类型（ID 1-5：合同工/临时工/外包/实习生/驻场）
+/// - 若发现 employeeTypeId > 5 的历史脏数据，说明数据清洗未执行，应手动调用
+///   <c>DormManage.Shared.Services.DictionaryFallbackService.BatchNormalizeEmployeesAsync</c>
+/// - 关联规范文档：<c>00-方案文档/43-无效FK归一通用规范-v2.11.24.md</c>
+/// </summary>
+public class IndexModel : PageModel
+{
+    private readonly DormDbContext _db;
+
+    public IndexModel(DormDbContext db)
+    {
+        _db = db;
+    }
+
+    /// <summary>
+    /// 员工列表（含 EmployeeType 导航属性）
+    /// </summary>
+    public PagedResult<PersonnelDto>? Result { get; set; }
+
+    /// <summary>
+    /// 员工类型列表（用于筛选下拉）
+    /// </summary>
+    public List<EmployeeTypeDropdownItem> EmployeeTypes { get; set; } = new();
+
+    /// <summary>
+    /// 部门列表（用于筛选下拉）
+    /// </summary>
+    public List<DepartmentDropdownItem> Departments { get; set; } = new();
+
+    /// <summary>
+    /// 考勤班次列表（用于筛选下拉）
+    /// </summary>
+    public List<AttendanceTypeDropdownItem> AttendanceTypes { get; set; } = new();
+
+    [BindProperty(SupportsGet = true)]
+    public int? DepartmentId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? EmployeeTypeId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? AttendanceTypeId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? Status { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? Keyword { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int PageIndex { get; set; } = 1;
+
+    public int PageSize { get; } = 20;
+
+    public async Task OnGetAsync()
+    {
+        // 加载筛选下拉数据
+        EmployeeTypes = await _db.EmployeeTypes
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.Id)
+            .Select(e => new EmployeeTypeDropdownItem { Id = e.Id, Name = e.Name, Code = e.Code })
+            .ToListAsync();
+
+        Departments = await _db.Departments
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.SortOrder)
+            .Select(d => new DepartmentDropdownItem { Id = d.Id, Name = d.Name })
+            .ToListAsync();
+
+        AttendanceTypes = await _db.AttendanceTypes
+            .Where(a => a.IsActive)
+            .OrderBy(a => a.Id)
+            .Select(a => new AttendanceTypeDropdownItem { Id = a.Id, Name = a.Name, Code = a.Code })
+            .ToListAsync();
+
+        // 查询员工列表（v2.11.7.CORRECT 强制 Include EmployeeType 导航属性）
+        var query = _db.Employees
+            .Include(e => e.EmployeeType)      // 员工类型 FK 关联
+            .Include(e => e.AttendanceType)    // 考勤班次 FK 关联
+            .AsQueryable();
+
+        if (DepartmentId.HasValue)
+            query = query.Where(e => e.DepartmentId == DepartmentId.Value);
+
+        if (EmployeeTypeId.HasValue)
+            query = query.Where(e => e.EmployeeTypeId == EmployeeTypeId.Value);
+
+        if (AttendanceTypeId.HasValue)
+            query = query.Where(e => e.AttendanceTypeId == AttendanceTypeId.Value);
+
+        if (Status.HasValue)
+            query = query.Where(e => e.EmploymentStatusId == Status.Value);
+
+        if (!string.IsNullOrWhiteSpace(Keyword))
+        {
+            var kw = Keyword.ToLower();
+            query = query.Where(e =>
+                e.EmployeeCode.ToLower().Contains(kw) ||
+                e.RealName.ToLower().Contains(kw) ||
+                (e.Phone != null && e.Phone.ToLower().Contains(kw)));
+        }
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderBy(e => e.EmployeeCode)
+            .Skip((PageIndex - 1) * PageSize)
+            .Take(PageSize)
+            .Select(e => new PersonnelDto
+            {
+                Id = e.Id,
+                EmployeeCode = e.EmployeeCode,
+                RealName = e.RealName,
+                Phone = e.Phone ?? "-",
+                DepartmentId = e.DepartmentId,
+                Department = e.Department ?? "-",
+                // v2.11.7 员工类型 FK 关联：通过 EmployeeTypeId 关联 EmployeeType 主键
+                EmployeeTypeId = e.EmployeeTypeId,
+                EmployeeTypeName = e.EmployeeType != null ? e.EmployeeType.Name : "-",
+                EmployeeTypeCode = e.EmployeeType != null ? e.EmployeeType.Code : "-",
+                AttendanceTypeId = e.AttendanceTypeId ?? 0,
+                AttendanceTypeName = e.AttendanceType != null ? e.AttendanceType.Name : "-",
+                AttendanceTypeCode = e.AttendanceType != null ? e.AttendanceType.Code : "-",
+                // v2.11.18：在职状态 FK 关联引用基础资料-在职状态表 EmploymentStatus
+                Status = e.EmploymentStatusId,
+                StatusName = e.EmploymentStatus != null ? e.EmploymentStatus.Name : GetStatusName(e.EmploymentStatusId),
+                HireDate = e.HireDate != null ? e.HireDate.Value.ToString("yyyy-MM-dd") : "-",
+                LeaveDate = e.LeaveDate != null ? e.LeaveDate.Value.ToString("yyyy-MM-dd") : "-",
+                DormCode = e.DormCode ?? "-",
+                IsActive = e.IsActive
+            })
+            .ToListAsync();
+
+        Result = new PagedResult<PersonnelDto>
+        {
+            Items = items,
+            TotalCount = total,
+            PageIndex = PageIndex,
+            PageSize = PageSize
+        };
+    }
+
+    /// <summary>
+    /// 获取在职状态中文名称
+    /// </summary>
+    private static string GetStatusName(int status)
+    {
+        switch (status)
+        {
+            case 1: return "在职";
+            case 2: return "待入职";
+            case 3: return "已离职";
+            default: return "未知";
+        }
+    }
+}
+
+/// <summary>
+/// 人员清单数据传输对象
+/// </summary>
+public class PersonnelDto
+{
+    public int Id { get; set; }
+    public string EmployeeCode { get; set; } = "";
+    public string RealName { get; set; } = "";
+    public string Phone { get; set; } = "";
+    public int DepartmentId { get; set; }
+    public string Department { get; set; } = "";
+
+    // v2.11.7.CORRECT 员工类型 FK 关联字段（仅 5 种：合同工/临时工/外包/实习生/驻场）
+    public int EmployeeTypeId { get; set; }
+    public string EmployeeTypeName { get; set; } = "";
+    public string EmployeeTypeCode { get; set; } = "";
+
+    // v2.11.7 考勤班次 FK 关联字段
+    public int AttendanceTypeId { get; set; }
+    public string AttendanceTypeName { get; set; } = "";
+    public string AttendanceTypeCode { get; set; } = "";
+
+    public int Status { get; set; }
+    public string StatusName { get; set; } = "";
+    public string HireDate { get; set; } = "";
+    public string LeaveDate { get; set; } = "";
+    public string DormCode { get; set; } = "";
+    public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// 员工类型下拉项
+/// </summary>
+public class EmployeeTypeDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Code { get; set; } = "";
+}
+
+/// <summary>
+/// 部门下拉项
+/// </summary>
+public class DepartmentDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>
+/// 考勤班次下拉项
+/// </summary>
+public class AttendanceTypeDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Code { get; set; } = "";
+}

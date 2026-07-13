@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>修正抄表读数 — v2.11 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; } .navbar-brand { font-weight: bold; color: #1976d2 !important; } .meter-card { border-left: 4px solid #fd7e14; }</style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <h2 class="mb-3"><i class="bi bi-pencil"></i> 修正抄表读数</h2>
+        <div class="alert alert-warning py-2">
+            <i class="bi bi-exclamation-triangle"></i> <strong>v2.11.4：</strong>修正后记录状态将变为「已修正」（status=2），并保留修正原因。已修正记录不可再修改或删除。
+        </div>
+
+        <div class="row">
+            <div class="filter-item">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="filter-item"><label class="form-label">宿舍</label><input type="text" id="dorm" class="form-control" disabled></div>
+                            <div class="filter-item"><label class="form-label">抄表月份</label><input type="text" id="month" class="form-control" disabled></div>
+                            <div class="filter-item"><label class="form-label">抄表员</label><input type="text" id="operator" class="form-control" disabled></div>
+                            <div class="filter-item"><label class="form-label">设备</label><input type="text" id="deviceSn" class="form-control" disabled></div>
+                        </div>
+                        <div id="lastRef" class="alert alert-secondary mt-3 mb-0" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="row g-3" id="meterInputs"></div>
+
+                <div class="card meter-card mt-3">
+                    <div class="card-body">
+                        <label class="form-label">修正原因 <span class="text-danger">*</span></label>
+                        <textarea id="remark" class="form-control" rows="2" placeholder="请说明修正原因（必填）"></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="index.html" class="btn btn-secondary">取消</a>
+                    <button type="button" class="btn btn-warning" onclick="submitForm()"><i class="bi bi-check"></i> 保存修正</button>
+                </div>
+            </div>
+
+            <div class="filter-item">
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-calculator"></i> 用量变化</strong></div>
+                    <div class="card-body" id="usagePreview"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+
+        const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+        const m = findMeter(id) || METER_RECORDS[0];
+        const orig = { cold: m.coldMeter, hot: m.hotMeter, electric: m.electricMeter };
+        const prev = prevMeter(m.dormCode, m.readMonth);
+
+        document.getElementById('dorm').value = `${m.dormCode} | ${m.dormAddress}`;
+        document.getElementById('month').value = m.readMonth;
+        document.getElementById('operator').value = m.operator;
+        document.getElementById('deviceSn').value = m.deviceSn;
+
+        if (prev) {
+            const ref = document.getElementById('lastRef');
+            ref.style.display = 'block';
+            ref.innerHTML = `📄 上月读数（${prev.readMonth}）：冷水 <strong>${prev.coldMeter}</strong> · 热水 <strong>${prev.hotMeter}</strong> · 电表 <strong>${prev.electricMeter}</strong>`;
+        }
+
+        document.getElementById('meterInputs').innerHTML = METER_TYPES.map(t => `
+            <div class="filter-item">
+                <div class="card meter-card h-100">
+                    <div class="card-body">
+                        <h6 class="${t.color}"><i class="bi ${t.icon}"></i> ${t.name}</h6>
+                        <label class="form-label small">读数（${t.unit}）</label>
+                        <input type="number" step="0.01" min="0" id="read_${t.key}" class="form-control" value="${orig[t.key].toFixed(2)}" oninput="onReadingInput()">
+                        <div class="form-text">原值：${orig[t.key].toFixed(2)}</div>
+                        <div class="form-text" id="hint_${t.key}"></div>
+                    </div>
+                </div>
+            </div>`).join('');
+
+        function prevVal(key) {
+            if (!prev) return null;
+            return key === 'cold' ? prev.coldMeter : key === 'hot' ? prev.hotMeter : prev.electricMeter;
+        }
+
+        function onReadingInput() {
+            const rows = [];
+            METER_TYPES.forEach(t => {
+                const val = parseFloat(document.getElementById('read_' + t.key).value);
+                const hint = document.getElementById('hint_' + t.key);
+                const pv = prevVal(t.key);
+                if (isNaN(val)) { hint.innerHTML = ''; rows.push(`<tr><td>${t.name}</td><td class="text-end text-muted">—</td></tr>`); return; }
+                if (pv === null) {
+                    hint.innerHTML = '<span class="text-muted">首次抄表</span>';
+                    rows.push(`<tr><td>${t.name}</td><td class="text-end">首次</td></tr>`);
+                } else if (val <= pv) {
+                    hint.innerHTML = `<span class="text-danger">✗ 必须大于上月 ${pv}</span>`;
+                    rows.push(`<tr class="table-danger"><td>${t.name}</td><td class="text-end">${(val - pv).toFixed(2)} ✗</td></tr>`);
+                } else {
+                    const usage = +(val - pv).toFixed(2);
+                    const origUsage = +(orig[t.key] - pv).toFixed(2);
+                    const changed = usage !== origUsage;
+                    hint.innerHTML = `<span class="text-success">用量 +${usage} ${t.unit}</span>`;
+                    rows.push(`<tr><td>${t.name}</td><td class="text-end fw-bold ${changed ? 'text-warning' : ''}">+${usage} ${t.unit}${changed ? ` <small>(原 +${origUsage})</small>` : ''}</td></tr>`);
+                }
+            });
+            document.getElementById('usagePreview').innerHTML = `<table class="table table-sm mb-0"><tbody>${rows.join('')}</tbody></table>`;
+        }
+
+        function submitForm() {
+            const remark = document.getElementById('remark').value.trim();
+            if (!remark) { alert('请填写修正原因'); return; }
+            const vals = {};
+            for (const t of METER_TYPES) {
+                const v = parseFloat(document.getElementById('read_' + t.key).value);
+                if (isNaN(v)) { alert(`请录入${t.name}读数`); return; }
+                const pv = prevVal(t.key);
+                if (pv !== null && v <= pv) { alert(`${t.name}读数必须大于上月（${pv}）`); return; }
+                vals[t.key] = v;
+            }
+            alert(`✓ 原型演示：记录 ${m.id} 已修正（状态→已修正）\n冷水 ${vals.cold} / 热水 ${vals.hot} / 电表 ${vals.electric}\n原因：${remark}\n（实际将 PUT /api/meter/records/${m.id}）`);
+            location.href = 'index.html';
+        }
+
+        onReadingInput();
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'meter/edit.html' });
+        });
+    </script>
+</body>
+</html>

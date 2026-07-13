@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>抄表详情 — v2.11 原型</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; } .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+        .reading-big { font-size: 1.6rem; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .photo-ph { position: relative; height: 200px; background: #263238; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #90a4ae; overflow: hidden; }
+        .photo-ph .wm { position: absolute; left: 8px; bottom: 8px; font-size: .72rem; color: rgba(255,255,255,.85); background: rgba(0,0,0,.35); padding: 2px 6px; border-radius: 3px; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+        <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.12.0</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0"><i class="bi bi-file-earmark-text"></i> 抄表详情</h2>
+            <a href="index.html" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> 返回列表</a>
+        </div>
+
+        <div class="row">
+            <div class="filter-item">
+                <div class="card mb-3">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <strong><i class="bi bi-building"></i> <span id="dormTitle"></span></strong>
+                        <span id="statusBadge"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-2">
+                            <div class="filter-item"><small class="text-muted">抄表月份</small><div id="readMonth" class="fw-bold"></div></div>
+                            <div class="filter-item"><small class="text-muted">抄表时间</small><div id="createdAt"></div></div>
+                            <div class="filter-item"><small class="text-muted">抄表员</small><div id="operator"></div></div>
+                            <div class="filter-item"><small class="text-muted">PDA 设备</small><div id="deviceSn"></div></div>
+                        </div>
+                        <hr>
+                        <div id="readings" class="row g-3 text-center"></div>
+                        <div id="remarkBox" class="alert alert-light border mt-3 mb-0" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-calculator"></i> 用量计算（对比上月）</strong></div>
+                    <div class="card-body" id="usagePanel"></div>
+                </div>
+            </div>
+
+            <div class="filter-item">
+                <div class="card">
+                    <div class="card-header bg-light"><strong><i class="bi bi-images"></i> 现场抄表照片（含水印）</strong></div>
+                    <div class="card-body">
+                        <div id="photos" class="row g-3"></div>
+                        <small class="text-muted d-block mt-2">💡 照片由 PDA 拍摄并加房号/表种/时间水印，存储于 <code>/uploads/YYYYMM/房号/</code>，Web 端在线预览。</small>
+                    </div>
+                </div>
+                <div class="card mt-3" id="actionCard">
+                    <div class="card-header bg-light"><strong><i class="bi bi-gear"></i> 操作</strong></div>
+                    <div class="card-body d-flex gap-2" id="actions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script>
+
+        const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+        const m = findMeter(id) || METER_RECORDS[0];
+
+        document.getElementById('dormTitle').textContent = `${m.dormCode} · ${m.dormAddress}`;
+        document.getElementById('statusBadge').innerHTML = `<span class="badge ${METER_STATUS_BADGE[m.status]}">${METER_STATUS[m.status]}</span>`;
+        document.getElementById('readMonth').textContent = m.readMonth;
+        document.getElementById('createdAt').textContent = m.createdAt;
+        document.getElementById('operator').textContent = m.operator;
+        document.getElementById('deviceSn').textContent = m.deviceSn;
+
+        // 三表读数（v2.11.4：status=0 表示未完成）
+        const readingVals = { cold: m.coldMeter, hot: m.hotMeter, electric: m.electricMeter };
+        document.getElementById('readings').innerHTML = METER_TYPES.map(t => {
+            const missing = m.status === 0 && readingVals[t.key] === 0;
+            return `
+            <div class="col-4">
+                <div class="text-muted"><i class="bi ${t.icon} ${t.color}"></i> ${t.name}</div>
+                <div class="reading-big ${t.color} ${missing ? 'text-decoration-line-through text-muted' : ''}">${readingVals[t.key].toFixed(2)}</div>
+                <small class="text-muted">${t.unit}${missing ? ' <span class="badge bg-warning text-dark">未完成</span>' : ''}</small>
+            </div>`;
+        }).join('');
+
+        if (m.remark) {
+            const rb = document.getElementById('remarkBox');
+            rb.style.display = 'block';
+            // v2.11.2 增补 o：备注历史按行格式化显示
+            const formatted = m.remark.split('\n').filter(Boolean).map(line => {
+                if (line.match(/^\[.*覆盖前数据\]/)) {
+                    return `<div class="text-muted small history-line"><i class="bi bi-clock-history"></i> ${line}</div>`;
+                }
+                return `<div>${line}</div>`;
+            }).join('');
+            rb.innerHTML = `<i class="bi bi-chat-left-text"></i> <strong>备注：</strong><div class="mt-1">${formatted}</div>`;
+        }
+
+        // 用量面板
+        const u = meterUsage(m);
+        const usagePanel = document.getElementById('usagePanel');
+        if (u.prev === null) {
+            usagePanel.innerHTML = '<p class="text-muted mb-0">该宿舍无上月记录，本月为首次抄表，用量暂不参与计费。</p>';
+        } else {
+            const uv = { cold: u.cold, hot: u.hot, electric: u.electric };
+            const pv = { cold: u.prev.coldMeter, hot: u.prev.hotMeter, electric: u.prev.electricMeter };
+            usagePanel.innerHTML = `
+                <table class="table table-sm mb-0">
+                    <thead class="table-light"><tr><th>表种</th><th class="text-end">上月读数</th><th class="text-end">本月读数</th><th class="text-end">用量</th></tr></thead>
+                    <tbody>
+                        ${METER_TYPES.map(t => `
+                        <tr>
+                            <td><i class="bi ${t.icon} ${t.color}"></i> ${t.name}</td>
+                            <td class="text-end">${pv[t.key].toFixed(2)}</td>
+                            <td class="text-end">${readingVals[t.key].toFixed(2)}</td>
+                            <td class="text-end fw-bold ${uv[t.key] < 0 ? 'text-danger' : ''}">${uv[t.key] >= 0 ? '+' : ''}${uv[t.key]} ${t.unit}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                <small class="text-muted d-block mt-2">上月记录：${u.prev.readMonth}（${u.prev.createdAt}）</small>`;
+        }
+
+        // 照片占位（3 张）
+        document.getElementById('photos').innerHTML = METER_TYPES.map(t => `
+            <div class="col-12">
+                <div class="photo-ph">
+                    <div class="text-center"><i class="bi ${t.icon}" style="font-size:2.4rem;"></i><div class="small mt-1">${t.name}照片</div></div>
+                    <div class="wm">${m.dormCode} | ${t.name} | ${m.createdAt}</div>
+                </div>
+            </div>`).join('');
+
+        // 操作按钮（v2.11.4：3状态，0=未完成 1=正常 2=已修正）
+        const actions = document.getElementById('actions');
+        if (m.status === 0) {
+            // v2.11.4：未完成状态，可删除
+            actions.innerHTML = `
+                <button class="btn btn-outline-danger" onclick="deleteRecord()"><i class="bi bi-trash"></i> 删除记录</button>
+                <a href="entry.html?dorm=${m.dormCode}&month=${m.readMonth}" class="btn btn-success"><i class="bi bi-pencil"></i> 补录读数</a>
+                <span class="text-muted ms-2">当前状态为「未完成」，可删除后重新补录。</span>`;
+        } else if (m.status === 1) {
+            // 正常状态，可修正
+            actions.innerHTML = `
+                <a href="edit.html?id=${m.id}" class="btn btn-outline-primary"><i class="bi bi-pencil"></i> 修正读数</a>
+                <span class="text-muted ms-2">如需删除，请先联系管理员。</span>`;
+        } else {
+            // 已修正状态，不可操作
+            actions.innerHTML = `<span class="text-muted">当前状态为「${METER_STATUS[m.status]}」，不可再修改。</span>`;
+        }
+
+        // v2.11.4：删除抄表记录（仅 status=0 未完成状态可删除）
+        function deleteRecord() {
+            if (!confirm(`确定要删除 ${m.dormCode}（${m.readMonth}）的未完成占位记录吗？\n删除后系统将在每日0点自动重新生成占位记录。`)) return;
+            alert(`✓ 原型演示：记录 ${m.id}（${m.dormCode}）已删除\n（实际将 DELETE /api/meter/records/${m.id}）`);
+            location.href = 'index.html';
+        }
+    </script>
+    <script src="../_shared/storage-keys.js"></script>
+<script src="../_shared/tab-bar.js"></script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'meter/detail.html' });
+        });
+    </script>
+</body>
+</html>
