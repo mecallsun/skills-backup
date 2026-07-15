@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using DormManage.Shared.Data;
 using DormManage.Shared.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Shared.Services;
 
@@ -9,20 +11,76 @@ public interface IDormService
 {
     Task<PagedResult<Dorm>> GetListAsync(string? keyword, int? buildingId, int page, int pageSize);
     Task<Dorm?> GetByIdAsync(int id);
+
+    /// <summary>
+    /// 更新宿舍容量（P2-5 约束）
+    /// 规则：新容量 >= 当前在宿人数（Status=Staying），否则返回业务错误
+    /// </summary>
+    Task<ApiResponse<Dorm>> UpdateCapacityAsync(int id, int newCapacity);
 }
 
 public class DormService : IDormService
 {
-    public Task<PagedResult<Dorm>> GetListAsync(string? keyword, int? buildingId, int page, int pageSize)
+    private readonly DormDbContext _db;
+
+    public DormService(DormDbContext db)
     {
-        return Task.FromResult(new PagedResult<Dorm>
-        {
-            Items = new List<Dorm>(),
-            Total = 0,
-            PageIndex = page,
-            PageSize = pageSize
-        });
+        _db = db;
     }
 
-    public Task<Dorm?> GetByIdAsync(int id) => Task.FromResult<Dorm?>(null);
+    public async Task<PagedResult<Dorm>> GetListAsync(string? keyword, int? buildingId, int page, int pageSize)
+    {
+        var query = _db.Dorms.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(d => d.DormCode.Contains(keyword));
+        if (buildingId.HasValue)
+            query = query.Where(d => d.BuildingId == buildingId.Value);
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderBy(d => d.DormCode)
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResult<Dorm>
+        {
+            Items = items,
+            Total = total,
+            PageIndex = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<Dorm?> GetByIdAsync(int id)
+    {
+        return await _db.Dorms.FindAsync(id);
+    }
+
+    public async Task<ApiResponse<Dorm>> UpdateCapacityAsync(int id, int newCapacity)
+    {
+        if (newCapacity < 1)
+            return ApiResponse<Dorm>.Fail("INVALID_CAPACITY", "容量必须 ≥ 1");
+
+        var dorm = await _db.Dorms.FindAsync(id);
+        if (dorm is null)
+            return ApiResponse<Dorm>.Fail("NOT_FOUND", "宿舍不存在");
+
+        // P2-5 核心约束：新容量必须 ≥ 当前在宿人数
+        var currentStaying = await _db.DormBookings
+            .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == BookingStatus.Staying);
+
+        if (newCapacity < currentStaying)
+        {
+            return ApiResponse<Dorm>.Fail(
+                "CAPACITY_BELOW_OCCUPANCY",
+                $"新容量 {newCapacity} 小于当前在宿人数 {currentStaying}，请先办理退房后再调整");
+        }
+
+        var oldCapacity = dorm.Capacity;
+        dorm.Capacity = newCapacity;
+        dorm.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+
+        return ApiResponse<Dorm>.Ok(dorm, $"容量已从 {oldCapacity} 调整为 {newCapacity}");
+    }
 }
