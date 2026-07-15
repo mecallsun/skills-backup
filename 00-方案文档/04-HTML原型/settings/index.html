@@ -59,7 +59,8 @@
                             <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#tab-service"><i class="bi bi-hdd-network"></i> 服务与端口</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-db"><i class="bi bi-database"></i> 数据库连接</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-app"><i class="bi bi-phone"></i> PDA App 版本</button>
-                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-users"><i class="bi bi-people"></i> 用户与角色</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-users"><i class="bi bi-people"></i> 用户管理</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-roles"><i class="bi bi-shield-lock"></i> 角色与权限</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-backup"><i class="bi bi-hdd-stack"></i> 备份与恢复</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-integration"><i class="bi bi-plug"></i> 系统集成</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-about"><i class="bi bi-info-circle"></i> 关于系统</button>
@@ -74,60 +75,115 @@
 
                     <!-- 服务与端口 -->
                     <div class="tab-pane fade show active" id="tab-service">
-                        <div class="card" style="margin-top: 0;">
+                        <div class="card">
                             <div class="card-header bg-light"><strong><i class="bi bi-hdd-network"></i> 服务与端口</strong></div>
                             <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="filter-item">
-                                        <label class="form-label small">PDA 服务端口</label>
-                                        <input type="number" id="pdaPort" class="form-control" min="1" max="65535">
-                                    </div>
-                                    <div class="filter-item d-flex align-items-end gap-2">
-                                        <span id="pdaStatus" class="me-2"></span>
-                                        <button class="btn btn-sm btn-outline-success" onclick="toggleService('pda')">启动/停止</button>
-                                    </div>
-                                    <div class="filter-item">
-                                        <label class="form-label small">Web 服务端口</label>
-                                        <input type="number" id="webPort" class="form-control" min="1" max="65535">
-                                    </div>
-                                    <div class="filter-item d-flex align-items-end gap-2">
-                                        <span id="webStatus" class="me-2"></span>
-                                        <button class="btn btn-sm btn-outline-success" onclick="toggleService('web')">启动/停止</button>
-                                    </div>
-                                    <div class="filter-item">
-                                        <label class="form-label small">服务器域名 / IP（PDA 访问用）</label>
-                                        <input type="text" id="serverDomain" class="form-control">
-                                    </div>
-                                    <div class="filter-item">
-                                        <label class="form-label small">图片保存路径</label>
-                                        <input type="text" id="imagePath" class="form-control">
-                                        <div class="form-text">必须为绝对路径且目录可写，如 D:\MeterImages</div>
-                                    </div>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle"></i> 配置托盘守护进程（TrayApp）管理的两个核心服务端口。修改端口后需重启对应服务，PDA 终端通过服务器 IP + PDA 端口访问。
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-3 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="180">参数名称</th>
+                                                <th>配置值</th>
+                                                <th width="100" class="text-center">状态</th>
+                                                <th width="160" class="text-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong><i class="bi bi-phone"></i> PDA 服务端口</strong></td>
+                                                <td><input type="number" id="pdaPort" class="form-control form-control-sm" min="1" max="65535" placeholder="默认 5100"></td>
+                                                <td class="text-center"><span id="pdaStatus"></span></td>
+                                                <td class="text-center"><button class="btn btn-sm btn-outline-success" onclick="toggleService('pda')"><i class="bi bi-play-fill"></i> 启动 / 停止</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-globe"></i> Web 服务端口</strong></td>
+                                                <td><input type="number" id="webPort" class="form-control form-control-sm" min="1" max="65535" placeholder="默认 5001"></td>
+                                                <td class="text-center"><span id="webStatus"></span></td>
+                                                <td class="text-center"><button class="btn btn-sm btn-outline-success" onclick="toggleService('web')"><i class="bi bi-play-fill"></i> 启动 / 停止</button></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-hdd-rack"></i> 服务器域名 / IP</strong></td>
+                                                <td><input type="text" id="serverDomain" class="form-control form-control-sm" placeholder="如 192.168.1.100"></td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-folder"></i> 图片保存路径</strong></td>
+                                                <td>
+                                                    <div class="input-group">
+                                                        <input type="text" id="imagePath" class="form-control form-control-sm" placeholder="如 D:\MeterImages">
+                                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="alert('原型演示：选择文件夹')"><i class="bi bi-folder2-open"></i></button>
+                                                    </div>
+                                                    <div class="form-text mt-1">必须为绝对路径且目录可写</div>
+                                                </td>
+                                                <td class="text-center">—</td>
+                                                <td class="text-center">—</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                                 <hr>
-                                <button class="btn btn-primary" onclick="saveConfig('服务与端口')"><i class="bi bi-save"></i> 保存并提示重启</button>
+                                <div class="text-end">
+                                    <button class="btn btn-primary" onclick="saveConfig('服务与端口')"><i class="bi bi-save"></i> 保存并提示重启</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 数据库 -->
+                    <!-- 数据库连接 -->
                     <div class="tab-pane fade" id="tab-db">
                         <div class="card">
                             <div class="card-header bg-light"><strong><i class="bi bi-database"></i> 数据库连接</strong></div>
                             <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="filter-item"><label class="form-label small">数据库服务器</label><input type="text" id="dbServer" class="form-control"></div>
-                                    <div class="filter-item"><label class="form-label small">端口号</label><input type="number" id="dbPort" class="form-control"></div>
-                                    <div class="filter-item"><label class="form-label small">数据库名称</label><input type="text" id="dbName" class="form-control"></div>
-                                    <div class="filter-item"><label class="form-label small">账号</label><input type="text" id="dbUser" class="form-control"></div>
-                                    <div class="filter-item"><label class="form-label small">密码</label><input type="password" id="dbPassword" class="form-control"></div>
-                                    <div class="filter-item d-flex align-items-end">
-                                        <button class="btn btn-outline-info w-100" onclick="dbTest()"><i class="bi bi-plug"></i> 读写测试（深度验证）</button>
-                                    </div>
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle"></i> 配置生产数据库连接参数（服务器 IP/端口/库名/账号）。修改后需重启服务生效，请先通过"读写测试"验证连通性。
                                 </div>
-                                <div id="dbTestResult" class="mt-3"></div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-3 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="180">参数名称</th>
+                                                <th>配置值</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong><i class="bi bi-hdd-rack"></i> 数据库服务器</strong></td>
+                                                <td><input type="text" id="dbServer" class="form-control form-control-sm" placeholder="如 192.168.1.237"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-hash"></i> 端口号</strong></td>
+                                                <td><input type="number" id="dbPort" class="form-control form-control-sm" placeholder="默认 1433" min="1" max="65535"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-folder2-open"></i> 数据库名称</strong></td>
+                                                <td><input type="text" id="dbName" class="form-control form-control-sm" placeholder="如 WaterMeterDB"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-person-badge"></i> 账号</strong></td>
+                                                <td><input type="text" id="dbUser" class="form-control form-control-sm" placeholder="如 __DB_USER__"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong><i class="bi bi-lock"></i> 密码</strong></td>
+                                                <td>
+                                                    <div class="input-group">
+                                                        <input type="password" id="dbPassword" class="form-control form-control-sm" placeholder="输入数据库密码">
+                                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="togglePassword('dbPassword', this)"><i class="bi bi-eye"></i></button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <hr>
-                                <button class="btn btn-primary" onclick="saveConfig('数据库连接')"><i class="bi bi-save"></i> 保存</button>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <button class="btn btn-outline-info" onclick="dbTest()"><i class="bi bi-check2-circle"></i> 读写测试（8 步深度验证）</button>
+                                    <div id="dbTestResult" class="flex-grow-1 mx-3"></div>
+                                    <button class="btn btn-primary" onclick="saveConfig('数据库连接')"><i class="bi bi-save"></i> 保存</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -151,27 +207,241 @@
                         </div>
                     </div>
 
-                    <!-- 用户与角色 -->
+                    <!-- 用户管理 -->
                     <div class="tab-pane fade" id="tab-users">
                         <div class="card mb-3">
                             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                 <strong><i class="bi bi-people"></i> 用户管理</strong>
-                                <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增用户（用户名/姓名/角色/初始密码）')"><i class="bi bi-plus-lg"></i> 新增用户</button>
+                                <div class="d-flex gap-2">
+                                    <div class="input-group input-group-sm" style="width: 220px;">
+                                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                        <input type="text" class="form-control" placeholder="搜索用户名/姓名..." id="userSearch">
+                                    </div>
+                                    <button class="btn btn-sm btn-success" onclick="showUserModal()"><i class="bi bi-plus-lg"></i> 新增用户</button>
+                                </div>
                             </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 align-middle">
-                                    <thead class="table-light"><tr><th>用户名</th><th>姓名</th><th>角色</th><th>最近登录</th><th>状态</th><th>备注</th><th width="200">操作</th></tr></thead>
-                                    <tbody id="userBody"></tbody>
-                                </table>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="40" class="text-center">#</th>
+                                                <th>用户名</th>
+                                                <th>姓名</th>
+                                                <th>角色</th>
+                                                <th>手机号</th>
+                                                <th>邮箱</th>
+                                                <th>最近登录</th>
+                                                <th>状态</th>
+                                                <th width="260" class="text-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="userBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="text-muted small" id="userCount">共 <strong>0</strong> 个用户</span>
+                                <nav>
+                                    <ul class="pagination pagination-sm mb-0" id="userPagination"></ul>
+                                </nav>
                             </div>
                         </div>
-                        <div class="card">
-                            <div class="card-header bg-light"><strong><i class="bi bi-shield-lock"></i> 角色权限矩阵</strong></div>
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0 align-middle text-center">
-                                    <thead class="table-light"><tr><th>模块</th><th>管理员</th><th>财务</th><th>PDA操作员</th></tr></thead>
-                                    <tbody id="permBody"></tbody>
-                                </table>
+
+                        <!-- 用户新建/编辑弹窗 -->
+                        <div class="modal fade" id="userModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="userModalTitle">新增用户</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="um_username" placeholder="英文字母/数字，如 admin">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="um_realname" placeholder="真实姓名">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">角色 <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="um_role">
+                                                <option value="">请选择角色</option>
+                                                <option value="管理员">管理员</option>
+                                                <option value="财务">财务</option>
+                                                <option value="PDA操作员">PDA 操作员</option>
+                                                <option value="访客">访客</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3" id="um_password_group">
+                                            <label class="form-label">初始密码 <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <input type="password" class="form-control" id="um_password" placeholder="至少 6 位字符">
+                                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('um_password', this)"><i class="bi bi-eye"></i></button>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">手机号</label>
+                                            <input type="text" class="form-control" id="um_phone" placeholder="11 位手机号">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">邮箱</label>
+                                            <input type="email" class="form-control" id="um_email" placeholder="example@company.com">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">备注</label>
+                                            <textarea class="form-control" id="um_remark" rows="2" placeholder="可选备注信息"></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveUser()"><i class="bi bi-save"></i> 保存</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 重置密码弹窗 -->
+                        <div class="modal fade" id="resetPwdModal" tabindex="-1">
+                            <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">重置密码</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>确定要重置用户 <strong id="rp_username"></strong> 的密码吗？</p>
+                                        <div class="mb-3">
+                                            <label class="form-label">新密码</label>
+                                            <input type="text" class="form-control" id="rp_newpwd" value="123456" readonly>
+                                            <div class="form-text">默认密码 123456，首次登录需修改</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-warning" onclick="confirmResetPwd()">确认重置</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 角色与权限 -->
+                    <div class="tab-pane fade" id="tab-roles">
+                        <!-- 角色列表 -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-shield-lock"></i> 角色管理</strong>
+                                <button class="btn btn-sm btn-success" onclick="showRoleModal()"><i class="bi bi-plus-lg"></i> 新增角色</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="40" class="text-center">#</th>
+                                                <th>角色编码</th>
+                                                <th>角色名称</th>
+                                                <th>描述</th>
+                                                <th>排序</th>
+                                                <th>用户数</th>
+                                                <th>状态</th>
+                                                <th width="160" class="text-center">操作</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="roleBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 权限矩阵 -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-key"></i> 权限矩阵 — 菜单 + 按钮级控制</strong>
+                                <button class="btn btn-sm btn-primary" onclick="savePermissions()"><i class="bi bi-save"></i> 保存权限</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered mb-0 align-middle text-center" id="permMatrixTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="min-width: 160px;" class="text-start ps-3">菜单 / 按钮</th>
+                                                <th style="min-width: 100px;">管理员</th>
+                                                <th style="min-width: 100px;">财务</th>
+                                                <th style="min-width: 100px;">PDA 操作员</th>
+                                                <th style="min-width: 100px;">访客</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="permBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted small">
+                                <i class="bi bi-lightbulb"></i> 说明：管理员拥有全部权限，灰色复选框为系统内置权限，不可取消；财务/PDA操作员/访客的权限由管理员在此配置。
+                            </div>
+                        </div>
+
+                        <!-- 权限分配弹窗 -->
+                        <div class="modal fade" id="rolePermModal" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="rpm_title">分配权限</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="rpm_select_all" onchange="toggleAllPerm(this)">
+                                                <label class="form-check-label" for="rpm_select_all"><strong>全选 / 全不选</strong></label>
+                                            </div>
+                                        </div>
+                                        <div id="rpm_perm_tree"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveRolePermissions()"><i class="bi bi-save"></i> 保存</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 角色新建/编辑弹窗 -->
+                        <div class="modal fade" id="roleModal" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="roleModalTitle">新增角色</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">角色编码 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="rm_code" placeholder="如 admin / finance">
+                                            <div class="form-text">英文标识，创建后不可修改</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">角色名称 <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="rm_name" placeholder="如 管理员 / 财务">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">描述</label>
+                                            <textarea class="form-control" id="rm_desc" rows="2" placeholder="角色用途说明"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">排序权重</label>
+                                            <input type="number" class="form-control" id="rm_sort" value="0" min="0">
+                                            <div class="form-text">数值越小越靠前</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                        <button type="button" class="btn btn-primary" onclick="saveRole()"><i class="bi bi-save"></i> 保存</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -272,6 +542,12 @@
         }
 
         // 数据库深度测试（8 步）
+        // 单个数据库字段测试
+        function testDbField(field) {
+            const labels = { server: 'TCP 连接', port: '端口可达', database: '库可见' };
+            alert(`原型演示：正在测试「${labels[field] || field}」...\n（实际将发起 TCP 握手 + 查询 sys.databases）`);
+        }
+
         function dbTest() {
             const box = document.getElementById('dbTestResult');
             box.innerHTML = '<div class="text-muted small">正在测试...</div>';
@@ -304,33 +580,346 @@
         document.querySelectorAll('.dom').forEach(e => e.textContent = cfg.serverDomain);
         document.querySelectorAll('.wp').forEach(e => e.textContent = cfg.webPort);
 
-        // 用户
-        document.getElementById('userBody').innerHTML = SYS_USERS.map(u => `
-            <tr class="${u.enabled ? '' : 'text-muted'}">
-                <td><strong>${u.username}</strong></td>
-                <td>${u.realName}</td>
-                <td><span class="badge bg-info">${u.role}</span></td>
-                <td><small class="text-muted">${u.lastLogin}</small></td>
-                <td>${u.enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
-                <td><small class="text-muted">${u.remark}</small></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary" onclick="alert('原型演示：编辑用户 ${u.username}')">编辑</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('原型演示：重置 ${u.username} 密码')">重置密码</button>
-                    <button class="btn btn-sm ${u.enabled ? 'btn-outline-danger' : 'btn-outline-success'}" onclick="alert('原型演示：${u.enabled ? '停用' : '启用'} ${u.username}')">${u.enabled ? '停用' : '启用'}</button>
-                </td>
-            </tr>`).join('');
+        // ==================== 用户管理 ====================
+        // 用户搜索
+        function renderUsers(filter) {
+            let users = [...SYS_USERS];
+            if (filter) {
+                const q = filter.toLowerCase();
+                users = users.filter(u => u.username.toLowerCase().includes(q) || u.realName.includes(q));
+            }
+            document.getElementById('userCount').innerHTML = `共 <strong>${users.length}</strong> 个用户`;
+            document.getElementById('userBody').innerHTML = users.map((u, i) => `
+                <tr class="${u.enabled ? '' : 'text-muted'}">
+                    <td class="text-center">${i + 1}</td>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.realName}</td>
+                    <td><span class="badge bg-info">${u.role}</span></td>
+                    <td>${u.phone || '<span class="text-muted">—</span>'}</td>
+                    <td>${u.email || '<span class="text-muted">—</span>'}</td>
+                    <td><small class="text-muted">${u.lastLogin}</small></td>
+                    <td>${u.enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary" onclick="editUser(${u.id})"><i class="bi bi-pencil"></i> 编辑</button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="resetPwd(${u.id})"><i class="bi bi-key"></i> 密码</button>
+                        <button class="btn btn-sm ${u.enabled ? 'btn-outline-danger' : 'btn-outline-success'}" onclick="toggleUser(${u.id})"><i class="bi bi-${u.enabled ? 'lock' : 'unlock'}"></i> ${u.enabled ? '停用' : '启用'}</button>
+                    </td>
+                </tr>`).join('');
+        }
 
-        // 权限矩阵
-        const permCell = v => v === '无'
-            ? '<span class="text-danger">✘</span>'
-            : `<span class="text-success">✔</span> <small>${v}</small>`;
-        document.getElementById('permBody').innerHTML = PERMISSION_MATRIX.map(p => `
-            <tr>
-                <td class="text-start"><strong>${p.module}</strong></td>
-                <td>${permCell(p.admin)}</td>
-                <td>${permCell(p.finance)}</td>
-                <td>${permCell(p.operator)}</td>
-            </tr>`).join('');
+        document.getElementById('userSearch')?.addEventListener('input', function() {
+            renderUsers(this.value);
+        });
+
+        renderUsers();
+
+        function showUserModal(editMode, user) {
+            const modal = new bootstrap.Modal(document.getElementById('userModal'));
+            document.getElementById('userModalTitle').textContent = editMode ? '编辑用户' : '新增用户';
+            if (editMode && user) {
+                document.getElementById('um_username').value = user.username;
+                document.getElementById('um_username').disabled = true;
+                document.getElementById('um_realname').value = user.realName;
+                document.getElementById('um_role').value = user.role;
+                document.getElementById('um_phone').value = user.phone || '';
+                document.getElementById('um_email').value = user.email || '';
+                document.getElementById('um_remark').value = user.remark || '';
+                document.getElementById('um_password_group').style.display = 'none';
+                document.getElementById('um_password').required = false;
+            } else {
+                document.getElementById('um_username').value = '';
+                document.getElementById('um_username').disabled = false;
+                document.getElementById('um_realname').value = '';
+                document.getElementById('um_role').value = '';
+                document.getElementById('um_phone').value = '';
+                document.getElementById('um_email').value = '';
+                document.getElementById('um_remark').value = '';
+                document.getElementById('um_password_group').style.display = 'block';
+                document.getElementById('um_password').required = true;
+            }
+            modal.show();
+        }
+
+        function editUser(id) {
+            const user = SYS_USERS.find(u => u.id === id);
+            if (user) showUserModal(true, user);
+        }
+
+        function showUserModal() { showUserModal(false); }
+
+        function saveUser() {
+            const username = document.getElementById('um_username').value.trim();
+            const realName = document.getElementById('um_realname').value.trim();
+            const role = document.getElementById('um_role').value;
+            if (!username || !realName || !role) {
+                alert('请填写所有必填项（用户名、姓名、角色）');
+                return;
+            }
+            alert(`✓ 用户「${realName} (${username})」已保存\n（原型演示：POST /api/settings/users）`);
+            bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
+        }
+
+        function toggleUser(id) {
+            const user = SYS_USERS.find(u => u.id === id);
+            if (user) {
+                user.enabled = !user.enabled;
+                renderUsers(document.getElementById('userSearch')?.value);
+                alert(`原型演示：${user.enabled ? '启用' : '停用'}用户 ${user.username}`);
+            }
+        }
+
+        function resetPwd(id) {
+            const user = SYS_USERS.find(u => u.id === id);
+            if (user) {
+                document.getElementById('rp_username').textContent = user.username;
+                new bootstrap.Modal(document.getElementById('resetPwdModal')).show();
+            }
+        }
+
+        function confirmResetPwd() {
+            alert('✓ 密码已重置为 123456\n用户下次登录时需修改密码。（原型演示）');
+            bootstrap.Modal.getInstance(document.getElementById('resetPwdModal')).hide();
+        }
+
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        // ==================== 角色管理 ====================
+        const ROLES_DATA = [
+            { id: 1, code: 'admin', name: '管理员', desc: '系统超级管理员，拥有全部权限', sort: 0, userCount: 1, enabled: true, isSystem: true },
+            { id: 2, code: 'finance', name: '财务', desc: '财务管理角色，可查看费用标准和账单', sort: 1, userCount: 1, enabled: true, isSystem: false },
+            { id: 3, code: 'pda_operator', name: 'PDA 操作员', desc: 'PDA 抄表操作员，仅可访问抄表模块', sort: 2, userCount: 3, enabled: true, isSystem: false },
+            { id: 4, code: 'viewer', name: '访客', desc: '只读角色，仅可查看首页数据看板', sort: 3, userCount: 0, enabled: true, isSystem: false }
+        ];
+
+        function renderRoles() {
+            document.getElementById('roleBody').innerHTML = ROLES_DATA.map((r, i) => `
+                <tr class="${r.enabled ? '' : 'text-muted'}">
+                    <td class="text-center">${i + 1}</td>
+                    <td><code>${r.code}</code> ${r.isSystem ? '<span class="badge bg-warning text-dark" style="font-size:0.65rem">内置</span>' : ''}</td>
+                    <td><strong>${r.name}</strong></td>
+                    <td><small class="text-muted">${r.desc}</small></td>
+                    <td class="text-center">${r.sort}</td>
+                    <td class="text-center"><span class="badge bg-secondary">${r.userCount}</span></td>
+                    <td>${r.enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
+                    <td class="text-center">
+                        ${!r.isSystem ? `
+                            <button class="btn btn-sm btn-outline-primary" onclick="editRole(${r.id})"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRole(${r.id})"><i class="bi bi-trash"></i></button>
+                        ` : '<span class="text-muted small">不可删除</span>'}
+                        <button class="btn btn-sm btn-outline-info" onclick="openPermAssign(${r.id})"><i class="bi bi-key"></i> 权限</button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        renderRoles();
+
+        function showRoleModal(editMode, role) {
+            const modal = new bootstrap.Modal(document.getElementById('roleModal'));
+            document.getElementById('roleModalTitle').textContent = editMode ? '编辑角色' : '新增角色';
+            if (editMode && role) {
+                document.getElementById('rm_code').value = role.code;
+                document.getElementById('rm_code').disabled = true;
+                document.getElementById('rm_name').value = role.name;
+                document.getElementById('rm_desc').value = role.desc;
+                document.getElementById('rm_sort').value = role.sort;
+            } else {
+                document.getElementById('rm_code').value = '';
+                document.getElementById('rm_code').disabled = false;
+                document.getElementById('rm_name').value = '';
+                document.getElementById('rm_desc').value = '';
+                document.getElementById('rm_sort').value = ROLES_DATA.length;
+            }
+            modal.show();
+        }
+
+        function editRole(id) {
+            const role = ROLES_DATA.find(r => r.id === id);
+            if (role) showRoleModal(true, role);
+        }
+
+        function saveRole() {
+            const code = document.getElementById('rm_code').value.trim();
+            const name = document.getElementById('rm_name').value.trim();
+            if (!code || !name) { alert('请填写角色编码和名称'); return; }
+            alert(`✓ 角色「${name}」已保存\n（原型演示：PUT/POST /api/settings/roles）`);
+            bootstrap.Modal.getInstance(document.getElementById('roleModal')).hide();
+        }
+
+        function deleteRole(id) {
+            if (confirm('确定要删除此角色吗？关联的用户将失去该角色权限。')) {
+                alert('原型演示：角色已删除');
+            }
+        }
+
+        // ==================== 权限矩阵（树形菜单 + 按钮级） ====================
+        const PERMISSION_TREE = [
+            {
+                module: '首页看板', icon: 'bi-speedometer2', perms: [
+                    { code: 'home:view', name: '查看看板', type: '菜单' }
+                ]
+            },
+            {
+                module: '办理登记', icon: 'bi-clipboard-check', perms: [
+                    { code: 'booking:view', name: '查看列表', type: '菜单' },
+                    { code: 'booking:checkin', name: '入住办理', type: '按钮' },
+                    { code: 'booking:checkout', name: '退房办理', type: '按钮' },
+                    { code: 'booking:transfer', name: '调宿管理', type: '按钮' }
+                ]
+            },
+            {
+                module: '宿舍管理', icon: 'bi-building', perms: [
+                    { code: 'dorm:view', name: '查看列表', type: '菜单' },
+                    { code: 'dorm:create', name: '新增宿舍', type: '按钮' },
+                    { code: 'dorm:edit', name: '编辑宿舍', type: '按钮' },
+                    { code: 'dorm:delete', name: '删除宿舍', type: '按钮' },
+                    { code: 'dorm:history', name: '历史记录', type: '菜单' }
+                ]
+            },
+            {
+                module: '人员清单', icon: 'bi-people', perms: [
+                    { code: 'personnel:view', name: '查看列表', type: '菜单' },
+                    { code: 'personnel:import', name: '导入员工', type: '按钮' },
+                    { code: 'personnel:export', name: '导出 Excel', type: '按钮' },
+                    { code: 'personnel:create', name: '新增员工', type: '按钮' },
+                    { code: 'personnel:edit', name: '编辑员工', type: '按钮' },
+                    { code: 'personnel:delete', name: '删除员工', type: '按钮' }
+                ]
+            },
+            {
+                module: '费用标准', icon: 'bi-currency-dollar', perms: [
+                    { code: 'billing:view', name: '查看列表', type: '菜单' },
+                    { code: 'billing:edit', name: '编辑标准', type: '按钮' }
+                ]
+            },
+            {
+                module: '宿舍账单', icon: 'bi-receipt', perms: [
+                    { code: 'dormbilling:view', name: '查看列表', type: '菜单' },
+                    { code: 'dormbilling:detail', name: '查看详情', type: '按钮' },
+                    { code: 'dormbilling:generate', name: '生成账单', type: '按钮' },
+                    { code: 'dormbilling:publish', name: '发布账单', type: '按钮' },
+                    { code: 'dormbilling:export', name: '导出报表', type: '按钮' }
+                ]
+            },
+            {
+                module: '员工账单', icon: 'bi-wallet2', perms: [
+                    { code: 'employeebilling:view', name: '查看列表', type: '菜单' },
+                    { code: 'employeebilling:detail', name: '查看详情', type: '按钮' },
+                    { code: 'employeebilling:share', name: '费用分摊', type: '按钮' },
+                    { code: 'employeebilling:export', name: '导出报表', type: '按钮' }
+                ]
+            },
+            {
+                module: '抄表记录', icon: 'bi-gauge', perms: [
+                    { code: 'meter:view', name: '查看列表', type: '菜单' },
+                    { code: 'meter:entry', name: '手动录入', type: '按钮' },
+                    { code: 'meter:import', name: '批量导入', type: '按钮' },
+                    { code: 'meter:upload', name: 'PDA 上传', type: '按钮' },
+                    { code: 'meter:cancel', name: '作废记录', type: '按钮' },
+                    { code: 'meter:image', name: '查看图片', type: '按钮' }
+                ]
+            },
+            {
+                module: '基础资料', icon: 'bi-database', perms: [
+                    { code: 'basics:view', name: '查看列表', type: '菜单' },
+                    { code: 'basics:edit', name: '编辑维护', type: '按钮' }
+                ]
+            },
+            {
+                module: '系统设置', icon: 'bi-gear', perms: [
+                    { code: 'settings:view', name: '查看设置', type: '菜单' },
+                    { code: 'settings:edit', name: '修改配置', type: '按钮' },
+                    { code: 'settings:backup', name: '备份恢复', type: '按钮' },
+                    { code: 'settings:usermgmt', name: '用户管理', type: '按钮' },
+                    { code: 'settings:rolemgmt', name: '角色权限', type: '按钮' }
+                ]
+            }
+        ];
+
+        // 各角色的权限配置（原型演示）
+        const ROLE_PERMS = {
+            'admin': PERMISSION_TREE.flatMap(m => m.perms.map(p => p.code)),
+            'finance': ['home:view', 'billing:view', 'billing:edit', 'dormbilling:view', 'dormbilling:detail', 'dormbilling:export', 'employeebilling:view', 'employeebilling:detail', 'employeebilling:export', 'basics:view', 'basics:edit', 'settings:view', 'settings:edit'],
+            'pda_operator': ['home:view', 'meter:view', 'meter:entry', 'meter:upload', 'meter:image', 'basics:view'],
+            'viewer': ['home:view']
+        };
+
+        let currentPermRole = 'finance';
+
+        function renderPermMatrix(role) {
+            currentPermRole = role || currentPermRole;
+            const enabledPerms = ROLE_PERMS[currentPermRole] || [];
+            let html = '';
+            PERMISSION_TREE.forEach(group => {
+                html += `<tr class="table-group">
+                    <td class="text-start ps-3" colspan="5"><strong><i class="bi ${group.icon} me-1"></i>${group.module}</strong></td>
+                </tr>`;
+                group.perms.forEach(perm => {
+                    const checked = enabledPerms.includes(perm.code);
+                    const isSystem = currentPermRole === 'admin';
+                    const disabledAttr = isSystem ? 'disabled checked' : (checked ? 'checked' : '');
+                    html += `<tr>
+                        <td class="text-start ps-4"><small>${perm.name}</small> <span class="badge bg-light text-muted" style="font-size:0.6rem">${perm.type}</span></td>
+                        <td><input class="form-check-input perm-check" type="checkbox" data-code="${perm.code}" ${isSystem ? 'disabled checked' : ''}></td>
+                        <td><input class="form-check-input perm-check" type="checkbox" data-code="${perm.code}" ${currentPermRole === 'finance' && disabledAttr ? (checked ? 'checked' : '') : ''} ${currentPermRole !== 'finance' ? 'disabled' : ''} ${currentPermRole === 'finance' ? '' : ''}></td>
+                        <td><input class="form-check-input perm-check" type="checkbox" data-code="${perm.code}" ${currentPermRole === 'pda_operator' && disabledAttr ? (checked ? 'checked' : '') : ''} ${currentPermRole !== 'pda_operator' ? 'disabled' : ''}></td>
+                        <td><input class="form-check-input perm-check" type="checkbox" data-code="${perm.code}" ${currentPermRole === 'viewer' && disabledAttr ? (checked ? 'checked' : '') : ''} ${currentPermRole !== 'viewer' ? 'disabled' : ''}></td>
+                    </tr>`;
+                });
+            });
+            document.getElementById('permBody').innerHTML = html;
+        }
+
+        renderPermMatrix('admin');
+
+        function savePermissions() {
+            alert('✓ 权限矩阵已保存\n（原型演示：PUT /api/settings/permissions）');
+        }
+
+        // ==================== 权限分配弹窗 ====================
+        function openPermAssign(roleId) {
+            const role = ROLES_DATA.find(r => r.id === roleId);
+            if (!role) return;
+            document.getElementById('rpm_title').textContent = `分配权限 — ${role.name}`;
+            let treeHtml = '';
+            PERMISSION_TREE.forEach(group => {
+                treeHtml += `<div class="mb-2">
+                    <div class="fw-bold small"><i class="bi ${group.icon} me-1"></i>${group.module}</div>`;
+                group.perms.forEach(perm => {
+                    treeHtml += `<div class="form-check ms-3">
+                        <input class="form-check-input" type="checkbox" value="${perm.code}" id="rpm_${perm.code}">
+                        <label class="form-check-label small" for="rpm_${perm.code}">${perm.name} <span class="badge bg-light text-muted">${perm.type}</span></label>
+                    </div>`;
+                });
+                treeHtml += `</div>`;
+            });
+            document.getElementById('rpm_perm_tree').innerHTML = treeHtml;
+            new bootstrap.Modal(document.getElementById('rolePermModal')).show();
+        }
+
+        function toggleAllPerm(checkbox) {
+            document.querySelectorAll('#rpm_perm_tree .form-check-input').forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        }
+
+        function saveRolePermissions() {
+            const checked = [];
+            document.querySelectorAll('#rpm_perm_tree .form-check-input:checked').forEach(cb => {
+                checked.push(cb.value);
+            });
+            alert(`✓ 权限已保存：选中 ${checked.length} 项\n（原型演示：PUT /api/settings/roles/${currentPermRole}/permissions）`);
+            bootstrap.Modal.getInstance(document.getElementById('rolePermModal')).hide();
+        }
 
         // 备份
         document.getElementById('backupBody').innerHTML = BACKUPS.map(b => `
