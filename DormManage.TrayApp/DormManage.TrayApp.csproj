@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DormManage.TrayApp</AssemblyName>
+    <RootNamespace>DormManage.TrayApp</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Version>2.13.2</Version>
+    <Company>JINGE</Company>
+    <Product>金戈宿舍管理系统托盘守护程序</Product>
+    <Description>DormManage.TrayApp v2.13.2 - 托盘守护 + 自动启停 + 故障自愈</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 托盘图标：若 Resources/tray-icon.ico 缺失，构建仅警告（NotifyIcon 使用 SystemIcons 后备） -->
+    <None Update="Resources\tray-icon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

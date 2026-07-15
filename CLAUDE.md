@@ -1,8 +1,8 @@
 # 金戈宿舍管理系统 — Claude Code 项目配置
 
 > **项目名称**：金戈宿舍管理系统  
-> **配置版本**：v2.13.0  
-> **生效日期**：2026-07-14  
+> **配置版本**：v2.13.2  
+> **生效日期**：2026-07-15  
 > **适用对象**：所有参与本项目的 Claude Code 会话
 
 ---
@@ -359,14 +359,16 @@ dotnet publish DormManage.Api/DormManage.Api.csproj -c Release -r win-x64 --self
 dotnet publish DormManage.TrayApp/DormManage.TrayApp.csproj -c Release -r win-x64 --self-contained true -o publish-final/TrayApp
 ```
 
-### 9.2 启动流程（V2.13.0 新增）
+### 9.2 启动流程（V2.13.2 同步更新）
 
-1. 运行 `DormManage.TrayApp.exe`（托盘守护程序）
+1. 运行 `DormManage.TrayApp.exe`（托盘守护程序，部署于 `publish-final/V1.0/TrayApp/`）
 2. 托盘程序自动启动：
-   - `DormManage.Admin.exe`（Web 管理端，端口 5001）
-   - `DormManage.Api.exe`（PDA 接口服务，端口 5000）
-3. PC 用户通过浏览器访问 `http://localhost:5001`
-4. PDA 终端通过 `http://<服务器IP>:5000` 访问抄表接口
+   - `DormManage.Admin.exe`（Web 管理端，端口 5001，可通过 SettingsForm 调整）
+   - `DormManage.Api.exe`（PDA 接口服务，端口 5100，可通过 SettingsForm 调整）
+3. 托盘菜单"打开管理后台"自动启动浏览器访问 `http://localhost:5001`
+4. PDA 终端通过 `http://<服务器IP>:5100` 访问抄表接口
+
+> **V2.13.2 变更**：Api 端口从 5000 → 5100（CLAUDE.md v2.13.0 描述有误，已修正）。托盘通过环境变量 `DormManage_KESTREL_PORT` 注入端口，`DormManage_DB_CONN`/`DormManage_DB_PATH` 注入数据库连接。
 
 ### 9.2 部署包结构
 
@@ -414,3 +416,4 @@ publish-final/
 | v1.2 | 2026-07-14 | 修正主解决方案文件名笔误；关联 v2.12.43 页面 500 修复报告 |
 | v2.13.0 | 2026-07-14 | 新增 RBAC 认证权限体系、Cookie 认证、强制登录控制、托盘守护程序、用户/角色独立管理页面 |
 | v2.13.1 | 2026-07-15 | 新增登录页面（/Account/Login）、登出页面（/Account/Logout）、管理员种子数据（admin/admin123）、BCrypt 密码加密 |
+| v2.13.2 | 2026-07-15 | **补全 DormManage.TrayApp 源码**（WinForms 托盘守护）：单实例锁 + 自动启停 Admin/Api + 故障自愈 + 健康检查 + SettingsForm 配置窗口；修复 ConfigService.PropertyNameCaseInsensitive 反序列化 BUG；新增 56/57 技术方案与需求规格文档 |
