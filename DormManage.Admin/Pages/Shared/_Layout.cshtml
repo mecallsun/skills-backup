@@ -1,13 +1,14 @@
 @using DormManage.Admin.Extensions
 @using Microsoft.AspNetCore.Http.Extensions
-@inject HttpContext HttpContext
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 
 @{
-    var userId = HttpContext.GetCurrentUserId();
-    var userName = HttpContext.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "用户";
-    var displayName = HttpContext.User.FindFirst("DisplayName")?.Value ?? userName;
-    var roles = HttpContext.GetRoles();
+    var httpContext = HttpContextAccessor.HttpContext;
+    var userId = httpContext?.GetCurrentUserId() ?? 0;
+    var userName = httpContext?.User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value ?? "用户";
+    var displayName = httpContext?.User.FindFirst("DisplayName")?.Value ?? userName;
+    var roles = httpContext?.GetRoles() ?? new List<string>();
     var antiforgeryToken = Antiforgery.GetAndStoreTokens(Context);
 }
 <!DOCTYPE html>
