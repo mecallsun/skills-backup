@@ -36,6 +36,12 @@ public class EditModel : PageModel
     public DateOnly? HireDate { get; set; }
     /// <summary>在职状态名称</summary>
     public string? EmploymentStatusName { get; set; }
+    /// <summary>班组（P2-3 / P2-8）</summary>
+    public string? Team { get; set; }
+    /// <summary>离职日期</summary>
+    public DateOnly? LeaveDate { get; set; }
+    /// <summary>住宿状态名称</summary>
+    public string? ResidenceStatusName { get; set; }
 
     public async Task OnGetAsync(int id)
     {
@@ -46,6 +52,7 @@ public class EditModel : PageModel
         var employee = await _db.Employees
             .Include(e => e.EmployeeType)
             .Include(e => e.AttendanceType)
+            .Include(e => e.ResidenceStatus)
             .FirstOrDefaultAsync(e => e.Id == Booking.EmployeeId);
 
         if (employee != null)
@@ -57,6 +64,9 @@ public class EditModel : PageModel
             AttendanceTypeName = employee.AttendanceType?.Name;
             Phone = employee.Phone;
             HireDate = employee.HireDate;
+            LeaveDate = employee.LeaveDate;
+            Team = employee.Team;
+            ResidenceStatusName = employee.ResidenceStatus?.Name;
 
             // 在职状态名称映射（Status 字段直接映射，非导航属性）
             EmploymentStatusName = employee.Status switch
