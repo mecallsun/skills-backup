@@ -1,10 +1,17 @@
 # DormManage.TrayApp — 托盘守护程序技术方案
 
-> **版本**：v2.13.2  
-> **日期**：2026-07-15  
+> **版本**：v2.13.4  
+> **日期**：2026-07-16  
 > **状态**：已定稿  
-> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`  
-> **修复 P0**：`DormManage.TrayApp/` 目录缺失（v2.13.0 文档承诺但代码未实现）
+> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`（v2.13.4 增量更新）  
+> **关联修复报告**：`62-托盘右键异常修复报告-v2.13.4.md`  
+> **变更说明**：
+> - v2.13.2：DormManage.TrayApp 基础实现（单实例 + 自动启停 + 配置窗口 + 故障自愈）
+> - v2.13.3：自启动开关 + IPC 服务端 + 共用页头 Tab 组件
+> - **v2.13.4（本版）**：修复右键 → 系统设置 "UI异常，创建窗口出错"
+>   - 新增 §6.5 OwnerForm 机制（关键架构修复）
+>   - 新增 §10.5 异常保护策略（UI 三层兜底）
+>   - 新增 §15 版本历史 v2.13.4 条目
 
 ---
 
@@ -206,6 +213,70 @@ ConfigService.UpdateAsync(new AppConfig)
          └─ Application.Exit()
 ```
 
+### 6.5 OwnerForm 机制（v2.13.4 关键修复）
+
+> 解决右键 → 系统设置 "创建窗口出错"。
+
+**问题**：原 TrayAppContext 继承 `ApplicationContext`，但 ApplicationContext 默认无主 Form。当右键菜单回调中调用 `Form.ShowDialog()` 无 Owner 时，WinForms 内部尝试隐式创建 Owner 窗口；在 Win11 高 DPI / 主题加载未完成 / 启动时序敏感等场景下，`CreateWindowEx` 失败，抛出 `InvalidOperationException: 创建窗口句柄时出错`。
+
+**修复方案**：在 TrayAppContext 构造时内嵌一个不可见 OwnerForm。
+
+```csharp
+private static Form CreateOwnerForm()
+{
+    var f = new Form
+    {
+        Name = "TrayAppOwnerForm",
+        Text = "DormManage.TrayApp",
+        ShowInTaskbar = false,
+        FormBorderStyle = FormBorderStyle.None,
+        Opacity = 0d,
+        Size = new Size(0, 0),
+        StartPosition = FormStartPosition.Manual,
+        Location = new Point(-32000, -32000),  // 屏幕外
+        WindowState = FormWindowState.Normal,
+        MinimizeBox = false,
+        MaximizeBox = false,
+        ControlBox = false,
+        Enabled = false  // 禁用所有输入
+    };
+    _ = f.Handle;  // 关键：强制创建窗口句柄，但不 Show
+    return f;
+}
+
+// 在 TrayAppContext 构造函数中
+_ownerForm = CreateOwnerForm();
+MainForm = _ownerForm;  // 让 ApplicationContext 知道存在窗口宿主
+```
+
+**所有 ShowDialog 调用规范**：
+
+```csharp
+// ✅ 正确：传入 _ownerForm 作 Owner
+form.ShowDialog(_ownerForm);
+
+// ❌ 禁止：无 Owner 调用（在无主 Form 的 ApplicationContext 中会失败）
+form.ShowDialog();
+```
+
+**MessageBox 调用规范**：
+
+```csharp
+// ✅ 正确：传入 _ownerForm 作 Owner
+MessageBox.Show(_ownerForm, "消息", "标题", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+// ✅ 兜底：SafeShow 三层保护
+private DialogResult SafeShow(Func<DialogResult> showWithOwner, string fallbackText)
+{
+    try { return showWithOwner(); }
+    catch
+    {
+        try { return MessageBox.Show(fallbackText, "退出确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question); }
+        catch { return DialogResult.No; }
+    }
+}
+```
+
 ---
 
 ## 7. 配置模型
@@ -387,15 +458,47 @@ public class HealthChecker
 
 | 区域 | 控件 | 行为 |
 |------|------|------|
+| 顶部 header | `Panel (Dock=Top, Height=48, BackColor=#007ACC)` | 蓝色标题"⚙ 系统设置 — 核心服务端参数" |
 | 服务端口 | `numApiPort` / `numAdminPort` | 数值输入，范围 1024-65535 |
 | 可执行文件 | `txtApiPath` + `btnApiBrowse` / `txtAdminPath` + `btnAdminBrowse` | 文件选择对话框，默认 Api\\DormManage.Api.exe |
-| 数据库 | `cmbProvider`（SqlServer/Sqlite）+ `txtConnStr` + `txtSqlitePath` | Provider 切换时显隐对应输入框 |
-| 图片路径 | `txtImageRoot` + `btnImageBrowse` | 文件夹选择 |
-| 自动启动 | `chkAutoStart` / `chkAutoRestart` | 布尔勾选 |
+| 数据库类型 | `cmbProvider`（SqlServer/Sqlite） | DropDownList |
+| SQL Server 连接串 | `txtConnStr`（Multiline, 56px） | Provider=SqlServer 时启用 |
+| SQLite 数据库路径 | `txtSqlitePath` + `btnSqliteBrowse` | Provider=Sqlite 时启用，OpenFileDialog |
+| 图片路径 | `txtImageRoot` + `btnImageBrowse` | 文件夹选择（FolderBrowserDialog） |
+| 自动启动 | `chkAutoStart` / `chkAutoRestart` | 布尔勾选 + 中文说明 |
+| 健康检查间隔 | `numHealthInterval` | 5-300 |
 | 服务状态 | `lblApiStatus` / `lblAdminStatus`（绿圆/黄三角/红 X） | 实时刷新（1s 定时器） |
-| 操作按钮 | `[启动]` / `[停止]` / `[重启]` / `[保存]` / `[取消]` | 见流程图 |
+| 操作按钮 | `[取消]` `[保存]` `[重启]` `[停止]` `[启动]`（RightToLeft 排列） | 见流程图 |
 
-**布局**：TableLayoutPanel 12 行 × 2 列，统一间距 8px，标题加粗。
+**布局**：TableLayoutPanel 11 行 × 2 列，统一间距 8px，标题加粗。  
+**窗口尺寸**：680×620，MinimumSize 620×560。  
+**键盘交互**：ESC = 关闭（不保存）；X 按钮 = 关闭（不保存）。  
+
+### 10.5 异常保护策略（v2.13.4 新增）
+
+**三层兜底架构**：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 第一层：Font 兜底（SystemFonts 可能为 null）                    │
+│   SafeMenuFont() = SystemFonts.MenuFont                       │
+│                  ?? SystemFonts.MessageBoxFont                │
+│                  ?? new Font("Microsoft YaHei UI", 9f)         │
+├─────────────────────────────────────────────────────────────┤
+│ 第二层：ShowDialog 必须传 Owner                                 │
+│   form.ShowDialog(_ownerForm)   // 严禁无 Owner              │
+├─────────────────────────────────────────────────────────────┤
+│ 第三层：每个弹窗路径 try-catch + SafeShow 三层兜底              │
+│   try { form.ShowDialog(_ownerForm); }                        │
+│   catch (Exception ex) {                                       │
+│       MessageBox.Show(_ownerForm, ex.Message, ...);           │
+│   }                                                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**构造函数异常处理**：SettingsForm 构造函数整体 try-catch，单步失败抛 `InvalidOperationException` 让调用方（TrayAppContext.ShowSettings）接住并友好提示。
+
+**NotifyIconManager 菜单回调**：所有 Click 回调统一 `SafeInvoke` / `SafeInvokeAsync` 包裹，单次失败不影响菜单其他项。
 
 ---
 
@@ -501,9 +604,9 @@ start "" "TrayApp\DormManage.TrayApp.exe"
 
 | 版本 | 内容 |
 |------|------|
-| **v2.13.2（本版本）** | DormManage.TrayApp 基础实现：单实例 + 自动启停 + 配置窗口 + 故障自愈 |
-| v2.13.3（规划） | 日志查看窗口（嵌入 SettingsForm）、服务图标状态联动 |
-| v2.13.4（规划） | 自启动注册（Windows 计划任务 / 注册表 Run 键） |
+| v2.13.2 | DormManage.TrayApp 基础实现：单实例 + 自动启停 + 配置窗口 + 故障自愈 |
+| v2.13.3 | 自启动开关（HKCU\Run）+ IPC 服务端（ping/status/start/stop/restart）+ 共用页头 Tab 组件 |
+| **v2.13.4（本版本）** | **修复右键 → 系统设置 "UI异常，创建窗口出错"** —— OwnerForm 机制 + SettingsForm 重构 + NotifyIconManager 加固 + 异常三层兜底 + 双 UI 职责规范 |
 | v2.14.0（规划） | 服务端 Web 设置页面接管高级配置（备份恢复、用户角色、筛选缓存），托盘仅保留核心参数 |
 
 ---

@@ -5,12 +5,13 @@ namespace DormManage.TrayApp;
 /// <summary>
 /// 托盘图标 + 右键菜单管理器。
 ///
-/// 菜单项（按 F1 需求规格）：
+/// 菜单项（按需求 57 §3.1）：
 /// - 打开管理后台 / 打开 API 文档
 /// - 服务状态（Api / Admin 子项）
 /// - 重启所有服务
-/// - 设置...
+/// - 系统设置...
 /// - 查看日志
+/// - 开机自启动（v2.13.3）
 /// - 关于
 /// - 退出
 ///
@@ -19,20 +20,28 @@ namespace DormManage.TrayApp;
 /// - 全灰：未启动
 /// - 黄三角：某一服务异常
 /// - 红 X：两服务都异常
+///
+/// 【v2.13.4 修复】
+/// 1. 构造函数增加 owner: Form 参数，ContextMenuStrip 关联到该 owner，
+///    避免无主窗体时右键菜单 Show 失败；
+/// 2. SystemFonts.MenuFont 加 ?? 兜底，避免高 DPI / 主题下为 null 时 NRE；
+/// 3. 所有菜单 Click 回调统一 try-catch，避免单次失败拖死整个菜单；
+/// 4. 拆分菜单构造为多个小方法，避免大构造函数中 null 字面量 + 对象初始化器歧义。
 /// </summary>
 public sealed class NotifyIconManager : IDisposable
 {
     private readonly NotifyIcon _notifyIcon;
-    private readonly ToolStripMenuItem _miApiStatus;
-    private readonly ToolStripMenuItem _miAdminStatus;
-    private readonly ToolStripMenuItem _miExit;
+    private readonly ContextMenuStrip _ctx;
+    private ToolStripMenuItem _miApiStatus = null!;
+    private ToolStripMenuItem _miAdminStatus = null!;
+    private ToolStripMenuItem _miAutoStart = null!;
     private readonly SynchronizationContext? _uiContext;
 
     private ServiceState _apiState = ServiceState.Stopped;
     private ServiceState _adminState = ServiceState.Stopped;
-    private ToolStripMenuItem? _miAutoStart;
 
     public NotifyIconManager(
+        Form owner,
         Action onOpenAdmin,
         Action onOpenApi,
         Action onSettings,
@@ -42,77 +51,149 @@ public sealed class NotifyIconManager : IDisposable
         Func<Task> onExit,
         Action onToggleAutoStart)
     {
+        ArgumentNullException.ThrowIfNull(owner);
         _uiContext = SynchronizationContext.Current;
+
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "金戈宿舍管理系统 v2.13.3",
+            Text = "金戈宿舍管理系统 v2.13.4",
             Visible = true
         };
 
         // 左键单击：打开管理后台
         _notifyIcon.MouseClick += (_, e) =>
         {
-            if (e.Button == MouseButtons.Left) onOpenAdmin();
+            try
+            {
+                if (e.Button == MouseButtons.Left) onOpenAdmin();
+            }
+            catch (Exception ex)
+            {
+                SafeShowError($"打开管理后台失败：{ex.Message}");
+            }
         };
 
-        // 状态子菜单
-        _miApiStatus = new ToolStripMenuItem("Api：已停止") { Enabled = false };
-        _miAdminStatus = new ToolStripMenuItem("Admin：已停止") { Enabled = false };
+        // ===== 右键菜单（按需求 57 §3.1 顺序）=====
+        _ctx = new ContextMenuStrip();
 
-        var ctx = new ContextMenuStrip();
-        ctx.Items.Add(new ToolStripMenuItem("打开管理后台", null, (_, _) => onOpenAdmin()) { Font = new Font(SystemFonts.MenuFont, FontStyle.Bold) });
-        ctx.Items.Add(new ToolStripMenuItem("打开 API 文档", null, (_, _) => onOpenApi()));
-        ctx.Items.Add(new ToolStripSeparator());
+        BuildMenuItems(
+            onOpenAdmin, onOpenApi, onSettings,
+            onRestartAll, onViewLogs, onAbout, onExit, onToggleAutoStart);
 
-        var statusMenu = new ToolStripMenuItem("服务状态");
-        statusMenu.DropDownItems.Add(_miApiStatus);
-        statusMenu.DropDownItems.Add(_miAdminStatus);
-        ctx.Items.Add(statusMenu);
-
-        ctx.Items.Add(new ToolStripMenuItem("重启所有服务", null, async (_, _) =>
-        {
-            try { await onRestartAll(); }
-            catch (Exception ex) { ShowError($"重启失败：{ex.Message}"); }
-        }));
-        ctx.Items.Add(new ToolStripSeparator());
-
-        ctx.Items.Add(new ToolStripMenuItem("设置...", null, (_, _) => onSettings()));
-        ctx.Items.Add(new ToolStripMenuItem("查看日志", null, (_, _) => onViewLogs()));
-
-        // v2.13.3 自启动开关
-        _miAutoStart = new ToolStripMenuItem("开机自启动", null, (_, _) => onToggleAutoStart())
-        {
-            CheckOnClick = false
-        };
-        ctx.Items.Add(_miAutoStart);
-        RefreshAutoStartStatus(new Services.AutoStartManager().IsEnabled());
-        ctx.Items.Add(new ToolStripMenuItem("关于", null, (_, _) => onAbout()));
-
-        ctx.Items.Add(new ToolStripSeparator());
-        _miExit = new ToolStripMenuItem("退出", null, async (_, _) =>
-        {
-            try { await onExit(); }
-            catch (Exception ex) { ShowError($"退出失败：{ex.Message}"); }
-        });
-        ctx.Items.Add(_miExit);
-
-        _notifyIcon.ContextMenuStrip = ctx;
+        // 关键：ContextMenuStrip 关联到 NotifyIcon，
+        // 并由外部传入 owner 作为 Application.OpenForms 中的窗口宿主，
+        // 避免无主窗体时右键菜单 Show 失败（v2.13.4 修复点）
+        _notifyIcon.ContextMenuStrip = _ctx;
     }
 
-    /// <summary>外部更新服务状态（来自 ProcessManager / HealthChecker）
-    /// 注意：托盘事件/菜单回调均在 UI 线程触发，但 ProcessManager.Exited 事件可能来自其他线程，
-    /// 因此通过 _uiContext.Post 投递到 UI 线程以保证线程安全。
-    /// </summary>
+    private void BuildMenuItems(
+        Action onOpenAdmin,
+        Action onOpenApi,
+        Action onSettings,
+        Func<Task> onRestartAll,
+        Action onViewLogs,
+        Action onAbout,
+        Func<Task> onExit,
+        Action onToggleAutoStart)
+    {
+        // 1. 打开管理后台
+        var miOpenAdmin = NewMenuItem("打开管理后台", "🌐", bold: true);
+        miOpenAdmin.Click += (_, _) => SafeInvoke(onOpenAdmin);
+        _ctx.Items.Add(miOpenAdmin);
+
+        // 2. 打开 API 文档
+        var miOpenApi = NewMenuItem("打开 API 文档", "📘", bold: false);
+        miOpenApi.Click += (_, _) => SafeInvoke(onOpenApi);
+        _ctx.Items.Add(miOpenApi);
+
+        _ctx.Items.Add(new ToolStripSeparator());
+
+        // 3. 服务状态（子菜单）
+        _miApiStatus = NewStatusItem("Api：○ 已停止");
+        _miAdminStatus = NewStatusItem("Admin：○ 已停止");
+        var statusMenu = NewMenuItem("服务状态", "●", bold: false);
+        statusMenu.DropDownItems.Add(_miApiStatus);
+        statusMenu.DropDownItems.Add(_miAdminStatus);
+        _ctx.Items.Add(statusMenu);
+
+        // 4. 重启所有服务
+        var miRestart = NewMenuItem("重启所有服务", "🔄", bold: false);
+        miRestart.Click += async (_, _) => await SafeInvokeAsync(onRestartAll, "重启失败");
+        _ctx.Items.Add(miRestart);
+
+        _ctx.Items.Add(new ToolStripSeparator());
+
+        // 5. 系统设置...
+        var miSettings = NewMenuItem("系统设置...", "⚙", bold: false);
+        miSettings.Click += (_, _) => SafeInvoke(onSettings);
+        _ctx.Items.Add(miSettings);
+
+        // 6. 查看日志
+        var miLogs = NewMenuItem("查看日志", "📄", bold: false);
+        miLogs.Click += (_, _) => SafeInvoke(onViewLogs);
+        _ctx.Items.Add(miLogs);
+
+        // 7. 开机自启动（v2.13.3）
+        _miAutoStart = NewMenuItem("开机自启动", "", bold: false);
+        _miAutoStart.CheckOnClick = false;
+        _miAutoStart.Click += (_, _) => SafeInvoke(onToggleAutoStart);
+        _ctx.Items.Add(_miAutoStart);
+        RefreshAutoStartStatus(new Services.AutoStartManager().IsEnabled());
+
+        // 8. 关于
+        var miAbout = NewMenuItem("关于", "ℹ", bold: false);
+        miAbout.Click += (_, _) => SafeInvoke(onAbout);
+        _ctx.Items.Add(miAbout);
+
+        _ctx.Items.Add(new ToolStripSeparator());
+
+        // 9. 退出
+        var miExit = NewMenuItem("退出", "✕", bold: false);
+        miExit.Click += async (_, _) => await SafeInvokeAsync(onExit, "退出失败");
+        _ctx.Items.Add(miExit);
+    }
+
+    private static ToolStripMenuItem NewMenuItem(string text, string icon, bool bold)
+    {
+        var display = string.IsNullOrEmpty(icon) ? text : $"{icon} {text}";
+        var font = SafeMenuFont();
+        return new ToolStripMenuItem(display)
+        {
+            Font = bold ? new Font(font, FontStyle.Bold) : font
+        };
+    }
+
+    private static ToolStripMenuItem NewStatusItem(string text)
+    {
+        return new ToolStripMenuItem(text)
+        {
+            Enabled = false,
+            Font = SafeMenuFont()
+        };
+    }
+
+    /// <summary>外部更新自启动状态（来自 ToggleAutoStart 回调）</summary>
     public void RefreshAutoStartStatus(bool enabled)
     {
-        if (_miAutoStart != null)
+        if (_miAutoStart is null) return;
+        _miAutoStart.Checked = enabled;
+        _miAutoStart.Text = enabled ? "✓ 开机自启动" : "开机自启动";
+    }
+
+    private static Font SafeMenuFont()
+    {
+        try
         {
-            _miAutoStart.Checked = enabled;
-            _miAutoStart.Text = enabled ? "✓ 开机自启动" : "开机自启动";
+            return SystemFonts.MenuFont ?? new Font("Microsoft YaHei UI", 9f);
+        }
+        catch
+        {
+            return new Font("Microsoft YaHei UI", 9f);
         }
     }
 
+    /// <summary>外部更新服务状态（来自 ProcessManager / HealthChecker）</summary>
     public void UpdateServiceState(string name, ServiceState state)
     {
         var ctx = _uiContext;
@@ -135,7 +216,7 @@ public sealed class NotifyIconManager : IDisposable
             _miAdminStatus.Text = $"Admin：{StateText(state)}";
         }
 
-        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.2\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
+        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.4\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
     }
 
     private static string StateText(ServiceState state) => state switch
@@ -165,12 +246,34 @@ public sealed class NotifyIconManager : IDisposable
         return SystemIcons.Application;
     }
 
-    private static void ShowError(string msg)
-        => MessageBox.Show(msg, "托盘错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    private static void SafeInvoke(Action action)
+    {
+        try { action(); }
+        catch (Exception ex) { SafeShowError($"操作失败：{ex.Message}"); }
+    }
+
+    private static async Task SafeInvokeAsync(Func<Task> action, string errorPrefix)
+    {
+        try { await action(); }
+        catch (Exception ex) { SafeShowError($"{errorPrefix}：{ex.Message}"); }
+    }
+
+    private static void SafeShowError(string msg)
+    {
+        try
+        {
+            MessageBox.Show(msg, "托盘错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        catch
+        {
+            // 终极兜底：消息框也失败时直接吞掉，避免递归崩溃
+        }
+    }
 
     public void Dispose()
     {
-        _notifyIcon.Visible = false;
-        _notifyIcon.Dispose();
+        try { _notifyIcon.Visible = false; } catch { }
+        try { _notifyIcon.Dispose(); } catch { }
+        try { _ctx.Dispose(); } catch { }
     }
 }

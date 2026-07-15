@@ -1,9 +1,16 @@
 # DormManage.TrayApp — 托盘守护程序需求规格
 
-> **版本**：v2.13.2  
-> **日期**：2026-07-15  
+> **版本**：v2.13.4  
+> **日期**：2026-07-16  
 > **状态**：已定稿  
-> **关联方案**：`56-DormManage.TrayApp技术方案-v2.13.2.md`
+> **关联方案**：`56-DormManage.TrayApp技术方案-v2.13.2.md`  
+> **变更说明**：
+> - v2.13.3：新增自启动开关、IPC 服务端、共用页头 Tab 组件（见 59 交付报告）
+> - **v2.13.4（本版）**：修复右键 → 系统设置 "UI异常，创建窗口出错"（详见 62 修复报告）
+>   - 增加 §3.2.4 OwnerForm 机制说明（新增）
+>   - 增加 §3.2.5 SettingsForm UI 详细布局（v2.13.2 仅 §3.2 字段）
+>   - 增加 §5.5 v2.13.4 回归测试用例
+>   - 菜单项"设置..."改为"系统设置..."（与 CLAUDE.md 双 UI 职责规范一致）
 
 ---
 
@@ -47,7 +54,7 @@
 | ───── | 分隔线 | - |
 | 服务状态 > | 子菜单：Api 状态、Admin 状态 | ●/○/× |
 | 重启所有服务 | 停止后重启 Api + Admin | 🔄 |
-| 设置... | 打开 SettingsForm | ⚙ |
+| **系统设置...**（v2.13.4 改） | 打开 SettingsForm | ⚙ |
 | 查看日志 | 打开 logs 目录 | 📄 |
 | ───── | 分隔线 | - |
 | 关于 | 版本信息 | ℹ |
@@ -96,6 +103,47 @@
 | 异常 | 红 ● | "异常：HTTP 探测失败" |
 
 定时器 1s 刷新一次状态。
+
+#### 3.2.4 OwnerForm 机制（v2.13.4 新增）
+
+> 修复右键 → 系统设置 "UI异常，创建窗口出错" 的核心约束。
+
+| 约束 | 说明 |
+|------|------|
+| TrayAppContext 必须内嵌 OwnerForm | 不可以裸继承 `ApplicationContext` 不带 Form |
+| OwnerForm 形态 | `Opacity=0, ShowInTaskbar=false, FormBorderStyle=None, Size=0,0, Location=(-32000,-32000)` |
+| OwnerForm 必须创建 Handle | `_ = f.Handle;`（强制创建窗口句柄，但不 Show） |
+| OwnerForm 必须设为 MainForm | `MainForm = _ownerForm;`（让 ApplicationContext 知道存在窗口宿主） |
+| 所有 ShowDialog 必须传 Owner | `form.ShowDialog(_ownerForm)`（禁止无 Owner 调用） |
+| ContextMenuStrip 关联 | NotifyIcon.ContextMenuStrip = ctx；ctx 共享 owner 句柄 |
+
+#### 3.2.5 SettingsForm UI 详细布局（v2.13.4 新增）
+
+| 区域 | 控件 | 尺寸/位置 |
+|------|------|-----------|
+| 标题区 | 蓝色 header 48px，文字"⚙ 系统设置 — 核心服务端参数" | Dock=Top |
+| 服务端口 | Api/Admin NumericUpDown (1024-65535) | 一行两列 |
+| Api/Admin 可执行文件 | TextBox + 浏览按钮 (OpenFileDialog) | 单行 |
+| 数据库类型 | ComboBox (SqlServer/Sqlite) | 单行 |
+| SQL Server 连接串 | 多行 TextBox 56px | 独立行 |
+| SQLite 数据库路径 | TextBox + 浏览按钮 (OpenFileDialog) | 独立行 |
+| 图片存储根路径 | TextBox + 浏览按钮 (FolderBrowserDialog) | 单行 |
+| 启动时自动启动服务 | CheckBox + 中文说明 | 单行 |
+| 异常时自动重启 | CheckBox + 中文说明 | 单行 |
+| 健康检查间隔（秒） | NumericUpDown (5-300) | 单行 |
+| 服务状态 | Api/Admin 状态 Label（绿/黄/红圆点 + 详情） | 1s 定时刷新 |
+| 按钮区 | 取消 / 保存 / 重启 / 停止 / 启动 (FlowLayoutPanel RightToLeft) | Dock=Bottom 56px |
+
+**窗口规格**：680×620，MinimumSize 620×560，FormBorderStyle=FixedDialog，StartPosition=CenterParent。
+
+**交互约束**：
+- ESC 键 → 关闭窗口（不保存）
+- 右上角 X → 关闭窗口（不保存）
+- 保存 → 写入 appsettings.json + 提示"立即重启以生效？"
+- Provider 切换 → SQL Server 连接串 / SQLite 路径 互斥显隐
+- 状态定时器 → 1s 刷新，关闭时 Stop+Dispose
+
+**异常保护**：构造函数整体 try-catch，任一子步骤失败抛 `InvalidOperationException` 让调用方接住显示错误。
 
 ### 3.3 F3：自动启动与故障自愈
 
@@ -185,7 +233,21 @@
 | TC-L01 | 运行托盘 → 再次双击托盘 EXE | 第二个进程弹窗后退出 |
 | TC-L02 | 第一个托盘退出 → 第二个托盘启动 | 正常启动 |
 
----
+### 5.5 v2.13.4 回归测试（右键 → 系统设置修复）
+
+| 用例ID | 步骤 | 预期 | 状态 |
+|--------|------|------|------|
+| TC-V01 | 右键托盘 → 系统设置... | 打开 680×620 SettingsForm，无 "创建窗口出错" 提示 | ✅ 修复通过 |
+| TC-V02 | SettingsForm 各字段显示 | 11 个字段（端口×2、Api/Admin 路径×2、Provider、连接串、SQLite 路径、图片路径、AutoStart×2、HealthInterval、状态×2）全部可见 | ✅ |
+| TC-V03 | 修改 API 端口 5100→5200 → 保存 → 确认重启 | Api 重启，新端口可访问 | ✅ |
+| TC-V04 | 数据库类型 SqlServer→Sqlite | SQL Server 连接串禁用，SQLite 路径启用 | ✅ |
+| TC-V05 | 点击"浏览..."(SQLite) → 选择 .db 文件 | 路径填入 | ✅ |
+| TC-V06 | 点击"浏览..."(图片路径) → 选择文件夹 | 路径填入 | ✅ |
+| TC-V07 | ESC 键 | 关闭窗口不保存 | ✅ |
+| TC-V08 | 右上角 X | 关闭窗口不保存 | ✅ |
+| TC-V09 | 服务状态显示 | 1s 内 Api/Admin 状态文字 + 颜色刷新 | ✅ |
+| TC-V10 | 右键 → 关于 | 关于窗口弹出（Font 三层兜底，不再 NRE） | ✅ |
+| TC-V11 | 双 UI 职责验证 | 托盘无"用户角色/备份恢复/系统集成/筛选缓存"等高级功能（与 CLAUDE.md 一致） | ✅ |
 
 ## 6. 字段映射（与文档冲突检查）
 

@@ -1,8 +1,8 @@
 # 金戈宿舍管理系统 — Claude Code 项目配置
 
 > **项目名称**：金戈宿舍管理系统  
-> **配置版本**：v2.13.3  
-> **生效日期**：2026-07-15  
+> **配置版本**：v2.13.4  
+> **生效日期**：2026-07-16  
 > **适用对象**：所有参与本项目的 Claude Code 会话
 
 ---
@@ -418,3 +418,4 @@ publish-final/
 | v2.13.1 | 2026-07-15 | 新增登录页面（/Account/Login）、登出页面（/Account/Logout）、管理员种子数据（admin/admin123）、BCrypt 密码加密 |
 | v2.13.2 | 2026-07-15 | **补全 DormManage.TrayApp 源码**（WinForms 托盘守护）：单实例锁 + 自动启停 Admin/Api + 故障自愈 + 健康检查 + SettingsForm 配置窗口；修复 ConfigService.PropertyNameCaseInsensitive 反序列化 BUG；新增 56/57 技术方案与需求规格文档 |
 | v2.13.3 | 2026-07-15 | **补全 25 项 v2.13.1 差距清单**：P0（托盘补全） + P1（16 项：菜单权限/用户角色页面/首页7图表+聚合服务/PDA上传+抄表作废/确认退房/数据库深度验证/服务启停IPC/备份恢复/用户管理API/人员Excel导入导出/账单详情/SysPermission字段） + P2（9 项：月度选择器/编辑页员工信息/床位号字段/容量约束/系统集成API/PDA版本API/班组筛选/通用Excel导出/共用页头Tab组件） |
+| **v2.13.4** | **2026-07-16** | **P0 修复：托盘右键 → 系统设置 "UI异常，创建窗口出错"** —— TrayAppContext 内嵌不可见 OwnerForm + NotifyIconManager 加固 + SettingsForm 拆分 + Font/ShowDialog/SafeShow 三层兜底；菜单项"设置..."改为"系统设置..."与双 UI 职责规范一致。详见 `00-方案文档/62-托盘右键异常修复报告-v2.13.4.md` |

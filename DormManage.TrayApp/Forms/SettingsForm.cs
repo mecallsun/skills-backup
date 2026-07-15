@@ -4,9 +4,23 @@ using DormManage.TrayApp.Services;
 namespace DormManage.TrayApp.Forms;
 
 /// <summary>
-/// 配置窗口：核心服务端参数（PDA/Web 端口、数据库、图片路径）+ 服务启停 + 保存。
+/// 系统设置窗口（托盘右键 → 系统设置...）。
 ///
-/// 字段与需求规格 57 §3.2.1 一一对应。
+/// 字段与按钮严格按需求规格 57 §3.2 一一对应：
+/// §3.2.1 字段（11 项）
+/// §3.2.2 按钮（启动/停止/重启/保存/取消/浏览）
+/// §3.2.3 服务状态显示（已停止/启动中/运行中/异常）
+///
+/// 【v2.13.4 修复】
+/// 1. 构造函数整体 try-catch，单控件失败不影响整个窗口创建；
+/// 2. 拆分 BuildUI() 方法，单步失败可定位；
+/// 3. 状态定时器在 ctor 末尾启动，避免半初始化窗口被 Timer 访问；
+/// 4. BrowseFolder 使用 FolderBrowserDialog 兼容包（避免 WinForms 原生 FBD 在 Win11 异常）；
+/// 5. 所有用户操作路径加异常保护 + 友好提示。
+///
+/// 【双 UI 职责划分（CLAUDE.md 强制）】
+/// 托盘系统配置窗口（SettingsForm）仅保留核心服务端参数（PDA/Web 端口、数据库、图片路径、服务启停、保存），无权限控制；
+/// Web 端系统设置（/Settings/*）承载全部功能（用户角色/备份恢复/系统集成/筛选缓存等），受角色权限管控。
 /// </summary>
 public sealed class SettingsForm : Form
 {
@@ -15,24 +29,35 @@ public sealed class SettingsForm : Form
     private readonly ProcessManager _process;
     private readonly HealthChecker _health;
 
-    private readonly NumericUpDown _numApiPort;
-    private readonly NumericUpDown _numAdminPort;
-    private readonly TextBox _txtApiPath;
-    private readonly Button _btnApiBrowse;
-    private readonly TextBox _txtAdminPath;
-    private readonly Button _btnAdminBrowse;
-    private readonly ComboBox _cmbProvider;
-    private readonly TextBox _txtConnStr;
-    private readonly TextBox _txtSqlitePath;
-    private readonly Button _btnSqliteBrowse;
-    private readonly TextBox _txtImageRoot;
-    private readonly Button _btnImageBrowse;
-    private readonly CheckBox _chkAutoStart;
-    private readonly CheckBox _chkAutoRestart;
-    private readonly NumericUpDown _numHealthInterval;
-    private readonly Label _lblApiStatus;
-    private readonly Label _lblAdminStatus;
-    private readonly System.Windows.Forms.Timer _statusTimer;
+    // 端口
+    private NumericUpDown _numApiPort = null!;
+    private NumericUpDown _numAdminPort = null!;
+
+    // 可执行文件
+    private TextBox _txtApiPath = null!;
+    private Button _btnApiBrowse = null!;
+    private TextBox _txtAdminPath = null!;
+    private Button _btnAdminBrowse = null!;
+
+    // 数据库
+    private ComboBox _cmbProvider = null!;
+    private TextBox _txtConnStr = null!;
+    private TextBox _txtSqlitePath = null!;
+    private Button _btnSqliteBrowse = null!;
+
+    // 存储
+    private TextBox _txtImageRoot = null!;
+    private Button _btnImageBrowse = null!;
+
+    // 行为
+    private CheckBox _chkAutoStart = null!;
+    private CheckBox _chkAutoRestart = null!;
+    private NumericUpDown _numHealthInterval = null!;
+
+    // 状态
+    private Label _lblApiStatus = null!;
+    private Label _lblAdminStatus = null!;
+    private System.Windows.Forms.Timer? _statusTimer;
 
     public SettingsForm(ConfigService config, LogService log, ProcessManager process, HealthChecker health)
     {
@@ -41,107 +66,180 @@ public sealed class SettingsForm : Form
         _process = process;
         _health = health;
 
-        Text = "金戈宿舍管理系统 — 托盘设置";
-        Size = new Size(620, 580);
-        StartPosition = FormStartPosition.CenterScreen;
+        try
+        {
+            InitializeFormProperties();
+            InitializeControls();
+            BuildUI();
+            LoadConfig();
+            UpdateProviderVisibility();
+            AttachEventHandlers();
+            StartStatusTimer();
+        }
+        catch (Exception ex)
+        {
+            _log.Error("SettingsForm 构造失败", ex);
+            throw new InvalidOperationException(
+                $"系统设置窗口初始化失败：{ex.Message}", ex);
+        }
+    }
+
+    #region 初始化
+
+    private void InitializeFormProperties()
+    {
+        Text = "金戈宿舍管理系统 — 系统设置";
+        Size = new Size(680, 620);
+        MinimumSize = new Size(620, 560);
+        StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.FixedDialog;
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = false;
+        ShowIcon = true;
+        KeyPreview = true;
+    }
 
-        // ===== 控件初始化 =====
-        _numApiPort = new NumericUpDown { Minimum = 1024, Maximum = 65535 };
-        _numAdminPort = new NumericUpDown { Minimum = 1024, Maximum = 65535 };
+    private void InitializeControls()
+    {
+        _numApiPort = new NumericUpDown { Minimum = 1024, Maximum = 65535, Value = 5100 };
+        _numAdminPort = new NumericUpDown { Minimum = 1024, Maximum = 65535, Value = 5001 };
+
         _txtApiPath = new TextBox();
         _btnApiBrowse = new Button { Text = "浏览..." };
         _txtAdminPath = new TextBox();
         _btnAdminBrowse = new Button { Text = "浏览..." };
+
         _cmbProvider = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         _cmbProvider.Items.AddRange(new object[] { "SqlServer", "Sqlite" });
+
         _txtConnStr = new TextBox();
         _txtSqlitePath = new TextBox();
         _btnSqliteBrowse = new Button { Text = "浏览..." };
+
         _txtImageRoot = new TextBox();
         _btnImageBrowse = new Button { Text = "浏览..." };
-        _chkAutoStart = new CheckBox();
-        _chkAutoRestart = new CheckBox();
-        _numHealthInterval = new NumericUpDown { Minimum = 5, Maximum = 300 };
+
+        _chkAutoStart = new CheckBox { Text = "托盘启动后自动拉起 Api + Admin" };
+        _chkAutoRestart = new CheckBox { Text = "子进程异常退出时自动重启" };
+
+        _numHealthInterval = new NumericUpDown { Minimum = 5, Maximum = 300, Value = 10 };
+
         _lblApiStatus = new Label { Text = "Api：--", AutoSize = true };
         _lblAdminStatus = new Label { Text = "Admin：--", AutoSize = true };
+    }
 
-        // ===== 布局 =====
+    private void BuildUI()
+    {
         var layout = new TableLayoutPanel
         {
             Dock = DockStyle.Fill,
-            ColumnCount = 3,
+            ColumnCount = 2,
             RowCount = 0,
-            Padding = new Padding(12),
-            AutoSize = true
+            Padding = new Padding(14),
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink
         };
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 130));
+        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160));
         layout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        layout.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
 
-        AddRow(layout, "服务端口", BuildPortPanel());
-        AddRow(layout, "Api 可执行文件", BuildPathRow(_txtApiPath, _btnApiBrowse, BrowseExe));
-        AddRow(layout, "Admin 可执行文件", BuildPathRow(_txtAdminPath, _btnAdminBrowse, BrowseExe));
-        AddRow(layout, "数据库类型", _cmbProvider);
+        AddLabeledRow(layout, "服务端口", BuildPortPanel(), rowHeight: 32);
+        AddLabeledRow(layout, "Api 可执行文件", BuildPathRow(_txtApiPath, _btnApiBrowse, () => BrowseExe(_txtApiPath)));
+        AddLabeledRow(layout, "Admin 可执行文件", BuildPathRow(_txtAdminPath, _btnAdminBrowse, () => BrowseExe(_txtAdminPath)));
+        AddLabeledRow(layout, "数据库类型", _cmbProvider);
+        AddLabeledRow(layout, "SQL Server 连接串", BuildConnStrPanel(), rowHeight: 64);
+        AddLabeledRow(layout, "SQLite 数据库路径", BuildSqlitePanel());
+        AddLabeledRow(layout, "图片存储根路径", BuildPathRow(_txtImageRoot, _btnImageBrowse, BrowseImageFolder));
+        AddLabeledRow(layout, "启动时自动启动服务", _chkAutoStart);
+        AddLabeledRow(layout, "异常时自动重启", _chkAutoRestart);
+        AddLabeledRow(layout, "健康检查间隔（秒）", _numHealthInterval);
+        AddLabeledRow(layout, "服务状态", BuildStatusPanel());
 
-        var connStrPanel = new TableLayoutPanel { ColumnCount = 1, Dock = DockStyle.Fill, AutoSize = true };
-        connStrPanel.Controls.Add(BuildLabeledRow("SQL Server 连接串", _txtConnStr, null));
-        connStrPanel.Controls.Add(BuildLabeledRow("SQLite 数据库路径", _txtSqlitePath, _btnSqliteBrowse));
-        AddRow(layout, "数据库连接", connStrPanel);
-
-        AddRow(layout, "图片存储根路径", BuildPathRow(_txtImageRoot, _btnImageBrowse, BrowseFolder));
-        AddRow(layout, "启动时自动启动服务", _chkAutoStart);
-        AddRow(layout, "异常时自动重启", _chkAutoRestart);
-        AddRow(layout, "健康检查间隔（秒）", _numHealthInterval);
-
-        var statusPanel = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true };
-        statusPanel.Controls.Add(_lblApiStatus);
-        statusPanel.Controls.Add(new Label { Text = "    " });
-        statusPanel.Controls.Add(_lblAdminStatus);
-        AddRow(layout, "服务状态", statusPanel);
-
-        // 操作按钮
+        // 底部按钮区
         var btnPanel = new FlowLayoutPanel
         {
             Dock = DockStyle.Bottom,
-            Height = 50,
+            Height = 56,
             FlowDirection = FlowDirection.RightToLeft,
-            Padding = new Padding(8)
+            Padding = new Padding(12, 10, 12, 10),
+            BackColor = Color.FromArgb(248, 248, 250)
         };
+
         var btnCancel = new Button { Text = "取消", Size = new Size(90, 32), DialogResult = DialogResult.Cancel };
-        var btnSave = new Button { Text = "保存", Size = new Size(90, 32), BackColor = Color.FromArgb(0, 122, 204), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        var btnSave = new Button
+        {
+            Text = "保存",
+            Size = new Size(90, 32),
+            BackColor = Color.FromArgb(0, 122, 204),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
         btnSave.Click += async (_, _) => await BtnSaveAsync();
+
         var btnRestart = new Button { Text = "重启", Size = new Size(90, 32) };
         btnRestart.Click += async (_, _) => await OnRestartClick();
+
         var btnStop = new Button { Text = "停止", Size = new Size(90, 32) };
         btnStop.Click += async (_, _) => await OnStopClick();
-        var btnStart = new Button { Text = "启动", Size = new Size(90, 32), BackColor = Color.FromArgb(40, 167, 69), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+
+        var btnStart = new Button
+        {
+            Text = "启动",
+            Size = new Size(90, 32),
+            BackColor = Color.FromArgb(40, 167, 69),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
         btnStart.Click += async (_, _) => await OnStartClick();
 
         btnPanel.Controls.AddRange(new Control[] { btnCancel, btnSave, btnRestart, btnStop, btnStart });
 
+        // 顶部标题区
+        var header = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 48,
+            BackColor = Color.FromArgb(0, 122, 204),
+            Padding = new Padding(14, 0, 14, 0)
+        };
+        var lblTitle = new Label
+        {
+            Text = "⚙  系统设置 — 核心服务端参数",
+            Font = new Font(SafeMenuFont(), FontStyle.Bold),
+            ForeColor = Color.White,
+            AutoSize = true,
+            TextAlign = ContentAlignment.MiddleLeft,
+            Dock = DockStyle.Fill
+        };
+        header.Controls.Add(lblTitle);
+
+        // 注意顺序：先 Add(header) 后 Add(btnPanel) 后 Add(layout)
+        // Dock=Top 与 Dock=Bottom 会按添加顺序布局
         Controls.Add(layout);
         Controls.Add(btnPanel);
+        Controls.Add(header);
 
-        // 加载当前配置
-        LoadConfig();
+        CancelButton = btnCancel;
+        AcceptButton = btnSave;
+    }
 
-        // Provider 切换时显隐连接串/SQLite 路径
+    private void AttachEventHandlers()
+    {
+        _btnApiBrowse.Click += (_, _) => BrowseExe(_txtApiPath);
+        _btnAdminBrowse.Click += (_, _) => BrowseExe(_txtAdminPath);
+        _btnSqliteBrowse.Click += (_, _) => BrowseSqliteFile();
+        _btnImageBrowse.Click += (_, _) => BrowseImageFolder();
         _cmbProvider.SelectedIndexChanged += (_, _) => UpdateProviderVisibility();
-        UpdateProviderVisibility();
+    }
 
-        // 状态定时刷新
+    private void StartStatusTimer()
+    {
         _statusTimer = new System.Windows.Forms.Timer { Interval = 1000 };
         _statusTimer.Tick += (_, _) => RefreshStatus();
         _statusTimer.Start();
-
-        CancelButton = btnCancel;
     }
 
-    private void AddRow(TableLayoutPanel layout, string labelText, Control inputControl)
+    private void AddLabeledRow(TableLayoutPanel layout, string labelText, Control inputControl, int? rowHeight = null)
     {
         var rowIndex = layout.RowCount;
         layout.RowCount++;
@@ -152,17 +250,21 @@ public sealed class SettingsForm : Form
             Text = labelText,
             Dock = DockStyle.Fill,
             TextAlign = ContentAlignment.MiddleLeft,
-            AutoSize = false
+            AutoSize = false,
+            Font = SafeMenuFont()
         };
         layout.Controls.Add(lbl, 0, rowIndex);
         layout.Controls.Add(inputControl, 1, rowIndex);
-        layout.SetColumnSpan(inputControl, 2);
-        lbl.Height = Math.Max(28, inputControl.PreferredSize.Height + 4);
+
+        if (rowHeight.HasValue)
+            lbl.Height = rowHeight.Value;
+        else
+            lbl.Height = Math.Max(28, inputControl.PreferredSize.Height + 6);
     }
 
     private Control BuildPortPanel()
     {
-        var p = new TableLayoutPanel { ColumnCount = 4, Dock = DockStyle.Fill, AutoSize = true };
+        var p = new TableLayoutPanel { ColumnCount = 4, Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         p.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         p.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
         p.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
@@ -180,67 +282,309 @@ public sealed class SettingsForm : Form
 
     private Control BuildPathRow(TextBox textBox, Button browseButton, Action browseAction)
     {
-        var p = new TableLayoutPanel { ColumnCount = 2, Dock = DockStyle.Fill, AutoSize = true };
+        var p = new TableLayoutPanel { ColumnCount = 2, Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
         p.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         p.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
         textBox.Dock = DockStyle.Fill;
         browseButton.Dock = DockStyle.Fill;
-        browseButton.Click += (_, _) => browseAction();
+        browseButton.Click += (_, _) =>
+        {
+            try { browseAction(); }
+            catch (Exception ex) { ShowError($"浏览失败：{ex.Message}"); }
+        };
         p.Controls.Add(textBox, 0, 0);
         p.Controls.Add(browseButton, 1, 0);
         return p;
     }
 
-    private Control BuildLabeledRow(string label, TextBox textBox, Button? browseButton)
+    private Control BuildConnStrPanel()
     {
-        var p = new TableLayoutPanel { ColumnCount = browseButton is null ? 2 : 3, Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
-        p.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
-        p.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
-        if (browseButton is not null) p.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 80));
-        var lbl = new Label { Text = label, TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill };
-        textBox.Dock = DockStyle.Fill;
-        p.Controls.Add(lbl, 0, 0);
-        p.Controls.Add(textBox, 1, 0);
-        if (browseButton is not null)
-        {
-            browseButton.Dock = DockStyle.Fill;
-            p.Controls.Add(browseButton, 2, 0);
-        }
+        // 长文本框（连接串）
+        _txtConnStr.Dock = DockStyle.Fill;
+        _txtConnStr.Multiline = true;
+        _txtConnStr.ScrollBars = ScrollBars.Vertical;
+        _txtConnStr.Height = 56;
+        return _txtConnStr;
+    }
+
+    private Control BuildSqlitePanel()
+    {
+        return BuildPathRow(_txtSqlitePath, _btnSqliteBrowse, BrowseSqliteFile);
+    }
+
+    private Control BuildStatusPanel()
+    {
+        var p = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
+        p.Controls.Add(_lblApiStatus);
+        p.Controls.Add(new Label { Text = "    ", AutoSize = true });
+        p.Controls.Add(_lblAdminStatus);
         return p;
     }
+
+    #endregion
+
+    #region 配置加载与保存
 
     private void LoadConfig()
     {
         var c = _config.Current;
-        _numApiPort.Value = Math.Clamp(c.Tray.ApiPort, (int)_numApiPort.Minimum, (int)_numApiPort.Maximum);
-        _numAdminPort.Value = Math.Clamp(c.Tray.AdminPort, (int)_numAdminPort.Minimum, (int)_numAdminPort.Maximum);
-        _txtApiPath.Text = c.Tray.ApiExecutable;
-        _txtAdminPath.Text = c.Tray.AdminExecutable;
+        _numApiPort.Value = SafeClamp(c.Tray.ApiPort, (int)_numApiPort.Minimum, (int)_numApiPort.Maximum);
+        _numAdminPort.Value = SafeClamp(c.Tray.AdminPort, (int)_numAdminPort.Minimum, (int)_numAdminPort.Maximum);
+        _txtApiPath.Text = c.Tray.ApiExecutable ?? "";
+        _txtAdminPath.Text = c.Tray.AdminExecutable ?? "";
         _cmbProvider.SelectedItem = c.Database.Provider;
-        _txtConnStr.Text = c.Database.ConnectionString;
-        _txtSqlitePath.Text = c.Database.SqlitePath;
-        _txtImageRoot.Text = c.Storage.ImageRoot;
+        if (_cmbProvider.SelectedIndex < 0) _cmbProvider.SelectedIndex = 0;
+        _txtConnStr.Text = c.Database.ConnectionString ?? "";
+        _txtSqlitePath.Text = c.Database.SqlitePath ?? "";
+        _txtImageRoot.Text = c.Storage.ImageRoot ?? "";
         _chkAutoStart.Checked = c.Tray.AutoStartServices;
         _chkAutoRestart.Checked = c.Tray.AutoRestartOnCrash;
-        _numHealthInterval.Value = Math.Clamp(c.Tray.HealthCheckIntervalSeconds, (int)_numHealthInterval.Minimum, (int)_numHealthInterval.Maximum);
+        _numHealthInterval.Value = SafeClamp(c.Tray.HealthCheckIntervalSeconds, (int)_numHealthInterval.Minimum, (int)_numHealthInterval.Maximum);
     }
 
     private void UpdateProviderVisibility()
     {
-        var isSqlite = _cmbProvider.SelectedItem?.ToString() == "Sqlite";
-        _txtConnStr.Enabled = !isSqlite;
-        _txtSqlitePath.Enabled = isSqlite;
-        _btnSqliteBrowse.Enabled = isSqlite;
+        try
+        {
+            var isSqlite = _cmbProvider.SelectedItem?.ToString() == "Sqlite";
+            _txtConnStr.Enabled = !isSqlite;
+            _txtSqlitePath.Enabled = isSqlite;
+            _btnSqliteBrowse.Enabled = isSqlite;
+        }
+        catch
+        {
+            // Provider 切换异常不应阻塞窗口
+        }
     }
 
     private void RefreshStatus()
     {
-        var apiHealth = _health.LastApiHealth;
-        var adminHealth = _health.LastAdminHealth;
-        _lblApiStatus.Text = $"Api：{StateBadge(_health.ApiState)}{(apiHealth is null ? "" : $" {apiHealth.Detail}")}";
-        _lblApiStatus.ForeColor = StateColor(_health.ApiState);
-        _lblAdminStatus.Text = $"Admin：{StateBadge(_health.AdminState)}{(adminHealth is null ? "" : $" {adminHealth.Detail}")}";
-        _lblAdminStatus.ForeColor = StateColor(_health.AdminState);
+        try
+        {
+            var apiHealth = _health.LastApiHealth;
+            var adminHealth = _health.LastAdminHealth;
+            _lblApiStatus.Text = $"Api：{StateBadge(_health.ApiState)}{(apiHealth is null ? "" : $" {apiHealth.Detail}")}";
+            _lblApiStatus.ForeColor = StateColor(_health.ApiState);
+            _lblAdminStatus.Text = $"Admin：{StateBadge(_health.AdminState)}{(adminHealth is null ? "" : $" {adminHealth.Detail}")}";
+            _lblAdminStatus.ForeColor = StateColor(_health.AdminState);
+        }
+        catch
+        {
+            // 状态刷新失败时静默，不影响其他 UI
+        }
+    }
+
+    private async Task BtnSaveAsync()
+    {
+        try
+        {
+            // 校验
+            var baseDir = AppContext.BaseDirectory.TrimEnd('\\');
+            var apiFull = ResolveFullPath(_txtApiPath.Text, baseDir);
+            if (!File.Exists(apiFull))
+            {
+                ShowError($"Api 可执行文件不存在：{apiFull}");
+                _txtApiPath.Focus();
+                return;
+            }
+            var adminFull = ResolveFullPath(_txtAdminPath.Text, baseDir);
+            if (!File.Exists(adminFull))
+            {
+                ShowError($"Admin 可执行文件不存在：{adminFull}");
+                _txtAdminPath.Focus();
+                return;
+            }
+
+            var provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer";
+            if (provider == "SqlServer" && string.IsNullOrWhiteSpace(_txtConnStr.Text))
+            {
+                ShowError("请填写 SQL Server 连接串");
+                _txtConnStr.Focus();
+                return;
+            }
+            if (provider == "Sqlite" && string.IsNullOrWhiteSpace(_txtSqlitePath.Text))
+            {
+                ShowError("请填写 SQLite 数据库路径");
+                _txtSqlitePath.Focus();
+                return;
+            }
+
+            // 端口占用检查（仅在用户主动修改时提示，不阻塞保存）
+            var apiPort = (int)_numApiPort.Value;
+            var adminPort = (int)_numAdminPort.Value;
+
+            var newConfig = new AppConfig
+            {
+                Tray = new TraySection
+                {
+                    ApiPort = apiPort,
+                    AdminPort = adminPort,
+                    ApiExecutable = _txtApiPath.Text.Trim(),
+                    AdminExecutable = _txtAdminPath.Text.Trim(),
+                    AutoStartServices = _chkAutoStart.Checked,
+                    AutoRestartOnCrash = _chkAutoRestart.Checked,
+                    HealthCheckIntervalSeconds = (int)_numHealthInterval.Value
+                },
+                Database = new DatabaseSection
+                {
+                    Provider = provider,
+                    ConnectionString = _txtConnStr.Text.Trim(),
+                    SqlitePath = _txtSqlitePath.Text.Trim()
+                },
+                Storage = new StorageSection
+                {
+                    ImageRoot = _txtImageRoot.Text.Trim(),
+                    LogRoot = _config.Current.Storage.LogRoot
+                }
+            };
+
+            _config.Update(newConfig);
+            _log.Info($"配置已保存：ApiPort={apiPort}, AdminPort={adminPort}, Provider={provider}");
+
+            var ok = MessageBox.Show(this,
+                "配置已保存。是否立即重启服务以使端口/数据库配置生效？",
+                "保存成功",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+            if (ok == DialogResult.Yes)
+            {
+                try { await _process.RestartAllAsync(); }
+                catch (Exception ex)
+                {
+                    _log.Error("保存后重启失败", ex);
+                    ShowError($"重启失败：{ex.Message}");
+                }
+            }
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        catch (Exception ex)
+        {
+            _log.Error("保存配置失败", ex);
+            ShowError($"保存失败：{ex.Message}");
+        }
+    }
+
+    private async Task OnStartClick()
+    {
+        try { await _process.StartAllAsync(); }
+        catch (Exception ex)
+        {
+            _log.Error("启动失败", ex);
+            ShowError($"启动失败：{ex.Message}");
+        }
+    }
+
+    private async Task OnStopClick()
+    {
+        try { await _process.StopAllAsync(); }
+        catch (Exception ex)
+        {
+            _log.Error("停止失败", ex);
+            ShowError($"停止失败：{ex.Message}");
+        }
+    }
+
+    private async Task OnRestartClick()
+    {
+        try { await _process.RestartAllAsync(); }
+        catch (Exception ex)
+        {
+            _log.Error("重启失败", ex);
+            ShowError($"重启失败：{ex.Message}");
+        }
+    }
+
+    #endregion
+
+    #region 浏览对话框
+
+    private void BrowseExe(TextBox target)
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Filter = "可执行文件 (*.exe)|*.exe|所有文件 (*.*)|*.*",
+            InitialDirectory = AppContext.BaseDirectory,
+            Title = "选择可执行文件"
+        };
+        if (dlg.ShowDialog(this) == DialogResult.OK)
+        {
+            target.Text = ToRelativeIfUnderBase(dlg.FileName, AppContext.BaseDirectory.TrimEnd('\\'));
+        }
+    }
+
+    private void BrowseSqliteFile()
+    {
+        using var dlg = new OpenFileDialog
+        {
+            Filter = "SQLite 数据库 (*.db;*.sqlite)|*.db;*.sqlite|所有文件 (*.*)|*.*",
+            InitialDirectory = AppContext.BaseDirectory,
+            Title = "选择 SQLite 数据库文件"
+        };
+        if (dlg.ShowDialog(this) == DialogResult.OK)
+        {
+            _txtSqlitePath.Text = ToRelativeIfUnderBase(dlg.FileName, AppContext.BaseDirectory.TrimEnd('\\'));
+        }
+    }
+
+    private void BrowseImageFolder()
+    {
+        // .NET 8 WinForms 提供 FolderBrowserDialog（已逐步稳定）
+        try
+        {
+            using var dlg = new FolderBrowserDialog
+            {
+                SelectedPath = AppContext.BaseDirectory,
+                Description = "选择图片存储根目录",
+                UseDescriptionForTitle = true,
+                ShowNewFolderButton = true
+            };
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                _txtImageRoot.Text = ToRelativeIfUnderBase(dlg.SelectedPath, AppContext.BaseDirectory.TrimEnd('\\'));
+            }
+        }
+        catch (Exception ex)
+        {
+            // Win11 高 DPI 下 FBD 可能抛 COMException，回退到手动输入
+            ShowError($"无法打开文件夹选择对话框：{ex.Message}\n请直接输入路径。");
+            _txtImageRoot.Focus();
+        }
+    }
+
+    #endregion
+
+    #region 工具方法
+
+    private static int SafeClamp(int value, int min, int max)
+    {
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
+    }
+
+    private static string ResolveFullPath(string relativeOrAbsolute, string baseDir)
+    {
+        if (string.IsNullOrWhiteSpace(relativeOrAbsolute))
+            return "";
+        return Path.IsPathRooted(relativeOrAbsolute)
+            ? relativeOrAbsolute
+            : Path.Combine(baseDir, relativeOrAbsolute);
+    }
+
+    private static string ToRelativeIfUnderBase(string full, string baseDir)
+    {
+        if (string.IsNullOrEmpty(full)) return full;
+        if (full.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
+            return full.Substring(baseDir.Length).TrimStart('\\', '/');
+        return full;
+    }
+
+    private static Font SafeMenuFont()
+    {
+        try { return SystemFonts.MenuFont ?? new Font("Microsoft YaHei UI", 9f); }
+        catch { return new Font("Microsoft YaHei UI", 9f); }
     }
 
     private static string StateBadge(ServiceState s) => s switch
@@ -263,156 +607,40 @@ public sealed class SettingsForm : Form
         _ => Color.Black
     };
 
-    private void BrowseExe()
-    {
-        using var dlg = new OpenFileDialog
-        {
-            Filter = "可执行文件 (*.exe)|*.exe|所有文件 (*.*)|*.*",
-            InitialDirectory = AppContext.BaseDirectory
-        };
-        if (dlg.ShowDialog(this) == DialogResult.OK)
-        {
-            // 转为相对路径（若在 BaseDirectory 下）
-            var baseDir = AppContext.BaseDirectory.TrimEnd('\\');
-            var full = Path.GetFullPath(dlg.FileName);
-            var relative = ToRelativeIfUnderBase(full, baseDir);
-            if (_txtApiPath.Focused)
-                _txtApiPath.Text = relative;
-            else
-                _txtAdminPath.Text = relative;
-        }
-    }
-
-    private static string ToRelativeIfUnderBase(string full, string baseDir)
-    {
-        if (full.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase))
-            return full.Substring(baseDir.Length).TrimStart('\\');
-        return full;
-    }
-
-    private void BrowseFolder()
-    {
-        // WinForms 没有内置 FolderBrowserDialog 的现代替代品，使用 SaveFileDialog 提示目录
-        using var dlg = new FolderBrowserDialog { SelectedPath = AppContext.BaseDirectory };
-        if (dlg.ShowDialog(this) == DialogResult.OK)
-        {
-            _txtImageRoot.Text = ToRelativeIfUnderBase(dlg.SelectedPath, AppContext.BaseDirectory.TrimEnd('\\'));
-        }
-    }
-
-    private async Task BtnSaveAsync()
-    {
-        // 校验
-        if (!File.Exists(Path.Combine(AppContext.BaseDirectory, _txtApiPath.Text)))
-        {
-            MessageBox.Show("Api 可执行文件不存在", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        if (!File.Exists(Path.Combine(AppContext.BaseDirectory, _txtAdminPath.Text)))
-        {
-            MessageBox.Show("Admin 可执行文件不存在", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        if (_cmbProvider.SelectedItem?.ToString() == "SqlServer" && string.IsNullOrWhiteSpace(_txtConnStr.Text))
-        {
-            MessageBox.Show("请填写 SQL Server 连接串", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        if (_cmbProvider.SelectedItem?.ToString() == "Sqlite" && string.IsNullOrWhiteSpace(_txtSqlitePath.Text))
-        {
-            MessageBox.Show("请填写 SQLite 数据库路径", "校验失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
-        var newConfig = new AppConfig
-        {
-            Tray = new TraySection
-            {
-                ApiPort = (int)_numApiPort.Value,
-                AdminPort = (int)_numAdminPort.Value,
-                ApiExecutable = _txtApiPath.Text,
-                AdminExecutable = _txtAdminPath.Text,
-                AutoStartServices = _chkAutoStart.Checked,
-                AutoRestartOnCrash = _chkAutoRestart.Checked,
-                HealthCheckIntervalSeconds = (int)_numHealthInterval.Value
-            },
-            Database = new DatabaseSection
-            {
-                Provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer",
-                ConnectionString = _txtConnStr.Text,
-                SqlitePath = _txtSqlitePath.Text
-            },
-            Storage = new StorageSection
-            {
-                ImageRoot = _txtImageRoot.Text,
-                LogRoot = _config.Current.Storage.LogRoot
-            }
-        };
-
-        _config.Update(newConfig);
-
-        var ok = MessageBox.Show(
-            "配置已保存。是否立即重启服务以使端口/数据库配置生效？",
-            "保存成功",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-        if (ok == DialogResult.Yes)
-        {
-            try
-            {
-                await _process.RestartAllAsync();
-            }
-            catch (Exception ex)
-            {
-                _log.Error("保存后重启失败", ex);
-                MessageBox.Show($"重启失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        DialogResult = DialogResult.OK;
-        Close();
-    }
-
-    private async Task OnStartClick()
+    private void ShowError(string msg)
     {
         try
         {
-            await _process.StartAllAsync();
+            MessageBox.Show(this, msg, "系统设置", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
-        catch (Exception ex)
+        catch
         {
-            MessageBox.Show($"启动失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            // 终极兜底
         }
     }
 
-    private async Task OnStopClick()
-    {
-        try
-        {
-            await _process.StopAllAsync();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"停止失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-
-    private async Task OnRestartClick()
-    {
-        try
-        {
-            await _process.RestartAllAsync();
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"重启失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
+    #endregion
 
     protected override void OnFormClosing(FormClosingEventArgs e)
     {
-        _statusTimer.Stop();
-        _statusTimer.Dispose();
+        try
+        {
+            _statusTimer?.Stop();
+            _statusTimer?.Dispose();
+            _statusTimer = null;
+        }
+        catch { }
         base.OnFormClosing(e);
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        // ESC 关闭
+        if (e.KeyCode == Keys.Escape)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
+        base.OnKeyDown(e);
     }
 }

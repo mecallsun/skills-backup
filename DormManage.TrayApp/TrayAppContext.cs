@@ -1,3 +1,4 @@
+using System.Reflection;
 using DormManage.TrayApp.Models;
 using DormManage.TrayApp.Services;
 using DormManage.Shared.Services;
@@ -7,10 +8,20 @@ namespace DormManage.TrayApp;
 /// <summary>
 /// 托盘应用上下文：管理 NotifyIcon + ProcessManager + HealthChecker + IPC Server 的生命周期。
 ///
+/// 【v2.13.4 修复】右键 → 设置 报 "UI异常，创建窗口出错"
+/// 根因：原版继承 <see cref="ApplicationContext"/>，无主 Form；
+///       <see cref="Form.ShowDialog()"/> 在无 Owner 时 WinForms 内部尝试创建隐式 Owner 窗口，
+///       在部分 DPI / 主题 / 启动时序下 CreateWindowEx 失败。
+/// 修复：内嵌一个不可见 <see cref="OwnerForm"/>（Opacity=0, ShowInTaskbar=false, FormBorderStyle=None, Size=0,0），
+///       并设为 <see cref="ApplicationContext.MainForm"/>；
+///       所有 ShowDialog 均传入 _ownerForm 作为 Owner；
+///       并给所有弹窗路径加 try-catch 保护，避免一次失败拖死右键菜单。
+///
 /// 资源释放顺序（Dispose）：
 /// 1. 停止 IPC Server（不再接收命令）
 /// 2. 停止 HealthChecker 探测循环
 /// 3. 释放 NotifyIcon
+/// 4. 销毁 OwnerForm（释放窗口句柄）
 /// </summary>
 public sealed class TrayAppContext : ApplicationContext, IDisposable
 {
@@ -21,12 +32,25 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     private readonly NotifyIconManager _notifyIcon;
     private readonly IpcServer? _ipcServer;
 
+    /// <summary>v2.13.4 新增：不可见主窗体，作为所有弹窗的 Owner</summary>
+    private readonly Form _ownerForm;
+
     public TrayAppContext(ConfigService config, LogService log)
     {
         _config = config;
         _log = log;
+
+        // 1) 关键：先创建不可见 OwnerForm（不 Show，仅作为窗口句柄宿主）
+        _ownerForm = CreateOwnerForm();
+        // 设为主 Form，使 ApplicationContext 知道存在一个窗口宿主
+        MainForm = _ownerForm;
+
+        // 2) 创建健康检查与进程管理器（依赖 ConfigService / LogService）
+        // 注：ProcessManager ↔ HealthChecker 是循环依赖，通过 lambda 闭包延迟解析
+#pragma warning disable CS8602 // lambda 调用时 _process 已赋值
         _health = new HealthChecker(log, onCrashed: () => _process.HandleCrashAsync());
         _process = new ProcessManager(config, log, _health);
+#pragma warning restore CS8602
 
         _process.ServiceStateChanged += OnServiceStateChanged;
         _health.ServiceStateChanged += OnServiceStateChanged;
@@ -35,7 +59,9 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             config.Current.Tray.HealthCheckIntervalSeconds,
             GetCurrentPorts);
 
+        // 3) 创建托盘图标 + 右键菜单（关联 _ownerForm 作为 ContextMenuStrip 宿主）
         _notifyIcon = new NotifyIconManager(
+            owner: _ownerForm,
             onOpenAdmin: OpenAdminBrowser,
             onOpenApi: OpenApiBrowser,
             onSettings: ShowSettings,
@@ -45,16 +71,20 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             onExit: async () =>
             {
                 _log.Info("用户请求退出");
-                var ok = MessageBox.Show(
-                    "确定要停止所有服务并退出托盘吗？",
-                    "退出确认",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                var ok = SafeShow(
+                    () => MessageBox.Show(
+                        _ownerForm,
+                        "确定要停止所有服务并退出托盘吗？",
+                        "退出确认",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question),
+                    fallbackText: "确定要停止所有服务并退出托盘吗？");
                 if (ok != DialogResult.Yes) return;
                 await ExitAsync();
             },
             onToggleAutoStart: ToggleAutoStart);
 
+        // 4) 配置驱动：托盘启动后自动拉起 Api + Admin
         if (config.Current.Tray.AutoStartServices)
         {
             _ = Task.Run(async () =>
@@ -70,10 +100,39 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             });
         }
 
-        // 启动 IPC Server（接收 Web Admin 命令：ping/status/start/stop/restart）
+        // 5) 启动 IPC Server（接收 Web Admin 命令：ping/status/start/stop/restart）
         _ipcServer = new IpcServer(ServiceIpc.DefaultPort, HandleIpcCommand);
         _ipcServer.Start();
         _log.Info($"IPC Server 已启动，监听 127.0.0.1:{ServiceIpc.DefaultPort}");
+
+        _log.Info("托盘上下文初始化完成");
+    }
+
+    /// <summary>
+    /// 创建不可见 OwnerForm —— 仅作为窗口句柄宿主，不显示、不接收输入、不在任务栏显示。
+    /// </summary>
+    private static Form CreateOwnerForm()
+    {
+        var f = new Form
+        {
+            Name = "TrayAppOwnerForm",
+            Text = "DormManage.TrayApp",
+            ShowInTaskbar = false,
+            FormBorderStyle = FormBorderStyle.None,
+            Opacity = 0d,
+            Size = new Size(0, 0),
+            StartPosition = FormStartPosition.Manual,
+            Location = new Point(-32000, -32000), // 屏幕外
+            WindowState = FormWindowState.Normal,
+            MinimizeBox = false,
+            MaximizeBox = false,
+            ControlBox = false,
+            Enabled = false   // 禁用所有输入，避免被意外聚焦
+        };
+        // 关键：必须创建窗口句柄（ShowInTaskbar=false 不会自动创建 Handle）
+        // 通过访问 Handle 强制创建，但不 Show
+        _ = f.Handle;
+        return f;
     }
 
     private (int ApiPort, int AdminPort) GetCurrentPorts()
@@ -101,7 +160,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                     {
                         Success = true,
                         Message = "pong",
-                        Data = new { version = "v2.13.3" }
+                        Data = new { version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.4" }
                     });
                     break;
 
@@ -220,18 +279,48 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         }
     }
 
+    /// <summary>
+    /// 打开系统设置窗口（按需求 57 §3.2）
+    /// v2.13.4 修复：用 _ownerForm 作 Owner + 整体 try-catch 保护
+    /// </summary>
     private void ShowSettings()
     {
-        using var form = new Forms.SettingsForm(_config, _log, _process, _health);
-        form.ShowDialog();
-        var c = _config.Current;
-        _log.Info($"配置刷新：ApiPort={c.Tray.ApiPort}, AdminPort={c.Tray.AdminPort}");
+        try
+        {
+            _log.Info("用户请求打开系统设置");
+            using var form = new Forms.SettingsForm(_config, _log, _process, _health);
+            // 关键修复：传入 _ownerForm 作 Owner，避免 WinForms 内部隐式创建失败
+            var result = form.ShowDialog(_ownerForm);
+
+            if (result == DialogResult.OK)
+            {
+                var c = _config.Current;
+                _log.Info($"配置已保存：ApiPort={c.Tray.ApiPort}, AdminPort={c.Tray.AdminPort}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error("打开系统设置窗口失败", ex);
+            MessageBox.Show(_ownerForm,
+                $"打开系统设置失败：{ex.Message}\n\n请查看日志 logs/tray-{DateTime.Now:yyyyMMdd}.log",
+                "系统设置",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
     }
 
     private void ShowAbout()
     {
-        using var form = new Forms.AboutForm();
-        form.ShowDialog();
+        try
+        {
+            using var form = new Forms.AboutForm();
+            form.ShowDialog(_ownerForm);
+        }
+        catch (Exception ex)
+        {
+            _log.Error("打开关于窗口失败", ex);
+            MessageBox.Show(_ownerForm, $"打开关于窗口失败：{ex.Message}", "关于", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void OpenLogsFolder()
@@ -252,7 +341,8 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"无法打开日志目录：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            _log.Error("打开日志目录失败", ex);
+            MessageBox.Show(_ownerForm, $"无法打开日志目录：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 
@@ -268,9 +358,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         }
         finally
         {
-            _ipcServer?.Dispose();
-            _health.Dispose();
-            _notifyIcon.Hide();
+            Dispose();
             Application.Exit();
         }
     }
@@ -288,7 +376,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 if (mgr.Disable())
                 {
                     _notifyIcon.RefreshAutoStartStatus(false);
-                    MessageBox.Show("已取消开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(_ownerForm, "已取消开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             else
@@ -296,27 +384,59 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 if (mgr.Enable())
                 {
                     _notifyIcon.RefreshAutoStartStatus(true);
-                    MessageBox.Show("已设置开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(_ownerForm, "已设置开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    MessageBox.Show("设置失败：请以管理员权限运行或检查注册表权限", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show(_ownerForm, "设置失败：请以管理员权限运行或检查注册表权限", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
             }
         }
         catch (Exception ex)
         {
             _log.Error("切换自启动异常", ex);
-            MessageBox.Show($"操作失败：{ex.Message}", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(_ownerForm, $"操作失败：{ex.Message}", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    /// <summary>
+    /// 包装 MessageBox.Show 调用，避免 CreateWindowEx 失败导致整个回调挂掉。
+    /// 优先尝试带 Owner 的 Show；若失败则回退到无 Owner 的 Show。
+    /// </summary>
+    private DialogResult SafeShow(Func<DialogResult> showWithOwner, string fallbackText)
+    {
+        try
+        {
+            return showWithOwner();
+        }
+        catch
+        {
+            try
+            {
+                return MessageBox.Show(fallbackText, "退出确认", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            }
+            catch
+            {
+                // 兜底：默认 No（保守，不退出）
+                return DialogResult.No;
+            }
         }
     }
 
     public new void Dispose()
     {
-        try { _ipcServer?.Dispose(); } catch { }
-        try { _health.Dispose(); } catch { }
-        try { _notifyIcon.Dispose(); } catch { }
-        base.Dispose();
+        try { _ipcServer?.Dispose(); } catch (Exception ex) { _log.Warn($"IPC 释放异常：{ex.Message}"); }
+        try { _health.Dispose(); } catch (Exception ex) { _log.Warn($"Health 释放异常：{ex.Message}"); }
+        try { _notifyIcon.Dispose(); } catch (Exception ex) { _log.Warn($"NotifyIcon 释放异常：{ex.Message}"); }
+        try
+        {
+            if (!_ownerForm.IsDisposed)
+            {
+                _ownerForm.Hide();
+                _ownerForm.Dispose();
+            }
+        }
+        catch (Exception ex) { _log.Warn($"OwnerForm 释放异常：{ex.Message}"); }
         GC.SuppressFinalize(this);
     }
 }
