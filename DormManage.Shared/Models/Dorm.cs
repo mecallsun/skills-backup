@@ -59,6 +59,14 @@ public class Dorm : BaseEntity
     public int RoomCount { get; set; } = 1;
 
     /// <summary>
+    /// 床位号集合（P2-4 新增）
+    /// 格式：逗号分隔字符串，例如 "1,2,3,4" 表示有 4 个床位，编号 1~4
+    /// Booking 创建时必须从中选择；避免人工误选
+    /// </summary>
+    [MaxLength(100)]
+    public string? BedNumbers { get; set; }
+
+    /// <summary>
     /// 备注
     /// </summary>
     [MaxLength(500)]
