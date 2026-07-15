@@ -94,6 +94,7 @@ public class DormDbContext : DbContext
     public DbSet<MeterImage> MeterImages { get; set; } = null!;
     public DbSet<SysConfig> SysConfigs { get; set; } = null!;
     public DbSet<SysUserFilterCache> SysUserFilterCaches { get; set; } = null!;
+    public DbSet<AppVersion> AppVersions { get; set; } = null!;
     public DbSet<SysOpLog> SysOpLogs { get; set; } = null!;
     public DbSet<SysSystemIntegration> SysSystemIntegrations { get; set; } = null!;
 
