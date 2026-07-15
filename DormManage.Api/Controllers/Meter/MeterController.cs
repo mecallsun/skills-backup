@@ -442,7 +442,7 @@ public class MeterController : ControllerBase
             .ToListAsync();
 
         // 生成 CSV (Excel 可打开)
-        var sb = new System.Text.StringBuilder();
+        var sb = new global::System.Text.StringBuilder();
         sb.AppendLine("序号,宿舍号,抄表月份,冷水(m³),热水(m³),电(度),操作员,状态,备注");
         var index = 1;
         foreach (var r in records)
@@ -451,8 +451,8 @@ public class MeterController : ControllerBase
             index++;
         }
 
-        var bytes = System.Text.Encoding.UTF8.GetPreamble()
-            .Concat(System.Text.Encoding.UTF8.GetBytes(sb.ToString()))
+        var bytes = global::System.Text.Encoding.UTF8.GetPreamble()
+            .Concat(global::System.Text.Encoding.UTF8.GetBytes(sb.ToString()))
             .ToArray();
 
         var fileName = $"抄表记录_{DateTime.Now:yyyyMMddHHmmss}.csv";

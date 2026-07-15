@@ -174,7 +174,7 @@ public class PdaController : ControllerBase
         if (!fullPath.StartsWith(_imageRoot, StringComparison.OrdinalIgnoreCase))
             return BadRequest("非法路径");
 
-        if (!System.IO.File.Exists(fullPath))
+        if (!global::System.IO.File.Exists(fullPath))
             return NotFound();
 
         var ext = Path.GetExtension(fullPath).ToLowerInvariant();
