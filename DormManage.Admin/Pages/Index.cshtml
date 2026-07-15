@@ -11,9 +11,28 @@
         <h2 class="mb-0">
             <i class="bi bi-speedometer2"></i> 数据看板
         </h2>
-        <small class="text-muted">
-            <i class="bi bi-calendar3"></i> @DateTime.Now.ToString("yyyy年MM月dd日 dddd")
-        </small>
+        <div class="d-flex align-items-center gap-2">
+            <form method="get" class="d-flex align-items-center gap-2">
+                <label class="text-muted small mb-0">参考月份：</label>
+                <select name="month" class="form-select form-select-sm" style="width:auto;" onchange="this.form.submit()">
+                    @foreach (var m in Model.AvailableMonths)
+                    {
+                        if (m == Model.CurrentMonth)
+                        {
+                            <option value="@m" selected>@m</option>
+                        }
+                        else
+                        {
+                            <option value="@m">@m</option>
+                        }
+                    }
+                </select>
+                <noscript><button type="submit" class="btn btn-sm btn-primary">切换</button></noscript>
+            </form>
+            <small class="text-muted">
+                <i class="bi bi-calendar3"></i> @DateTime.Now.ToString("yyyy年MM月dd日")
+            </small>
+        </div>
     </div>
 
     <!-- 第一行：4 个 KPI 卡片 -->
