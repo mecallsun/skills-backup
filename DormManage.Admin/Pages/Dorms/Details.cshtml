@@ -1,4 +1,4 @@
-@page
+@page "{id:int}"
 @model DormManage.Admin.Pages.Dorms.DetailsModel
 @{
     ViewData["Title"] = "宿舍详情";
@@ -171,6 +171,8 @@
                                             <th>姓名</th>
                                             <th>部门</th>
                                             <th>手机</th>
+                                            <th>考勤班次</th>
+                                            <th>床号</th>
                                             <th>入住日期</th>
                                         </tr>
                                     </thead>
@@ -178,12 +180,37 @@
                                         @for (int i = 0; i < Model.CurrentResidents.Count; i++)
                                         {
                                             var resident = Model.CurrentResidents[i];
+                                            // v2.12.40 考勤班次从 SysEmployee.AttendanceTypeId → AttendanceType.Name 关联引用
+                                            var attendance = Model.EmployeeAttendanceMap.ContainsKey(resident.EmployeeId)
+                                                ? Model.EmployeeAttendanceMap[resident.EmployeeId]
+                                                : null;
                                             <tr>
                                                 <td class="text-center text-muted">@(i + 1)</td>
                                                 <td><strong>@resident.EmployeeCode</strong></td>
                                                 <td>@resident.EmployeeName</td>
                                                 <td>@(resident.Department ?? "-")</td>
                                                 <td>@(resident.Phone ?? "-")</td>
+                                                <td>
+                                                    @if (attendance != null)
+                                                    {
+                                                        <span class="badge @attendance.BadgeClass">@attendance.Name</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @* v2.12.40 床号列 - FK 关联引用 SysEmployee.BedNo（与人员清单床号列同步）*@
+                                                    @if (resident.BedNo.HasValue)
+                                                    {
+                                                        <span class="badge bg-info text-dark">床位 @resident.BedNo</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
                                                 <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
                                             </tr>
                                         }
@@ -247,7 +274,7 @@
 
         function renderHistory() {
             // 从后端传入的历史数据渲染时间线
-            const history = @(Html.Raw(Json.Serialize(Model.HistoryRecords.Where(r => r.Type != 1 || r.Status != 2).OrderByDescending(r => r.BookingDate).Take(50))));
+            const history = @(Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.HistoryRecords.Where(r => r.Type != 1 || r.Status != 2).OrderByDescending(r => r.BookingDate).Take(50), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase })));
             document.getElementById('historyCount').textContent = history.length;
             const timeline = document.getElementById('historyTimeline');
 

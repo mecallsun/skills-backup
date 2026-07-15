@@ -64,6 +64,14 @@
                                 onclick="setActiveTab('users')">
                             <i class="bi bi-people"></i> 用户与角色
                         </button>
+                        <a class="nav-link @(Model.ActiveTab == "users" ? "" : "") text-start"
+                           href="/Settings/User">
+                            <i class="bi bi-person-badge"></i> 用户管理
+                        </a>
+                        <a class="nav-link @(Model.ActiveTab == "users" ? "" : "") text-start"
+                           href="/Settings/Role">
+                            <i class="bi bi-shield-lock"></i> 角色管理
+                        </a>
                         <button class="nav-link @(Model.ActiveTab == "backup" ? "active" : "") text-start"
                                 data-bs-toggle="pill" data-bs-target="#tab-backup"
                                 onclick="setActiveTab('backup')">
@@ -329,13 +337,13 @@
                                         <tr>
                                             <td class="text-start">@perm.Module</td>
                                             <td>
-                                                @if (perm.AdminAccess) <text>✅</text> else <text>❌</text>
+                                                @if (perm.AdminAccess) { <text>✅</text> } else { <text>❌</text> }
                                             </td>
                                             <td>
-                                                @if (perm.FinanceAccess) <text>✅</text> else <text>❌</text>
+                                                @if (perm.FinanceAccess) { <text>✅</text> } else { <text>❌</text> }
                                             </td>
                                             <td>
-                                                @if (perm.PdaAccess) <text>✅</text> else <text>❌</text>
+                                                @if (perm.PdaAccess) { <text>✅</text> } else { <text>❌</text> }
                                             </td>
                                         </tr>
                                     }
@@ -445,11 +453,11 @@
                                                         </button>
                                                     </td>
                                                     <td class="text-center">
-                                                        @if (integration.LastTestResult)
+                                                        @if (integration.LastTestResult == true)
                                                         {
                                                             <span class="badge bg-success">正常</span>
                                                         }
-                                                        else if (integration.LastTestTime.HasValue)
+                                                        else if (integration.LastTestResult == false)
                                                         {
                                                             <span class="badge bg-danger">失败</span>
                                                         }

@@ -117,9 +117,17 @@ public class IndexModel : PageModel
                 Capacity = d.Capacity,
                 Gender = d.Gender,
                 CurrentCount = _db.DormBookings.Count(b => b.DormCode == d.DormCode && b.Status == 2),
-                IsActive = d.IsActive
+                IsActive = d.IsActive,
+                // v2.12.41：是否存在办理登记历史（包括已退房/已取消/预约/在宿）
+                HasBookingHistory = _db.DormBookings.Any(b => b.DormCode == d.DormCode)
             })
             .ToListAsync();
+
+        // v2.12.41 计算 CanDelete：仅当当前无在宿人员 且 无办理登记历史时才允许删除
+        foreach (var item in items)
+        {
+            item.CanDelete = (item.CurrentCount == 0 && !item.HasBookingHistory);
+        }
 
         Result = new PagedResult<DormDto>
         {
@@ -145,4 +153,12 @@ public class DormDto
     public int Gender { get; set; }
     public int CurrentCount { get; set; }
     public bool IsActive { get; set; }
+    /// <summary>
+    /// 是否存在办理登记历史（v2.12.41 新增）：包括已退房/已取消/预约/在宿
+    /// </summary>
+    public bool HasBookingHistory { get; set; }
+    /// <summary>
+    /// 是否可删除（v2.12.41 新增）：仅当 CurrentCount=0 且 HasBookingHistory=false 时为 true
+    /// </summary>
+    public bool CanDelete { get; set; }
 }

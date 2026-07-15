@@ -5,31 +5,45 @@
     Layout = "_Layout";
 }
 
+@section Styles {
+    <style>
+        /* v2.12.37 紧凑一屏布局：去掉规范信息，减小行间距 */
+        .form-section { margin-bottom: 0.6rem; }
+        .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+        .form-field { margin-bottom: 0.5rem; }
+        .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        .form-label .required { color: #dc3545; margin-left: 2px; }
+        .form-control, .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+        .form-readonly { background: #f5f7fa; cursor: not-allowed; }
+    </style>
+}
+
 <div class="container-fluid">
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <!-- v2.12.37 紧凑页头：去掉"返回列表"按钮（页面标题侧边） -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="mb-0">
-            <i class="bi bi-building"></i> 新增宿舍
+            <i class="bi bi-building text-success"></i> 新增宿舍
         </h2>
-        <div>
-            <a href="/Dorms" class="btn btn-outline-secondary">
-                <i class="bi bi-arrow-left"></i> 返回列表
-            </a>
-        </div>
+        <a href="/Dorms" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
     </div>
 
-    <!-- 新增表单 -->
-    <div class="card">
-        <div class="card-body">
-            <form method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">宿舍号 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" asp-for="Dorm.DormCode" required maxlength="20" placeholder="如 D-001">
+    <!-- v2.12.37 新增表单（紧凑一屏布局） -->
+    <form method="post">
+        <!-- 区块 1：基本信息 -->
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="form-section-title">基本信息</div>
+                <div class="row g-2">
+                    <div class="col-md-6 form-field">
+                        <label class="form-label">宿舍号<span class="required">*</span></label>
+                        <input type="text" class="form-control" asp-for="Dorm.DormCode" required maxlength="20" placeholder="如 D-001" oninput="checkDormCodeDup()" onblur="checkDormCodeDup()">
+                        <small class="d-block" id="dupDormCodeWarn" style="display:none; font-size: 0.8rem;"></small>
                         <span class="text-danger small" asp-validation-for="Dorm.DormCode"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">楼栋 <span class="text-danger">*</span></label>
+                    <div class="col-md-6 form-field">
+                        <label class="form-label">楼栋<span class="required">*</span></label>
                         <select class="form-select" asp-for="Dorm.BuildingId" required>
                             <option value="">请选择楼栋</option>
                             @foreach (var item in Model.Buildings)
@@ -39,8 +53,8 @@
                         </select>
                         <span class="text-danger small" asp-validation-for="Dorm.BuildingId"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">楼层 <span class="text-danger">*</span></label>
+                    <div class="col-md-6 form-field">
+                        <label class="form-label">楼层<span class="required">*</span></label>
                         <select class="form-select" asp-for="Dorm.FloorId" required>
                             <option value="">请选择楼层</option>
                             @foreach (var item in Model.Floors)
@@ -50,8 +64,8 @@
                         </select>
                         <span class="text-danger small" asp-validation-for="Dorm.FloorId"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">地址 <span class="text-danger">*</span></label>
+                    <div class="col-md-6 form-field">
+                        <label class="form-label">地址<span class="required">*</span></label>
                         <select class="form-select" asp-for="Dorm.AddressId" required>
                             <option value="">请选择地址</option>
                             @foreach (var item in Model.Addresses)
@@ -61,44 +75,122 @@
                         </select>
                         <span class="text-danger small" asp-validation-for="Dorm.AddressId"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">容量（人） <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" asp-for="Dorm.Capacity" required min="1" max="20" value="4">
+                </div>
+            </div>
+        </div>
+
+        <!-- 区块 2：容量配置（床位数锁定同步） -->
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="form-section-title">容量配置</div>
+                <div class="row g-2">
+                    <div class="col-md-4 form-field">
+                        <label class="form-label">房间数<span class="required">*</span></label>
+                        <input type="number" class="form-control" asp-for="Dorm.RoomCount" required min="1" max="10" value="1">
+                        <span class="text-danger small" asp-validation-for="Dorm.RoomCount"></span>
+                    </div>
+                    <div class="col-md-4 form-field">
+                        <label class="form-label">容量（人）<span class="required">*</span></label>
+                        <input type="number" id="inputCapacity" class="form-control" asp-for="Dorm.Capacity" required min="1" max="40" value="4" oninput="syncBedCount()">
                         <span class="text-danger small" asp-validation-for="Dorm.Capacity"></span>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">性别 <span class="text-danger">*</span></label>
+                    <div class="col-md-4 form-field">
+                        <label class="form-label">床位数<span class="required">*</span></label>
+                        <input type="number" id="inputBedCount" class="form-control form-readonly" value="4" readonly>
+                        <small class="text-muted" style="font-size:0.75rem;">床位号由容量自动生成（1..容量）</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 区块 3：其他 -->
+        <div class="card mb-2">
+            <div class="card-body py-2">
+                <div class="form-section-title">其他</div>
+                <div class="row g-2">
+                    <div class="col-md-6 form-field">
+                        <label class="form-label">性别<span class="required">*</span></label>
                         <select class="form-select" asp-for="Dorm.Gender" required>
                             <option value="1">男</option>
                             <option value="2">女</option>
                         </select>
                         <span class="text-danger small" asp-validation-for="Dorm.Gender"></span>
                     </div>
-                    <div class="col-md-12">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" asp-for="Dorm.Remark" rows="3" maxlength="500" placeholder="可选"></textarea>
-                    </div>
-                    <div class="col-md-12">
-                        <div class="form-check">
+                    <div class="col-md-6 form-field d-flex align-items-end">
+                        <div class="form-check pb-2">
                             <input type="checkbox" class="form-check-input" asp-for="Dorm.IsActive" checked>
                             <label class="form-check-label" for="Dorm_IsActive">启用该宿舍</label>
                         </div>
                     </div>
+                    <div class="col-md-12 form-field">
+                        <label class="form-label">备注</label>
+                        <textarea class="form-control" asp-for="Dorm.Remark" rows="2" maxlength="500" placeholder="可选"></textarea>
+                        <span class="text-danger small" asp-validation-for="Dorm.Remark"></span>
+                    </div>
                 </div>
-
-                <hr class="my-4">
-
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="/Dorms" class="btn btn-outline-secondary">取消</a>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-check-lg"></i> 保存
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+
+        <!-- 操作按钮 -->
+        <div class="d-flex justify-content-end gap-2">
+            <a href="/Dorms" class="btn btn-outline-secondary">取消</a>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> 保存
+            </button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // v2.12.37 床位数锁定同步（容量变化时自动更新床位数）
+        function syncBedCount() {
+            var cap = parseInt(document.getElementById('inputCapacity').value) || 0;
+            document.getElementById('inputBedCount').value = cap;
+        }
+        // v2.12.37 房号重复实时校验（动态严谨校验：失败红色 / 通过绿色 + 锁定提交按钮）
+        var dormDupCheckTimer = null;
+        function checkDormCodeDup() {
+            var code = document.querySelector('input[name="Dorm.DormCode"]').value.trim();
+            var warn = document.getElementById('dupDormCodeWarn');
+            var submitBtn = document.querySelector('button[type="submit"]');
+            if (!code) {
+                // 空值时不显示任何提示
+                warn.style.display = 'none';
+                warn.className = 'd-block';
+                warn.innerHTML = '';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+            // 通过 AJAX 调用后端校验（仅展示前端校验逻辑，实际以后端返回为准）
+            clearTimeout(dormDupCheckTimer);
+            dormDupCheckTimer = setTimeout(function() {
+                fetch('/Dorms?handler=CheckDormCode&code=' + encodeURIComponent(code))
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res && res.exists) {
+                            // 校验失败：红色提示 + 锁定提交按钮
+                            warn.innerHTML = '<i class="bi bi-x-circle-fill"></i> 房号 "' + code + '" 已存在，禁止创建重复房号';
+                            warn.className = 'text-danger d-block';
+                            warn.style.fontSize = '0.8rem';
+                            warn.style.display = 'block';
+                            if (submitBtn) submitBtn.disabled = true;
+                        } else {
+                            // 校验通过：绿色提示 + 解锁提交按钮
+                            warn.innerHTML = '<i class="bi bi-check-circle-fill"></i> 校验通过！这是新房号，请填写完整资料！';
+                            warn.className = 'text-success d-block';
+                            warn.style.fontSize = '0.8rem';
+                            warn.style.display = 'block';
+                            if (submitBtn) submitBtn.disabled = false;
+                        }
+                    })
+                    .catch(() => { warn.style.display = 'none'; if (submitBtn) submitBtn.disabled = false; });
+            }, 300); // 300ms 防抖
+        }
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            syncBedCount();
+        });
+    </script>
 }

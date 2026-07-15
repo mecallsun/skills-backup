@@ -54,6 +54,7 @@ public class EditModel : PageModel
             FloorId = dorm.FloorId,
             AddressId = dorm.AddressId,
             Capacity = dorm.Capacity,
+            RoomCount = dorm.RoomCount,
             Gender = dorm.Gender,
             Remark = dorm.Remark,
             IsActive = dorm.IsActive
@@ -88,6 +89,7 @@ public class EditModel : PageModel
         dorm.AddressId = Dorm.AddressId;
         dorm.AddressText = address?.AddressText ?? "";
         dorm.Capacity = Dorm.Capacity;
+        dorm.RoomCount = Dorm.RoomCount;
         dorm.Gender = Dorm.Gender;
         dorm.Remark = Dorm.Remark;
         dorm.IsActive = Dorm.IsActive;
@@ -127,6 +129,8 @@ public class DormEditDto
     public int AddressId { get; set; }
 
     public int Capacity { get; set; } = 4;
+
+    public int RoomCount { get; set; } = 1;  // v2.12.38 新增房间数字段
 
     public int Gender { get; set; } = 1;
 

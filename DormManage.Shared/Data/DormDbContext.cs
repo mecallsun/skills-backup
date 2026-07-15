@@ -83,6 +83,22 @@ public class DormDbContext : DbContext
 
     #endregion
 
+    #region 认证权限
+
+    public DbSet<SysUser> SysUsers { get; set; } = null!;
+    public DbSet<SysRole> SysRoles { get; set; } = null!;
+    public DbSet<SysUserRole> SysUserRoles { get; set; } = null!;
+    public DbSet<SysPermission> SysPermissions { get; set; } = null!;
+    public DbSet<SysRolePermission> SysRolePermissions { get; set; } = null!;
+    public DbSet<PdaDevice> PdaDevices { get; set; } = null!;
+    public DbSet<MeterImage> MeterImages { get; set; } = null!;
+    public DbSet<SysConfig> SysConfigs { get; set; } = null!;
+    public DbSet<SysUserFilterCache> SysUserFilterCaches { get; set; } = null!;
+    public DbSet<SysOpLog> SysOpLogs { get; set; } = null!;
+    public DbSet<SysSystemIntegration> SysSystemIntegrations { get; set; } = null!;
+
+    #endregion
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -94,6 +94,56 @@ public class BookingController : ControllerBase
     }
 
     /// <summary>
+    /// 快速确认入住（v2.11.8）：Type=1 入住 && Status=1 预约 → Status=2 在宿
+    /// </summary>
+    [HttpPost("{id}/confirm-checkin")]
+    public async Task<ApiResponse<DormBooking>> ConfirmCheckIn(int id)
+    {
+        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        return await _service.ConfirmCheckInAsync(id, registrar);
+    }
+
+    /// <summary>
+    /// 撤销退房（v2.11.10）：Type=2 退房 && Status=3 已退房 && BookingDate=今天 → Status=2 在宿
+    /// </summary>
+    [HttpPost("{id}/undo-checkout")]
+    public async Task<ApiResponse<DormBooking>> UndoCheckOut(int id)
+    {
+        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        return await _service.UndoCheckOutAsync(id, registrar);
+    }
+
+    /// <summary>
+    /// 撤销预约（v2.11.11）：Status=1 预约 → Status=4 已取消
+    /// </summary>
+    [HttpPost("{id}/cancel-reservation")]
+    public async Task<ApiResponse<DormBooking>> CancelReservation(int id)
+    {
+        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        return await _service.CancelReservationAsync(id, registrar);
+    }
+
+    /// <summary>
+    /// 确认预约退房（v2.11.12）：Type=2 退房 && Status=1 预约 → Status=3 已退房
+    /// </summary>
+    [HttpPost("{id}/confirm-checkout")]
+    public async Task<ApiResponse<DormBooking>> ConfirmCheckout(int id)
+    {
+        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        return await _service.ConfirmReservedCheckOutAsync(id, registrar);
+    }
+
+    /// <summary>
+    /// 撤销在宿（v2.11.17）：Type=1 入住 && Status=2 在宿 && BookingDate=今天 → Status=4 已取消
+    /// </summary>
+    [HttpPost("{id}/cancel-today")]
+    public async Task<ApiResponse<DormBooking>> CancelToday(int id)
+    {
+        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        return await _service.CancelTodayAsync(id, registrar);
+    }
+
+    /// <summary>
     /// 删除记录
     /// </summary>
     [HttpDelete("{id}")]

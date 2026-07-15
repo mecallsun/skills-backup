@@ -117,6 +117,7 @@ public class SysEmployee : BaseEntity
     /// 数据一致性：人员清单 dormCode 列 / 首页 KPI 1 入住人数 / 人员清单宿舍列 共享此字段。
     /// </remarks>
     [MaxLength(20)]
+    public int? BedNo { get; set; }
     public string? DormCode { get; set; }
 
     /// <summary>

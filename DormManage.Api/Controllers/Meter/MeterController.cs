@@ -60,7 +60,7 @@ public class MeterController : ControllerBase
             ElectricMeter = r.ElectricMeter,
             Operator = r.Operator,
             Status = r.Status,
-            StatusName = r.GetStatusName(),
+            StatusName = r?.Status.ToString() ?? "Unknown",
             Remark = r.Remark,
             ServerCreatedAt = r.ServerCreatedAt
         }).ToList();
@@ -90,12 +90,12 @@ public class MeterController : ControllerBase
             DormId = record.DormId,
             DormCode = record.DormCode,
             ReadMonth = record.ReadMonth,
-            ColdMeter = record.ColdMeter,
-            HotMeter = record.HotMeter,
-            ElectricMeter = record.ElectricMeter,
+            ColdMeter = record.ColdMeter ,
+            HotMeter = record.HotMeter ,
+            ElectricMeter = record.ElectricMeter ,
             Operator = record.Operator,
             Status = record.Status,
-            StatusName = record.GetStatusName(),
+            StatusName = record?.Status.ToString() ?? "Unknown",
             Remark = record.Remark,
             ServerCreatedAt = record.ServerCreatedAt
         };
@@ -144,7 +144,7 @@ public class MeterController : ControllerBase
             existing.HotMeter = request.HotMeter;
             existing.ElectricMeter = request.ElectricMeter;
             existing.Operator = string.IsNullOrEmpty(request.Operator) ? existing.Operator : request.Operator;
-            existing.Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter);
+            existing.Status = (byte)((request.ColdMeter != 0 || request.HotMeter != 0 || request.ElectricMeter != 0) ? 1 : 0);
             existing.Remark = newRemark;
             existing.UpdatedAt = DateTime.Now;
             existing.ServerCreatedAt = DateTime.Now;
@@ -164,7 +164,7 @@ public class MeterController : ControllerBase
                 HotMeter = request.HotMeter,
                 ElectricMeter = request.ElectricMeter,
                 Operator = request.Operator ?? "管理员",
-                Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter),
+                Status = (byte)((request.ColdMeter != 0 || request.HotMeter != 0 || request.ElectricMeter != 0) ? 1 : 0),
                 Remark = request.Remark,
                 ServerCreatedAt = DateTime.Now
             };
@@ -181,12 +181,12 @@ public class MeterController : ControllerBase
             DormId = record.DormId,
             DormCode = record.DormCode,
             ReadMonth = record.ReadMonth,
-            ColdMeter = record.ColdMeter,
-            HotMeter = record.HotMeter,
-            ElectricMeter = record.ElectricMeter,
+            ColdMeter = record.ColdMeter ,
+            HotMeter = record.HotMeter ,
+            ElectricMeter = record.ElectricMeter ,
             Operator = record.Operator,
             Status = record.Status,
-            StatusName = record.GetStatusName(),
+            StatusName = record?.Status.ToString() ?? "Unknown",
             Remark = record.Remark,
             ServerCreatedAt = record.ServerCreatedAt
         }, message);
@@ -220,12 +220,12 @@ public class MeterController : ControllerBase
             DormId = record.DormId,
             DormCode = record.DormCode,
             ReadMonth = record.ReadMonth,
-            ColdMeter = record.ColdMeter,
-            HotMeter = record.HotMeter,
-            ElectricMeter = record.ElectricMeter,
+            ColdMeter = record.ColdMeter ,
+            HotMeter = record.HotMeter ,
+            ElectricMeter = record.ElectricMeter ,
             Operator = record.Operator,
             Status = record.Status,
-            StatusName = record.GetStatusName(),
+            StatusName = record?.Status.ToString() ?? "Unknown",
             Remark = record.Remark,
             ServerCreatedAt = record.ServerCreatedAt
         }, "修正成功");
@@ -383,7 +383,7 @@ public class MeterController : ControllerBase
         var index = 1;
         foreach (var r in records)
         {
-            sb.AppendLine($"{index},{r.DormCode},{r.ReadMonth},{r.ColdMeter},{r.HotMeter},{r.ElectricMeter},{r.Operator},{r.GetStatusName()},{r.Remark ?? ""}");
+            sb.AppendLine($"{index},{r.DormCode},{r.ReadMonth},{r.ColdMeter},{r.HotMeter},{r.ElectricMeter},{r.Operator},{r?.Status.ToString() ?? "Unknown"},{r.Remark ?? ""}");
             index++;
         }
 

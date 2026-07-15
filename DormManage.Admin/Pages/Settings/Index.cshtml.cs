@@ -1,5 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DormManage.Shared.Models;
+using DormManage.Shared.Data;
+using Microsoft.EntityFrameworkCore;
+using DormManage.Shared.Services;
 
 namespace DormManage.Admin.Pages.Settings;
 

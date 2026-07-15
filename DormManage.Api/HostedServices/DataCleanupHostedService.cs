@@ -4,30 +4,25 @@ using DormManage.Shared.Services;
 namespace DormManage.Api.HostedServices;
 
 /// <summary>
-/// 一次性数据清洗后台服务（v2.11.24）
+/// 一次性数据清洗后台服务（v2.11.24 → v2.12.44 升级为 BackgroundService）
 /// </summary>
 /// <remarks>
 /// 规范文档：<c>00-方案文档/43-无效FK归一通用规范-v2.11.24.md</c>
 ///
-/// 启动流程：
-/// <list type="number">
-///   <item><description>应用启动时由 <see cref="IHostedService"/> 调度 <c>StartAsync</c></description></item>
-///   <item><description>通过 <see cref="IServiceProvider"/> 创建 Scope 拿 <see cref="DormDbContext"/></description></item>
-///   <item><description>调用 <see cref="DictionaryFallbackService.BatchNormalizeEmployeesAsync"/> 一次性归一存量数据</description></item>
-///   <item><description>输出 v2.11.24 标准审计日志（ILogger）</description></item>
-/// </list>
-///
-/// 关键约束：
+/// v2.12.44 重大变更：
 /// <list type="bullet">
+///   <item><description>从 <see cref="IHostedService"/> 改为 <see cref="BackgroundService"/></description></item>
+///   <item><description>StartAsync 立即返回（不阻塞 Kestrel 绑定端口）</description></item>
+///   <item><description>真正工作在 ExecuteAsync 异步执行，添加 30s 启动延迟确保 Kestrel 先就绪</description></item>
 ///   <item><description>异常必须 try/catch 吞掉，**不阻塞应用启动**</description></item>
-///   <item><description>只在启动时执行一次（HostedService 默认行为）</description></item>
-///   <item><description>数据量小（800 人），使用批量归一方法足够</description></item>
+///   <item><description>只在启动时执行一次（BackgroundService 内部循环检测标志）</description></item>
 /// </list>
 /// </remarks>
-public class DataCleanupHostedService : IHostedService
+public class DataCleanupHostedService : BackgroundService
 {
     private readonly IServiceProvider _services;
     private readonly ILogger<DataCleanupHostedService> _logger;
+    private bool _hasRun = false;
 
     public DataCleanupHostedService(IServiceProvider services, ILogger<DataCleanupHostedService> logger)
     {
@@ -36,12 +31,18 @@ public class DataCleanupHostedService : IHostedService
     }
 
     /// <summary>
-    /// 启动钩子：执行 v2.11.24 一次性 FK 归一。
+    /// 后台执行：等待 30s（让 Kestrel 先绑定端口）→ 执行一次性 FK 归一 → 标记完成
     /// </summary>
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
+            // 等待 Kestrel 启动并绑定端口
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+
+            if (_hasRun) return;
+            _hasRun = true;
+
             using var scope = _services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<DormDbContext>();
 
@@ -58,15 +59,14 @@ public class DataCleanupHostedService : IHostedService
             var total = fixedStats.Values.Sum();
             _logger.LogInformation("[v2.11.24 FK 归一] 合计: {N} 条", total);
         }
+        catch (OperationCanceledException)
+        {
+            // 应用停止
+        }
         catch (Exception ex)
         {
             // 不阻塞应用启动
             _logger.LogError(ex, "[v2.11.24 FK 归一] 启动清洗异常（非阻塞）");
         }
     }
-
-    /// <summary>
-    /// 停止钩子：本服务无后台轮询，空实现即可。
-    /// </summary>
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

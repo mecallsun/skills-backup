@@ -51,7 +51,12 @@ public class Dorm : BaseEntity
     /// <summary>
     /// 性别：1=男 2=女
     /// </summary>
-    public int Gender { get; set; } = 1;
+    public int Gender { get; set; }
+
+    /// <summary>
+    /// 房间数
+    /// </summary>
+    public int RoomCount { get; set; } = 1;
 
     /// <summary>
     /// 备注

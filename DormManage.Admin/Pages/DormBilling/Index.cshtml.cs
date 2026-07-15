@@ -50,6 +50,12 @@ public class IndexModel : PageModel
 
     public int PageSize { get; } = 20;
 
+    // 分页摘要（视图使用）
+    public int TotalCount => Result?.TotalCount ?? 0;
+    public int TotalPages => TotalCount > 0 ? (int)Math.Ceiling(TotalCount / (double)PageSize) : 0;
+    public int CurrentPage => PageIndex;
+    public int StartIndex => (PageIndex - 1) * PageSize + 1;
+
     public async Task OnGetAsync()
     {
         // 默认月份为当前月
@@ -72,10 +78,7 @@ public class IndexModel : PageModel
             .ToListAsync();
 
         // 查询账单数据（使用模拟数据，实际应从 DormBilling 表读取）
-        var query = _db.Dorms
-            .Include(d => d.Building)
-            .Include(d => d.Floor)
-            .AsQueryable();
+        var query = _db.Dorms.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(DormCode))
             query = query.Where(d => d.DormCode.Contains(DormCode));
@@ -87,29 +90,32 @@ public class IndexModel : PageModel
             query = query.Where(d => d.FloorId == FloorId.Value);
 
         var total = await query.CountAsync();
-        var items = await query
+        var dormList = await query
             .OrderBy(d => d.DormCode)
             .Skip((PageIndex - 1) * PageSize)
             .Take(PageSize)
-            .Select(d => new DormBillingDto
-            {
-                DormId = d.Id,
-                DormCode = d.DormCode,
-                BuildingName = d.BuildingName ?? "-",
-                FloorName = d.FloorId.ToString(),
-                ColdUsage = new Random().NextDecimal(80, 160),
-                HotUsage = new Random().NextDecimal(50, 100),
-                ElectricUsage = new Random().NextDecimal(200, 450),
-                ColdAmount = new Random().NextDecimal(200, 400),
-                HotAmount = new Random().NextDecimal(300, 500),
-                ElectricAmount = new Random().NextDecimal(600, 900),
-                TotalAmount = 0m,
-                ResidentCount = new Random().Next(1, d.Capacity + 1),
-                MaxCapacity = d.Capacity,
-                IsPublished = new Random().Next(0, 3) != 0,
-                ReadMonth = BillingMonth ?? DateTime.Now.ToString("yyyy-MM")
-            })
             .ToListAsync();
+
+        // 生成模拟账单数据
+        var rng = new Random(42);
+        var items = dormList.Select(d => new DormBillingDto
+        {
+            DormId = d.Id,
+            DormCode = d.DormCode,
+            BuildingName = d.BuildingName ?? "-",
+            FloorName = d.FloorId.ToString(),
+            ColdUsage = (decimal)(rng.NextDouble() * 80 + 5),
+            HotUsage = (decimal)(rng.NextDouble() * 50 + 3),
+            ElectricUsage = (decimal)(rng.NextDouble() * 250 + 50),
+            ColdAmount = (decimal)(rng.NextDouble() * 200 + 50),
+            HotAmount = (decimal)(rng.NextDouble() * 250 + 80),
+            ElectricAmount = (decimal)(rng.NextDouble() * 350 + 200),
+            TotalAmount = 0m,
+            ResidentCount = rng.Next(1, d.Capacity + 1),
+            MaxCapacity = d.Capacity,
+            IsPublished = rng.Next(0, 3) != 0,
+            ReadMonth = BillingMonth ?? DateTime.Now.ToString("yyyy-MM")
+        }).ToList();
 
         // 计算合计
         foreach (var item in items)

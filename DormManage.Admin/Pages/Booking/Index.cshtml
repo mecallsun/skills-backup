@@ -170,6 +170,11 @@
                                         {
                                             <button class="btn btn-sm btn-outline-warning" onclick="confirmCheckout(@item.Id)">退房</button>
                                         }
+                                        @* v2.11.17 新增：撤销在宿按钮（仅 Type=1 入住 && Status=2 在宿 && BookingDate=今天 时显示） *@
+                                        @if (item.Type == 1 && item.Status == 2 && item.BookingDate == DateOnly.FromDateTime(DateTime.Today))
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelToday(@item.Id)">撤销在宿</button>
+                                        }
                                         @* v2.11.11 新增：撤销预约按钮（仅 Status=1 预约时显示，位置在操作列最右侧） *@
                                         @if (item.Status == 1)
                                         {
@@ -641,9 +646,6 @@
         text-align: center;
     }
 </style>
-}
-
-@section Scripts {
 <script>
 const API_BASE = '/api/v1/bookings';
 
@@ -772,6 +774,31 @@ async function confirmCheckout(id) {
     } catch (err) {
         console.error(err);
         alert('确认退房失败');
+    }
+}
+
+// v2.11.17 新增：撤销在宿
+// 调用 POST /api/v1/bookings/{id}/cancel-today
+// 仅当 Type == 1 入住 && Status == 2 在宿 && BookingDate == today 时显示
+// 服务端将 Status 即时变更为 4 已取消，联动清空 SysEmployee.DormCode
+async function cancelToday(id) {
+    if (!confirm('确认撤销该员工的在宿记录？\n（状态：在宿 → 已取消，并清空该员工的宿舍分配）')) return;
+
+    try {
+        const resp = await fetch(`${API_BASE}/${id}/cancel-today`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert('在宿已撤销（状态 → 已取消）');
+            location.reload();
+        } else {
+            alert(result.message || '撤销在宿失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('撤销在宿失败');
     }
 }
 

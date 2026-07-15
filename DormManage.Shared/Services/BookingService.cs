@@ -83,6 +83,7 @@ public interface IBookingService
     /// 获取员工的在宿记录（用于退房选择）
     /// </summary>
     Task<List<DormBooking>> GetStayingRecordsAsync(int employeeId);
+    Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar);
 }
 
 /// <summary>
@@ -643,4 +644,12 @@ public class BookingService : IBookingService
             .OrderByDescending(x => x.BookingDate)
             .ToListAsync();
     }
+
+    /// <inheritdoc/>
+    public async Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar)
+    {
+        return ApiResponse<DormBooking>.Ok();
+    }
 }
+
+

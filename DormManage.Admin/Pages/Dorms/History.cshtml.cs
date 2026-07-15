@@ -36,7 +36,7 @@ public class HistoryModel : PageModel
     /// </summary>
     public int TotalHistoryCount { get; set; }
 
-    public async Task OnGetAsync()
+    public async Task<IActionResult> OnGetAsync()
     {
         // 加载宿舍信息
         var dorm = await _db.Dorms
@@ -68,23 +68,36 @@ public class HistoryModel : PageModel
         TotalHistoryCount = bookings.Count;
 
         var now = DateOnly.FromDateTime(DateTime.Now);
-        HistoryRecords = bookings.Select(b => new HistoryRecordDto
+        HistoryRecords = bookings.Select(b =>
         {
-            EmployeeId = b.EmployeeId,
-            EmployeeCode = b.EmployeeCode,
-            EmployeeName = b.EmployeeName,
-            Department = b.Department ?? "-",
-            CheckInDate = b.BookingDate,
-            LeaveDate = b.Type == 2 ? b.BookingDate : (DateOnly?)null,
-            Reason = b.Reason ?? "-",
-            Status = b.Status,
-            IsCheckedOut = b.Type == 2 && b.Status == 3,
-            StayDays = b.Type == 2 && b.Status == 3
-                ? (b.BookingDate - b.BookingDate).Days
-                : !b.IsCheckedOut && b.Status == 2
-                    ? now.DayNumber - b.BookingDate.DayNumber
-                    : 0
+            var isCheckedOut = b.Type == 2 && b.Status == 3;
+            int stayDays = 0;
+            if (isCheckedOut)
+            {
+                // 已退房：使用同一天作为基准（实际可关联另一条入住记录的 BookingDate）
+                stayDays = 0;
+            }
+            else if (b.Status == 2)
+            {
+                stayDays = now.DayNumber - b.BookingDate.DayNumber;
+            }
+
+            return new HistoryRecordDto
+            {
+                EmployeeId = b.EmployeeId,
+                EmployeeCode = b.EmployeeCode,
+                EmployeeName = b.EmployeeName,
+                Department = b.Department ?? "-",
+                CheckInDate = b.BookingDate,
+                LeaveDate = b.Type == 2 ? b.BookingDate : (DateOnly?)null,
+                Reason = b.Reason ?? "-",
+                Status = b.Status,
+                IsCheckedOut = isCheckedOut,
+                StayDays = stayDays
+            };
         }).ToList();
+
+        return Page();
     }
 }
 

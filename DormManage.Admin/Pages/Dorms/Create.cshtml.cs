@@ -73,6 +73,7 @@ public class CreateModel : PageModel
             AddressId = Dorm.AddressId,
             AddressText = address?.AddressText ?? "",
             Capacity = Dorm.Capacity,
+            RoomCount = Dorm.RoomCount,
             Gender = Dorm.Gender,
             Remark = Dorm.Remark,
             IsActive = Dorm.IsActive,
@@ -112,6 +113,8 @@ public class DormCreateDto
     public int AddressId { get; set; }
 
     public int Capacity { get; set; } = 4;
+
+    public int RoomCount { get; set; } = 1;  // v2.12.37 新增房间数字段
 
     public int Gender { get; set; } = 1;
 

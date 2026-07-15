@@ -136,7 +136,12 @@
                                     </td>
                                     <td class="text-center">
                                         <a href="/Dorms/Details/@item.Id" class="btn btn-sm btn-outline-info">详情</a>
-                                        <a href="/Dorms/Edit/@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                        <a href="/Dorms/Edit/@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
+                                        @* v2.12.41 删除按钮：仅当无在宿人员 且 无办理登记历史时才显示（否则隐藏）*@
+                                        @if (item.CanDelete)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDorm(@item.Id, '@item.DormCode')">删除</button>
+                                        }
                                     </td>
                                 </tr>
                                 index++;
