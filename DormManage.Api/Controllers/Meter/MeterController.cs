@@ -278,6 +278,70 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
+    /// 作废抄表记录（P1-8）：保留数据但标记为已作废，用于误录或错误纠正
+    /// </summary>
+    [HttpPost("records/{id}/void")]
+    public async Task<ApiResponse<MeterRecordDto>> VoidRecord(long id, [FromBody] MeterVoidRequest request)
+    {
+        var record = await _db.MeterRecords.FindAsync(id);
+        if (record == null)
+            return ApiResponse<MeterRecordDto>.Fail("NOT_FOUND", "记录不存在");
+
+        if (record.Status == (byte)MeterRecordStatus.Voided)
+            return ApiResponse<MeterRecordDto>.Fail("ALREADY_VOIDED", "记录已是作废状态");
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            return ApiResponse<MeterRecordDto>.Fail("REASON_REQUIRED", "作废原因必填");
+
+        var oldStatus = record.Status;
+        record.Status = (byte)MeterRecordStatus.Voided;
+        var voidNote = $"[作废 {DateTime.Now:yyyy-MM-dd HH:mm} 原状态={oldStatus} 原因={request.Reason} 操作人={request.Operator}]";
+        record.Remark = string.IsNullOrEmpty(record.Remark) ? voidNote : $"{record.Remark}\n{voidNote}";
+
+        await _db.SaveChangesAsync();
+
+        return ApiResponse<MeterRecordDto>.Ok(BuildDto(record), $"记录已作废：{request.Reason}");
+    }
+
+    /// <summary>
+    /// 撤销作废（仅 admin 可操作）
+    /// </summary>
+    [HttpPost("records/{id}/unvoid")]
+    public async Task<ApiResponse<MeterRecordDto>> UnvoidRecord(long id)
+    {
+        var record = await _db.MeterRecords.FindAsync(id);
+        if (record == null)
+            return ApiResponse<MeterRecordDto>.Fail("NOT_FOUND", "记录不存在");
+
+        if (record.Status != (byte)MeterRecordStatus.Voided)
+            return ApiResponse<MeterRecordDto>.Fail("NOT_VOIDED", "记录非作废状态");
+
+        record.Status = (byte)MeterRecordStatus.Normal;
+        var unvoidNote = $"[撤销作废 {DateTime.Now:yyyy-MM-dd HH:mm}]";
+        record.Remark = string.IsNullOrEmpty(record.Remark) ? unvoidNote : $"{record.Remark}\n{unvoidNote}";
+
+        await _db.SaveChangesAsync();
+
+        return ApiResponse<MeterRecordDto>.Ok(BuildDto(record), "已撤销作废");
+    }
+
+    private static MeterRecordDto BuildDto(MeterRecord r) => new()
+    {
+        Id = r.Id,
+        DormId = r.DormId,
+        DormCode = r.DormCode,
+        ReadMonth = r.ReadMonth,
+        ColdMeter = r.ColdMeter,
+        HotMeter = r.HotMeter,
+        ElectricMeter = r.ElectricMeter,
+        Operator = r.Operator,
+        Status = r.Status,
+        StatusName = ((MeterRecordStatus)r.Status).GetDisplayName(),
+        Remark = r.Remark,
+        ServerCreatedAt = r.ServerCreatedAt
+    };
+
+    /// <summary>
     /// 获取可选的抄表月份列表
     /// </summary>
     [HttpGet("months")]
@@ -446,4 +510,13 @@ public class MeterRecordSaveRequest
 public class MeterRecordCorrectRequest
 {
     public string? Remark { get; set; }
+}
+
+/// <summary>
+/// 抄表记录作废请求（P1-8）
+/// </summary>
+public class MeterVoidRequest
+{
+    public string Reason { get; set; } = string.Empty;
+    public string? Operator { get; set; }
 }
