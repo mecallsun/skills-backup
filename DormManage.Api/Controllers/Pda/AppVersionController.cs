@@ -167,6 +167,48 @@ public class AppVersionController : ControllerBase
         return PhysicalFile(fullPath, "application/vnd.android.package-archive", v.FileName);
     }
 
+    /// <summary>
+    /// 生成占位 APK（v2.13.3 测试用）：创建一个假的 APK 文件用于演示上传/下载流程
+    /// </summary>
+    [HttpPost("generate-placeholder")]
+    public async Task<ApiResponse<AppVersionDto>> GeneratePlaceholder([FromBody] PlaceholderRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Version))
+            return ApiResponse<AppVersionDto>.Fail("VERSION_REQUIRED", "版本号必填");
+
+        var entity = new AppVersion
+        {
+            Version = request.Version,
+            FileName = $"dorm-pda-{request.Version}-placeholder.apk",
+            FileSize = request.SizeBytes ?? (5 * 1024 * 1024), // 默认 5MB
+            ReleaseNotes = request.ReleaseNotes ?? "占位 APK（演示用，非真实文件）",
+            IsLatest = request.IsLatest,
+            IsEnabled = request.IsEnabled ?? true,
+            IsForceUpdate = request.IsForceUpdate,
+            MinCompatibleVersion = request.MinCompatibleVersion,
+            Md5 = null,
+            ReleaseDate = DateTime.Now,
+            CreatedAt = DateTime.Now
+        };
+
+        // 写入一个伪 APK 文件（包含版本信息的文本内容）
+        var fullPath = Path.Combine(_storageDir, entity.FileName);
+        var content = $"DormManage PDA App Placeholder APK\nVersion: {request.Version}\nSize: {entity.FileSize}\nGenerated: {DateTime.Now}\nNote: This is a placeholder for testing. Replace with real APK from build pipeline.";
+        await global::System.IO.File.WriteAllTextAsync(fullPath, content);
+
+        _db.AppVersions.Add(entity);
+        if (request.IsLatest)
+        {
+            var others = await _db.AppVersions.Where(v => v.Id != entity.Id && v.IsLatest).ToListAsync();
+            foreach (var o in others) o.IsLatest = false;
+        }
+        await _db.SaveChangesAsync();
+
+        entity.Md5 = await ComputeMd5Async(fullPath);
+
+        return ApiResponse<AppVersionDto>.Ok(MapToDto(entity), $"占位 APK 已生成（{entity.FileSize} bytes）");
+    }
+
     private static AppVersionDto MapToDto(AppVersion v) => new()
     {
         Id = v.Id,
@@ -237,4 +279,15 @@ public class AppVersionUpdateRequest
 public class EnableRequest
 {
     public bool IsEnabled { get; set; }
+}
+
+public class PlaceholderRequest
+{
+    public string Version { get; set; } = "";
+    public string? ReleaseNotes { get; set; }
+    public bool IsLatest { get; set; }
+    public bool? IsEnabled { get; set; } = true;
+    public bool IsForceUpdate { get; set; }
+    public string? MinCompatibleVersion { get; set; }
+    public long? SizeBytes { get; set; }
 }

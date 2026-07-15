@@ -23,12 +23,27 @@ public class IndexModel : PageModel
     /// <summary>
     /// PDA 服务端口
     /// </summary>
-    public int PdaPort { get; set; } = 5000;
+    public int PdaPort { get; set; } = 5100;
 
     /// <summary>
     /// Web 服务端口
     /// </summary>
     public int WebPort { get; set; } = 5001;
+
+    /// <summary>
+    /// Api 服务状态（来自托盘 IPC）
+    /// </summary>
+    public string ApiState { get; set; } = "Unknown";
+
+    /// <summary>
+    /// Admin 服务状态（来自托盘 IPC）
+    /// </summary>
+    public string AdminState { get; set; } = "Unknown";
+
+    /// <summary>
+    /// 托盘是否可达
+    /// </summary>
+    public bool TrayReachable { get; set; }
 
     /// <summary>
     /// PDA 服务是否运行中
@@ -140,6 +155,81 @@ public class IndexModel : PageModel
         // TODO: 实际项目中应写入配置文件或数据库
         TempData["SuccessMessage"] = "服务与端口配置保存成功，部分改动需重启服务后生效";
         return RedirectToPage("/Settings/Index");
+    }
+
+    /// <summary>
+    /// 通过托盘 IPC 控制服务启停（v2.13.3）
+    /// </summary>
+    public async Task<IActionResult> OnPostControlServiceAsync(string action, string service)
+    {
+        if (string.IsNullOrWhiteSpace(action) || string.IsNullOrWhiteSpace(service))
+        {
+            TempData["ErrorMessage"] = "缺少 action 或 service 参数";
+            return RedirectToPage(new { tab = "service" });
+        }
+
+        try
+        {
+            var ipc = new DormManage.Shared.Services.IpcClient();
+            var resp = await ipc.SendAsync(new DormManage.Shared.Services.ServiceIpc.IpcCommand
+            {
+                Command = action,
+                Service = service
+            }, 30000);
+
+            if (resp.Success)
+                TempData["SuccessMessage"] = $"操作成功：{resp.Message}";
+            else
+                TempData["ErrorMessage"] = $"操作失败：{resp.Message}";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"托盘不可达：{ex.Message}";
+        }
+
+        return RedirectToPage(new { tab = "service" });
+    }
+
+    /// <summary>
+    /// 通过托盘 IPC Ping 测试（v2.13.3）
+    /// </summary>
+    public async Task<IActionResult> OnPostPingTrayAsync()
+    {
+        try
+        {
+            var ipc = new DormManage.Shared.Services.IpcClient();
+            var resp = await ipc.SendAsync(new DormManage.Shared.Services.ServiceIpc.IpcCommand { Command = "ping" }, 2000);
+            TempData["SuccessMessage"] = resp.Success ? $"托盘可达：{resp.Message}" : "托盘返回失败";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"托盘不可达：{ex.Message}";
+        }
+        return RedirectToPage(new { tab = "service" });
+    }
+
+    /// <summary>
+    /// 加载页面时探测托盘状态
+    /// </summary>
+    public async Task OnGetAsync()
+    {
+        try
+        {
+            var ipc = new DormManage.Shared.Services.IpcClient();
+            var resp = await ipc.SendAsync(new DormManage.Shared.Services.ServiceIpc.IpcCommand { Command = "status" }, 2000);
+            TrayReachable = resp.Success;
+            if (resp.Data is System.Text.Json.JsonElement elem)
+            {
+                if (elem.TryGetProperty("api", out var api) && api.TryGetProperty("state", out var s1))
+                    ApiState = s1.GetString() ?? "Unknown";
+                if (elem.TryGetProperty("admin", out var admin) && admin.TryGetProperty("state", out var s2))
+                    AdminState = s2.GetString() ?? "Unknown";
+            }
+        }
+        catch
+        {
+            TrayReachable = false;
+        }
     }
 
     /// <summary>

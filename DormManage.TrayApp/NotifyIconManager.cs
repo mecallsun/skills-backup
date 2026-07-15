@@ -30,6 +30,7 @@ public sealed class NotifyIconManager : IDisposable
 
     private ServiceState _apiState = ServiceState.Stopped;
     private ServiceState _adminState = ServiceState.Stopped;
+    private ToolStripMenuItem? _miAutoStart;
 
     public NotifyIconManager(
         Action onOpenAdmin,
@@ -38,13 +39,14 @@ public sealed class NotifyIconManager : IDisposable
         Func<Task> onRestartAll,
         Action onViewLogs,
         Action onAbout,
-        Func<Task> onExit)
+        Func<Task> onExit,
+        Action onToggleAutoStart)
     {
         _uiContext = SynchronizationContext.Current;
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "金戈宿舍管理系统 v2.13.2",
+            Text = "金戈宿舍管理系统 v2.13.3",
             Visible = true
         };
 
@@ -77,6 +79,14 @@ public sealed class NotifyIconManager : IDisposable
 
         ctx.Items.Add(new ToolStripMenuItem("设置...", null, (_, _) => onSettings()));
         ctx.Items.Add(new ToolStripMenuItem("查看日志", null, (_, _) => onViewLogs()));
+
+        // v2.13.3 自启动开关
+        _miAutoStart = new ToolStripMenuItem("开机自启动", null, (_, _) => onToggleAutoStart())
+        {
+            CheckOnClick = false
+        };
+        ctx.Items.Add(_miAutoStart);
+        RefreshAutoStartStatus(new Services.AutoStartManager().IsEnabled());
         ctx.Items.Add(new ToolStripMenuItem("关于", null, (_, _) => onAbout()));
 
         ctx.Items.Add(new ToolStripSeparator());
@@ -94,6 +104,15 @@ public sealed class NotifyIconManager : IDisposable
     /// 注意：托盘事件/菜单回调均在 UI 线程触发，但 ProcessManager.Exited 事件可能来自其他线程，
     /// 因此通过 _uiContext.Post 投递到 UI 线程以保证线程安全。
     /// </summary>
+    public void RefreshAutoStartStatus(bool enabled)
+    {
+        if (_miAutoStart != null)
+        {
+            _miAutoStart.Checked = enabled;
+            _miAutoStart.Text = enabled ? "✓ 开机自启动" : "开机自启动";
+        }
+    }
+
     public void UpdateServiceState(string name, ServiceState state)
     {
         var ctx = _uiContext;

@@ -52,7 +52,8 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                     MessageBoxIcon.Question);
                 if (ok != DialogResult.Yes) return;
                 await ExitAsync();
-            });
+            },
+            onToggleAutoStart: ToggleAutoStart);
 
         if (config.Current.Tray.AutoStartServices)
         {
@@ -271,6 +272,42 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             _health.Dispose();
             _notifyIcon.Hide();
             Application.Exit();
+        }
+    }
+
+    /// <summary>
+    /// 切换 Windows 开机自启动（v2.13.3）
+    /// </summary>
+    private void ToggleAutoStart()
+    {
+        var mgr = new Services.AutoStartManager();
+        try
+        {
+            if (mgr.IsEnabled())
+            {
+                if (mgr.Disable())
+                {
+                    _notifyIcon.RefreshAutoStartStatus(false);
+                    MessageBox.Show("已取消开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                if (mgr.Enable())
+                {
+                    _notifyIcon.RefreshAutoStartStatus(true);
+                    MessageBox.Show("已设置开机自启动", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("设置失败：请以管理员权限运行或检查注册表权限", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error("切换自启动异常", ex);
+            MessageBox.Show($"操作失败：{ex.Message}", "托盘", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 

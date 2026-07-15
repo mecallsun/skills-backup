@@ -103,6 +103,34 @@
                             <strong><i class="bi bi-hdd-network"></i> 服务与端口</strong>
                         </div>
                         <div class="card-body">
+                            @if (TempData["SuccessMessage"] is string okMsg)
+                            {
+                                <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i> @okMsg</div>
+                            }
+                            @if (TempData["ErrorMessage"] is string errMsg)
+                            {
+                                <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @errMsg</div>
+                            }
+
+                            <!-- 托盘状态 -->
+                            <div class="alert @(Model.TrayReachable ? "alert-success" : "alert-warning") py-2 mb-3">
+                                <i class="bi bi-@(Model.TrayReachable ? "check-circle" : "exclamation-triangle")"></i>
+                                <strong>托盘状态：</strong>
+                                @if (Model.TrayReachable)
+                                {
+                                    <text>已连接（127.0.0.1:5099）</text>
+                                }
+                                else
+                                {
+                                    <text>未连接（请先启动托盘程序 DormManage.TrayApp.exe）</text>
+                                }
+                                <form method="post" asp-page-handler="PingTray" class="d-inline ms-2">
+                                    <button type="submit" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-arrow-repeat"></i> 测试连接
+                                    </button>
+                                </form>
+                            </div>
+
                             <form method="post" asp-page-handler="SaveService">
                                 <div class="row g-3">
                                     <div class="col-md-4">
@@ -110,34 +138,83 @@
                                         <input type="number" name="PdaPort" value="@Model.PdaPort" class="form-control" min="1" max="65535">
                                     </div>
                                     <div class="col-md-4 d-flex align-items-end gap-2">
-                                        <span id="pdaStatus" class="me-2">
-                                            @if (Model.PdaServiceRunning)
+                                        <span class="me-2">
+                                            @switch (Model.ApiState)
                                             {
-                                                <text><span class="status-dot dot-run"></span>运行中</text>
-                                            }
-                                            else
-                                            {
-                                                <text><span class="status-dot dot-stop"></span>已停止</text>
+                                                case "Running":
+                                                    <text><span class="status-dot dot-run"></span>运行中</text>
+                                                    break;
+                                                case "Starting":
+                                                    <text><span class="status-dot dot-run" style="background:#fbc02d;"></span>启动中</text>
+                                                    break;
+                                                case "Stopped":
+                                                    <text><span class="status-dot dot-stop"></span>已停止</text>
+                                                    break;
+                                                case "Crashed":
+                                                    <text><span class="status-dot dot-stop" style="background:#dc3545;"></span>异常</text>
+                                                    break;
+                                                default:
+                                                    <text><span class="status-dot dot-stop"></span>@Model.ApiState</text>
+                                                    break;
                                             }
                                         </span>
-                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleService('pda')">启动/停止</button>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="start">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" @(Model.TrayReachable ? "" : "disabled")>启动</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="stop">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" @(Model.TrayReachable ? "" : "disabled")>停止</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="restart">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" @(Model.TrayReachable ? "" : "disabled")>重启</button>
+                                        </form>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small">Web 服务端口</label>
                                         <input type="number" name="WebPort" value="@Model.WebPort" class="form-control" min="1" max="65535">
                                     </div>
                                     <div class="col-md-4 d-flex align-items-end gap-2">
-                                        <span id="webStatus" class="me-2">
-                                            @if (Model.WebServiceRunning)
+                                        <span class="me-2">
+                                            @switch (Model.AdminState)
                                             {
-                                                <text><span class="status-dot dot-run"></span>运行中</text>
-                                            }
-                                            else
-                                            {
-                                                <text><span class="status-dot dot-stop"></span>已停止</text>
+                                                case "Running":
+                                                    <text><span class="status-dot dot-run"></span>运行中</text>
+                                                    break;
+                                                case "Starting":
+                                                    <text><span class="status-dot dot-run" style="background:#fbc02d;"></span>启动中</text>
+                                                    break;
+                                                case "Stopped":
+                                                    <text><span class="status-dot dot-stop"></span>已停止</text>
+                                                    break;
+                                                case "Crashed":
+                                                    <text><span class="status-dot dot-stop" style="background:#dc3545;"></span>异常</text>
+                                                    break;
+                                                default:
+                                                    <text><span class="status-dot dot-stop"></span>@Model.AdminState</text>
+                                                    break;
                                             }
                                         </span>
-                                        <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleService('web')">启动/停止</button>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="start">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" @(Model.TrayReachable ? "" : "disabled")>启动</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="stop">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" style="display:none">_</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" @(Model.TrayReachable ? "" : "disabled")>停止</button>
+                                        </form>
+                                        <form method="post" asp-page-handler="ControlService" class="d-inline">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="restart">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" @(Model.TrayReachable ? "" : "disabled")>重启</button>
+                                        </form>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small">服务器域名 / IP（PDA 访问用）</label>
