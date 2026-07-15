@@ -54,6 +54,7 @@ builder.Services.AddScoped<IPersonnelService, PersonnelService>();  // v2.12.42 
 builder.Services.AddScoped<IDormService, DormService>();          // v2.12.42 BUGFIX: 缺失注册
 builder.Services.AddScoped<IDashboardService, DashboardService>();  // v2.13.3: 首页数据看板聚合服务
 builder.Services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();  // v2.13.3: 数据库深度验证
+builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 
 // 注册 v2.11.24 数据清洗后台服务（启动时一次性 FK 归一）
 // 规范文档：00-方案文档/43-无效FK归一通用规范-v2.11.24.md
