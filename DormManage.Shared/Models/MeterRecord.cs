@@ -15,7 +15,41 @@ public enum MeterRecordStatus
     Normal = 1,
 
     /// <summary>已修正（三表完整，已修正过）</summary>
-    Corrected = 2
+    Corrected = 2,
+
+    /// <summary>未完成（PDA 端上传了占位但未补录）— v2.13.3 新增，区分于 Incomplete</summary>
+    Unfinished = 3,
+
+    /// <summary>已作废（人为取消或误录）— v2.13.3 新增</summary>
+    Voided = 4
+}
+
+/// <summary>
+/// 抄表状态显示名映射（中文）
+/// </summary>
+public static class MeterStatusExtensions
+{
+    public static string GetDisplayName(this MeterRecordStatus status) => status switch
+    {
+        MeterRecordStatus.Incomplete => "未完成",
+        MeterRecordStatus.Normal => "正常",
+        MeterRecordStatus.Corrected => "已修正",
+        MeterRecordStatus.Unfinished => "未完成(PDA)",
+        MeterRecordStatus.Voided => "已作废",
+        _ => "未知"
+    };
+
+    public static string GetBadgeClass(this MeterRecordStatus status) => status switch
+    {
+        MeterRecordStatus.Incomplete => "bg-warning text-dark",
+        MeterRecordStatus.Normal => "bg-success",
+        MeterRecordStatus.Corrected => "bg-info",
+        MeterRecordStatus.Unfinished => "bg-warning",
+        MeterRecordStatus.Voided => "bg-secondary text-decoration-line-through",
+        _ => "bg-light"
+    };
+
+    public static bool IsEffective(this MeterRecordStatus status) => status == MeterRecordStatus.Normal || status == MeterRecordStatus.Corrected;
 }
 
 /// <summary>

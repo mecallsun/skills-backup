@@ -648,7 +648,40 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar)
     {
-        return ApiResponse<DormBooking>.Ok();
+        var booking = await _db.DormBookings.FindAsync(id);
+        if (booking == null)
+            return ApiResponse<DormBooking>.Fail("NOT_FOUND", "记录不存在");
+
+        if (booking.Type != BookingType.CheckOut)
+            return ApiResponse<DormBooking>.Fail("INVALID_TYPE", "仅 Type=2 退房类型可快速确认");
+
+        if (booking.Status != BookingStatus.Reserved)
+            return ApiResponse<DormBooking>.Fail("INVALID_STATUS", "仅 Status=1 预约状态可快速确认");
+
+        // 退房日期不能晚于今天
+        if (booking.BookingDate > DateOnly.FromDateTime(DateTime.Now))
+            return ApiResponse<DormBooking>.Fail("DATE_FUTURE", "退房日期不能晚于今天");
+
+        // 退房日期不能晚于下一次入住日期
+        var nextRecord = await _db.DormBookings
+            .Where(x => x.EmployeeId == booking.EmployeeId && x.BookingDate > booking.BookingDate)
+            .OrderBy(x => x.BookingDate)
+            .FirstOrDefaultAsync();
+        if (nextRecord != null && nextRecord.Type == BookingType.CheckIn && booking.BookingDate >= nextRecord.BookingDate)
+            return ApiResponse<DormBooking>.Fail("DATE_CONFLICT", "退房日期不能晚于下一次入住日期");
+
+        // 更新预约记录为已退房
+        booking.Status = BookingStatus.CheckedOut;
+        booking.Registrar = registrar;
+        booking.RegistrationDate = DateTime.Now;
+        booking.UpdatedAt = DateTime.Now;
+        _db.DormBookings.Update(booking);
+
+        // 同步 PERSONNEL.dormCode=null
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "快速确认退房");
+
+        await _db.SaveChangesAsync();
+        return ApiResponse<DormBooking>.Ok(booking);
     }
 }
 
