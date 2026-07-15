@@ -1,0 +1,154 @@
+@page
+@model DormManage.Admin.Pages.EmployeeBilling.DetailsModel
+@{
+    ViewData["Title"] = $"员工账单 - {Model.Employee?.RealName} - {Model.Month}";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-wallet2"></i> 员工账单详情
+            @if (Model.Employee is not null)
+            {
+                <span class="badge bg-secondary ms-2">@Model.Employee.EmployeeCode</span>
+                <span class="text-muted fs-5">@Model.Employee.RealName</span>
+            }
+            <span class="badge bg-info ms-2">@Model.Month</span>
+        </h2>
+        <a href="/EmployeeBilling" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] is string err)
+    {
+        <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @err</div>
+    }
+
+    @if (Model.Employee is not null)
+    {
+        <!-- 员工信息 -->
+        <div class="card mb-3">
+            <div class="card-header bg-light"><strong><i class="bi bi-person"></i> 员工信息</strong></div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-2"><div class="text-muted small">工号</div><div class="fw-bold">@Model.Employee.EmployeeCode</div></div>
+                    <div class="col-md-2"><div class="text-muted small">姓名</div><div class="fw-bold">@Model.Employee.RealName</div></div>
+                    <div class="col-md-2"><div class="text-muted small">部门</div><div>@Model.Employee.Department</div></div>
+                    <div class="col-md-2"><div class="text-muted small">员工类型</div><div>@Model.Employee.EmployeeTypeId</div></div>
+                    <div class="col-md-2"><div class="text-muted small">当前宿舍</div><div>@(Model.Employee.DormCode ?? "未分配")</div></div>
+                    <div class="col-md-2"><div class="text-muted small">联系电话</div><div>@Model.Employee.Phone</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 账单汇总 -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1976d2;">
+                    <div class="card-body">
+                        <div class="text-muted small">住宿天数</div>
+                        <div class="fs-3 fw-bold">@Model.Summary.StayDays 天</div>
+                        <small class="text-muted">@Model.Summary.RentAmount.ToString("F2") 元 (10元/天)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0097a7;">
+                    <div class="card-body">
+                        <div class="text-muted small">水费分摊</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.WaterAmount.ToString("F2")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f57c00;">
+                    <div class="card-body">
+                        <div class="text-muted small">电费分摊</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.ElectricAmount.ToString("F2")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #388e3c;">
+                    <div class="card-body">
+                        <div class="text-muted small">合计</div>
+                        <div class="fs-3 fw-bold text-success">¥@Model.Summary.TotalAmount.ToString("F2")</div>
+                        <small class="text-muted">本月应缴</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- 账单明细 -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light"><strong><i class="bi bi-list-ul"></i> 账单明细</strong></div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>日期</th>
+                                    <th>项目</th>
+                                    <th class="text-end">金额 (元)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.BillingItems)
+                                {
+                                    <tr>
+                                        <td>@item.Date</td>
+                                        <td>@item.Description</td>
+                                        <td class="text-end">¥@item.Amount.ToString("F2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="2" class="text-end">合计</th>
+                                    <th class="text-end text-success">¥@Model.Summary.TotalAmount.ToString("F2")</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 用量趋势 -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light"><strong><i class="bi bi-graph-up"></i> 宿舍最近 6 个月用量</strong></div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>月份</th>
+                                    <th class="text-end">冷水 (m³)</th>
+                                    <th class="text-end">热水 (m³)</th>
+                                    <th class="text-end">电 (度)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.MonthlyConsumption)
+                                {
+                                    <tr>
+                                        <td>@c.Month</td>
+                                        <td class="text-end">@c.Cold.ToString("F2")</td>
+                                        <td class="text-end">@c.Hot.ToString("F2")</td>
+                                        <td class="text-end">@c.Electric.ToString("F2")</td>
+                                    </tr>
+                                }
+                                @if (Model.MonthlyConsumption.Count == 0)
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-3">暂无用量数据</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

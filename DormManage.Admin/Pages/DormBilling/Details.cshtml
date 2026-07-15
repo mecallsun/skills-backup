@@ -1,0 +1,177 @@
+@page
+@model DormManage.Admin.Pages.DormBilling.DetailsModel
+@{
+    ViewData["Title"] = $"宿舍账单 - {Model.DormCode} - {Model.Month}";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-receipt"></i> 宿舍账单详情
+            <span class="badge bg-secondary ms-2">@Model.DormCode</span>
+            <span class="badge bg-info ms-2">@Model.Month</span>
+        </h2>
+        <a href="/DormBilling" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> 返回列表
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] is string err)
+    {
+        <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @err</div>
+    }
+
+    @if (Model.Dorm is not null)
+    {
+        <!-- 宿舍基本信息 -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <strong><i class="bi bi-building"></i> 宿舍信息</strong>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-muted small">宿舍号</div>
+                        <div class="fs-5 fw-bold">@Model.Dorm.DormCode</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">楼栋</div>
+                        <div>@Model.Dorm.BuildingName</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">楼层 ID</div>
+                        <div>@Model.Dorm.FloorId</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-muted small">容量</div>
+                        <div>@Model.Dorm.Capacity 人</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 账单汇总 -->
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1976d2;">
+                    <div class="card-body">
+                        <div class="text-muted small">房租</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.RentAmount.ToString("F2")</div>
+                        <small class="text-muted">@Model.Bookings.Count(b => b.Type == BookingType.CheckIn && b.Status != BookingStatus.CheckedOut) 人</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0097a7;">
+                    <div class="card-body">
+                        <div class="text-muted small">水费</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.WaterAmount.ToString("F2")</div>
+                        <small class="text-muted">@((Model.Summary.ColdTotal + Model.Summary.HotTotal).ToString("F2")) m³ × 4 元</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #f57c00;">
+                    <div class="card-body">
+                        <div class="text-muted small">电费</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.ElectricAmount.ToString("F2")</div>
+                        <small class="text-muted">@Model.Summary.ElectricTotal.ToString("F2") 度 × 0.6 元</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #388e3c;">
+                    <div class="card-body">
+                        <div class="text-muted small">合计</div>
+                        <div class="fs-3 fw-bold text-success">¥@Model.Summary.TotalAmount.ToString("F2")</div>
+                        <small class="text-muted">本月应缴</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- 用量趋势 -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light"><strong><i class="bi bi-graph-up"></i> 最近 6 个月用量</strong></div>
+                    <div class="card-body">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>月份</th>
+                                    <th class="text-end">冷水 (m³)</th>
+                                    <th class="text-end">热水 (m³)</th>
+                                    <th class="text-end">电 (度)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.MonthlyConsumption)
+                                {
+                                    <tr>
+                                        <td>@c.Month</td>
+                                        <td class="text-end">@c.Cold.ToString("F2")</td>
+                                        <td class="text-end">@c.Hot.ToString("F2")</td>
+                                        <td class="text-end">@c.Electric.ToString("F2")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 当月入住/退房记录 -->
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-light"><strong><i class="bi bi-clipboard-data"></i> 当月入住/退房记录</strong></div>
+                    <div class="card-body p-0">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>日期</th>
+                                    <th>员工</th>
+                                    <th>类型</th>
+                                    <th>状态</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Bookings.Count == 0)
+                                {
+                                    <tr><td colspan="4" class="text-center text-muted py-3">当月无记录</td></tr>
+                                }
+                                @foreach (var b in Model.Bookings)
+                                {
+                                    <tr>
+                                        <td>@b.BookingDate.ToString("MM-dd")</td>
+                                        <td>@b.EmployeeName</td>
+                                        <td>
+                                            @if (b.Type == BookingType.CheckIn)
+                                            {
+                                                <span class="badge bg-success">入住</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">退房</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (b.Status)
+                                            {
+                                                case 1: <span class="badge bg-info">预约</span>; break;
+                                                case 2: <span class="badge bg-primary">在宿</span>; break;
+                                                case 3: <span class="badge bg-secondary">已退房</span>; break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

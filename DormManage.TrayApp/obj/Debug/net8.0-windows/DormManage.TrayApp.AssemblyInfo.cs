@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("DormManage.TrayApp v2.13.2 - 托盘守护 + 自动启停 + 故障自愈")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("2.13.2.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.13.2+58401f9793004639ee533223523bef9882d6fa8a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("2.13.2+47fe783ea6fe3485cfa30916c9024046e1fed6f4")]
 [assembly: System.Reflection.AssemblyProductAttribute("金戈宿舍管理系统托盘守护程序")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DormManage.TrayApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("2.13.2.0")]
