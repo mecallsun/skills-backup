@@ -389,6 +389,83 @@ public class DormDbContext : DbContext
             new DormBooking { Id = 10, EmployeeId = 1, EmployeeCode = "EMP-2026-001", EmployeeName = "张三", Phone = "13800000001", Department = "生产部", DormCode = "D-001", Type = 2, BookingDate = DateOnly.Parse("2025-06-30"), Status = 3, Reason = "离职", RegistrationDate = DateTime.Parse("2025-06-30 17:00:00"), Registrar = "admin", IsActive = true }
         );
 
+        // 系统角色种子数据
+        modelBuilder.Entity<SysRole>().HasData(
+            new SysRole { Id = 1, RoleCode = "admin", RoleName = "管理员", Description = "系统超级管理员，拥有全部权限", SortOrder = 0, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRole { Id = 2, RoleCode = "finance", RoleName = "财务", Description = "财务管理角色，可查看费用标准和账单", SortOrder = 1, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRole { Id = 3, RoleCode = "pda_operator", RoleName = "PDA 操作员", Description = "PDA 抄表操作员，仅可访问抄表模块", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRole { Id = 4, RoleCode = "viewer", RoleName = "访客", Description = "只读角色，仅可查看首页数据看板", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
+        );
+
+        // 系统用户种子数据（admin / admin123，密码使用 BCrypt 加密）
+        var adminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
+        modelBuilder.Entity<SysUser>().HasData(
+            new SysUser { Id = 1, UserName = "admin", PasswordHash = adminPasswordHash, DisplayName = "系统管理员", IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
+        );
+
+        // 用户-角色关联（admin 用户 → 管理员角色）
+        modelBuilder.Entity<SysUserRole>().HasData(
+            new SysUserRole { Id = 1, UserId = 1, RoleId = 1 }
+        );
+
+        // 系统权限种子数据（菜单 + 按钮）
+        modelBuilder.Entity<SysPermission>().HasData(
+            new SysPermission { Id = 1, PermissionCode = "home:view", PermissionName = "首页看板", PermissionType = 1, ParentId = 0, Route = "/", Icon = "bi-speedometer2", SortOrder = 0, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 2, PermissionCode = "booking:view", PermissionName = "办理登记", PermissionType = 1, ParentId = 0, Route = "/Booking", Icon = "bi-clipboard-check", SortOrder = 1, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 3, PermissionCode = "booking:checkin", PermissionName = "入住办理", PermissionType = 2, ParentId = 2, Route = "/Booking/CheckIn", Icon = "bi-box-arrow-in-right", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 4, PermissionCode = "booking:checkout", PermissionName = "退房办理", PermissionType = 2, ParentId = 2, Route = "/Booking/CheckOut", Icon = "bi-box-arrow-right", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 5, PermissionCode = "dorm:view", PermissionName = "宿舍管理", PermissionType = 1, ParentId = 0, Route = "/Dorms", Icon = "bi-building", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 6, PermissionCode = "dorm:create", PermissionName = "新增宿舍", PermissionType = 2, ParentId = 5, Route = "/Dorms/Create", Icon = "", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 7, PermissionCode = "dorm:edit", PermissionName = "编辑宿舍", PermissionType = 2, ParentId = 5, Route = "/Dorms/Edit", Icon = "", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 8, PermissionCode = "dorm:delete", PermissionName = "删除宿舍", PermissionType = 2, ParentId = 5, Route = "", Icon = "", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 9, PermissionCode = "personnel:view", PermissionName = "人员清单", PermissionType = 1, ParentId = 0, Route = "/Personnel", Icon = "bi-people", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 10, PermissionCode = "personnel:import", PermissionName = "导入员工", PermissionType = 2, ParentId = 9, Route = "/Personnel/Import", Icon = "bi-upload", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 11, PermissionCode = "billing:view", PermissionName = "费用标准", PermissionType = 1, ParentId = 0, Route = "/BillingStandard", Icon = "bi-currency-dollar", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 12, PermissionCode = "dormbilling:view", PermissionName = "宿舍账单", PermissionType = 1, ParentId = 0, Route = "/DormBilling", Icon = "bi-receipt", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 13, PermissionCode = "employeebilling:view", PermissionName = "员工账单", PermissionType = 1, ParentId = 0, Route = "/EmployeeBilling", Icon = "bi-wallet2", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 14, PermissionCode = "meter:view", PermissionName = "抄表记录", PermissionType = 1, ParentId = 0, Route = "/Meter", Icon = "bi-gauge", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 15, PermissionCode = "meter:entry", PermissionName = "手动录入", PermissionType = 2, ParentId = 14, Route = "/Meter/Entry", Icon = "bi-pencil", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 16, PermissionCode = "meter:import", PermissionName = "批量导入", PermissionType = 2, ParentId = 14, Route = "/Meter/Import", Icon = "bi-upload", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 17, PermissionCode = "basics:view", PermissionName = "基础资料", PermissionType = 1, ParentId = 0, Route = "/Basics", Icon = "bi-database", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 18, PermissionCode = "settings:view", PermissionName = "系统设置", PermissionType = 1, ParentId = 0, Route = "/Settings", Icon = "bi-gear", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
+        );
+
+        // 角色-权限关联（管理员：全部权限）
+        modelBuilder.Entity<SysRolePermission>().HasData(
+            new SysRolePermission { Id = 1, RoleId = 1, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 2, RoleId = 1, PermissionId = 2, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 3, RoleId = 1, PermissionId = 3, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 4, RoleId = 1, PermissionId = 4, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 5, RoleId = 1, PermissionId = 5, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 6, RoleId = 1, PermissionId = 6, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 7, RoleId = 1, PermissionId = 7, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 8, RoleId = 1, PermissionId = 8, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 9, RoleId = 1, PermissionId = 9, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 10, RoleId = 1, PermissionId = 10, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 11, RoleId = 1, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 12, RoleId = 1, PermissionId = 12, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 13, RoleId = 1, PermissionId = 13, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 14, RoleId = 1, PermissionId = 14, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 15, RoleId = 1, PermissionId = 15, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 16, RoleId = 1, PermissionId = 16, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 17, RoleId = 1, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 18, RoleId = 1, PermissionId = 18, CreatedAt = DateTime.Parse("2026-07-14") },
+            // 财务角色
+            new SysRolePermission { Id = 19, RoleId = 2, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 20, RoleId = 2, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 21, RoleId = 2, PermissionId = 12, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 22, RoleId = 2, PermissionId = 13, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 23, RoleId = 2, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 24, RoleId = 2, PermissionId = 18, CreatedAt = DateTime.Parse("2026-07-14") },
+            // PDA 操作员
+            new SysRolePermission { Id = 25, RoleId = 3, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 26, RoleId = 3, PermissionId = 14, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 27, RoleId = 3, PermissionId = 15, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRolePermission { Id = 28, RoleId = 3, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
+            // 访客
+            new SysRolePermission { Id = 29, RoleId = 4, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") }
+        );
+
         // 抄表记录种子数据（2026年6月、7月）
         var currentMonth = DateTime.Now.ToString("yyyy-MM");
         var lastMonth = DateTime.Now.AddMonths(-1).ToString("yyyy-MM");
