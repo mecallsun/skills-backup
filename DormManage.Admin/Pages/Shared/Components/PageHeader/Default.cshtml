@@ -1,0 +1,102 @@
+@model DormManage.Admin.ViewComponents.PageHeaderModel
+@{
+    var btnClass = (Model.PrimaryAction?.Style) switch
+    {
+        "primary" => "btn-primary",
+        "success" => "btn-success",
+        "danger" => "btn-danger",
+        "warning" => "btn-warning",
+        _ => "btn-primary"
+    };
+}
+
+<!-- 共用页头（P2-1）：图标 + 标题 + 总数 + 操作按钮 + 可选 Tab -->
+<div class="page-header mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0 d-flex align-items-center">
+            @if (!string.IsNullOrEmpty(Model.Icon))
+            {
+                <i class="bi @Model.Icon me-2"></i>
+            }
+            <span>@Model.Title</span>
+            @if (Model.Count.HasValue)
+            {
+                <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
+            }
+        </h2>
+        <div class="d-flex align-items-center gap-2">
+            @if (Model.PrimaryAction is not null)
+            {
+                @if (!string.IsNullOrEmpty(Model.PrimaryAction.Url))
+                {
+                    <a href="@Model.PrimaryAction.Url" class="btn @btnClass btn-sm">
+                        @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
+                        {
+                            <i class="bi @Model.PrimaryAction.Icon"></i>
+                        }
+                        @Model.PrimaryAction.Label
+                    </a>
+                }
+                else if (!string.IsNullOrEmpty(Model.PrimaryAction.OnClick))
+                {
+                    <button class="btn @btnClass btn-sm" onclick="@Model.PrimaryAction.OnClick">
+                        @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
+                        {
+                            <i class="bi @Model.PrimaryAction.Icon"></i>
+                        }
+                        @Model.PrimaryAction.Label
+                    </button>
+                }
+            }
+            @foreach (var action in Model.Actions)
+            {
+                var styleClass = action.Style switch
+                {
+                    "primary" => "btn-outline-primary",
+                    "success" => "btn-outline-success",
+                    "danger" => "btn-outline-danger",
+                    "secondary" => "btn-outline-secondary",
+                    _ => "btn-outline-secondary"
+                };
+                @if (!string.IsNullOrEmpty(action.Url))
+                {
+                    <a href="@action.Url" class="btn @styleClass btn-sm">
+                        @if (!string.IsNullOrEmpty(action.Icon))
+                        {
+                            <i class="bi @action.Icon"></i>
+                        }
+                        @action.Label
+                    </a>
+                }
+            }
+            @if (!string.IsNullOrEmpty(Model.Subtitle))
+            {
+                <small class="text-muted">@Model.Subtitle</small>
+            }
+        </div>
+    </div>
+
+    @if (Model.Tabs.Any())
+    {
+        <ul class="nav nav-tabs mt-3">
+            @foreach (var tab in Model.Tabs)
+            {
+                var isActive = Model.ActiveTab == tab.Key || (string.IsNullOrEmpty(Model.ActiveTab) && Model.Tabs.IndexOf(tab) == 0);
+                <li class="nav-item">
+                    <a class="nav-link @(isActive ? "active" : "")"
+                       href="?tab=@tab.Key">
+                        @if (!string.IsNullOrEmpty(tab.Icon))
+                        {
+                            <i class="bi @tab.Icon"></i>
+                        }
+                        @tab.Label
+                        @if (!string.IsNullOrEmpty(tab.Badge))
+                        {
+                            <span class="badge @(tab.BadgeColor == 1 ? "bg-warning" : tab.BadgeColor == 2 ? "bg-danger" : tab.BadgeColor == 3 ? "bg-info" : "bg-secondary") ms-1">@tab.Badge</span>
+                        }
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</div>
