@@ -26,10 +26,12 @@ public class MenuViewComponent : ViewComponent
             return View("Default", new List<AuthHelperExtensions.MenuNode>());
         }
 
-        // 根据用户角色查询权限菜单
+        // 根据用户角色查询权限菜单（已包含父级补齐）
         var menus = await _authService.GetUserMenusAsync(userId);
 
-        // 只显示 PermissionType=1 的菜单项
-        return View("Default", menus.Where(m => !string.IsNullOrEmpty(m.Route)).ToList());
+        // 只显示顶级菜单（ParentId=0）作为导航项，子菜单在 Dropdown 中渲染
+        var topMenus = menus.Where(m => m.ParentId == 0).ToList();
+
+        return View("Default", (topMenus, menus));
     }
 }

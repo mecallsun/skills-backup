@@ -77,20 +77,51 @@ public class AuthService : IAuthService
     {
         if (userId <= 0) return new List<AuthHelperExtensions.MenuNode>();
 
-        // 查询用户角色关联的所有权限
+        // 查询用户角色关联的所有菜单类权限（PermissionType=1）
+        // 含 ParentId / SortOrder 字段，供前端按父子层级渲染
         var menus = await (from perm in _db.SysPermissions
                            join rp in _db.SysRolePermissions on perm.Id equals rp.PermissionId
                            join ur in _db.SysUserRoles on rp.RoleId equals ur.RoleId
-                           where ur.UserId == userId && perm.IsActive
-                           orderby perm.SortOrder
+                           where ur.UserId == userId
+                                 && perm.IsActive
+                                 && perm.PermissionType == 1
+                           orderby perm.SortOrder, perm.Id
                            select new AuthHelperExtensions.MenuNode
                            {
                                Id = perm.Id,
+                               ParentId = perm.ParentId,
                                PermissionCode = perm.PermissionCode,
                                PermissionName = perm.PermissionName,
-                               Route = perm.Route,
-                               Icon = perm.Icon ?? ""
+                               Route = perm.Route ?? "",
+                               Icon = perm.Icon ?? "",
+                               SortOrder = perm.SortOrder,
+                               PermissionType = perm.PermissionType
                            }).Distinct().ToListAsync();
+
+        // 若顶级菜单缺少父级链，自动补齐父级（确保父级可见时子菜单才能显示）
+        var parentIds = menus.Where(m => m.ParentId > 0).Select(m => m.ParentId).Distinct().ToList();
+        if (parentIds.Any())
+        {
+            var existingIds = menus.Select(m => m.Id).ToHashSet();
+            var missingParents = await _db.SysPermissions
+                .Where(p => parentIds.Contains(p.Id) && !existingIds.Contains(p.Id))
+                .ToListAsync();
+            foreach (var p in missingParents)
+            {
+                menus.Add(new AuthHelperExtensions.MenuNode
+                {
+                    Id = p.Id,
+                    ParentId = p.ParentId,
+                    PermissionCode = p.PermissionCode,
+                    PermissionName = p.PermissionName,
+                    Route = p.Route ?? "",
+                    Icon = p.Icon ?? "",
+                    SortOrder = p.SortOrder,
+                    PermissionType = p.PermissionType
+                });
+            }
+            menus = menus.OrderBy(m => m.SortOrder).ThenBy(m => m.Id).ToList();
+        }
 
         return menus;
     }
