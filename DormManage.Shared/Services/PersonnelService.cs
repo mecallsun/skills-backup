@@ -12,10 +12,10 @@ namespace DormManage.Shared.Services;
 public interface IPersonnelService
 {
     Task<PagedResult<SysEmployee>> GetListAsync(
-        string? keyword, string? department, int? employeeTypeId, int? employmentStatusId, int page, int pageSize);
+        string? keyword, string? department, int? employeeTypeId, int? employmentStatusId, string? team, int page, int pageSize);
 
     /// <summary>导出 CSV 字节流（P1-14）</summary>
-    Task<byte[]> ExportCsvAsync(string? keyword = null, string? department = null);
+    Task<byte[]> ExportCsvAsync(string? keyword = null, string? department = null, string? team = null);
 
     /// <summary>导入 CSV（P1-14）：支持新增与按 EmployeeCode 覆盖更新</summary>
     Task<PersonnelImportResult> ImportCsvAsync(Stream csvStream);
@@ -46,7 +46,7 @@ public class PersonnelService : IPersonnelService
     }
 
     public async Task<PagedResult<SysEmployee>> GetListAsync(
-        string? keyword, string? department, int? employeeTypeId, int? employmentStatusId, int page, int pageSize)
+        string? keyword, string? department, int? employeeTypeId, int? employmentStatusId, string? team, int page, int pageSize)
     {
         var query = _db.Employees.AsQueryable();
 
@@ -58,6 +58,8 @@ public class PersonnelService : IPersonnelService
             query = query.Where(e => e.EmployeeTypeId == employeeTypeId.Value);
         if (employmentStatusId.HasValue)
             query = query.Where(e => e.EmploymentStatusId == employmentStatusId.Value);
+        if (!string.IsNullOrWhiteSpace(team))
+            query = query.Where(e => e.Team == team);
 
         var total = await query.CountAsync();
         var items = await query
@@ -74,13 +76,15 @@ public class PersonnelService : IPersonnelService
         };
     }
 
-    public async Task<byte[]> ExportCsvAsync(string? keyword = null, string? department = null)
+    public async Task<byte[]> ExportCsvAsync(string? keyword = null, string? department = null, string? team = null)
     {
         var query = _db.Employees.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
             query = query.Where(e => e.EmployeeCode.Contains(keyword) || e.RealName.Contains(keyword));
         if (!string.IsNullOrWhiteSpace(department))
             query = query.Where(e => e.Department == department);
+        if (!string.IsNullOrWhiteSpace(team))
+            query = query.Where(e => e.Team == team);
 
         var employees = await query.OrderBy(e => e.EmployeeCode).ToListAsync();
 

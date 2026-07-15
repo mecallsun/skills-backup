@@ -21,17 +21,18 @@ public class PersonnelController : ControllerBase
         [FromQuery] string? department,
         [FromQuery] int? employeeTypeId,
         [FromQuery] int? employmentStatusId,
+        [FromQuery] string? team,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var result = await _service.GetListAsync(keyword, department, employeeTypeId, employmentStatusId, page, pageSize);
+        var result = await _service.GetListAsync(keyword, department, employeeTypeId, employmentStatusId, team, page, pageSize);
         return ApiResponse<PagedResult<SysEmployeeModel>>.Ok(result);
     }
 
     [HttpGet("export")]
-    public async Task<IActionResult> Export([FromQuery] string? keyword, [FromQuery] string? department)
+    public async Task<IActionResult> Export([FromQuery] string? keyword, [FromQuery] string? department, [FromQuery] string? team)
     {
-        var bytes = await _service.ExportCsvAsync(keyword, department);
+        var bytes = await _service.ExportCsvAsync(keyword, department, team);
         return File(bytes, "text/csv; charset=utf-8", $"人员清单_{DateTime.Now:yyyyMMddHHmmss}.csv");
     }
 

@@ -121,6 +121,12 @@ public class SysEmployee : BaseEntity
     public string? DormCode { get; set; }
 
     /// <summary>
+    /// 班组（v2.13.3 补充字段，对应基础资料-班组表 Team 字符串）
+    /// </summary>
+    [MaxLength(20)]
+    public string? Team { get; set; }
+
+    /// <summary>
     /// 住宿状态ID（v2.11.20 新增 FK 字段，引用基础资料-住宿状态表 ResidenceStatus.Id）
     /// </summary>
     /// <remarks>
