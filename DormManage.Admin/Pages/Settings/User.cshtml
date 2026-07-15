@@ -1,0 +1,298 @@
+@page
+@model DormManage.Admin.Pages.Settings.UserModel
+@{
+    ViewData["Title"] = "用户管理";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-person-badge"></i> 用户管理
+            <span class="badge bg-secondary ms-2">@Model.Users.Count 人</span>
+        </h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-plus-lg"></i> 新增用户
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i> @Model.SuccessMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
+    }
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th width="60">序号</th>
+                        <th>用户名</th>
+                        <th>姓名</th>
+                        <th>角色</th>
+                        <th>联系方式</th>
+                        <th>最后登录</th>
+                        <th width="120" class="text-center">状态</th>
+                        <th width="280">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var idx = 0; }
+                    @foreach (var u in Model.Users)
+                    {
+                        idx++;
+                        <tr>
+                            <td>@idx</td>
+                            <td><strong>@u.UserName</strong></td>
+                            <td>@u.DisplayName</td>
+                            <td>
+                                @foreach (var roleName in u.RoleNames.Split(", ", StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <span class="badge bg-info me-1">@roleName</span>
+                                }
+                            </td>
+                            <td class="small">
+                                @if (!string.IsNullOrEmpty(u.Email))
+                                {
+                                    <div><i class="bi bi-envelope"></i> @u.Email</div>
+                                }
+                                @if (!string.IsNullOrEmpty(u.Phone))
+                                {
+                                    <div><i class="bi bi-phone"></i> @u.Phone</div>
+                                }
+                            </td>
+                            <td class="small text-muted">
+                                @(u.LastLoginTime?.ToString("yyyy-MM-dd HH:mm") ?? "从未登录")
+                                @if (!string.IsNullOrEmpty(u.LastLoginIp))
+                                {
+                                    <div><code>@u.LastLoginIp</code></div>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (u.IsActive && !u.IsLocked)
+                                {
+                                    <span class="badge bg-success">正常</span>
+                                }
+                                else if (u.IsLocked)
+                                {
+                                    <span class="badge bg-danger">已锁定</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">禁用</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleNames')">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <button class="btn btn-sm btn-outline-warning"
+                                        onclick="openPwdModal(@u.Id, '@u.UserName')">
+                                    <i class="bi bi-key"></i> 重置密码
+                                </button>
+                                @if (u.UserName != "admin")
+                                {
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete(@u.Id, '@u.UserName')">
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新增用户 Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus"></i> 新增用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                        <input type="text" name="UserName" class="form-control" required maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="DisplayName" class="form-control" required maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">初始密码 <span class="text-danger">*</span></label>
+                        <input type="password" name="Password" class="form-control" required minlength="6">
+                        <div class="form-text">至少 6 位，建议首次登录后修改</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" name="Email" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">电话</label>
+                            <input type="text" name="Phone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色</label>
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="SelectedRoleIds" value="@role.Id" id="newRole_@role.Id">
+                                <label class="form-check-label" for="newRole_@role.Id">
+                                    @role.RoleName <small class="text-muted">(@role.RoleCode)</small>
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户 Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Update">
+                <input type="hidden" name="Id" id="editId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> 编辑用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" id="editUserName" class="form-control" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="DisplayName" id="editDisplayName" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" name="Email" id="editEmail" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">电话</label>
+                            <input type="text" name="Phone" id="editPhone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editIsActive">
+                        <input type="hidden" name="IsActive" value="false">
+                        <label class="form-check-label" for="editIsActive">启用账号</label>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色</label>
+                        <div id="editRolesContainer">
+                            @foreach (var role in Model.AvailableRoles)
+                            {
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox"
+                                           name="SelectedRoleIds" value="@role.Id" id="editRole_@role.Id">
+                                    <label class="form-check-label" for="editRole_@role.Id">
+                                        @role.RoleName <small class="text-muted">(@role.RoleCode)</small>
+                                    </label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 重置密码 Modal -->
+<div class="modal fade" id="resetPwdModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="ResetPassword">
+                <input type="hidden" name="Id" id="pwdId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-key"></i> 重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>为用户 <strong id="pwdUserName"></strong> 设置新密码：</p>
+                    <input type="password" name="NewPassword" class="form-control" required minlength="6">
+                    <div class="form-text">至少 6 位</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning"><i class="bi bi-key"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认表单（隐藏） -->
+<form id="deleteForm" method="post" asp-page-handler="Delete" style="display:none;">
+    <input type="hidden" name="Id" id="deleteId">
+</form>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, displayName, email, phone, isActive, roleNames) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editUserName').value = id;
+            // 需通过 ajax 拿用户名，这里先用 id 显示
+            document.getElementById('editDisplayName').value = displayName;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editIsActive').checked = isActive === 'true';
+
+            // 取消所有角色勾选
+            document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => cb.checked = false);
+            // 勾选该用户的角色
+            const roles = roleNames.split(', ');
+            roles.forEach(name => {
+                document.querySelectorAll('#editRolesContainer label').forEach(lbl => {
+                    if (lbl.textContent.trim().startsWith(name)) {
+                        const cb = document.getElementById(lbl.htmlFor);
+                        if (cb) cb.checked = true;
+                    }
+                });
+            });
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+
+        function openPwdModal(id, userName) {
+            document.getElementById('pwdId').value = id;
+            document.getElementById('pwdUserName').textContent = userName;
+            new bootstrap.Modal(document.getElementById('resetPwdModal')).show();
+        }
+
+        function confirmDelete(id, userName) {
+            if (confirm(`确定要删除用户 ${userName} 吗？此操作不可撤销。`)) {
+                document.getElementById('deleteId').value = id;
+                document.getElementById('deleteForm').submit();
+            }
+        }
+    </script>
+}

@@ -1,0 +1,314 @@
+@page
+@model DormManage.Admin.Pages.Settings.RoleModel
+@{
+    ViewData["Title"] = "角色管理";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-shield-lock"></i> 角色管理
+            <span class="badge bg-secondary ms-2">@Model.Roles.Count 个角色</span>
+        </h2>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            <i class="bi bi-plus-lg"></i> 新增角色
+        </button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success py-2"><i class="bi bi-check-circle"></i> @Model.SuccessMessage</div>
+    }
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
+    }
+
+    <!-- 角色列表 -->
+    <div class="card mb-3">
+        <div class="card-header bg-light"><strong><i class="bi bi-list-ul"></i> 角色列表</strong></div>
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th width="60">序号</th>
+                        <th>角色编码</th>
+                        <th>角色名称</th>
+                        <th>说明</th>
+                        <th width="80" class="text-center">排序</th>
+                        <th width="80" class="text-center">用户数</th>
+                        <th width="100" class="text-center">权限数</th>
+                        <th width="100" class="text-center">状态</th>
+                        <th width="280">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var idx = 0; }
+                    @foreach (var r in Model.Roles)
+                    {
+                        idx++;
+                        <tr>
+                            <td>@idx</td>
+                            <td><code>@r.RoleCode</code></td>
+                            <td><strong>@r.RoleName</strong></td>
+                            <td class="small text-muted">@r.Description</td>
+                            <td class="text-center">@r.SortOrder</td>
+                            <td class="text-center"><span class="badge bg-info">@r.UserCount</span></td>
+                            <td class="text-center"><span class="badge bg-primary">@r.PermissionCount</span></td>
+                            <td class="text-center">
+                                @if (r.IsActive)
+                                {
+                                    <span class="badge bg-success">启用</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">禁用</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary"
+                                        onclick="openEditModal(@r.Id, '@r.RoleName', '@r.Description', @r.SortOrder, @r.IsActive.ToString().ToLower())">
+                                    <i class="bi bi-pencil"></i> 编辑
+                                </button>
+                                <button class="btn btn-sm btn-outline-success"
+                                        onclick="openPermMatrixModal(@r.Id, '@r.RoleName')">
+                                    <i class="bi bi-grid-3x3"></i> 权限矩阵
+                                </button>
+                                @if (r.RoleCode != "admin")
+                                {
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete(@r.Id, '@r.RoleName')">
+                                        <i class="bi bi-trash"></i> 删除
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 权限矩阵总览（只读） -->
+    <div class="card">
+        <div class="card-header bg-light">
+            <strong><i class="bi bi-grid-3x3-gap"></i> 权限矩阵总览</strong>
+            <small class="text-muted ms-2">（按角色 × 顶级模块展示，✔ 表示已分配）</small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered mb-0 align-middle text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-start">模块</th>
+                        @foreach (var r in Model.Roles)
+                        {
+                            <th>@r.RoleName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var group in Model.PermissionGroups)
+                    {
+                        <tr>
+                            <td class="text-start"><strong>@group.GroupName</strong></td>
+                            @foreach (var r in Model.Roles)
+                            {
+                                var granted = group.Items.Any(p => Model.RolePermissions.GetValueOrDefault(r.Id)?.Contains(p.Id) ?? false);
+                                <td>
+                                    @if (granted)
+                                    {
+                                        <span class="text-success">✔</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">·</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新增角色 Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-lg"></i> 新增角色</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">角色编码 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleCode" class="form-control" required maxlength="50" pattern="[a-z_]+">
+                        <div class="form-text">仅小写字母与下划线，例如：custom_role</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleName" class="form-control" required maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">说明</label>
+                        <textarea name="Description" class="form-control" rows="2" maxlength="200"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input type="number" name="SortOrder" class="form-control" value="99" min="0" max="999">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑角色 Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="Update">
+                <input type="hidden" name="Id" id="editRoleId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> 编辑角色</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">角色编码</label>
+                        <input type="text" id="editRoleCode" class="form-control" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleName" id="editRoleName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">说明</label>
+                        <textarea name="Description" id="editRoleDesc" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input type="number" name="SortOrder" id="editRoleSort" class="form-control" min="0" max="999">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editRoleActive">
+                        <input type="hidden" name="IsActive" value="false">
+                        <label class="form-check-label" for="editRoleActive">启用角色</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 权限矩阵编辑 Modal -->
+<div class="modal fade" id="permMatrixModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" asp-page-handler="SavePermissions">
+                <input type="hidden" name="RoleId" id="permRoleId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-grid-3x3"></i> 权限分配 - <span id="permRoleName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        @foreach (var group in Model.PermissionGroups)
+                        {
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-header py-2 bg-light">
+                                        <strong>@group.GroupName</strong>
+                                    </div>
+                                    <div class="card-body py-2">
+                                        @foreach (var perm in group.Items)
+                                        {
+                                            <div class="form-check">
+                                                <input class="form-check-input perm-cb" type="checkbox"
+                                                       name="PermissionIds" value="@perm.Id" id="perm_@perm.Id"
+                                                       data-role-id="">
+                                                <label class="form-check-label small" for="perm_@perm.Id">
+                                                    @perm.PermissionName
+                                                </label>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="selectAllPerms(true)">全选</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="selectAllPerms(false)">全不选</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存权限</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认表单（隐藏） -->
+<form id="deleteRoleForm" method="post" asp-page-handler="Delete" style="display:none;">
+    <input type="hidden" name="Id" id="deleteRoleId">
+</form>
+
+@section Scripts {
+    <script>
+        function openEditModal(id, name, desc, sort, isActive) {
+            document.getElementById('editRoleId').value = id;
+            document.getElementById('editRoleName').value = name;
+            document.getElementById('editRoleDesc').value = desc || '';
+            document.getElementById('editRoleSort').value = sort;
+            document.getElementById('editRoleActive').checked = isActive === 'true';
+            new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+        }
+
+        function openPermMatrixModal(roleId, roleName) {
+            document.getElementById('permRoleId').value = roleId;
+            document.getElementById('permRoleName').textContent = roleName;
+
+            // 清除所有勾选
+            document.querySelectorAll('.perm-cb').forEach(cb => {
+                cb.checked = false;
+                cb.dataset.roleId = roleId;
+            });
+
+            // 根据 RolePermissions 字典勾选当前角色已有的权限
+            const rolePermsJson = @Html.Raw(Json.Serialize(Model.RolePermissions.ToDictionary(
+                kv => kv.Key,
+                kv => kv.Value.ToArray())));
+            const permIds = rolePermsJson[roleId] || [];
+            permIds.forEach(pid => {
+                const cb = document.getElementById('perm_' + pid);
+                if (cb) cb.checked = true;
+            });
+
+            new bootstrap.Modal(document.getElementById('permMatrixModal')).show();
+        }
+
+        function selectAllPerms(checked) {
+            document.querySelectorAll('.perm-cb').forEach(cb => cb.checked = checked);
+        }
+
+        function confirmDelete(id, name) {
+            if (confirm(`确定要删除角色 ${name} 吗？此操作不可撤销。`)) {
+                document.getElementById('deleteRoleId').value = id;
+                document.getElementById('deleteRoleForm').submit();
+            }
+        }
+    </script>
+}
