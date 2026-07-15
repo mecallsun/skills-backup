@@ -318,7 +318,7 @@
                         <div class="row g-2">
                             <div class="col-md-4 form-field">
                                 <label class="form-label">入住日期<span class="required">*</span></label>
-                                <input type="date" id="modal_bookingDate" class="form-control">
+                                <input type="date" id="modal_bookingDate" class="form-control" onchange="onModalDateChangeIn()">
                             </div>
                             <div class="col-md-4 form-field">
                                 <label class="form-label">原因</label>
@@ -342,10 +342,11 @@
                         <div class="form-section-title">操作类型与校验</div>
                         <div class="d-flex align-items-start gap-2">
                             <!-- 左栏：操作类型（固定 100px） -->
-                            <div style="width: 100px; flex-shrink: 0;">
+                            <!-- v2.12.34 入住日期 > 当前日期时显示"入住"/"预约"二选一 -->
+                            <div id="modal_opTypeBox_in" style="width: 100px; flex-shrink: 0;">
                                 <span class="badge bg-success px-3 py-2 w-100 d-block text-center"><i class="bi bi-box-arrow-in-right"></i> 入住</span>
                             </div>
-                            <!-- 右栏：校验信息（校验未通过时显示禁止提交） -->
+                            <!-- 右栏：校验信息 -->
                             <div id="modal_validationBox_in" style="flex: 1 1 0; min-width: 0;">
                                 <div id="modal_validationText_in" class="text-muted small">请先选择员工</div>
                             </div>
@@ -359,6 +360,8 @@
                             <option value="">请先选择员工</option>
                         </select>
                         <small class="text-muted mt-1 d-block" id="modal_dormHint">系统自动过滤余量 > 0 的房间</small>
+                        <!-- v2.12.34 默认预分配房号（按优先级：1.同班次 2.入住率高+有余量 3.同部门） -->
+                        <div id="modal_dormSuggestion" class="alert alert-info mt-2 mb-0 py-2" style="display:none; font-size: 0.85rem;"></div>
                     </div>
                 </div>
                 <div class="modal-footer py-2">
@@ -720,11 +723,16 @@
         document.getElementById('modalCheckIn').addEventListener('show.bs.modal', function () {
             const today = new Date().toISOString().slice(0, 10);
             document.getElementById('modal_bookingDate').value = today;
+            document.getElementById('modal_registrar_out');
             document.getElementById('modal_registrar_in').value = 'admin';
             modalSel.in = null;
+            modalSel.inValid = null;
+            modalSel.inActiveRecord = null;
             document.getElementById('modal_empKeyword').value = '';
             document.getElementById('modal_empInfo_in').style.display = 'none';
-            updateValidationIn();
+            document.getElementById('modal_dormSuggestion').style.display = 'none';
+            // v2.12.34 根据入住日期决定操作类型显示
+            onModalDateChangeIn();
         });
         document.getElementById('modalCheckOut').addEventListener('show.bs.modal', function () {
             const today = new Date().toISOString().slice(0, 10);
@@ -823,10 +831,16 @@
             const emp = modalSel.in;
             if (!emp) return;
             const active = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.employeeId === emp.id && b.status === 2) : [];
+            modalSel.inActiveRecord = active[0] || null;
+            // v2.12.34 校验失败时显示在宿房间号（红色加粗）
             if (active.length > 0) {
-                modalSel.inValid = { blocked: true, msg: '员工当前已在宿 ' + active[0].dormCode + '，请先办理退房' };
+                modalSel.inValid = {
+                    blocked: true,
+                    msg: '入住校验：校验失败！员工当前已在宿 <span class="text-danger fw-bold fs-5">' + active[0].dormCode + '</span>，请先办理退房',
+                    raw: '员工当前已在宿 ' + active[0].dormCode + '，请先办理退房'
+                };
             } else {
-                modalSel.inValid = { blocked: false, msg: '✓ 员工状态正常，可办理入住' };
+                modalSel.inValid = { blocked: false, msg: '入住校验：校验通过！员工状态正常，可办理入住', raw: '员工状态正常，可办理入住' };
             }
             updateValidationIn();
             refreshDormsIn();
@@ -860,13 +874,18 @@
                 lockActionIn(true);
                 return;
             }
+            const date = document.getElementById('modal_bookingDate').value;
+            const today = new Date().toISOString().slice(0, 10);
             const v = modalSel.inValid;
             if (v && v.blocked) {
-                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 校验未通过：' + v.msg + '</span>';
+                // v2.12.34 校验失败：在宿房间号红色加粗
+                box.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> 入住校验：校验失败！入住日期 ' + date + ' ，员工当前已在宿<span class="text-danger fw-bold fs-5">' + (modalSel.inActiveRecord ? modalSel.inActiveRecord.dormCode : '') + '</span>，请先办理退房</span>';
                 lockActionIn(true);
             } else {
-                box.innerHTML = '<span class="text-success">' + (v ? v.msg : '员工状态正常') + '</span>';
+                box.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> ' + (v ? v.msg : '员工状态正常，可办理入住') + '</span>';
                 lockActionIn(false);
+                // v2.12.34 校验通过后显示默认预分配房号
+                suggestDormIn();
             }
         }
 
@@ -916,6 +935,93 @@
             sel.innerHTML = '<option value="">请选择房间</option>' +
                 list.map(d => `<option value="${d.dormCode}">${d.dormCode} | 余量 ${d.available}/${d.capacity}</option>`).join('');
             document.getElementById('modal_dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间`;
+            // v2.12.34 校验通过后显示默认预分配房号
+            if (!modalSel.inValid || !modalSel.inValid.blocked) {
+                suggestDormIn();
+            } else {
+                document.getElementById('modal_dormSuggestion').style.display = 'none';
+            }
+        }
+
+        // v2.12.34 默认预分配房号（按优先级：1.同班次 2.入住率高+有余量 3.同部门）
+        function suggestDormIn() {
+            const emp = modalSel.in;
+            if (!emp) return;
+            const date = document.getElementById('modal_bookingDate').value;
+            const list = (typeof availableDorms === 'function') ? availableDorms(date) : [];
+            if (list.length === 0) {
+                document.getElementById('modal_dormSuggestion').style.display = 'none';
+                return;
+            }
+            // 优先级 1：同班次（同 attendanceTypeId 且有余量）
+            const sameAtt = list.filter(d => {
+                const activeResidents = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.dormCode === d.dormCode && b.status === 2) : [];
+                return activeResidents.some(r => {
+                    const e = (typeof findEmployee === 'function') ? findEmployee(r.employeeId) : null;
+                    return e && e.attendanceTypeId === emp.attendanceTypeId;
+                });
+            });
+            // 优先级 2：入住率高且有余量（available/capacity < 0.5 且 > 0）
+            const highOcc = list.filter(d => d.capacity > 0 && (d.capacity - d.available) / d.capacity >= 0.5);
+            // 优先级 3：同部门
+            const sameDept = list.filter(d => {
+                const activeResidents = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.dormCode === d.dormCode && b.status === 2) : [];
+                return activeResidents.some(r => {
+                    const e = (typeof findEmployee === 'function') ? findEmployee(r.employeeId) : null;
+                    return e && e.departmentId === emp.departmentId;
+                });
+            });
+
+            let suggested = null;
+            let reason = '';
+            if (sameAtt.length > 0) {
+                suggested = sameAtt[0];
+                reason = '同班次';
+            } else if (highOcc.length > 0) {
+                suggested = highOcc[0];
+                reason = '入住率高且有余量';
+            } else if (sameDept.length > 0) {
+                suggested = sameDept[0];
+                reason = '同部门';
+            } else {
+                suggested = list[0];
+                reason = '首个可用房间';
+            }
+
+            const box = document.getElementById('modal_dormSuggestion');
+            // 计算默认床位号（按已分配数 + 1）
+            const activeCount = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.filter(b => b.dormCode === suggested.dormCode && b.status === 2).length : 0;
+            const bedNo = activeCount + 1;
+            box.innerHTML = '<i class="bi bi-lightbulb"></i> <strong>默认预分配房号：</strong>' + suggested.dormCode + '（' + reason + '）· 床位 <strong>' + bedNo + '</strong>';
+            box.style.display = 'block';
+
+            // 自动选入下拉框
+            const sel = document.getElementById('modal_dormSelect');
+            if (sel && !sel.value) sel.value = suggested.dormCode;
+        }
+
+        // v2.12.34 入住日期变更：决定操作类型显示（单 Badge 或 入住/预约 二选一）
+        function onModalDateChangeIn() {
+            const date = document.getElementById('modal_bookingDate').value;
+            const today = new Date().toISOString().slice(0, 10);
+            const box = document.getElementById('modal_opTypeBox_in');
+            if (date > today) {
+                // 入住日期 > 当前日期：显示"入住"和"预约"二选一
+                box.innerHTML =
+                    '<div class="btn-group-vertical w-100" role="group">' +
+                    '<input type="radio" class="btn-check" name="opTypeIn" id="opInCheckIn" value="1" checked>' +
+                    '<label class="btn btn-outline-success w-100 mb-1" for="opInCheckIn"><i class="bi bi-box-arrow-in-right"></i> 入住</label>' +
+                    '<input type="radio" class="btn-check" name="opTypeIn" id="opInReserve" value="4">' +
+                    '<label class="btn btn-outline-info w-100" for="opInReserve"><i class="bi bi-calendar-check"></i> 预约</label>' +
+                    '</div>';
+            } else {
+                // 入住日期 <= 当前日期：仅显示"入住"Badge
+                box.innerHTML = '<span class="badge bg-success px-3 py-2 w-100 d-block text-center"><i class="bi bi-box-arrow-in-right"></i> 入住</span>';
+            }
+            // 重新触发校验
+            if (modalSel.in && modalSel.inValid) {
+                updateValidationIn();
+            }
         }
 
         function onModalDateChange() {

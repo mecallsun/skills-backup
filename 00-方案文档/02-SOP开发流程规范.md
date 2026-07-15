@@ -222,7 +222,7 @@ TrayApp / Bootstrapper（如需要）
 ### 步骤 4.4：编译验证
 
 ```
-dotnet build DormManage.Service.sln -c Release    # 必须 0 错误
+dotnet build DormManage.sln -c Release    # 必须 0 错误
 ```
 
 ### ✅ 阶段 ④ 验收物

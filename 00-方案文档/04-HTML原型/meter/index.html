@@ -160,6 +160,16 @@
         /* 按钮 */
         .btn i { margin-right: 0.25rem; }
 
+        /* v2.12.36 手动补录模态弹窗紧凑样式 */
+        .modal-body .form-section { margin-bottom: 0.6rem; }
+        .modal-body .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+        .modal-body .form-field { margin-bottom: 0.5rem; }
+        .modal-body .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        .modal-body .form-label .required { color: #dc3545; margin-left: 2px; }
+        .modal-body .form-control, .modal-body .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+        .upload-ph { border: 2px dashed #cfd8dc; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #90a4ae; cursor: pointer; }
+        .upload-ph:hover { border-color: #1976d2; color: #1976d2; }
+
         /* 筛选区查询按钮统一风格 */
         .filter-btn {
             min-width: 100px !important;
@@ -259,7 +269,7 @@
                 <i class="bi bi-clipboard-data-fill"></i>抄表记录
             </h1>
             <div>
-                <a href="entry.html" class="btn btn-success"><i class="bi bi-pencil-square"></i> 手动补录</a>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalManualEntry"><i class="bi bi-pencil-square"></i> 手动补录</button>
                 <a href="import.html" class="btn btn-primary"><i class="bi bi-file-earmark-arrow-up"></i> 批量导入</a>
                 <button class="btn btn-outline-secondary" onclick="exportExcel()"><i class="bi bi-download"></i> 导出 Excel</button>
             </div>
@@ -324,6 +334,102 @@
                 </table>
             </div>
             <div class="card-footer" id="pager"></div>
+        </div>
+    </div>
+
+    <!-- v2.12.36 手动补录 模态弹窗 -->
+    <div class="modal fade" id="modalManualEntry" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalManualEntryLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 900px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="modalManualEntryLabel"><i class="bi bi-pencil-square text-success"></i> 手动补录抄表</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- 区块 1：宿舍 + 月份 + 抄表员（紧凑一行） -->
+                    <div class="form-section">
+                        <div class="form-section-title">基本信息</div>
+                        <div class="row g-2">
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">宿舍<span class="required">*</span></label>
+                                <select id="me_dorm" class="form-select">
+                                    <option value="">请选择宿舍</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">抄表月份<span class="required">*</span></label>
+                                <input type="month" id="me_month" class="form-control">
+                            </div>
+                            <div class="col-md-4 form-field">
+                                <label class="form-label">抄表员</label>
+                                <input type="text" id="me_operator" class="form-control" value="admin（后台补录）" disabled>
+                            </div>
+                        </div>
+                        <!-- 覆盖/重复警告 -->
+                        <div id="me_dupWarn" class="alert alert-danger mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
+                        <div id="me_lastRef" class="alert alert-secondary mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
+                    </div>
+
+                    <!-- 区块 2：三表读数（紧凑三列卡片） -->
+                    <div class="form-section">
+                        <div class="form-section-title">三表读数</div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #1976d2 !important;">
+                                    <div class="card-body py-2">
+                                        <h6 class="text-primary mb-1"><i class="bi bi-droplet"></i> 冷水</h6>
+                                        <input type="number" step="0.01" min="0" id="me_cold" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                        <small class="text-muted" id="me_hint_cold">用量：—</small>
+                                        <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')" style="height: 50px; font-size: 0.8rem;">
+                                            <i class="bi bi-camera"></i> 上传照片
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #0dcaf0 !important;">
+                                    <div class="card-body py-2">
+                                        <h6 class="text-info mb-1"><i class="bi bi-steam"></i> 热水</h6>
+                                        <input type="number" step="0.01" min="0" id="me_hot" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                        <small class="text-muted" id="me_hint_hot">用量：—</small>
+                                        <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')" style="height: 50px; font-size: 0.8rem;">
+                                            <i class="bi bi-camera"></i> 上传照片
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #ffc107 !important;">
+                                    <div class="card-body py-2">
+                                        <h6 class="text-warning mb-1"><i class="bi bi-lightning"></i> 电</h6>
+                                        <input type="number" step="0.01" min="0" id="me_electric" class="form-control form-control-sm" placeholder="读数（度）" oninput="onMeterReading()">
+                                        <small class="text-muted" id="me_hint_electric">用量：—</small>
+                                        <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')" style="height: 50px; font-size: 0.8rem;">
+                                            <i class="bi bi-camera"></i> 上传照片
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 区块 3：备注 -->
+                    <div class="form-section">
+                        <div class="form-section-title">备注</div>
+                        <textarea id="me_remark" class="form-control form-control-sm" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
+                    </div>
+
+                    <!-- 右侧用量预览 -->
+                    <div id="me_usagePreview" class="alert alert-light border mt-2 mb-0 py-2" style="font-size: 0.85rem;">
+                        <strong><i class="bi bi-calculator"></i> 本月用量预览</strong>
+                        <p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                    <button type="button" class="btn btn-primary" onclick="meSubmit()"><i class="bi bi-check-lg"></i> 提交</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -444,6 +550,142 @@
         }
 
         function exportExcel() { alert('原型演示：实际将下载 抄表记录_' + (monthSel.value || '全部') + '.xlsx'); }
+
+        // ========== v2.12.36 手动补录 模态弹窗逻辑 ==========
+        // 弹窗显示时初始化
+        document.getElementById('modalManualEntry').addEventListener('show.bs.modal', function () {
+            // 初始化宿舍下拉（仅启用）
+            const dormSel = document.getElementById('me_dorm');
+            dormSel.innerHTML = '<option value="">请选择宿舍</option>';
+            if (typeof DORMS !== 'undefined') {
+                DORMS.filter(d => d.isActive).forEach(d => dormSel.innerHTML += `<option value="${d.dormCode}">${d.dormCode} | ${d.address || ''}</option>`);
+            }
+            // v2.12.36：抄表月份默认为服务端当前月份
+            document.getElementById('me_month').value = new Date().toISOString().slice(0, 7);
+            document.getElementById('me_operator').value = 'admin（后台补录）';
+            // 清空输入
+            ['me_cold','me_hot','me_electric'].forEach(id => { document.getElementById(id).value = ''; });
+            document.getElementById('me_remark').value = '';
+            document.getElementById('me_dupWarn').style.display = 'none';
+            document.getElementById('me_lastRef').style.display = 'none';
+            onMeterReading();
+        });
+
+        function meCurrentPrev() {
+            const code = document.getElementById('me_dorm').value;
+            const mo = document.getElementById('me_month').value;
+            if (!code || !mo || typeof prevMeter === 'undefined') return null;
+            return prevMeter(code, mo);
+        }
+
+        function meExistingRecord() {
+            const code = document.getElementById('me_dorm').value;
+            const mo = document.getElementById('me_month').value;
+            if (!code || !mo || typeof METER_RECORDS === 'undefined') return null;
+            return METER_RECORDS.find(m => m.dormCode === code && m.readMonth === mo && (m.status === 1 || m.status === 2));
+        }
+
+        function meOverwriteableRecord() {
+            const code = document.getElementById('me_dorm').value;
+            const mo = document.getElementById('me_month').value;
+            if (!code || !mo || typeof METER_RECORDS === 'undefined') return null;
+            return METER_RECORDS.find(m => m.dormCode === code && m.readMonth === mo && m.status === 0);
+        }
+
+        // 宿舍/月份变更时检测
+        ['me_dorm','me_month'].forEach(id => {
+            document.getElementById(id).addEventListener('change', meOnDormMonthChange);
+        });
+        function meOnDormMonthChange() {
+            const dupWarn = document.getElementById('me_dupWarn');
+            const lastRef = document.getElementById('me_lastRef');
+            const exist = meExistingRecord();
+            if (exist) {
+                dupWarn.style.display = 'block';
+                dupWarn.className = 'alert alert-warning mt-2 mb-0 py-1';
+                dupWarn.style.fontSize = '0.85rem';
+                dupWarn.innerHTML = `⚠️ 该宿舍 <strong>${exist.readMonth}</strong> 已有抄表记录（状态：${METER_STATUS[exist.status]}）。如需修改请到列表中「修正」，不可重复补录。`;
+            } else {
+                const overwriteRec = meOverwriteableRecord();
+                if (overwriteRec) {
+                    dupWarn.style.display = 'block';
+                    dupWarn.className = 'alert alert-info mt-2 mb-0 py-1';
+                    dupWarn.style.fontSize = '0.85rem';
+                    dupWarn.innerHTML = `ℹ️ 该宿舍本月为 <strong>未完成</strong> 状态。提交后将覆盖此占位记录，旧数据保留到备注历史。`;
+                } else {
+                    dupWarn.style.display = 'none';
+                }
+            }
+            const prev = meCurrentPrev();
+            if (prev) {
+                lastRef.style.display = 'block';
+                lastRef.innerHTML = `📄 上月读数（${prev.readMonth}）：冷水 <strong>${prev.coldMeter}</strong> · 热水 <strong>${prev.hotMeter}</strong> · 电表 <strong>${prev.electricMeter}</strong>`;
+            } else {
+                lastRef.style.display = 'none';
+            }
+            onMeterReading();
+        }
+
+        // 三表读数变更时实时预览用量
+        function onMeterReading() {
+            const prev = meCurrentPrev();
+            const preview = document.getElementById('me_usagePreview');
+            const cold = parseFloat(document.getElementById('me_cold').value);
+            const hot = parseFloat(document.getElementById('me_hot').value);
+            const elec = parseFloat(document.getElementById('me_electric').value);
+            // 各表用量提示
+            [['me_cold','me_hint_cold','cold','冷水'],
+             ['me_hot','me_hint_hot','hot','热水'],
+             ['me_electric','me_hint_electric','electric','电']
+            ].forEach(([inpId, hintId, key, label]) => {
+                const v = parseFloat(document.getElementById(inpId).value);
+                const hint = document.getElementById(hintId);
+                const prevVal = prev ? prev[key === 'cold' ? 'coldMeter' : key === 'hot' ? 'hotMeter' : 'electricMeter'] : null;
+                if (isNaN(v)) { hint.innerHTML = '用量：—'; hint.className = 'text-muted d-block'; return; }
+                if (prevVal === null) {
+                    hint.innerHTML = `<span class="text-muted">首次抄表（无上月读数）</span>`;
+                } else {
+                    const usage = +(v - prevVal).toFixed(2);
+                    if (v <= prevVal) {
+                        hint.innerHTML = `<span class="text-danger">✗ 必须大于上月 ${prevVal}</span>`;
+                    } else {
+                        hint.innerHTML = `<span class="text-success">用量 +${usage}${key === 'electric' ? ' 度' : ' m³'}</span>`;
+                    }
+                }
+            });
+            // 合计预览
+            if (!isNaN(cold) || !isNaN(hot) || !isNaN(elec)) {
+                preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong>' +
+                    '<div class="d-flex gap-3 mt-1">' +
+                    '<span>冷水 <strong>' + (isNaN(cold) ? '—' : cold.toFixed(2)) + '</strong> m³</span>' +
+                    '<span>热水 <strong>' + (isNaN(hot) ? '—' : hot.toFixed(2)) + '</strong> m³</span>' +
+                    '<span>电 <strong>' + (isNaN(elec) ? '—' : elec.toFixed(2)) + '</strong> 度</span>' +
+                    '</div>';
+            } else {
+                preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>';
+            }
+        }
+
+        // 提交
+        function meSubmit() {
+            const code = document.getElementById('me_dorm').value;
+            const mo = document.getElementById('me_month').value;
+            if (!code) { alert('请选择宿舍'); return; }
+            if (!mo) { alert('请选择抄表月份'); return; }
+            if (meExistingRecord()) { alert('该宿舍本月已有正常/已修正记录，如需修改请走修正流程'); return; }
+            const prev = meCurrentPrev();
+            const vals = {};
+            for (const [inpId, key, label] of [['me_cold','cold','冷水'],['me_hot','hot','热水'],['me_electric','electric','电']]) {
+                const v = parseFloat(document.getElementById(inpId).value);
+                if (isNaN(v)) { alert(`请录入${label}读数`); return; }
+                const prevVal = prev ? prev[key === 'cold' ? 'coldMeter' : key === 'hot' ? 'hotMeter' : 'electricMeter'] : null;
+                if (prevVal !== null && v <= prevVal) { alert(`${label}读数必须大于上月（${prevVal}）`); return; }
+                vals[key] = v;
+            }
+            alert(`✓ 原型演示：${code}（${mo}）抄表已补录\n冷水 ${vals.cold} / 热水 ${vals.hot} / 电表 ${vals.electric}`);
+            bootstrap.Modal.getInstance(document.getElementById('modalManualEntry')).hide();
+            render();
+        }
 
         render();
     </script>

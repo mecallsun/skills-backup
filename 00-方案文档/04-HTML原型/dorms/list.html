@@ -39,7 +39,7 @@
                 <i class="bi bi-building"></i>宿舍档案<span class="total-count">（共 <span id="totalCount">6</span> 间）</span>
             </h1>
             <div class="btn-group" role="group">
-                <a href="create.html" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增</a>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalDormCreate"><i class="bi bi-plus-lg"></i> 新增宿舍</button>
             </div>
         </div>
 
@@ -97,6 +97,194 @@
         </div>
     </div>
 
+    <!-- v2.12.38 编辑宿舍 模态弹窗 -->
+    <div class="modal fade" id="modalDormEdit" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDormEditLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="modalDormEditLabel"><i class="bi bi-pencil-square text-primary"></i> 编辑宿舍</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dormEditForm" onsubmit="event.preventDefault(); deSubmit();">
+                        <!-- 区块 1：基本信息（房号锁定 readonly） -->
+                        <div class="form-section">
+                            <div class="form-section-title">基本信息</div>
+                            <div class="row g-2">
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">房号<span class="required">*</span></label>
+                                    <input type="text" id="de_dormCode" class="form-control" required maxlength="20" readonly style="background:#f5f7fa; cursor:not-allowed;">
+                                    <small class="text-muted d-block" style="font-size:0.75rem;">宿舍编号不可修改</small>
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">楼栋<span class="required">*</span></label>
+                                    <select id="de_building" class="form-select" required>
+                                        <option value="">请选择楼栋</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">楼层<span class="required">*</span></label>
+                                    <input type="number" id="de_floor" class="form-control" required min="1" max="99">
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">详细地址</label>
+                                    <input type="text" id="de_address" class="form-control" maxlength="100" placeholder="如：3号楼301室">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 区块 2：容量配置（床位数锁定同步） -->
+                        <div class="form-section">
+                            <div class="form-section-title">容量配置</div>
+                            <div class="row g-2">
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">房间数<span class="required">*</span></label>
+                                    <input type="number" id="de_roomCount" class="form-control" required min="1" max="10">
+                                </div>
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">容量（人）<span class="required">*</span></label>
+                                    <input type="number" id="de_capacity" class="form-control" required min="1" max="40" oninput="deSyncBedCount()">
+                                </div>
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">床位数<span class="required">*</span></label>
+                                    <input type="number" id="de_bedCount" class="form-control" readonly style="background:#f5f7fa; cursor:not-allowed;">
+                                    <small class="text-muted d-block" style="font-size:0.75rem;">床位号由容量自动生成（1..容量）</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 区块 3：其他 -->
+                        <div class="form-section">
+                            <div class="form-section-title">其他</div>
+                            <div class="row g-2">
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">性别<span class="required">*</span></label>
+                                    <select id="de_gender" class="form-select" required>
+                                        <option value="1">男</option>
+                                        <option value="2">女</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-field d-flex align-items-end">
+                                    <div class="form-check pb-2">
+                                        <input type="checkbox" id="de_isActive" class="form-check-input">
+                                        <label class="form-check-label">启用该宿舍</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 form-field">
+                                    <label class="form-label">备注</label>
+                                    <textarea id="de_remark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                    <button type="button" class="btn btn-primary" onclick="deSubmit()"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- v2.12.37 新增宿舍 模态弹窗 -->
+    <div class="modal fade" id="modalDormCreate" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDormCreateLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="modalDormCreateLabel"><i class="bi bi-plus-circle text-success"></i> 新增宿舍</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dormCreateForm" onsubmit="event.preventDefault(); dcSubmit();">
+                        <!-- 区块 1：基本信息（双列布局） -->
+                        <div class="form-section">
+                            <div class="form-section-title">基本信息</div>
+                            <div class="row g-2">
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">房号<span class="required">*</span></label>
+                                    <input type="text" id="dc_dormCode" class="form-control" required maxlength="20" placeholder="如：D-401" oninput="dcCheckDup()" onblur="dcCheckDup()">
+                                    <small class="d-block" id="dc_dupWarn" style="display:none; font-size: 0.8rem;"></small>
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">楼栋<span class="required">*</span></label>
+                                    <select id="dc_building" class="form-select" required>
+                                        <option value="">请选择楼栋</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">楼层<span class="required">*</span></label>
+                                    <input type="number" id="dc_floor" class="form-control" required min="1" max="99">
+                                </div>
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">详细地址</label>
+                                    <input type="text" id="dc_address" class="form-control" maxlength="100" placeholder="如：3号楼301室">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 区块 2：容量配置（容量 → 床位数 自动同步） -->
+                        <div class="form-section">
+                            <div class="form-section-title">容量配置</div>
+                            <div class="row g-2">
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">房间数<span class="required">*</span></label>
+                                    <input type="number" id="dc_roomCount" class="form-control" required min="1" max="10" value="1">
+                                </div>
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">容量（人）<span class="required">*</span></label>
+                                    <input type="number" id="dc_capacity" class="form-control" required min="1" max="40" value="4" oninput="dcSyncBedCount()">
+                                </div>
+                                <div class="col-md-4 form-field">
+                                    <label class="form-label">床位数<span class="required">*</span></label>
+                                    <input type="number" id="dc_bedCount" class="form-control" required min="1" max="40" value="4" readonly style="background:#f5f7fa; cursor:not-allowed;">
+                                    <small class="text-muted d-block" style="font-size:0.75rem;">床位号由容量自动生成（1..容量）</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 区块 3：其他 -->
+                        <div class="form-section">
+                            <div class="form-section-title">其他</div>
+                            <div class="row g-2">
+                                <div class="col-md-6 form-field">
+                                    <label class="form-label">性别<span class="required">*</span></label>
+                                    <select id="dc_gender" class="form-select" required>
+                                        <option value="1">男</option>
+                                        <option value="2">女</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 form-field d-flex align-items-end">
+                                    <div class="form-check pb-2">
+                                        <input type="checkbox" id="dc_isActive" class="form-check-input" checked>
+                                        <label class="form-check-label">启用该宿舍</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-12 form-field">
+                                    <label class="form-label">备注</label>
+                                    <textarea id="dc_remark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                    <button type="button" class="btn btn-primary" onclick="dcSubmit()"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- v2.12.37 弹窗专用样式 + 床位数同步逻辑 -->
+    <style>
+        #modalDormCreate .form-section { margin-bottom: 0.6rem; }
+        #modalDormCreate .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+        #modalDormCreate .form-field { margin-bottom: 0.5rem; }
+        #modalDormCreate .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+        #modalDormCreate .form-label .required { color: #dc3545; margin-left: 2px; }
+        #modalDormCreate .form-control, #modalDormCreate .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+    </style>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../mock-data.js"></script>
     <script src="../_shared/storage-keys.js"></script>
@@ -105,6 +293,91 @@
         document.addEventListener('DOMContentLoaded', function() {
             mountTabBar({ basePath: '..', currentUrl: 'dorms/list.html' });
         });
+
+        // ========== v2.12.37 新增宿舍 模态弹窗逻辑 ==========
+        // 弹窗显示时初始化
+        document.getElementById('modalDormCreate').addEventListener('show.bs.modal', function () {
+            // 初始化楼栋下拉（仅启用）
+            const bSel = document.getElementById('dc_building');
+            bSel.innerHTML = '<option value="">请选择楼栋</option>';
+            if (typeof BUILDINGS !== 'undefined') {
+                BUILDINGS.forEach(b => bSel.innerHTML += `<option value="${b}">${b}</option>`);
+            }
+            // 重置表单
+            document.getElementById('dormCreateForm').reset();
+            // 床位数默认 = 容量（4）
+            document.getElementById('dc_capacity').value = 4;
+            document.getElementById('dc_bedCount').value = 4;
+            document.getElementById('dc_isActive').checked = true;
+            document.getElementById('dc_dupWarn').style.display = 'none';
+        });
+
+        // v2.12.37 容量变化 → 床位数自动同步（锁定床位数）
+        function dcSyncBedCount() {
+            const capacity = parseInt(document.getElementById('dc_capacity').value) || 0;
+            document.getElementById('dc_bedCount').value = capacity;
+        }
+
+        // v2.12.37 房号重复校验（实时动态严谨校验：失败红色 / 通过绿色）
+        function dcCheckDup() {
+            const code = document.getElementById('dc_dormCode').value.trim();
+            const warn = document.getElementById('dc_dupWarn');
+            const submitBtn = document.querySelector('#modalDormCreate .modal-footer .btn-primary');
+            if (!code) {
+                // 空值时不显示任何提示
+                warn.style.display = 'none';
+                warn.className = 'd-block';
+                warn.innerHTML = '';
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+            if (typeof DORMS !== 'undefined' && DORMS.some(d => d.dormCode === code)) {
+                // 校验失败：房号已存在，禁止创建重复房号
+                warn.innerHTML = '<i class="bi bi-x-circle-fill"></i> 房号 "' + code + '" 已存在，禁止创建重复房号';
+                warn.className = 'text-danger d-block';
+                warn.style.fontSize = '0.8rem';
+                warn.style.display = 'block';
+                if (submitBtn) submitBtn.disabled = true;
+            } else {
+                // 校验通过：新房号，可填写完整资料
+                warn.innerHTML = '<i class="bi bi-check-circle-fill"></i> 校验通过！这是新房号，请填写完整资料！';
+                warn.className = 'text-success d-block';
+                warn.style.fontSize = '0.8rem';
+                warn.style.display = 'block';
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        }
+
+        // v2.12.37 提交（校验失败时禁用提交按钮）
+        function dcSubmit() {
+            const code = document.getElementById('dc_dormCode').value.trim();
+            if (!code) { alert('请输入房号'); return; }
+            if (typeof DORMS !== 'undefined' && DORMS.some(d => d.dormCode === code)) {
+                alert('房号 "' + code + '" 已存在，禁止创建重复房号');
+                return;
+            }
+            const capacity = parseInt(document.getElementById('dc_capacity').value) || 0;
+            const roomCount = parseInt(document.getElementById('dc_roomCount').value) || 0;
+            if (!capacity || !roomCount) { alert('请填写容量和房间数'); return; }
+            if (capacity > 40) { alert('容量不能超过 40'); return; }
+            // 床位号自动生成（按容量生成 1..Capacity 的逗号分隔字符串）
+            const bedNumbers = Array.from({length: capacity}, (_, i) => i + 1).join(',');
+            alert('✓ 原型演示：宿舍 ' + code + ' 已新建\n房号：' + code + '\n容量：' + capacity + ' 人\n床位数：' + capacity + '\n床位号（自动生成）：' + bedNumbers + '\n（实际将 POST /api/v1/dorms）');
+            bootstrap.Modal.getInstance(document.getElementById('modalDormCreate')).hide();
+            // 刷新列表（原型演示：直接刷新页面）
+            location.reload();
+        }
+
+        // v2.12.37 房号校验失败时锁定提交按钮
+        function dcUpdateSubmitBtn() {
+            const code = document.getElementById('dc_dormCode').value.trim();
+            const submitBtn = document.querySelector('#modalDormCreate .modal-footer .btn-primary');
+            if (code && typeof DORMS !== 'undefined' && DORMS.some(d => d.dormCode === code)) {
+                submitBtn.disabled = true;
+            } else {
+                submitBtn.disabled = false;
+            }
+        }
 
         const bSel = document.getElementById('building');
         BUILDINGS.forEach(b => bSel.innerHTML += `<option value="${b}">${b}</option>`);
@@ -134,6 +407,12 @@
                     const usage = Math.round(residents / d.capacity * 100);
                     const usageColor = usage >= 100 ? 'bg-danger' : usage >= 75 ? 'bg-warning text-dark' : 'bg-success';
                     const serialNum = start + idx + 1;
+                    // v2.12.38 删除按钮锁定条件：有在宿人员 或 有办理登记历史
+                    const hasHistory = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.some(b => b.dormCode === d.dormCode) : false;
+                    const canDelete = (residents === 0 && !hasHistory);
+                    const deleteBtn = canDelete
+                        ? `<button class="btn btn-sm btn-outline-danger" onclick="del(${d.id}, '${d.dormCode}')">删除</button>`
+                        : '';  // v2.12.41：禁止删除时完全隐藏按钮（仅文字无标识符）
                     return `
                     <tr>
                         <td class="text-center text-muted">${serialNum}</td>
@@ -155,8 +434,8 @@
                         <td>${d.isActive ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
                         <td>
                             <a href="details.html?code=${d.dormCode}" class="btn btn-sm btn-outline-info">详情</a>
-                            <a href="edit.html?id=${d.id}" class="btn btn-sm btn-outline-primary">编辑</a>
-                            <button class="btn btn-sm btn-outline-danger" onclick="del(${d.id}, '${d.dormCode}')">删除</button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="deOpen(${d.id})">修改</button>
+                            ${deleteBtn}
                         </td>
                     </tr>`;
                 }).join('');
@@ -166,8 +445,65 @@
         function render() { list.reset(); }
 
         function del(id, code) {
-            if (!confirm(`确定删除宿舍 "${code}" 吗？\n（如有在住员工或未完成账单则不能删除）`)) return;
+            // v2.12.38 删除前再次校验（前端兜底）：有在宿人员 或 有办理登记历史 → 禁止删除
+            const dorm = (typeof DORMS !== 'undefined') ? DORMS.find(d => d.id === id) : null;
+            if (dorm) {
+                const residents = currentResidents(dorm.dormCode);
+                const hasHistory = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.some(b => b.dormCode === dorm.dormCode) : false;
+                if (residents > 0) {
+                    alert('该宿舍当前有 ' + residents + ' 人在宿，禁止删除');
+                    return;
+                }
+                if (hasHistory) {
+                    alert('该宿舍 "' + code + '" 有历史办理登记记录，禁止删除');
+                    return;
+                }
+            }
+            if (!confirm(`确定删除宿舍 "${code}" 吗？`)) return;
             alert(`✓ 原型演示：宿舍 ${code} 已删除\n（实际将 DELETE /api/v1/dorms/${id}）`);
+        }
+
+        // ========== v2.12.38 编辑宿舍 模态弹窗逻辑 ==========
+        function deOpen(id) {
+            const dorm = (typeof DORMS !== 'undefined') ? DORMS.find(d => d.id === id) : null;
+            if (!dorm) { alert('宿舍不存在'); return; }
+            // 初始化楼栋下拉
+            const bSel = document.getElementById('de_building');
+            bSel.innerHTML = '<option value="">请选择楼栋</option>';
+            if (typeof BUILDINGS !== 'undefined') {
+                BUILDINGS.forEach(b => bSel.innerHTML += `<option value="${b}" ${b === dorm.building ? 'selected' : ''}>${b}</option>`);
+            }
+            // 回填数据
+            document.getElementById('de_dormCode').value = dorm.dormCode;
+            document.getElementById('de_floor').value = dorm.floor;
+            document.getElementById('de_address').value = dorm.address || '';
+            document.getElementById('de_roomCount').value = dorm.roomCount;
+            document.getElementById('de_capacity').value = dorm.capacity;
+            document.getElementById('de_bedCount').value = dorm.capacity;
+            document.getElementById('de_gender').value = dorm.gender || 1;
+            document.getElementById('de_isActive').checked = dorm.isActive;
+            document.getElementById('de_remark').value = dorm.remark || '';
+            // 显示弹窗
+            const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDormEdit'));
+            modal.show();
+        }
+        // v2.12.38 容量变化同步床位数
+        function deSyncBedCount() {
+            const capacity = parseInt(document.getElementById('de_capacity').value) || 0;
+            document.getElementById('de_bedCount').value = capacity;
+        }
+        // v2.12.38 提交
+        function deSubmit() {
+            const code = document.getElementById('de_dormCode').value.trim();
+            const capacity = parseInt(document.getElementById('de_capacity').value) || 0;
+            const roomCount = parseInt(document.getElementById('de_roomCount').value) || 0;
+            if (!capacity || !roomCount) { alert('请填写容量和房间数'); return; }
+            if (capacity > 40) { alert('容量不能超过 40'); return; }
+            // 床位号自动生成
+            const bedNumbers = Array.from({length: capacity}, (_, i) => i + 1).join(',');
+            alert('✓ 原型演示：宿舍 ' + code + ' 已更新\n容量：' + capacity + ' 人\n床位号（重新生成）：' + bedNumbers + '\n（实际将 PUT /api/v1/dorms/{id}）');
+            bootstrap.Modal.getInstance(document.getElementById('modalDormEdit')).hide();
+            location.reload();
         }
 
         render();

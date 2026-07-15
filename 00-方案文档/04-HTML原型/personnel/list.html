@@ -127,6 +127,7 @@
                             <th>在职状态</th>
                             <th>离职日期</th>
                             <th>宿舍（房号）</th>
+                            <th>床号</th>
                             <th width="200">操作</th>
                         </tr>
                     </thead>
@@ -176,6 +177,14 @@
         // 维护规则：办理登记操作（入住/退房/预约/撤销）会同步更新此字段
         var dc = p.dormCode;
         if (dc && String(dc).trim() !== '') return '<strong>' + dc + '</strong>';
+        return '<span class="text-muted">-</span>';
+    }
+    // v2.12.39 新增：床号列渲染（与 dormCode 同步：仅当 DormCode 不为空时有值）
+    function bedNoCellHtml(p) {
+        // 直接使用 PERSONNEL.bedNo 作为单一数据源
+        // 维护规则：办理登记操作（入住/退房/撤销）会同步更新此字段
+        if (!p.dormCode || String(p.dormCode).trim() === '') return '<span class="text-muted">-</span>';
+        if (p.bedNo !== null && p.bedNo !== undefined) return '<span class="badge bg-info text-dark">床位 ' + p.bedNo + '</span>';
         return '<span class="text-muted">-</span>';
     }
     function typeBadgeHtml(id) {
@@ -318,6 +327,7 @@
             + '<td>' + employmentBadgeHtml(statusId) + '</td>'
             + '<td><small class="text-muted">' + (p.leaveDate || '-') + '</small></td>'
             + '<td>' + dormCellHtml(p) + '</td>'
+            + '<td>' + bedNoCellHtml(p) + '</td>'
             + '<td>'
             + '<a href="edit.html?id=' + p.id + '" class="btn btn-sm btn-outline-primary">编辑</a> '
             + '<button class="btn btn-sm btn-outline-warning" onclick="markLeft(' + p.id + ', \'' + name + '\')">离职</button> '

@@ -85,6 +85,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>工号</th><th>姓名</th><th>部门</th><th>员工类型</th><th>考勤班次</th>
+                                    <th>床号</th>
                                     <th>入住日期</th><th>已入住</th><th width="200">操作</th>
                                 </tr>
                             </thead>
@@ -132,7 +133,7 @@
         document.getElementById('residentCount').textContent = active.length;
         const tbody = document.getElementById('tbody');
         if (active.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">暂无入住人员</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">暂无入住人员</td></tr>`;
         } else {
             // v2.11.6 强化：员工类型按 FK 关联引用（SysEmployee.EmployeeTypeId → EmployeeType.Name）
             // v2.11.7 BUG 修复：增加兼容逻辑 - 同时支持 FK (新格式) 和 string code (旧格式)
@@ -203,6 +204,8 @@
                     <!-- v2.11.7：员工类型 - FK 关联引用 SysEmployee → EmployeeType (含 fallback) -->
                     <td><span class="badge ${empTypeBadge(emp)}" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">${empTypeNameByFk(emp)}</span></td>
                     <td><span class="badge ${attendanceBadge(emp)}">${attendanceLabel(emp)}</span></td>
+                    <!-- v2.12.40 新增：床号列 - FK 关联引用 SysEmployee.BedNo (与人员清单床号列同步) -->
+                    <td>${(emp.bedNo !== null && emp.bedNo !== undefined) ? '<span class="badge bg-info text-dark">床位 ' + emp.bedNo + '</span>' : '<span class="text-muted">-</span>'}</td>
                     <td>${formatDate(r.checkInDate)}</td>
                     <td><span class="badge bg-info">${days} 天</span></td>
                     <td>
