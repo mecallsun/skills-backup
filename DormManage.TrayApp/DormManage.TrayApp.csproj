@@ -9,10 +9,10 @@
     <AssemblyName>DormManage.TrayApp</AssemblyName>
     <RootNamespace>DormManage.TrayApp</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <Version>2.13.2</Version>
+    <Version>2.13.3</Version>
     <Company>JINGE</Company>
     <Product>金戈宿舍管理系统托盘守护程序</Product>
-    <Description>DormManage.TrayApp v2.13.2 - 托盘守护 + 自动启停 + 故障自愈</Description>
+    <Description>DormManage.TrayApp v2.13.3 - 托盘守护 + 自动启停 + 故障自愈 + IPC 服务端</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,6 +20,10 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DormManage.Shared\DormManage.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

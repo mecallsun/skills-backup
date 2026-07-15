@@ -1,14 +1,15 @@
 using DormManage.TrayApp.Models;
 using DormManage.TrayApp.Services;
+using DormManage.Shared.Services;
 
 namespace DormManage.TrayApp;
 
 /// <summary>
-/// 托盘应用上下文：管理 NotifyIcon + ProcessManager + HealthChecker 的生命周期。
+/// 托盘应用上下文：管理 NotifyIcon + ProcessManager + HealthChecker + IPC Server 的生命周期。
 ///
 /// 资源释放顺序（Dispose）：
-/// 1. 停止 HealthChecker 探测循环
-/// 2. 停止子进程（ProcessManager.StopAllAsync）
+/// 1. 停止 IPC Server（不再接收命令）
+/// 2. 停止 HealthChecker 探测循环
 /// 3. 释放 NotifyIcon
 /// </summary>
 public sealed class TrayAppContext : ApplicationContext, IDisposable
@@ -18,6 +19,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     private readonly HealthChecker _health;
     private readonly ProcessManager _process;
     private readonly NotifyIconManager _notifyIcon;
+    private readonly IpcServer? _ipcServer;
 
     public TrayAppContext(ConfigService config, LogService log)
     {
@@ -26,11 +28,9 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         _health = new HealthChecker(log, onCrashed: () => _process.HandleCrashAsync());
         _process = new ProcessManager(config, log, _health);
 
-        // 把 ProcessManager 状态变更转发给 NotifyIcon
         _process.ServiceStateChanged += OnServiceStateChanged;
         _health.ServiceStateChanged += OnServiceStateChanged;
 
-        // 健康检查器需要获取最新端口（配置变更时也会刷新）
         _health.Start(
             config.Current.Tray.HealthCheckIntervalSeconds,
             GetCurrentPorts);
@@ -54,7 +54,6 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 await ExitAsync();
             });
 
-        // 初次启动：根据配置自动启动服务
         if (config.Current.Tray.AutoStartServices)
         {
             _ = Task.Run(async () =>
@@ -70,18 +69,10 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             });
         }
 
-        Application.ApplicationExit += (_, _) =>
-        {
-            // 同步等待停止（避免子进程成孤儿）
-            try
-            {
-                _process.StopAllAsync().GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                _log.Error("退出时停止服务异常", ex);
-            }
-        };
+        // 启动 IPC Server（接收 Web Admin 命令：ping/status/start/stop/restart）
+        _ipcServer = new IpcServer(ServiceIpc.DefaultPort, HandleIpcCommand);
+        _ipcServer.Start();
+        _log.Info($"IPC Server 已启动，监听 127.0.0.1:{ServiceIpc.DefaultPort}");
     }
 
     private (int ApiPort, int AdminPort) GetCurrentPorts()
@@ -94,6 +85,111 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     {
         _notifyIcon.UpdateServiceState(name, state);
     }
+
+    #region IPC 命令处理（v2.13.3 新增）
+
+    private void HandleIpcCommand(ServiceIpc.IpcCommand cmd, Action<ServiceIpc.IpcResponse> respond)
+    {
+        _log.Info($"IPC 收到命令：{cmd.Command} service={cmd.Service ?? "-"}");
+        try
+        {
+            switch (cmd.Command?.ToLowerInvariant())
+            {
+                case "ping":
+                    respond(new ServiceIpc.IpcResponse
+                    {
+                        Success = true,
+                        Message = "pong",
+                        Data = new { version = "v2.13.3" }
+                    });
+                    break;
+
+                case "status":
+                    respond(new ServiceIpc.IpcResponse
+                    {
+                        Success = true,
+                        Message = "ok",
+                        Data = new
+                        {
+                            api = new { state = _health.ApiState.ToString(), port = _config.Current.Tray.ApiPort },
+                            admin = new { state = _health.AdminState.ToString(), port = _config.Current.Tray.AdminPort }
+                        }
+                    });
+                    break;
+
+                case "start":
+                    _ = HandleStartCommandAsync(cmd.Service, respond);
+                    break;
+
+                case "stop":
+                    _ = HandleStopCommandAsync(cmd.Service, respond);
+                    break;
+
+                case "restart":
+                    _ = HandleRestartCommandAsync(cmd.Service, respond);
+                    break;
+
+                default:
+                    respond(new ServiceIpc.IpcResponse { Success = false, Message = $"未知命令：{cmd.Command}" });
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Error($"IPC 命令处理异常：{cmd.Command}", ex);
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    private async Task HandleStartCommandAsync(string? service, Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            if (service is null || service == "all" || service == "api")
+                await _process.StartApiAsync();
+            if (service is null || service == "all" || service == "admin")
+            {
+                await Task.Delay(1000);
+                await _process.StartAdminAsync();
+            }
+            respond(new ServiceIpc.IpcResponse { Success = true, Message = $"已启动 {service ?? "all"}" });
+        }
+        catch (Exception ex)
+        {
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    private async Task HandleStopCommandAsync(string? service, Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            if (service is null || service == "all" || service == "admin")
+                await _process.StopAdminAsync();
+            if (service is null || service == "all" || service == "api")
+                await _process.StopApiAsync();
+            respond(new ServiceIpc.IpcResponse { Success = true, Message = $"已停止 {service ?? "all"}" });
+        }
+        catch (Exception ex)
+        {
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    private async Task HandleRestartCommandAsync(string? service, Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            await _process.RestartAllAsync();
+            respond(new ServiceIpc.IpcResponse { Success = true, Message = $"已重启 {service ?? "all"}" });
+        }
+        catch (Exception ex)
+        {
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    #endregion
 
     private void OpenAdminBrowser()
     {
@@ -127,7 +223,6 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     {
         using var form = new Forms.SettingsForm(_config, _log, _process, _health);
         form.ShowDialog();
-        // 配置可能变更，重新读取端口
         var c = _config.Current;
         _log.Info($"配置刷新：ApiPort={c.Tray.ApiPort}, AdminPort={c.Tray.AdminPort}");
     }
@@ -172,6 +267,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         }
         finally
         {
+            _ipcServer?.Dispose();
             _health.Dispose();
             _notifyIcon.Hide();
             Application.Exit();
@@ -180,6 +276,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
 
     public new void Dispose()
     {
+        try { _ipcServer?.Dispose(); } catch { }
         try { _health.Dispose(); } catch { }
         try { _notifyIcon.Dispose(); } catch { }
         base.Dispose();
