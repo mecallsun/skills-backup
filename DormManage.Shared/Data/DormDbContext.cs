@@ -119,6 +119,21 @@ public class DormDbContext : DbContext
     /// </summary>
     public DbSet<MeterRecord> MeterRecords { get; set; } = null!;
 
+    /// <summary>
+    /// 费用标准
+    /// </summary>
+    public DbSet<BillingStandard> BillingStandards { get; set; } = null!;
+
+    /// <summary>
+    /// 宿舍月度账单
+    /// </summary>
+    public DbSet<DormBilling> DormBillings { get; set; } = null!;
+
+    /// <summary>
+    /// 员工分摊账单
+    /// </summary>
+    public DbSet<EmployeeBilling> EmployeeBillings { get; set; } = null!;
+
     #endregion
 
     #region 认证权限
@@ -323,6 +338,51 @@ public class DormDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Code).HasMaxLength(20);
+        });
+
+        // ===== 费用管理实体 =====
+        modelBuilder.Entity<BillingStandard>(entity =>
+        {
+            entity.ToTable("BillingStandard");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.StandardName).HasMaxLength(50).IsRequired();
+            entity.HasIndex(e => e.StandardName).IsUnique();
+            entity.Property(e => e.EffectiveFrom).HasColumnType("date");
+            entity.Property(e => e.EffectiveTo).HasColumnType("date");
+            entity.Property(e => e.HotWaterUnitPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ColdWaterUnitPrice).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ElectricUnitPrice).HasColumnType("decimal(10,4)");
+        });
+
+        modelBuilder.Entity<DormBilling>(entity =>
+        {
+            entity.ToTable("DormBilling");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.BillingMonth).HasMaxLength(7).IsRequired();
+            entity.HasIndex(e => new { e.DormCode, e.BillingMonth }).IsUnique();
+            entity.Property(e => e.ColdUsage).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.HotUsage).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ElectricityUsage).HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ColdAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.HotAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.ElectricityAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(12,2)");
+        });
+
+        modelBuilder.Entity<EmployeeBilling>(entity =>
+        {
+            entity.ToTable("EmployeeBilling");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.EmployeeName).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.BillingMonth).HasMaxLength(7).IsRequired();
+            entity.HasIndex(e => new { e.EmployeeId, e.BillingMonth }).IsUnique();
+            entity.Property(e => e.ShareRatio).HasColumnType("decimal(5,4)");
+            entity.Property(e => e.ColdShareAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.HotShareAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.ElectricityShareAmount).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.TotalShareAmount).HasColumnType("decimal(12,2)");
         });
 
         // ===== v2.13.7 RBAC 实体与真实 SQL Server schema 对齐 =====

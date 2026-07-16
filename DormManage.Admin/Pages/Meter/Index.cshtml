@@ -122,7 +122,7 @@
                                     </td>
                                     <td><small class="text-muted">@item.Operator</small></td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info" onclick="viewRecord(@item.Id)">详情</button>
+                                        <a href="/Meter/Detail?id=@item.Id" class="btn btn-sm btn-outline-info">详情</a>
                                         @if (item.Status == 1)
                                         {
                                             <button class="btn btn-sm btn-outline-primary" onclick="correctRecord(@item.Id)">修正</button>

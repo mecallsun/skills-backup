@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Shared.Services;
 
 namespace DormManage.Admin.Pages.DormBilling;
 
@@ -12,10 +13,12 @@ namespace DormManage.Admin.Pages.DormBilling;
 public class IndexModel : PageModel
 {
     private readonly DormDbContext _db;
+    private readonly IBillingService _billing;
 
-    public IndexModel(DormDbContext db)
+    public IndexModel(DormDbContext db, IBillingService billing)
     {
         _db = db;
+        _billing = billing;
     }
 
     /// <summary>
@@ -77,56 +80,29 @@ public class IndexModel : PageModel
             .Select(f => new FloorDropdownItem { Id = f.Id, FloorNo = f.FloorNo })
             .ToListAsync();
 
-        // 查询账单数据（使用模拟数据，实际应从 DormBilling 表读取）
-        var query = _db.Dorms.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(DormCode))
-            query = query.Where(d => d.DormCode.Contains(DormCode));
-
-        if (BuildingId.HasValue)
-            query = query.Where(d => d.BuildingId == BuildingId.Value);
-
-        if (FloorId.HasValue)
-            query = query.Where(d => d.FloorId == FloorId.Value);
-
-        var total = await query.CountAsync();
-        var dormList = await query
-            .OrderBy(d => d.DormCode)
-            .Skip((PageIndex - 1) * PageSize)
-            .Take(PageSize)
-            .ToListAsync();
-
-        // 生成模拟账单数据
-        var rng = new Random(42);
-        var items = dormList.Select(d => new DormBillingDto
-        {
-            DormId = d.Id,
-            DormCode = d.DormCode,
-            BuildingName = d.BuildingName ?? "-",
-            FloorName = d.FloorId.ToString(),
-            ColdUsage = (decimal)(rng.NextDouble() * 80 + 5),
-            HotUsage = (decimal)(rng.NextDouble() * 50 + 3),
-            ElectricUsage = (decimal)(rng.NextDouble() * 250 + 50),
-            ColdAmount = (decimal)(rng.NextDouble() * 200 + 50),
-            HotAmount = (decimal)(rng.NextDouble() * 250 + 80),
-            ElectricAmount = (decimal)(rng.NextDouble() * 350 + 200),
-            TotalAmount = 0m,
-            ResidentCount = rng.Next(1, d.Capacity + 1),
-            MaxCapacity = d.Capacity,
-            IsPublished = rng.Next(0, 3) != 0,
-            ReadMonth = BillingMonth ?? DateTime.Now.ToString("yyyy-MM")
-        }).ToList();
-
-        // 计算合计
-        foreach (var item in items)
-        {
-            item.TotalAmount = item.ColdAmount + item.HotAmount + item.ElectricAmount;
-        }
-
+        // 查询账单数据（使用真实服务）
+        var entities = await _billing.GetDormBillsAsync(BillingMonth, DormCode, PageIndex, PageSize);
         Result = new PagedResult<DormBillingDto>
         {
-            Items = items,
-            TotalCount = total,
+            Items = entities.Items.Select(e => new DormBillingDto
+            {
+                DormId = e.Id,
+                DormCode = e.DormCode,
+                BuildingName = e.DormCode,
+                FloorName = e.DormCode,
+                ColdUsage = e.ColdUsage,
+                HotUsage = e.HotUsage,
+                ElectricUsage = e.ElectricityUsage,
+                ColdAmount = e.ColdAmount,
+                HotAmount = e.HotAmount,
+                ElectricAmount = e.ElectricityAmount,
+                TotalAmount = e.TotalAmount,
+                ResidentCount = e.ResidentCount,
+                MaxCapacity = e.ResidentCount,
+                IsPublished = e.IsPublished,
+                ReadMonth = e.BillingMonth
+            }).ToList(),
+            TotalCount = entities.Total,
             PageIndex = PageIndex,
             PageSize = PageSize
         };

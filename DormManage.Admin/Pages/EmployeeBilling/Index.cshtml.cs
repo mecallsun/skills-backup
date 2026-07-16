@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Shared.Services;
 
 namespace DormManage.Admin.Pages.EmployeeBilling;
 
@@ -12,10 +13,12 @@ namespace DormManage.Admin.Pages.EmployeeBilling;
 public class IndexModel : PageModel
 {
     private readonly DormDbContext _db;
+    private readonly IBillingService _billing;
 
-    public IndexModel(DormDbContext db)
+    public IndexModel(DormDbContext db, IBillingService billing)
     {
         _db = db;
+        _billing = billing;
     }
 
     /// <summary>
@@ -70,40 +73,22 @@ public class IndexModel : PageModel
             BillingMonth = DateTime.Now.ToString("yyyy-MM");
         }
 
-        // 这里使用 SysEmployee 表作为演示数据
-        // 实际项目应该用 EmployeeBilling 表
-        var query = _db.Employees.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(EmpKeyword))
-            query = query.Where(e =>
-                e.EmployeeCode.Contains(EmpKeyword) ||
-                e.RealName.Contains(EmpKeyword));
-
-        // 统计数据
-        TotalCount = await query.CountAsync();
-
-        // 分页数据
-        var items = await query
-            .OrderBy(e => e.EmployeeCode)
-            .Skip((PageIndex - 1) * PageSize)
-            .Take(PageSize)
-            .Select(e => new EmployeeBillingDto
+        // 使用真实服务查询
+        var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, PageIndex, PageSize);
+        Result = new PagedResult<EmployeeBillingDto>
+        {
+            Items = entities.Items.Select(e => new EmployeeBillingDto
             {
                 Id = e.Id,
                 EmployeeCode = e.EmployeeCode,
-                EmployeeName = e.RealName,
-                Department = e.Department ?? "",
+                EmployeeName = e.EmployeeName,
+                Department = "",
                 DormCode = e.DormCode ?? "",
-                BillingMonth = BillingMonth,
-                ShareAmount = 569.50m,
-                IsPublished = false
-            })
-            .ToListAsync();
-
-        Result = new PagedResult<EmployeeBillingDto>
-        {
-            Items = items,
-            TotalCount = TotalCount,
+                BillingMonth = e.BillingMonth,
+                ShareAmount = e.TotalShareAmount,
+                IsPublished = e.IsPublished
+            }).ToList(),
+            TotalCount = entities.Total,
             PageIndex = PageIndex,
             PageSize = PageSize
         };

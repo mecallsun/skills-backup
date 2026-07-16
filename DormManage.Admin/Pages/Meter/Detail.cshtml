@@ -1,0 +1,105 @@
+@page
+@model DormManage.Admin.Pages.Meter.DetailModel
+@{
+    ViewData["Title"] = "抄表记录详情";
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0"><i class="bi bi-clipboard-data"></i> 抄表记录详情 <small class="text-muted">@Model.Record.DormCode / @Model.Record.ReadMonth</small></h2>
+        <a href="/Meter" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="text-muted small">宿舍号</label>
+                    <div class="fw-bold">@Model.Record.DormCode</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small">抄表月份</label>
+                    <div class="fw-bold">@Model.Record.ReadMonth</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small">操作员</label>
+                    <div class="fw-bold">@Model.Record.Operator</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="text-muted small">状态</label>
+                    <div><span class="badge @(Model.Record.Status == 1 ? "bg-success" : Model.Record.Status == 2 ? "bg-warning text-dark" : "bg-secondary")">@Model.Record.StatusName</span></div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">冷水表读数 (m³)</label>
+                    <div class="fw-bold fs-5">@Model.Record.ColdMeter</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">热水表读数 (m³)</label>
+                    <div class="fw-bold fs-5">@Model.Record.HotMeter</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">电表读数 (kWh)</label>
+                    <div class="fw-bold fs-5">@Model.Record.ElectricMeter</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">冷水用量</label>
+                    <div class="fw-bold text-primary">@Model.Usage.ColdUsage m³</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">热水用量</label>
+                    <div class="fw-bold text-primary">@Model.Usage.HotUsage m³</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="text-muted small">用电用量</label>
+                    <div class="fw-bold text-primary">@Model.Usage.ElectricUsage kWh</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Record.Remark))
+                {
+                    <div class="col-12">
+                        <label class="text-muted small">备注</label>
+                        <div class="text-muted">@Model.Record.Remark</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Comparison != null)
+    {
+        <div class="card">
+            <div class="card-header"><i class="bi bi-graph-up"></i> 用量对比</div>
+            <div class="card-body p-0">
+                <table class="table table-bordered mb-0">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>冷水(m³)</th>
+                            <th>热水(m³)</th>
+                            <th>电(kWh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="fw-bold">上月</td>
+                            <td>@Model.Comparison.PreviousCold</td>
+                            <td>@Model.Comparison.PreviousHot</td>
+                            <td>@Model.Comparison.PreviousElectric</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td class="fw-bold">本月</td>
+                            <td>@Model.Comparison.CurrentCold</td>
+                            <td>@Model.Comparison.CurrentHot</td>
+                            <td>@Model.Comparison.CurrentElectric</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">用量</td>
+                            <td class="text-success fw-bold">@Model.Usage.ColdUsage</td>
+                            <td class="text-success fw-bold">@Model.Usage.HotUsage</td>
+                            <td class="text-success fw-bold">@Model.Usage.ElectricUsage</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

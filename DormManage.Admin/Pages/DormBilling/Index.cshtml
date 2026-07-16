@@ -333,8 +333,21 @@
         }
 
         function generate(regenerate) {
-            var msg = regenerate ? '重新生成账单中...' : '生成账单中...';
-            alert(msg + '\n（实际将调用 POST /api/v1/dorm-bills/generate）');
+            if (!confirm(regenerate ? '确定重新生成账单吗？将覆盖已有数据。' : '确定生成账单吗？将基于本月抄表记录生成。')) return;
+            $.ajax({
+                url: '/api/v1/billing/dorm-bills/generate',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ billingMonth: '@Model.BillingMonth' }),
+                success: function (res) {
+                    alert('生成成功！');
+                    location.reload();
+                },
+                error: function (xhr) {
+                    alert('生成失败：' + (xhr.responseJSON?.message || xhr.statusText));
+                }
+            });
+        }
             location.reload();
         }
 

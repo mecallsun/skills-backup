@@ -1,0 +1,93 @@
+@page
+@model DormManage.Admin.Pages.BillingStandard.IndexModel
+@{
+    ViewData["Title"] = "费用标准";
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0"><i class="bi bi-cash-stack"></i> 费用标准 <small class="text-muted">(@Model.Total 条)</small></h2>
+        <a href="/BillingStandard/Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增标准</a>
+    </div>
+
+    <!-- 当前有效标准 -->
+    @if (Model.ActiveStandard != null)
+    {
+        <div class="alert alert-success mb-3">
+            <strong><i class="bi bi-check-circle"></i> 当前生效：</strong>
+            @Model.ActiveStandard.StandardName
+            （@Model.ActiveStandard.EffectiveFrom.Value:yyyy-MM-dd ~ @(Model.ActiveStandard.EffectiveTo?.ToString("yyyy-MM-dd") ?? "长期")）
+            水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh
+        </div>
+    }
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:50px">序号</th>
+                        <th>标准名称</th>
+                        <th>生效日期</th>
+                        <th>截止日期</th>
+                        <th>冷水(元/m³)</th>
+                        <th>热水(元/m³)</th>
+                        <th>电(元/kWh)</th>
+                        <th>适用类型</th>
+                        <th style="width:100px">状态</th>
+                        <th style="width:120px">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Result != null)
+                    {
+                        @for (var i = 0; i < Model.Result.Items.Count; i++)
+                        {
+                            var item = Model.Result.Items[i];
+                            <tr>
+                                <td>@((Model.Result.PageIndex - 1) * Model.Result.PageSize + i + 1)</td>
+                                <td>@item.StandardName</td>
+                                <td>@item.EffectiveFrom?.ToString("yyyy-MM-dd")</td>
+                                <td>@(item.EffectiveTo?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                <td>@item.ColdWaterUnitPrice</td>
+                                <td>@item.HotWaterUnitPrice</td>
+                                <td>@item.ElectricUnitPrice</td>
+                                <td>@(item.ApplicableType ?? "全部")</td>
+                                <td>
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">停用</span>
+                                    }
+                                </td>
+                                <td>
+                                    <a href="/BillingStandard/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    @if (Model.Result != null && Model.Result.TotalPages > 1)
+    {
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center mb-0">
+                @for (var p = 1; p <= Model.Result.TotalPages; p++)
+                {
+                    <li class="page-item @(p == Model.Result.PageIndex ? "active" : "")">
+                        <a class="page-link" href="?page=@p">@p</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+</div>

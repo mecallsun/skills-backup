@@ -1,0 +1,55 @@
+@page
+@model DormManage.Admin.Pages.BillingStandard.EditModel
+@{
+    ViewData["Title"] = "编辑费用标准";
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0"><i class="bi bi-pencil-square"></i> 编辑费用标准</h2>
+        <a href="/BillingStandard" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">标准名称 <span class="text-danger">*</span></label>
+                        <input asp-for="Input.StandardName" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">生效日期 <span class="text-danger">*</span></label>
+                        <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">截止日期</label>
+                        <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">冷水单价(元/m³) <span class="text-danger">*</span></label>
+                        <input asp-for="Input.ColdWaterUnitPrice" type="number" step="0.01" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">热水单价(元/m³) <span class="text-danger">*</span></label>
+                        <input asp-for="Input.HotWaterUnitPrice" type="number" step="0.01" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">电价(元/kWh) <span class="text-danger">*</span></label>
+                        <input asp-for="Input.ElectricUnitPrice" type="number" step="0.0001" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">适用员工类型</label>
+                        <input asp-for="Input.ApplicableType" class="form-control" />
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="/BillingStandard" class="btn btn-outline-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

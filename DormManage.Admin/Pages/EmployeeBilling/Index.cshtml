@@ -285,17 +285,53 @@
 <script>
 function generateBilling() {
     if (!confirm('确定要生成本月员工分摊账单吗？')) return;
-    alert('✓ 原型演示：已生成本月员工分摊账单');
+    $.ajax({
+        url: '/api/v1/billing/employee-bills/generate',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ billingMonth: '@Model.BillingMonth' }),
+        success: function (res) {
+            alert('生成分摊成功！');
+            location.reload();
+        },
+        error: function (xhr) {
+            alert('生成失败：' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+    });
 }
 
 function regenerateBilling() {
     if (!confirm('确定要重新生成员工分摊账单吗？\n已存在的账单将被覆盖！')) return;
-    alert('✓ 原型演示：已重新生成本月员工分摊账单');
+    $.ajax({
+        url: '/api/v1/billing/employee-bills/generate',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ billingMonth: '@Model.BillingMonth' }),
+        success: function (res) {
+            alert('重新生成成功！');
+            location.reload();
+        },
+        error: function (xhr) {
+            alert('生成失败：' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+    });
 }
 
 function publishAll() {
     if (!confirm('确定要发布全部员工账单吗？')) return;
-    alert('✓ 原型演示：已发布全部员工账单');
+    $.ajax({
+        url: '/api/v1/billing/employee-bills/publish',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ billingMonth: '@Model.BillingMonth' }),
+        success: function (res) {
+            alert(res.message || '发布成功！');
+            location.reload();
+        },
+        error: function (xhr) {
+            alert('发布失败：' + (xhr.responseJSON?.message || xhr.statusText));
+        }
+    });
 }
 
 function publishOne(id) {
