@@ -68,12 +68,15 @@ public class EditModel : PageModel
             Team = employee.Team;
             ResidenceStatusName = employee.ResidenceStatus?.Name;
 
-            // 在职状态名称映射（Status 字段直接映射，非导航属性）
-            EmploymentStatusName = employee.Status switch
+            // v2.13.11 在职状态名称映射（改用 EmploymentStatusId 关联引用基础资料-在职状态表，避免废弃 Status 属性）
+#pragma warning disable CS0618 // 兼容旧数据回退路径
+            var statusValue = employee.EmploymentStatusId > 0 ? employee.EmploymentStatusId : (int)employee.Status;
+#pragma warning restore CS0618
+            EmploymentStatusName = statusValue switch
             {
-                EmployeeStatus.Active => "在职",
-                EmployeeStatus.Onboarding => "待入职",
-                EmployeeStatus.Left => "已离职",
+                1 => "在职",
+                2 => "待入职",
+                3 => "已离职",
                 _ => "未知"
             };
         }

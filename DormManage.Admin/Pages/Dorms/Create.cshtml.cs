@@ -84,6 +84,11 @@ public class CreateModel : PageModel
         await _db.SaveChangesAsync();
 
         TempData["Success"] = "新增成功";
+        // v2.13.11 inModal=1 时返回 JavaScript 关闭弹窗并刷新父页
+        if (Request.Query.ContainsKey("inModal"))
+        {
+            return Content("<script>parent.location.reload();</script>", "text/html");
+        }
         return RedirectToPage("/Dorms/Details", new { id = dorm.Id });
     }
 

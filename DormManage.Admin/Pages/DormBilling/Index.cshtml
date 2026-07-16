@@ -63,7 +63,7 @@
     </div>
 
     <!-- 筛选条件区域 -->
-    <form method="get" class="card mb-3 filter-card">
+    <form method="get" class="card mb-3 filter-card" data-filter-form="dormBilling">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
                 <div class="col-auto filter-item">
@@ -113,6 +113,11 @@
                     <a href="/DormBilling" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('dormBilling')" title="清除 localStorage 中该模块的筛选缓存">
+                        <i class="bi bi-trash"></i> 清除
+                    </button>
                 </div>
             </div>
         </div>

@@ -31,11 +31,11 @@ public class ImportModel : PageModel
     /// <summary>
     /// 下载导入模板
     /// </summary>
-    public async Task<IActionResult> OnGetDownloadTemplateAsync()
+    public Task<IActionResult> OnGetDownloadTemplateAsync()
     {
         // TODO: 实际项目中应生成 Excel 模板文件
         // 这里返回一个占位响应
-        return Redirect("/");
+        return Task.FromResult<IActionResult>(Redirect("/"));
     }
 
     /// <summary>
@@ -91,9 +91,9 @@ public class ImportModel : PageModel
     /// <summary>
     /// 下载模板（POST 处理）
     /// </summary>
-    public async Task<IActionResult> OnPostDownloadTemplateAsync()
+    public Task<IActionResult> OnPostDownloadTemplateAsync()
     {
-        return Redirect("/");
+        return Task.FromResult<IActionResult>(Redirect("/"));
     }
 }
 

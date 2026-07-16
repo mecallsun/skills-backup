@@ -23,10 +23,10 @@ public class ImportModel : PageModel
     /// <summary>
     /// 下载模板（POST 处理）
     /// </summary>
-    public async Task<IActionResult> OnPostDownloadTemplateAsync()
+    public Task<IActionResult> OnPostDownloadTemplateAsync()
     {
         // TODO: 实际项目中应生成 Excel 模板文件
-        return Redirect("/Meter");
+        return Task.FromResult<IActionResult>(Redirect("/Meter"));
     }
 
     /// <summary>
@@ -51,6 +51,8 @@ public class ImportModel : PageModel
             ModelState.AddModelError("file", "文件大小不能超过 10MB");
             return Page();
         }
+
+        await Task.CompletedTask; // 保持 async 语义以兼容 Page() 调用
 
         // TODO: 实际项目中应使用 EPPlus 或 ClosedXML 解析 Excel
         // 这里模拟校验结果
@@ -101,11 +103,11 @@ public class ImportModel : PageModel
     /// <summary>
     /// 确认导入
     /// </summary>
-    public async Task<IActionResult> OnPostImportAsync()
+    public Task<IActionResult> OnPostImportAsync()
     {
         // TODO: 实际项目中应执行批量导入逻辑
         TempData["SuccessMessage"] = "抄表数据导入成功";
-        return RedirectToPage("/Meter/Index");
+        return Task.FromResult<IActionResult>(RedirectToPage("/Meter/Index"));
     }
 }
 

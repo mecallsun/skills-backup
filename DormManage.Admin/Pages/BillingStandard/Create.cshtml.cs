@@ -14,7 +14,7 @@ public class CreateModel : PageModel
     [BindProperty]
     public global::DormManage.Shared.Models.BillingStandard Input { get; set; } = new();
 
-    public async Task OnGetAsync() { }
+    public Task OnGetAsync() => Task.CompletedTask;
 
     public async Task<IActionResult> OnPostAsync()
     {

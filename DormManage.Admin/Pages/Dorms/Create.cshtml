@@ -2,7 +2,15 @@
 @model DormManage.Admin.Pages.Dorms.CreateModel
 @{
     ViewData["Title"] = "新增宿舍";
-    Layout = "_Layout";
+    // v2.13.11 inModal=1 时使用极简布局（去掉顶栏/侧边栏，仅渲染表单）
+    if (Request.Query.ContainsKey("inModal"))
+    {
+        Layout = null;
+    }
+    else
+    {
+        Layout = "_Layout";
+    }
 }
 
 @section Styles {

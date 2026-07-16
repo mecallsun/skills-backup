@@ -33,7 +33,7 @@
     </div>
 
     <!-- 筛选条件区域（flex-nowrap 一行排列，响应式） -->
-    <form method="get" class="card mb-3 filter-card">
+    <form method="get" class="card mb-3 filter-card" data-filter-form="personnel">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
                 <div class="col-auto filter-item" style="flex: 2 1 auto; max-width: 280px;">
@@ -122,6 +122,11 @@
                     <a href="/Personnel" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('personnel')" title="清除 localStorage 中该模块的筛选缓存">
+                        <i class="bi bi-trash"></i> 清除
+                    </button>
                 </div>
             </div>
         </div>
@@ -391,6 +396,7 @@
 }
 
 @section Scripts {
+<script src="~/js/filter-persistence.js"></script>
 <script>
     function markLeft(id, name) {
         if (!confirm('确定将员工 ' + name + ' 标记为离职吗？')) return;
