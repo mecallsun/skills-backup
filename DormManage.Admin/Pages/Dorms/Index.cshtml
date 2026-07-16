@@ -12,27 +12,23 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头 -->
+    <!-- 页头（v2.13.10 与原型 dorms/list.html 对齐：宿舍档案） -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
-            <i class="bi bi-building"></i> 宿舍管理
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
+            <i class="bi bi-building"></i> 宿舍档案
+            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 间）</small>
         </h2>
-        <div>
+        <div class="btn-group" role="group">
             <a href="/Dorms/Create" class="btn btn-success">
                 <i class="bi bi-plus-lg"></i> 新增宿舍
             </a>
         </div>
     </div>
 
-    <!-- 筛选条件区域（一行排列，响应式） -->
+    <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->
     <form method="get" class="card mb-3 filter-card">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
-                <div class="col-auto flex-grow-1 filter-item">
-                    <label class="form-label mb-1">宿舍号</label>
-                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
-                </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">楼栋</label>
                     <select name="BuildingId" class="form-select">
@@ -45,23 +41,19 @@
                 </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">楼层</label>
-                    <select name="FloorId" class="form-select">
-                        <option value="">全部</option>
-                        @foreach (var item in Model.Floors)
-                        {
-                            <option value="@item.Id" selected="@(Model.FloorId == item.Id)">@item.FloorNo 楼</option>
-                        }
-                    </select>
+                    <input type="number" name="FloorNo" value="@Model.FloorNo" class="form-control" placeholder="如：3" min="1" max="99">
                 </div>
                 <div class="col-auto filter-item">
-                    <label class="form-label mb-1">地址</label>
-                    <select name="AddressId" class="form-select">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="IsActive" class="form-select">
                         <option value="">全部</option>
-                        @foreach (var item in Model.Addresses)
-                        {
-                            <option value="@item.Id" selected="@(Model.AddressId == item.Id)">@item.AddressText</option>
-                        }
+                        <option value="true" selected="@(Model.IsActive == true)">启用</option>
+                        <option value="false" selected="@(Model.IsActive == false)">停用</option>
                     </select>
+                </div>
+                <div class="col-auto flex-grow-1 filter-item" style="flex: 2 1 auto; max-width: 320px;">
+                    <label class="form-label mb-1">关键词</label>
+                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="房号/地址">
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
                     <button type="submit" class="btn btn-primary filter-btn">
@@ -85,15 +77,16 @@
                     <thead class="table-light">
                         <tr>
                             <th width="60" class="text-center">序号</th>
-                            <th>宿舍号</th>
+                            <th>房号</th>
                             <th>楼栋</th>
                             <th>楼层</th>
                             <th>地址</th>
+                            <th class="text-center">房间数</th>
                             <th class="text-center">容量</th>
-                            <th class="text-center">性别</th>
-                            <th class="text-center">当前入住</th>
+                            <th class="text-center">在住人数</th>
+                            <th class="text-center" style="min-width:120px">使用率</th>
                             <th class="text-center">状态</th>
-                            <th width="120" class="text-center">操作</th>
+                            <th width="220" class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,21 +101,20 @@
                                     <td>@item.BuildingName</td>
                                     <td>@item.FloorNo 楼</td>
                                     <td>@item.AddressText</td>
+                                    <td class="text-center">@item.RoomCount</td>
                                     <td class="text-center">@item.Capacity 人</td>
                                     <td class="text-center">
-                                        @if (item.Gender == 1)
-                                        {
-                                            <span class="badge bg-primary">男</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">女</span>
-                                        }
+                                        <span class="badge @(item.CurrentCount > 0 ? "bg-primary" : "bg-light text-dark")">@item.CurrentCount</span>
+                                        / @item.Capacity
                                     </td>
                                     <td class="text-center">
-                                        <span class="@(item.CurrentCount >= item.Capacity ? "text-danger fw-bold" : "text-success")">
-                                            @item.CurrentCount / @item.Capacity
-                                        </span>
+                                        @{
+                                            var usage = item.Capacity > 0 ? (int)Math.Round(item.CurrentCount * 100.0 / item.Capacity) : 0;
+                                            var usageColor = usage >= 100 ? "bg-danger" : usage >= 75 ? "bg-warning text-dark" : "bg-success";
+                                        }
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar @usageColor" style="width: @usage%">@usage%</div>
+                                        </div>
                                     </td>
                                     <td class="text-center">
                                         @if (item.IsActive)
@@ -150,7 +142,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="10" class="text-center text-muted py-4">暂无宿舍数据</td>
+                                <td colspan="11" class="text-center text-muted py-4">暂无宿舍数据</td>
                             </tr>
                         }
                     </tbody>
@@ -169,7 +161,7 @@
                             @if (currentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                    <a class="page-link" href="?BuildingId=@Model.BuildingId&FloorNo=@Model.FloorNo&IsActive=@Model.IsActive&Keyword=@Model.Keyword&PageIndex=@(currentPage - 1)" aria-label="上一页">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -177,13 +169,13 @@
                             @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
                             {
                                 <li class="page-item @(p == currentPage ? "active" : "")">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@p">@p</a>
+                                    <a class="page-link" href="?BuildingId=@Model.BuildingId&FloorNo=@Model.FloorNo&IsActive=@Model.IsActive&Keyword=@Model.Keyword&PageIndex=@p">@p</a>
                                 </li>
                             }
                             @if (currentPage < totalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&BuildingId=@Model.BuildingId&FloorId=@Model.FloorId&AddressId=@Model.AddressId&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                    <a class="page-link" href="?BuildingId=@Model.BuildingId&FloorNo=@Model.FloorNo&IsActive=@Model.IsActive&Keyword=@Model.Keyword&PageIndex=@(currentPage + 1)" aria-label="下一页">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
@@ -195,6 +187,21 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+<script>
+    function deleteDorm(id, code) {
+        if (!confirm('确定删除宿舍 "' + code + '" 吗？此操作不可恢复。')) return;
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = '/Dorms?handler=Delete&id=' + id;
+        const t = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (t) f.appendChild(t.cloneNode());
+        document.body.appendChild(f);
+        f.submit();
+    }
+</script>
+}
 
 <style>
     /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
