@@ -15,7 +15,7 @@
     <!-- 页头 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
-            <i class="bi bi-gauge"></i> 抄表记录
+            <i class="bi bi-clipboard-data-fill"></i> 抄表记录
             <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
         </h2>
         <div class="btn-group" role="group">
@@ -28,7 +28,7 @@
             <button class="btn btn-info text-white" onclick="showBatchImportModal()">
                 <i class="bi bi-upload"></i> 批量导入
             </button>
-            <a href="/api/meter/export?@((Model.DormCode != null ? "dormCode=" + Model.DormCode : ""))@((Model.ReadMonth != null ? "&readMonth=" + Model.ReadMonth : ""))@((Model.Status.HasValue ? "&status=" + Model.Status.Value : ""))" class="btn btn-outline-success">
+            <a href="/api/meter/export?@((Model.Keyword != null ? "keyword=" + Model.Keyword : ""))@((Model.ReadMonth != null ? "&readMonth=" + Model.ReadMonth : ""))@((Model.Status.HasValue ? "&status=" + Model.Status.Value : ""))" class="btn btn-outline-success">
                 <i class="bi bi-file-earmark-excel"></i> 导出Excel
             </a>
         </div>
@@ -38,10 +38,6 @@
     <form method="get" class="card mb-3 filter-card">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
-                <div class="col-auto flex-grow-1 filter-item">
-                    <label class="form-label mb-1">宿舍号</label>
-                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
-                </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">抄表月份</label>
                     <select name="ReadMonth" class="form-select">
@@ -53,6 +49,20 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼栋</label>
+                    <select name="BuildingId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var b in Model.Buildings)
+                        {
+                            <option value="@b.Id" selected="@(Model.BuildingId == b.Id)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">抄表员</label>
+                    <input type="text" name="Operator" value="@Model.Operator" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
                     <label class="form-label mb-1">状态</label>
                     <select name="Status" class="form-select">
                         <option value="">全部</option>
@@ -60,6 +70,10 @@
                         <option value="1" selected="@(Model.Status == 1)">正常</option>
                         <option value="2" selected="@(Model.Status == 2)">已修正</option>
                     </select>
+                </div>
+                <div class="col-auto flex-grow-1 filter-item" style="flex: 2 1 auto; max-width: 320px;">
+                    <label class="form-label mb-1">房号/地址</label>
+                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="模糊查询">
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
                     <button type="submit" class="btn btn-primary filter-btn">
@@ -83,14 +97,19 @@
                     <thead class="table-light">
                         <tr>
                             <th width="60" class="text-center">序号</th>
-                            <th>宿舍号</th>
+                            <th>房号</th>
                             <th>月份</th>
-                            <th class="text-center">冷水(m³)</th>
-                            <th class="text-center">热水(m³)</th>
-                            <th class="text-center">电(度)</th>
-                            <th class="text-center">状态</th>
-                            <th>操作员</th>
-                            <th width="140" class="text-center">操作</th>
+                            <th class="text-end">冷水读数</th>
+                            <th class="text-end">热水读数</th>
+                            <th class="text-end">电表读数</th>
+                            <th class="text-end">冷水用量</th>
+                            <th class="text-end">热水用量</th>
+                            <th class="text-end">电表用量</th>
+                            <th>抄表员</th>
+                            <th>设备</th>
+                            <th>抄表时间</th>
+                            <th>状态</th>
+                            <th width="150" class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -103,16 +122,28 @@
                                     <td class="text-center text-muted">@index</td>
                                     <td><strong>@item.DormCode</strong></td>
                                     <td>@item.ReadMonth</td>
-                                    <td class="text-center">
+                                    <td class="text-end">
                                         <span class="@(item.ColdMeter == 0 ? "meter-zero" : "")">@item.ColdMeter.ToString("N2")</span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-end">
                                         <span class="@(item.HotMeter == 0 ? "meter-zero" : "")">@item.HotMeter.ToString("N2")</span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-end">
                                         <span class="@(item.ElectricMeter == 0 ? "meter-zero" : "")">@item.ElectricMeter.ToString("N2")</span>
                                     </td>
-                                    <td class="text-center">
+                                    <td class="text-end">
+                                        <span class="@(item.ColdUsage == 0 ? "usage-unfinished" : "")">@item.ColdUsage.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.HotUsage == 0 ? "usage-unfinished" : "")">@item.HotUsage.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.ElectricUsage == 0 ? "usage-unfinished" : "")">@item.ElectricUsage.ToString("N2")</span>
+                                    </td>
+                                    <td><small class="text-muted">@item.Operator</small></td>
+                                    <td><small class="text-muted">@(item.DeviceSn == "-" ? "-" : item.DeviceSn)</small></td>
+                                    <td><small class="text-muted">@item.ServerCreatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                    <td>
                                         @switch (item.Status)
                                         {
                                             case 0: <span class="badge bg-secondary">未完成</span>; break;
@@ -120,7 +151,6 @@
                                             case 2: <span class="badge bg-warning text-dark">已修正</span>; break;
                                         }
                                     </td>
-                                    <td><small class="text-muted">@item.Operator</small></td>
                                     <td class="text-center">
                                         <a href="/Meter/Detail?id=@item.Id" class="btn btn-sm btn-outline-info">详情</a>
                                         @if (item.Status == 1)
@@ -139,7 +169,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">暂无抄表记录</td>
+                                <td colspan="14" class="text-center text-muted py-4">暂无抄表记录</td>
                             </tr>
                         }
                     </tbody>
@@ -158,7 +188,7 @@
                             @if (currentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                    <a class="page-link" href="?ReadMonth=@Model.ReadMonth&BuildingId=@Model.BuildingId&Operator=@Model.Operator&Status=@Model.Status&Keyword=@Model.Keyword&PageIndex=@(currentPage - 1)" aria-label="上一页">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -166,13 +196,13 @@
                             @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
                             {
                                 <li class="page-item @(p == currentPage ? "active" : "")">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@p">@p</a>
+                                    <a class="page-link" href="?ReadMonth=@Model.ReadMonth&BuildingId=@Model.BuildingId&Operator=@Model.Operator&Status=@Model.Status&Keyword=@Model.Keyword&PageIndex=@p">@p</a>
                                 </li>
                             }
                             @if (currentPage < totalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DormCode=@Model.DormCode&ReadMonth=@Model.ReadMonth&Status=@Model.Status&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                    <a class="page-link" href="?ReadMonth=@Model.ReadMonth&BuildingId=@Model.BuildingId&Operator=@Model.Operator&Status=@Model.Status&Keyword=@Model.Keyword&PageIndex=@(currentPage + 1)" aria-label="下一页">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
