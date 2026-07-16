@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
+using DormManage.Shared.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Personnel;
@@ -20,10 +21,20 @@ namespace DormManage.Admin.Pages.Personnel;
 public class IndexModel : PageModel
 {
     private readonly DormDbContext _db;
+    private readonly IPersonnelService _svc;
 
-    public IndexModel(DormDbContext db)
+    public IndexModel(DormDbContext db, IPersonnelService svc)
     {
         _db = db;
+        _svc = svc;
+    }
+
+    /// <summary>标记离职（项1）</summary>
+    public async Task<IActionResult> OnPostMarkLeftAsync(int id)
+    {
+        var (ok, msg) = await _svc.MarkLeftAsync(id, DateOnly.FromDateTime(DateTime.Today));
+        TempData[ok ? "Success" : "ErrorMessage"] = msg;
+        return RedirectToPage("/Personnel/Index");
     }
 
     /// <summary>

@@ -54,6 +54,15 @@ public class SysEmployee : BaseEntity
     [ForeignKey(nameof(EmployeeTypeId))]
     public EmployeeType? EmployeeType { get; set; }
 
+    /// <summary>员工类型名称（冗余，对应真实表 EmployeeType nvarchar 列，NOT NULL）</summary>
+    public string? EmployeeTypeText { get; set; }
+
+    /// <summary>班组ID（对应真实表 TeamId，NOT NULL）</summary>
+    public int TeamId { get; set; }
+
+    /// <summary>性别（1=男 2=女，对应真实表 Gender，默认 1）</summary>
+    public int Gender { get; set; } = 1;
+
     /// <summary>
     /// 手机号
     /// </summary>

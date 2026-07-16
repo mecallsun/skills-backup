@@ -47,4 +47,28 @@ public class PersonnelController : ControllerBase
         var result = await _service.ImportCsvAsync(stream);
         return ApiResponse<PersonnelImportResult>.Ok(result, $"导入完成：新增 {result.SuccessCount} 条，更新 {result.UpdateCount} 条，失败 {result.FailCount} 条");
     }
+
+    /// <summary>新增员工（项1）</summary>
+    [HttpPost]
+    public async Task<ApiResponse<int>> Create([FromBody] PersonnelEditDto dto)
+    {
+        var (ok, msg, id) = await _service.CreateAsync(dto);
+        return ok ? ApiResponse<int>.Ok(id, msg) : ApiResponse<int>.Fail("CREATE_FAILED", msg);
+    }
+
+    /// <summary>编辑员工（项1）</summary>
+    [HttpPut("{id:int}")]
+    public async Task<ApiResponse> Update(int id, [FromBody] PersonnelEditDto dto)
+    {
+        var (ok, msg) = await _service.UpdateAsync(id, dto);
+        return ok ? ApiResponse.Ok(msg) : ApiResponse.Fail("UPDATE_FAILED", msg);
+    }
+
+    /// <summary>标记离职（项1）</summary>
+    [HttpPost("{id:int}/leave")]
+    public async Task<ApiResponse> Leave(int id, [FromQuery] DateOnly? leaveDate)
+    {
+        var (ok, msg) = await _service.MarkLeftAsync(id, leaveDate ?? DateOnly.FromDateTime(DateTime.Today));
+        return ok ? ApiResponse.Ok(msg) : ApiResponse.Fail("LEAVE_FAILED", msg);
+    }
 }

@@ -12,6 +12,7 @@
 }
 
 <div class="container-fluid">
+@Html.AntiForgeryToken()
     <!-- 页头 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
@@ -175,7 +176,7 @@
                                     </td>
                                     <td>@item.DormCode</td>
                                     <td class="text-center">
-                                        <a href="/Personnel/Edit/@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                        <a href="/Personnel/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
                                         @if (item.Status == 1)
                                         {
                                             <button class="btn btn-sm btn-outline-warning" onclick="markLeft(@item.Id, '@item.RealName')">离职</button>
@@ -355,7 +356,13 @@
 <script>
     function markLeft(id, name) {
         if (!confirm('确定将员工 ' + name + ' 标记为离职吗？')) return;
-        alert('原型演示：已将 ' + name + ' 标记为离职');
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = '/Personnel?handler=MarkLeft&id=' + id;
+        const t = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (t) f.appendChild(t.cloneNode());
+        document.body.appendChild(f);
+        f.submit();
     }
 </script>
 }

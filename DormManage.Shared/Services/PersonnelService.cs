@@ -19,6 +19,18 @@ public interface IPersonnelService
 
     /// <summary>导入 CSV（P1-14）：支持新增与按 EmployeeCode 覆盖更新</summary>
     Task<PersonnelImportResult> ImportCsvAsync(Stream csvStream);
+
+    /// <summary>按 ID 获取员工（编辑页加载）</summary>
+    Task<SysEmployee?> GetByIdAsync(int id);
+
+    /// <summary>新增员工（项1）：校验工号唯一 + 填充真实表 NOT NULL 冗余列</summary>
+    Task<(bool ok, string message, int id)> CreateAsync(PersonnelEditDto dto);
+
+    /// <summary>编辑员工（项1）</summary>
+    Task<(bool ok, string message)> UpdateAsync(int id, PersonnelEditDto dto);
+
+    /// <summary>标记离职（项1）：EmploymentStatusId=3 + LeaveDate；同步清空 DormCode</summary>
+    Task<(bool ok, string message)> MarkLeftAsync(int id, DateOnly leaveDate);
 }
 
 /// <summary>
@@ -31,6 +43,26 @@ public class PersonnelImportResult
     public int UpdateCount { get; set; }
     public int FailCount { get; set; }
     public List<string> Errors { get; set; } = new();
+}
+
+/// <summary>
+/// 员工新增/编辑 DTO（项1）
+/// </summary>
+public class PersonnelEditDto
+{
+    public string EmployeeCode { get; set; } = "";
+    public string RealName { get; set; } = "";
+    public int DepartmentId { get; set; }
+    public int EmployeeTypeId { get; set; }
+    public int TeamId { get; set; }
+    public int Gender { get; set; } = 1;
+    public string? Phone { get; set; }
+    public DateOnly? HireDate { get; set; }
+    public int AttendanceTypeId { get; set; }
+    public int EmploymentStatusId { get; set; } = 1;
+    public string? DormCode { get; set; }
+    public int? BedNo { get; set; }
+    public string? Remark { get; set; }
 }
 
 /// <summary>
@@ -277,5 +309,93 @@ public class PersonnelService : IPersonnelService
         }
         result.Add(sb.ToString());
         return result.ToArray();
+    }
+
+    // ==================== 项1：员工增删改 ====================
+
+    public async Task<SysEmployee?> GetByIdAsync(int id)
+    {
+        return await _db.Employees
+            .Include(e => e.EmployeeType)
+            .Include(e => e.AttendanceType)
+            .FirstOrDefaultAsync(e => e.Id == id);
+    }
+
+    public async Task<(bool ok, string message, int id)> CreateAsync(PersonnelEditDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.EmployeeCode) || string.IsNullOrWhiteSpace(dto.RealName))
+            return (false, "工号与姓名必填", 0);
+        if (dto.HireDate == null)
+            return (false, "入职日期必填", 0);
+        if (await _db.Employees.AnyAsync(e => e.EmployeeCode == dto.EmployeeCode))
+            return (false, $"工号 {dto.EmployeeCode} 已存在", 0);
+
+        var dept = await _db.Departments.FindAsync(dto.DepartmentId);
+        var etype = await _db.EmployeeTypes.FindAsync(dto.EmployeeTypeId);
+
+        var emp = new SysEmployee
+        {
+            EmployeeCode = dto.EmployeeCode.Trim(),
+            RealName = dto.RealName.Trim(),
+            DepartmentId = dto.DepartmentId,
+            Department = dept?.Name ?? "",
+            EmployeeTypeId = dto.EmployeeTypeId,
+            EmployeeTypeText = etype?.Name ?? "",       // 真实表 EmployeeType nvarchar NOT NULL
+            TeamId = dto.TeamId,                          // 真实表 TeamId NOT NULL
+            Gender = dto.Gender,
+            Phone = dto.Phone,
+            HireDate = dto.HireDate,
+            AttendanceTypeId = dto.AttendanceTypeId,
+            EmploymentStatusId = dto.EmploymentStatusId,
+            Status = dto.EmploymentStatusId,
+            ResidenceStatusId = 2,                        // 默认未住宿
+            DormCode = dto.DormCode ?? "",                // 真实表 NOT NULL
+            BedNo = dto.BedNo ?? 0,                        // 真实表 NOT NULL
+            Remark = dto.Remark,
+            IsActive = true
+        };
+        _db.Employees.Add(emp);
+        await _db.SaveChangesAsync();
+        return (true, "新增成功", emp.Id);
+    }
+
+    public async Task<(bool ok, string message)> UpdateAsync(int id, PersonnelEditDto dto)
+    {
+        var emp = await _db.Employees.FirstOrDefaultAsync(e => e.Id == id);
+        if (emp == null) return (false, "员工不存在");
+        if (string.IsNullOrWhiteSpace(dto.RealName)) return (false, "姓名必填");
+
+        var dept = await _db.Departments.FindAsync(dto.DepartmentId);
+        var etype = await _db.EmployeeTypes.FindAsync(dto.EmployeeTypeId);
+
+        emp.RealName = dto.RealName.Trim();
+        emp.DepartmentId = dto.DepartmentId;
+        emp.Department = dept?.Name ?? emp.Department;
+        emp.EmployeeTypeId = dto.EmployeeTypeId;
+        emp.EmployeeTypeText = etype?.Name ?? emp.EmployeeTypeText;
+        emp.TeamId = dto.TeamId;
+        emp.Gender = dto.Gender;
+        emp.Phone = dto.Phone;
+        if (dto.HireDate != null) emp.HireDate = dto.HireDate;
+        emp.AttendanceTypeId = dto.AttendanceTypeId;
+        emp.EmploymentStatusId = dto.EmploymentStatusId;
+        emp.Status = dto.EmploymentStatusId;
+        emp.DormCode = dto.DormCode ?? emp.DormCode;
+        emp.BedNo = dto.BedNo ?? emp.BedNo;
+        emp.Remark = dto.Remark;
+        await _db.SaveChangesAsync();
+        return (true, "保存成功");
+    }
+
+    public async Task<(bool ok, string message)> MarkLeftAsync(int id, DateOnly leaveDate)
+    {
+        var emp = await _db.Employees.FirstOrDefaultAsync(e => e.Id == id);
+        if (emp == null) return (false, "员工不存在");
+        emp.EmploymentStatusId = EmployeeStatus.Left; // 3=已离职
+        emp.Status = EmployeeStatus.Left;
+        emp.LeaveDate = leaveDate;
+        emp.DormCode = "";        // 离职清空当前宿舍（真实表 NOT NULL）
+        await _db.SaveChangesAsync();
+        return (true, "已标记离职");
     }
 }

@@ -1,0 +1,77 @@
+@page
+@model DormManage.Admin.Pages.Personnel.CreateModel
+@{
+    ViewData["Title"] = "新增员工";
+}
+
+<div class="container-fluid px-4 py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h4 mb-0"><i class="bi bi-person-plus"></i> 新增员工</h2>
+        <a href="/Personnel" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">工号 <span class="text-danger">*</span></label>
+                        <input asp-for="Input.EmployeeCode" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input asp-for="Input.RealName" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">性别</label>
+                        <select asp-for="Input.Gender" class="form-select">
+                            <option value="1">男</option>
+                            <option value="2">女</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">部门</label>
+                        <select asp-for="Input.DepartmentId" asp-items="Model.Departments" class="form-select"><option value="">请选择</option></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">员工类型</label>
+                        <select asp-for="Input.EmployeeTypeId" asp-items="Model.EmployeeTypes" class="form-select"><option value="">请选择</option></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">班组</label>
+                        <select asp-for="Input.TeamId" asp-items="Model.Teams" class="form-select"><option value="">请选择</option></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">考勤班次</label>
+                        <select asp-for="Input.AttendanceTypeId" asp-items="Model.AttendanceTypes" class="form-select"><option value="">请选择</option></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">手机号</label>
+                        <input asp-for="Input.Phone" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">入职日期 <span class="text-danger">*</span></label>
+                        <input asp-for="Input.HireDate" type="date" class="form-control" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">在职状态</label>
+                        <select asp-for="Input.EmploymentStatusId" asp-items="Model.EmploymentStatuses" class="form-select"></select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">床位号</label>
+                        <input asp-for="Input.BedNo" type="number" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">备注</label>
+                        <textarea asp-for="Input.Remark" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> 保存</button>
+                    <a href="/Personnel" class="btn btn-outline-secondary">取消</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

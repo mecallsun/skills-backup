@@ -90,6 +90,11 @@ public class DormDbContext : DbContext
     /// </summary>
     public DbSet<EmploymentStatus> EmploymentStatuses { get; set; } = null!;
 
+    /// <summary>
+    /// 班组
+    /// </summary>
+    public DbSet<Team> Teams { get; set; } = null!;
+
     #endregion
 
     #region 业务表
@@ -241,6 +246,7 @@ public class DormDbContext : DbContext
             entity.ToTable("SysEmployee");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("EmployeeId"); // 真实 SQL Server 主键列名
+            entity.Property(e => e.EmployeeTypeText).HasColumnName("EmployeeType").HasMaxLength(64); // 真实冗余列 EmployeeType(nvarchar)
             entity.Ignore(e => e.Team); // 真实表无 Team 字符串列（仅 TeamId FK）；班组显示/筛选需改 TeamId 关联，属后续增强
             entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.RealName).HasMaxLength(50).IsRequired();
@@ -308,6 +314,15 @@ public class DormDbContext : DbContext
             entity.Property(e => e.Remark).HasMaxLength(1000);
             entity.HasIndex(e => new { e.DormCode, e.ReadMonth }).IsUnique();
             entity.HasIndex(e => e.ReadMonth);
+        });
+
+        // Team（班组，真实表 Team，主键 Id）
+        modelBuilder.Entity<Team>(entity =>
+        {
+            entity.ToTable("Team");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.Code).HasMaxLength(20);
         });
 
         // ===== v2.13.7 RBAC 实体与真实 SQL Server schema 对齐 =====
