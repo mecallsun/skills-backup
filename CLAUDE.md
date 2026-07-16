@@ -330,12 +330,15 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 每次代码提交后必须执行：
 
 ```
-✅ Api 启动 → /health 返回 200
-✅ Api 启动 → /api/v1/xx/dictionaries 返回完整字典
+✅ Api 启动 → /api/v1/system/dbhealth/quick 返回 200（数据库连接正常）
+✅ Api 启动 → /swagger/index.html 可访问
+✅ Api → /api/dorms、/api/v1/bookings、/api/v1/personnel、/api/meter/records 均返回 200（SQL Server/SQLite 一致）
 ✅ Admin 启动 → /Account/Login 页面可访问
 ✅ Bootstrapper → 自动解压 + 启动 TrayApp
 ✅ 核心 CRUD 操作正常
 ```
+
+> **v2.13.6 订正**：原清单的 `/health`、`/api/v1/xx/dictionaries` 端点实际不存在；健康检查真实端点为 `/api/v1/system/dbhealth/quick`。字典由各基础资料端点提供，无统一 dictionaries 端点。
 
 ### 8.2 测试用例模板
 
@@ -420,3 +423,4 @@ publish-final/
 | v2.13.3 | 2026-07-15 | **补全 25 项 v2.13.1 差距清单**：P0（托盘补全） + P1（16 项：菜单权限/用户角色页面/首页7图表+聚合服务/PDA上传+抄表作废/确认退房/数据库深度验证/服务启停IPC/备份恢复/用户管理API/人员Excel导入导出/账单详情/SysPermission字段） + P2（9 项：月度选择器/编辑页员工信息/床位号字段/容量约束/系统集成API/PDA版本API/班组筛选/通用Excel导出/共用页头Tab组件） |
 | **v2.13.4** | **2026-07-16** | **P0 修复：托盘右键 → 系统设置 "UI异常，创建窗口出错"** —— TrayAppContext 内嵌不可见 OwnerForm + NotifyIconManager 加固 + SettingsForm 拆分 + Font/ShowDialog/SafeShow 三层兜底；菜单项"设置..."改为"系统设置..."与双 UI 职责规范一致。详见 `00-方案文档/62-托盘右键异常修复报告-v2.13.4.md` |
 | **v2.13.5** | **2026-07-16** | **修复：详情/编辑/历史页跳转链接 404** —— 提交 5a522ef 将 5 个页面路由改为纯 `@page`（id 走查询字符串）后，列表页与页内跳转链接仍为路径式（`/Dorms/Details/5`），点击后由 500 变 404。补齐 5 处链接为查询式（`?id=`）：Dorms/Index（详情+修改）、Dorms/Details（编辑）、Dorms/History（宿舍详情）、Booking/Index（修改）。已实启服务登录验证全链路 200。详见 `00-方案文档/64-详情编辑页路由链接修复验证报告-v2.13.5.md` |
+| **v2.13.6** | **2026-07-16** | **修复：EF 实体与真实 SQL Server schema 对齐（核心模块）** —— Api（Provider=SqlServer）多端点 500，根因为 EF 实体主键/列名/类型与真实 WaterMeterDB 不一致（SQLite 下被掩盖）。修复 Dorm→DormId、DormBooking→BookingId、MeterRecord→RecordId、SysEmployee→EmployeeId 主键映射 + DormBooking Type→BookingType/TINYINT + SysEmployee Team Ignore。连真实 SQL Server 验证核心模块 7/7 端点 200，SQLite（Admin）重建 dorm.db 后回归无退。**遗留（待决策）**：Sys*/RBAC 子系统与真实库结构性分裂 + 缺表。详见 `00-方案文档/65-EF实体与真实Schema对齐修复报告-v2.13.6.md` |

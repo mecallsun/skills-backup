@@ -207,6 +207,8 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("SysEmployee");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("EmployeeId"); // 真实 SQL Server 主键列名
+            entity.Ignore(e => e.Team); // 真实表无 Team 字符串列（仅 TeamId FK）；班组显示/筛选需改 TeamId 关联，属后续增强
             entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.RealName).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Department).HasMaxLength(50);
@@ -231,6 +233,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("Dorm");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("DormId"); // 真实 SQL Server 主键列名
             entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.BuildingName).HasMaxLength(50);
             entity.Property(e => e.AddressText).HasMaxLength(200);
@@ -243,6 +246,9 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("DormBooking");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("BookingId"); // 真实 SQL Server 主键列名
+            entity.Property(e => e.Type).HasColumnName("BookingType").HasConversion<byte>(); // 真实列名 BookingType，TINYINT
+            entity.Property(e => e.Status).HasConversion<byte>(); // TINYINT
             entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.EmployeeName).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Phone).HasMaxLength(20);
@@ -260,6 +266,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("MeterRecord");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("RecordId"); // 真实 SQL Server 主键列名（BIGINT，实体为 int，取值在 int 范围内安全）
             entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.ReadMonth).HasMaxLength(7).IsRequired();
             entity.Property(e => e.Operator).HasMaxLength(50);
