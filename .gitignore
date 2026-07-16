@@ -11,5 +11,16 @@ DormManage.Admin/bin/
 DormManage.Admin/obj/
 DormManage.Shared/bin/
 DormManage.Shared/obj/
+DormManage.TrayApp/bin/
+DormManage.TrayApp/obj/
 .agents/
 .claude/settings.local.json
+
+# SQLite 开发数据库
+*.db
+*.db-shm
+*.db-wal
+
+# 文档归档压缩包
+*.rar
+*.zip
