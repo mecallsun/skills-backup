@@ -5,3 +5,5 @@
 *.sql   filter=redactdb
 *.py    filter=redactdb
 *.ps1   filter=redactdb
+*.js    filter=redactdb
+*.html  filter=redactdb
