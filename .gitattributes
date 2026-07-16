@@ -1,0 +1,7 @@
+# 上传脱敏：暂存时把数据库账号/密码替换为占位符入库，工作区保留真实值（本地不变）
+*.json  filter=redactdb
+*.cs    filter=redactdb
+*.md    filter=redactdb
+*.sql   filter=redactdb
+*.py    filter=redactdb
+*.ps1   filter=redactdb
