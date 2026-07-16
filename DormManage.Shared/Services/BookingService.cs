@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 
@@ -202,9 +203,31 @@ public class BookingService : IBookingService
         return await _db.DormBookings.FindAsync(id);
     }
 
+    /// <summary>
+    /// 在「可串行化」事务中执行容量敏感操作，消除并发超容 / 同床双分配竞态。
+    /// - 经执行策略包裹以兼容 EnableRetryOnFailure（死锁 1205 自动重试整个委托）；
+    /// - 每次尝试前 ChangeTracker.Clear() 保证重试干净（委托内部重新加载实体）；
+    /// - 校验失败/提前返回时依赖 await using 自动回滚，仅成功路径显式提交。
+    /// </summary>
+    private Task<ApiResponse<DormBooking>> InSerializableTxAsync(Func<Task<ApiResponse<DormBooking>>> body)
+    {
+        var strategy = _db.Database.CreateExecutionStrategy();
+        return strategy.ExecuteAsync(async () =>
+        {
+            _db.ChangeTracker.Clear();
+            await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            var result = await body();
+            if (result.Success)
+                await tx.CommitAsync();
+            return result;
+        });
+    }
+
     /// <inheritdoc/>
     public async Task<ApiResponse<DormBooking>> CheckInAsync(BookingCheckInRequest request, string registrar)
     {
+        return await InSerializableTxAsync(async () =>
+        {
         // 1. 获取员工信息
         var employee = await _db.Employees.FindAsync(request.EmployeeId);
         if (employee == null)
@@ -284,6 +307,7 @@ public class BookingService : IBookingService
         await _db.SaveChangesAsync();
 
         return ApiResponse<DormBooking>.Ok(booking);
+        });
     }
 
     /// <inheritdoc/>
@@ -330,6 +354,8 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<ApiResponse<DormBooking>> ConfirmCheckInAsync(int id, string registrar)
     {
+        return await InSerializableTxAsync(async () =>
+        {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
             return ApiResponse<DormBooking>.Fail("NOT_FOUND", "记录不存在");
@@ -361,11 +387,14 @@ public class BookingService : IBookingService
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
+        });
     }
 
     /// <inheritdoc/>
     public async Task<ApiResponse<DormBooking>> UndoCheckOutAsync(int id, string registrar)
     {
+        return await InSerializableTxAsync(async () =>
+        {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
             return ApiResponse<DormBooking>.Fail("NOT_FOUND", "记录不存在");
@@ -397,6 +426,7 @@ public class BookingService : IBookingService
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
+        });
     }
 
     /// <inheritdoc/>

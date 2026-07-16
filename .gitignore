@@ -13,6 +13,8 @@ DormManage.Shared/bin/
 DormManage.Shared/obj/
 DormManage.TrayApp/bin/
 DormManage.TrayApp/obj/
+tests/**/bin/
+tests/**/obj/
 .agents/
 .claude/settings.local.json
 

@@ -10,6 +10,39 @@ public class DormDbContext : DbContext
 {
     public DormDbContext(DbContextOptions<DormDbContext> options) : base(options) { }
 
+    /// <summary>
+    /// 统一审计字段填充：新增时补 CreatedAt/UpdatedAt，修改时刷新 UpdatedAt。
+    /// 修复真实 SQL Server 多表 UpdatedAt NOT NULL DEFAULT(GETDATE()) 时 EF 显式写 NULL 导致 INSERT 失败。
+    /// </summary>
+    private void ApplyAuditStamps()
+    {
+        var now = DateTime.Now;
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                if (entry.Entity.CreatedAt == default) entry.Entity.CreatedAt = now;
+                entry.Entity.UpdatedAt ??= now; // 真实表 UpdatedAt NOT NULL，避免写入 NULL
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
+            }
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        ApplyAuditStamps();
+        return base.SaveChanges();
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        ApplyAuditStamps();
+        return base.SaveChangesAsync(cancellationToken);
+    }
+
     #region 基础资料
 
     /// <summary>
