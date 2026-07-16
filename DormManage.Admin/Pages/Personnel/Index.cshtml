@@ -16,15 +16,18 @@
     <!-- 页头 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
-            <i class="bi bi-people"></i> 人员清单
+            <i class="bi bi-people-fill"></i> 人员清单
             <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 人）</small>
         </h2>
-        <div>
+        <div class="btn-group" role="group">
             <a href="/Personnel/Create" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> 新增员工
+                <i class="bi bi-plus-lg"></i> 新增
             </a>
-            <button class="btn btn-info text-white" onclick="alert('原型演示：将下载 Excel 文件')">
-                <i class="bi bi-download"></i> 导出
+            <a href="/Personnel/Import" class="btn btn-info text-white">
+                <i class="bi bi-upload"></i> 导入
+            </a>
+            <button class="btn btn-outline-success" onclick="location.href='/api/v1/personnel/export'">
+                <i class="bi bi-file-earmark-excel"></i> 导出
             </button>
         </div>
     </div>
@@ -33,6 +36,10 @@
     <form method="get" class="card mb-3 filter-card">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item" style="flex: 2 1 auto; max-width: 280px;">
+                    <label class="form-label mb-1">关键词</label>
+                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="姓名/工号/手机号">
+                </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">部门</label>
                     <select name="DepartmentId" class="form-select">
@@ -58,6 +65,18 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
+                    <label class="form-label mb-1">班组</label>
+                    <select name="TeamId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var team in Model.Teams)
+                        {
+                            <option value="@team.Id" selected="@(Model.TeamId == team.Id)">
+                                @team.Name
+                            </option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
                     <label class="form-label mb-1">考勤班次</label>
                     <select name="AttendanceTypeId" class="form-select">
                         <option value="">全部</option>
@@ -70,17 +89,29 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
-                    <label class="form-label mb-1">状态</label>
-                    <select name="Status" class="form-select">
+                    <label class="form-label mb-1">在职状态</label>
+                    <select name="EmploymentStatusId" class="form-select">
                         <option value="">全部</option>
-                        <option value="1" selected="@(Model.Status == 1)">在职</option>
-                        <option value="2" selected="@(Model.Status == 2)">待入职</option>
-                        <option value="3" selected="@(Model.Status == 3)">已离职</option>
+                        @foreach (var es in Model.EmploymentStatuses)
+                        {
+                            <option value="@es.Id" selected="@(Model.EmploymentStatusId == es.Id)">
+                                @es.Name
+                            </option>
+                        }
                     </select>
                 </div>
-                <div class="col-auto filter-item" style="flex: 2 1 auto; max-width: 280px;">
-                    <label class="form-label mb-1">关键词</label>
-                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="姓名/工号/手机">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">宿舍（房号）</label>
+                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="如 D-001（模糊匹配）" list="dormList">
+                    <datalist id="dormList">
+                        @if (Model.DormCodes != null)
+                        {
+                            @foreach (var code in Model.DormCodes)
+                            {
+                                <option value="@code"></option>
+                            }
+                        }
+                    </datalist>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
                     <button type="submit" class="btn btn-primary filter-btn">
@@ -109,11 +140,14 @@
                             <th>手机号</th>
                             <th>部门</th>
                             <th>员工类型</th>
+                            <th>班组</th>
                             <th>考勤班次</th>
                             <th>入职日期</th>
                             <th>在职状态</th>
-                            <th>宿舍</th>
-                            <th width="140" class="text-center">操作</th>
+                            <th>离职日期</th>
+                            <th>宿舍（房号）</th>
+                            <th>床号</th>
+                            <th width="200" class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -156,6 +190,7 @@
                                             @item.EmployeeTypeName
                                         </span>
                                     </td>
+                                    <td>@item.TeamName</td>
                                     <td>
                                         <span class="badge @attClass">@item.AttendanceTypeName</span>
                                     </td>
@@ -174,13 +209,16 @@
                                             <span class="badge bg-secondary">已离职</span>
                                         }
                                     </td>
+                                    <td>@item.LeaveDate</td>
                                     <td>@item.DormCode</td>
+                                    <td>@(item.BedNo > 0 ? item.BedNo.ToString() : "-")</td>
                                     <td class="text-center">
                                         <a href="/Personnel/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
                                         @if (item.Status == 1)
                                         {
                                             <button class="btn btn-sm btn-outline-warning" onclick="markLeft(@item.Id, '@item.RealName')">离职</button>
                                         }
+                                        <button class="btn btn-sm btn-outline-danger" onclick="del(@item.Id, '@item.RealName')">删除</button>
                                     </td>
                                 </tr>
                                 index++;
@@ -189,7 +227,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">暂无人员数据</td>
+                                <td colspan="14" class="text-center text-muted py-4">暂无人员数据</td>
                             </tr>
                         }
                     </tbody>
@@ -208,7 +246,7 @@
                             @if (currentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage - 1)" aria-label="上一页">
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&TeamId=@Model.TeamId&EmploymentStatusId=@Model.EmploymentStatusId&DormCode=@Model.DormCode&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage - 1)" aria-label="上一页">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -216,13 +254,13 @@
                             @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
                             {
                                 <li class="page-item @(p == currentPage ? "active" : "")">
-                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@p">@p</a>
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&TeamId=@Model.TeamId&EmploymentStatusId=@Model.EmploymentStatusId&DormCode=@Model.DormCode&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@p">@p</a>
                                 </li>
                             }
                             @if (currentPage < totalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage + 1)" aria-label="下一页">
+                                    <a class="page-link" href="?DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&TeamId=@Model.TeamId&EmploymentStatusId=@Model.EmploymentStatusId&DormCode=@Model.DormCode&AttendanceTypeId=@Model.AttendanceTypeId&Status=@Model.Status&Keyword=@Model.Keyword&pageIndex=@(currentPage + 1)" aria-label="下一页">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
@@ -359,6 +397,17 @@
         const f = document.createElement('form');
         f.method = 'post';
         f.action = '/Personnel?handler=MarkLeft&id=' + id;
+        const t = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (t) f.appendChild(t.cloneNode());
+        document.body.appendChild(f);
+        f.submit();
+    }
+
+    function del(id, name) {
+        if (!confirm('确定删除员工 ' + name + ' 吗？此操作不可恢复。')) return;
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = '/Personnel?handler=Delete&id=' + id;
         const t = document.querySelector('input[name="__RequestVerificationToken"]');
         if (t) f.appendChild(t.cloneNode());
         document.body.appendChild(f);

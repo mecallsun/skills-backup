@@ -27,6 +27,10 @@ public class EditModel : PageModel
 
     public string EmployeeCode { get; set; } = "";
 
+    public string RealName { get; set; } = "";
+
+    public int EmploymentStatusId { get; set; }
+
     public List<SelectListItem> Departments { get; set; } = new();
     public List<SelectListItem> EmployeeTypes { get; set; } = new();
     public List<SelectListItem> Teams { get; set; } = new();
@@ -42,6 +46,8 @@ public class EditModel : PageModel
             return RedirectToPage("/Personnel/Index");
         }
         EmployeeCode = emp.EmployeeCode;
+        RealName = emp.RealName;
+        EmploymentStatusId = emp.EmploymentStatusId;
         Input = new PersonnelEditDto
         {
             EmployeeCode = emp.EmployeeCode,
@@ -78,6 +84,14 @@ public class EditModel : PageModel
         }
         TempData["Success"] = msg;
         return RedirectToPage("/Personnel/Index");
+    }
+
+    /// <summary>标记离职（与原型 edit.html 一致：标记后请保存修改）</summary>
+    public async Task<IActionResult> OnPostMarkLeftAsync()
+    {
+        var (ok, msg) = await _svc.MarkLeftAsync(Id, DateOnly.FromDateTime(DateTime.Today));
+        TempData[ok ? "Success" : "ErrorMessage"] = msg;
+        return RedirectToPage("/Personnel/Edit", new { id = Id });
     }
 
     private async Task LoadDropdownsAsync()

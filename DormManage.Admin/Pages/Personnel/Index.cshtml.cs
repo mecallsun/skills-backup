@@ -37,6 +37,21 @@ public class IndexModel : PageModel
         return RedirectToPage("/Personnel/Index");
     }
 
+    /// <summary>删除员工（项1）</summary>
+    public async Task<IActionResult> OnPostDeleteAsync(int id)
+    {
+        var emp = await _db.Employees.FindAsync(id);
+        if (emp == null)
+        {
+            TempData["ErrorMessage"] = "员工不存在";
+            return RedirectToPage("/Personnel/Index");
+        }
+        _db.Employees.Remove(emp);
+        await _db.SaveChangesAsync();
+        TempData["Success"] = "删除成功";
+        return RedirectToPage("/Personnel/Index");
+    }
+
     /// <summary>
     /// 员工列表（含 EmployeeType 导航属性）
     /// </summary>
@@ -52,16 +67,34 @@ public class IndexModel : PageModel
     /// </summary>
     public List<DepartmentDropdownItem> Departments { get; set; } = new();
 
+    /// <summary>员工班组列表（用于筛选下拉）</summary>
+    public List<TeamDropdownItem> Teams { get; set; } = new();
+
+    /// <summary>在职状态列表（用于筛选下拉）</summary>
+    public List<EmploymentStatusDropdownItem> EmploymentStatuses { get; set; } = new();
+
     /// <summary>
     /// 考勤班次列表（用于筛选下拉）
     /// </summary>
     public List<AttendanceTypeDropdownItem> AttendanceTypes { get; set; } = new();
+
+    /// <summary>宿舍房号候选（datalist 自动完成用）</summary>
+    public List<string> DormCodes { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
     public int? DepartmentId { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int? EmployeeTypeId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? TeamId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int? EmploymentStatusId { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? DormCode { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int? AttendanceTypeId { get; set; }
@@ -92,10 +125,30 @@ public class IndexModel : PageModel
             .Select(d => new DepartmentDropdownItem { Id = d.Id, Name = d.Name })
             .ToListAsync();
 
+        Teams = await _db.Teams
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => new TeamDropdownItem { Id = t.Id, Name = t.Name })
+            .ToListAsync();
+
+        EmploymentStatuses = await _db.EmploymentStatuses
+            .Where(es => es.IsActive)
+            .OrderBy(es => es.Id)
+            .Select(es => new EmploymentStatusDropdownItem { Id = es.Id, Name = es.Name })
+            .ToListAsync();
+
         AttendanceTypes = await _db.AttendanceTypes
             .Where(a => a.IsActive)
             .OrderBy(a => a.Id)
             .Select(a => new AttendanceTypeDropdownItem { Id = a.Id, Name = a.Name, Code = a.Code })
+            .ToListAsync();
+
+        // 宿舍房号候选（Dorms + Personnel.DormCode 出现过的去重）
+        DormCodes = await _db.Dorms
+            .Select(d => d.DormCode)
+            .Union(_db.Employees.Where(e => e.DormCode != null).Select(e => e.DormCode!))
+            .Distinct()
+            .OrderBy(c => c)
             .ToListAsync();
 
         // 查询员工列表（v2.11.7.CORRECT 强制 Include EmployeeType 导航属性）
@@ -109,6 +162,15 @@ public class IndexModel : PageModel
 
         if (EmployeeTypeId.HasValue)
             query = query.Where(e => e.EmployeeTypeId == EmployeeTypeId.Value);
+
+        if (TeamId.HasValue)
+            query = query.Where(e => e.TeamId == TeamId.Value);
+
+        if (EmploymentStatusId.HasValue)
+            query = query.Where(e => e.EmploymentStatusId == EmploymentStatusId.Value);
+
+        if (!string.IsNullOrWhiteSpace(DormCode))
+            query = query.Where(e => e.DormCode != null && e.DormCode.Contains(DormCode));
 
         if (AttendanceTypeId.HasValue)
             query = query.Where(e => e.AttendanceTypeId == AttendanceTypeId.Value);
@@ -151,6 +213,9 @@ public class IndexModel : PageModel
                 HireDate = e.HireDate != null ? e.HireDate.Value.ToString("yyyy-MM-dd") : "-",
                 LeaveDate = e.LeaveDate != null ? e.LeaveDate.Value.ToString("yyyy-MM-dd") : "-",
                 DormCode = e.DormCode ?? "-",
+                BedNo = e.BedNo ?? 0,
+                TeamId = e.TeamId,
+                TeamName = e.Team ?? "-",
                 IsActive = e.IsActive
             })
             .ToListAsync();
@@ -206,6 +271,9 @@ public class PersonnelDto
     public string HireDate { get; set; } = "";
     public string LeaveDate { get; set; } = "";
     public string DormCode { get; set; } = "";
+    public int BedNo { get; set; }
+    public int TeamId { get; set; }
+    public string TeamName { get; set; } = "";
     public bool IsActive { get; set; }
 }
 
@@ -236,4 +304,22 @@ public class AttendanceTypeDropdownItem
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Code { get; set; } = "";
+}
+
+/// <summary>
+/// 班组下拉项
+/// </summary>
+public class TeamDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>
+/// 在职状态下拉项
+/// </summary>
+public class EmploymentStatusDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }
