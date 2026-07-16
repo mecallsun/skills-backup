@@ -2,7 +2,7 @@
 -- 📌 金戈宿舍管理系统 — 绝对真理源 DDL
 -- 来源：192.168.1.237 / WaterMeterDB 实时探测
 -- 生成日期：2026-07-15
--- 版本：v2.13.3
+-- 版本：v2.13.7（2026-07-16 RBAC 补表：SysRole.SortOrder 列 + SysPermission/SysRolePermission 表）
 --
 -- 用途：
 --   1. AI 编写后端代码时的唯一数据源依据
@@ -327,6 +327,7 @@ CREATE TABLE [dbo].[SysRole] (
     [RoleCode]    NVARCHAR(32)   NOT NULL,
     [RoleName]    NVARCHAR(64)   NOT NULL,
     [Description] NVARCHAR(256)  NULL,
+    [SortOrder]   INT            NOT NULL DEFAULT ((0)),  -- v2.13.7 RBAC 补列：角色排序（Web 端 OrderBy 使用）
     [IsActive]    BIT            NOT NULL DEFAULT ((1)),
     [CreatedAt]   DATETIME       NOT NULL DEFAULT (GETDATE()),
     CONSTRAINT [PK_SysRole] PRIMARY KEY ([RoleId]),
@@ -375,7 +376,45 @@ CREATE TABLE [dbo].[Team] (
     CONSTRAINT [UQ_Team_Code] UNIQUE ([Code])
 );
 
--- 23. 视图 v_MeterRecordDetail
+-- =========================================================================
+-- v2.13.7 RBAC 补表：权限表与角色权限关联表（原真理源缺失，RBAC 上 SQL Server 补齐）
+-- 列名与 EF 实体属性 1:1 对齐，主键 [Id]（与 SysPermission/SysRolePermission 实体一致）
+-- =========================================================================
+
+-- 24. SysPermission（权限/菜单节点）
+CREATE TABLE [dbo].[SysPermission] (
+    [Id]             INT            IDENTITY(1,1) NOT NULL,
+    [PermissionCode] NVARCHAR(64)   NOT NULL,
+    [PermissionName] NVARCHAR(64)   NOT NULL,
+    [PermissionType] TINYINT        NOT NULL DEFAULT ((1)),  -- 1=菜单 2=操作
+    [ParentId]       INT            NOT NULL DEFAULT ((0)),
+    [Route]          NVARCHAR(256)  NULL,
+    [Icon]           NVARCHAR(64)   NULL,
+    [SortOrder]      INT            NOT NULL DEFAULT ((0)),
+    [IsActive]       BIT            NOT NULL DEFAULT ((1)),
+    [IsSystem]       BIT            NOT NULL DEFAULT ((0)),
+    [Description]    NVARCHAR(256)  NULL,
+    [CreatedAt]      DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]      DATETIME       NULL,
+    [CreatedBy]      NVARCHAR(64)   NULL,
+    CONSTRAINT [PK_SysPermission] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysPermission_Code] UNIQUE ([PermissionCode])
+);
+CREATE INDEX [IX_SysPermission_ParentId] ON [dbo].[SysPermission]([ParentId]);
+
+-- 25. SysRolePermission（角色权限关联）
+CREATE TABLE [dbo].[SysRolePermission] (
+    [Id]           INT            IDENTITY(1,1) NOT NULL,
+    [RoleId]       INT            NOT NULL,
+    [PermissionId] INT            NOT NULL,
+    [CreatedAt]    DATETIME       NOT NULL DEFAULT (GETDATE()),
+    CONSTRAINT [PK_SysRolePermission] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysRolePermission_RolePerm] UNIQUE ([RoleId], [PermissionId]),
+    CONSTRAINT [FK_SysRolePermission_Role] FOREIGN KEY ([RoleId]) REFERENCES [dbo].[SysRole]([RoleId]) ON DELETE CASCADE,
+    CONSTRAINT [FK_SysRolePermission_Perm] FOREIGN KEY ([PermissionId]) REFERENCES [dbo].[SysPermission]([Id]) ON DELETE CASCADE
+);
+
+-- 26. 视图 v_MeterRecordDetail
 CREATE VIEW [dbo].[v_MeterRecordDetail] AS
 SELECT
     r.[RecordId], r.[DormId], r.[DormCode], r.[ReadMonth],

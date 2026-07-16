@@ -277,6 +277,58 @@ public class DormDbContext : DbContext
             entity.HasIndex(e => e.ReadMonth);
         });
 
+        // ===== v2.13.7 RBAC 实体与真实 SQL Server schema 对齐 =====
+        // SysUser（真实表 SysUser，主键 UserId）
+        modelBuilder.Entity<SysUser>(entity =>
+        {
+            entity.ToTable("SysUser");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("UserId");
+            entity.Property(e => e.UserName).HasColumnName("Username").HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Phone).HasColumnName("Mobile").HasMaxLength(16);       // 真实列名 Mobile
+            entity.Property(e => e.LastLoginTime).HasColumnName("LastLoginAt");           // 真实列名 LastLoginAt
+            entity.Ignore(e => e.EmployeeId);  // 真实表无此列
+            entity.Ignore(e => e.UpdatedAt);   // 真实表无此列（代码仅赋值不查询，忽略即可）
+            entity.HasIndex(e => e.UserName).IsUnique();
+        });
+
+        // SysRole（真实表 SysRole，主键 RoleId）
+        modelBuilder.Entity<SysRole>(entity =>
+        {
+            entity.ToTable("SysRole");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("RoleId");
+            entity.Property(e => e.RoleCode).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.RoleName).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.RoleCode).IsUnique();
+        });
+
+        // SysUserRole（真实表 SysUserRole，复合主键 UserId+RoleId，无 Id 列）
+        modelBuilder.Entity<SysUserRole>(entity =>
+        {
+            entity.ToTable("SysUserRole");
+            entity.Ignore(e => e.Id);                    // 真实表无 Id 列
+            entity.HasKey(e => new { e.UserId, e.RoleId }); // 复合主键
+        });
+
+        // SysPermission（v2.13.7 新增表，列名与实体 1:1，主键 Id）
+        modelBuilder.Entity<SysPermission>(entity =>
+        {
+            entity.ToTable("SysPermission");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.PermissionCode).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.PermissionName).HasMaxLength(64).IsRequired();
+            entity.HasIndex(e => e.PermissionCode).IsUnique();
+        });
+
+        // SysRolePermission（v2.13.7 新增表，列名与实体 1:1，主键 Id）
+        modelBuilder.Entity<SysRolePermission>(entity =>
+        {
+            entity.ToTable("SysRolePermission");
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.RoleId, e.PermissionId }).IsUnique();
+        });
+
         // 种子数据
         SeedData(modelBuilder);
     }
@@ -414,7 +466,7 @@ public class DormDbContext : DbContext
 
         // 用户-角色关联（admin 用户 → 管理员角色）
         modelBuilder.Entity<SysUserRole>().HasData(
-            new SysUserRole { Id = 1, UserId = 1, RoleId = 1 }
+            new SysUserRole { UserId = 1, RoleId = 1 } // v2.13.7 复合主键，去除 Id
         );
 
         // 系统权限种子数据（菜单 + 按钮）

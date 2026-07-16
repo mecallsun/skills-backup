@@ -1,7 +1,7 @@
 # 金戈宿舍管理系统 — Claude Code 项目配置
 
 > **项目名称**：金戈宿舍管理系统  
-> **配置版本**：v2.13.5  
+> **配置版本**：v2.13.7  
 > **生效日期**：2026-07-16  
 > **适用对象**：所有参与本项目的 Claude Code 会话
 
@@ -424,3 +424,4 @@ publish-final/
 | **v2.13.4** | **2026-07-16** | **P0 修复：托盘右键 → 系统设置 "UI异常，创建窗口出错"** —— TrayAppContext 内嵌不可见 OwnerForm + NotifyIconManager 加固 + SettingsForm 拆分 + Font/ShowDialog/SafeShow 三层兜底；菜单项"设置..."改为"系统设置..."与双 UI 职责规范一致。详见 `00-方案文档/62-托盘右键异常修复报告-v2.13.4.md` |
 | **v2.13.5** | **2026-07-16** | **修复：详情/编辑/历史页跳转链接 404** —— 提交 5a522ef 将 5 个页面路由改为纯 `@page`（id 走查询字符串）后，列表页与页内跳转链接仍为路径式（`/Dorms/Details/5`），点击后由 500 变 404。补齐 5 处链接为查询式（`?id=`）：Dorms/Index（详情+修改）、Dorms/Details（编辑）、Dorms/History（宿舍详情）、Booking/Index（修改）。已实启服务登录验证全链路 200。详见 `00-方案文档/64-详情编辑页路由链接修复验证报告-v2.13.5.md` |
 | **v2.13.6** | **2026-07-16** | **修复：EF 实体与真实 SQL Server schema 对齐（核心模块）** —— Api（Provider=SqlServer）多端点 500，根因为 EF 实体主键/列名/类型与真实 WaterMeterDB 不一致（SQLite 下被掩盖）。修复 Dorm→DormId、DormBooking→BookingId、MeterRecord→RecordId、SysEmployee→EmployeeId 主键映射 + DormBooking Type→BookingType/TINYINT + SysEmployee Team Ignore。连真实 SQL Server 验证核心模块 7/7 端点 200，SQLite（Admin）重建 dorm.db 后回归无退。**遗留（待决策）**：Sys*/RBAC 子系统与真实库结构性分裂 + 缺表。详见 `00-方案文档/65-EF实体与真实Schema对齐修复报告-v2.13.6.md` |
+| **v2.13.7** | **2026-07-16** | **RBAC 上 SQL Server（补表+实体重构）** —— 补真理源缺表：SysRole 补 `SortOrder` 列 + 新增 `SysPermission`/`SysRolePermission` 表（幂等迁移脚本 `01-Database/migrations/v2.13.7-rbac-tables.sql`，已对现网库执行）。重构 Sys* 实体：SysUser（ToTable+Id→UserId+UserName→Username+Phone→Mobile+LastLoginTime→LastLoginAt+Ignore EmployeeId/UpdatedAt）、SysRole（Id→RoleId）、SysUserRole（复合主键 UserId+RoleId+去 Id）。双 provider 验证：SQL Server `/api/v1/auth/users`+`/roles` 200、SQLite 登录+用户/角色页面 200。详见 `00-方案文档/66-RBAC上SQLServer补表与实体对齐报告-v2.13.7.md` |
