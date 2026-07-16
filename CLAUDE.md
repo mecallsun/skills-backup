@@ -287,6 +287,27 @@ feat(personnel): 新增员工离职功能
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 ```
 
+### 6.4 上传脱敏规则（凭据保护 · 强制默认）
+
+> ⚠️ **默认原则**：向 GitHub 提交/上传的程序源码若含账号密码等安全敏感信息，**上传入库时默认替换为占位符；但不改变本地代码文件（本地保留真实值以保证运行）。**
+
+**实现机制（v2.13.8 起）**：git `clean` 过滤器 `redactdb` + `.gitattributes`
+- 暂存(`git add`)时自动将 `__DB_USER__`→`__DB_USER__`、`__DB_PASSWORD__`→`__DB_PASSWORD__` 入库；工作区文件保持真实值不变；git 比较脱敏后内容，故无 `modified` 噪声。
+- 覆盖类型：`*.json / *.cs / *.md / *.sql / *.py / *.ps1`。
+- 新增敏感值时：扩展 `filter.redactdb.clean` 的 sed 规则 + 确认 `.gitattributes` 覆盖该文件类型。
+
+**克隆后必做**（过滤器为本地配置，不随仓库同步）：
+```bash
+git config filter.redactdb.clean "sed -E 's/__DB_PASSWORD__/__DB_PASSWORD__/g; s/__DB_USER__/__DB_USER__/g'"
+git config filter.redactdb.smudge cat
+git config filter.redactdb.required false
+git add --renormalize .   # 使既有文件套用过滤器
+```
+
+**部署/运行**：真实连接串通过环境变量注入（`DormManage_DB_CONN`）或本地未跟踪的 `appsettings.json` 提供，占位符仅存在于仓库。
+
+**遗留提示**：本机制自 v2.13.8 生效，仅保护新提交；此前历史提交仍含明文，如需彻底清除须 `git filter-repo --replace-text` 重写历史并强推（私有库下按需处理）。
+
 ---
 
 ## 7. 文档规范
