@@ -145,7 +145,7 @@
                                         @* v2.11.12 操作列顺序：修改 → 撤销退房(v2.11.10) → 入住 → 退房 → 撤销预约(v2.11.11，最右侧) *@
                                         @if (item.Status == 1)
                                         {
-                                            <a href="/Booking/Edit/@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
+                                            <a href="/Booking/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
                                         }
                                         else
                                         {
