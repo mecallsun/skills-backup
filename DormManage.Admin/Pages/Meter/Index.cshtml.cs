@@ -24,6 +24,9 @@ public class IndexModel : PageModel
 
     public PagedResult<MeterRecordDto>? Result { get; set; }
 
+    /// <summary>总数（供 PageHeader 组件使用）</summary>
+    public int Total => Result?.TotalCount ?? 0;
+
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 

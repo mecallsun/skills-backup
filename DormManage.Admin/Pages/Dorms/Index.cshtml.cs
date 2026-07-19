@@ -25,6 +25,9 @@ public class IndexModel : PageModel
     /// <summary>宿舍列表</summary>
     public PagedResult<DormDto>? Result { get; set; }
 
+    /// <summary>总数（供 PageHeader 组件使用）</summary>
+    public int Total => Result?.TotalCount ?? 0;
+
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 

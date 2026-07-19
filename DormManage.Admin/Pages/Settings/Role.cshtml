@@ -6,15 +6,14 @@
 }
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-shield-lock"></i> 角色管理
-            <span class="badge bg-secondary ms-2">@Model.Roles.Count 个角色</span>
-        </h2>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createRoleModal">
-            <i class="bi bi-plus-lg"></i> 新增角色
-        </button>
-    </div>
+    <!-- 页头（v2.13.17 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-shield-lock",
+        title = "角色管理",
+        count = Model.Roles?.Count ?? 0,
+        countLabel = "个角色",
+        primaryAction = new PageAction { Label = "新增角色", OnClick = "var m = new bootstrap.Modal(document.getElementById('createRoleModal')); m.show();", Icon = "bi-plus-lg", Style = "primary" }
+    })
 
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
     {

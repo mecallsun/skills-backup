@@ -1,37 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
-using DormManage.Admin.Extensions;
-using DormManage.Admin.Services;
 
 namespace DormManage.Admin.ViewComponents;
 
 /// <summary>
-/// 导航栏菜单组件（按用户权限动态渲染）
+/// 导航栏菜单组件（v2.13.14 已废弃：Tab 栏改为硬编码 10 个固定 Tab）
+/// 保留此组件以兼容旧引用，当前返回空视图。
 /// </summary>
 public class MenuViewComponent : ViewComponent
 {
-    private readonly IAuthService _authService;
-
-    public MenuViewComponent(IAuthService authService)
+    public IViewComponentResult Invoke()
     {
-        _authService = authService;
-    }
-
-    public async Task<IViewComponentResult> InvokeAsync()
-    {
-        var userId = HttpContext.GetCurrentUserId();
-
-        // 未登录用户显示空菜单
-        if (userId <= 0)
-        {
-            return View("Default", new List<AuthHelperExtensions.MenuNode>());
-        }
-
-        // 根据用户角色查询权限菜单（已包含父级补齐）
-        var menus = await _authService.GetUserMenusAsync(userId);
-
-        // 只显示顶级菜单（ParentId=0）作为导航项，子菜单在 Dropdown 中渲染
-        var topMenus = menus.Where(m => m.ParentId == 0).ToList();
-
-        return View("Default", (topMenus, menus));
+        // v2.13.14：Tab 栏已改为硬编码，此组件不再渲染菜单
+        return View("_MenuStub");
     }
 }

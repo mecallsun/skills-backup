@@ -6,317 +6,369 @@
 }
 
 <div class="container-fluid">
-    <h2 class="mb-3"><i class="bi bi-database"></i> 基础资料</h2>
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-database"></i> 基础资料
+        </h2>
+    </div>
 
-    <!-- Tab 页签 -->
-    <ul class="nav nav-tabs mb-3" id="basicsTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="tab-dept" data-bs-toggle="tab" data-bs-target="#pane-dept" type="button">
-                <i class="bi bi-building"></i> 部门管理
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-building" data-bs-toggle="tab" data-bs-target="#pane-building" type="button">
-                <i class="bi bi-geo-alt"></i> 楼栋管理
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-floor" data-bs-toggle="tab" data-bs-target="#pane-floor" type="button">
-                <i class="bi bi-layers"></i> 楼层管理
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-address" data-bs-toggle="tab" data-bs-target="#pane-address" type="button">
-                <i class="bi bi-pin-map"></i> 地址管理
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-emptype" data-bs-toggle="tab" data-bs-target="#pane-emptype" type="button">
-                <i class="bi bi-person-badge"></i> 员工类型
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-attendance" data-bs-toggle="tab" data-bs-target="#pane-attendance" type="button">
-                <i class="bi bi-clock-history"></i> 考勤班次
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-unit" data-bs-toggle="tab" data-bs-target="#pane-unit" type="button">
-                <i class="bi bi-speedometer2"></i> 计量单位
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-residence" data-bs-toggle="tab" data-bs-target="#pane-residence" type="button">
-                <i class="bi bi-house-door"></i> 住宿状态
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="tab-employment" data-bs-toggle="tab" data-bs-target="#pane-employment" type="button">
-                <i class="bi bi-person-check"></i> 在职状态
-            </button>
-        </li>
-    </ul>
-
-    <!-- Tab 内容 -->
-    <div class="tab-content" id="basicsTabContent">
-
-        <!-- 部门管理 -->
-        <div class="tab-pane fade show active" id="pane-dept" role="tabpanel">
+    <!-- 左侧纵向 pills 导航 + 右侧 tab 面板（v2.13.13 重构：与系统设置风格一致） -->
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <!-- 左侧导航（200px） -->
+        <div style="flex-shrink: 0; width: 200px;">
             <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-building"></i> 部门列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('dept')">
-                            <i class="bi bi-plus-lg"></i> 新增部门
+                <div class="card-body p-2">
+                    <div class="nav flex-column nav-pills basics-nav" role="tablist">
+                        <button class="nav-link text-start @(Model.ActiveTab == "dept" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-dept"
+                                onclick="setActiveTab('dept')">
+                            <i class="bi bi-building"></i> 部门管理
                         </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>部门编码</th>
-                                    <th>部门名称</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="deptTable"></tbody>
-                        </table>
+                        <button class="nav-link text-start @(Model.ActiveTab == "building" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-building"
+                                onclick="setActiveTab('building')">
+                            <i class="bi bi-geo-alt"></i> 楼栋管理
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "floor" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-floor"
+                                onclick="setActiveTab('floor')">
+                            <i class="bi bi-layers"></i> 楼层管理
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "address" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-address"
+                                onclick="setActiveTab('address')">
+                            <i class="bi bi-pin-map"></i> 地址管理
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "emptype" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-emptype"
+                                onclick="setActiveTab('emptype')">
+                            <i class="bi bi-person-badge"></i> 员工类型
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "attendance" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-attendance"
+                                onclick="setActiveTab('attendance')">
+                            <i class="bi bi-clock-history"></i> 考勤班次
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "team" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-team"
+                                onclick="setActiveTab('team')">
+                            <i class="bi bi-people-fill"></i> 员工班组
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "unit" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-unit"
+                                onclick="setActiveTab('unit')">
+                            <i class="bi bi-speedometer2"></i> 计量单位
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "residence" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-residence"
+                                onclick="setActiveTab('residence')">
+                            <i class="bi bi-house-door"></i> 住宿状态
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "employment" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-employment"
+                                onclick="setActiveTab('employment')">
+                            <i class="bi bi-person-check"></i> 在职状态
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 楼栋管理 -->
-        <div class="tab-pane fade" id="pane-building" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 楼栋列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('building')">
-                            <i class="bi bi-plus-lg"></i> 新增楼栋
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>楼栋名称</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="buildingTable"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- 右侧内容 -->
+        <div style="flex: 1 1 0%;">
+            <div class="tab-content" id="basicsTabContent">
 
-        <!-- 楼层管理 -->
-        <div class="tab-pane fade" id="pane-floor" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-layers"></i> 楼层列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('floor')">
-                            <i class="bi bi-plus-lg"></i> 新增楼层
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>楼层</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="floorTable"></tbody>
-                        </table>
+                <!-- 部门管理 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "dept" ? "show active" : "")" id="pane-dept" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-building"></i> 部门列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('dept')">
+                                    <i class="bi bi-plus-lg"></i> 新增部门
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>部门编码</th>
+                                            <th>部门名称</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deptTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 地址管理 -->
-        <div class="tab-pane fade" id="pane-address" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-pin-map"></i> 地址列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('address')">
-                            <i class="bi bi-plus-lg"></i> 新增地址
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>地址</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="addressTable"></tbody>
-                        </table>
+                <!-- 楼栋管理 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "building" ? "show active" : "")" id="pane-building" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 楼栋列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('building')">
+                                    <i class="bi bi-plus-lg"></i> 新增楼栋
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>楼栋名称</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="buildingTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 员工类型 -->
-        <div class="tab-pane fade" id="pane-emptype" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-person-badge"></i> 员工类型列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('emptype')">
-                            <i class="bi bi-plus-lg"></i> 新增类型
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>类型编码</th>
-                                    <th>类型名称</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="emptypeTable"></tbody>
-                        </table>
+                <!-- 楼层管理 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "floor" ? "show active" : "")" id="pane-floor" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-layers"></i> 楼层列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('floor')">
+                                    <i class="bi bi-plus-lg"></i> 新增楼层
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>楼层</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="floorTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 考勤班次 -->
-        <div class="tab-pane fade" id="pane-attendance" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 考勤班次列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('attendance')">
-                            <i class="bi bi-plus-lg"></i> 新增班次
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>类型编码</th>
-                                    <th>类型名称</th>
-                                    <th>工作时段</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="attendanceTable"></tbody>
-                        </table>
+                <!-- 地址管理 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "address" ? "show active" : "")" id="pane-address" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-pin-map"></i> 地址列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('address')">
+                                    <i class="bi bi-plus-lg"></i> 新增地址
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>地址</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="addressTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 计量单位 -->
-        <div class="tab-pane fade" id="pane-unit" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 计量单位列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('unit')">
-                            <i class="bi bi-plus-lg"></i> 新增单位
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>单位编码</th>
-                                    <th>单位名称</th>
-                                    <th>显示单位</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="unitTable"></tbody>
-                        </table>
+                <!-- 员工类型 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "emptype" ? "show active" : "")" id="pane-emptype" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-person-badge"></i> 员工类型列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('emptype')">
+                                    <i class="bi bi-plus-lg"></i> 新增类型
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>类型编码</th>
+                                            <th>类型名称</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="emptypeTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 住宿状态 -->
-        <div class="tab-pane fade" id="pane-residence" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-house-door"></i> 住宿状态列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('residence')">
-                            <i class="bi bi-plus-lg"></i> 新增状态
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>状态编码</th>
-                                    <th>状态名称</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="residenceTable"></tbody>
-                        </table>
+                <!-- 考勤班次 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "attendance" ? "show active" : "")" id="pane-attendance" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 考勤班次列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('attendance')">
+                                    <i class="bi bi-plus-lg"></i> 新增班次
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>类型编码</th>
+                                            <th>类型名称</th>
+                                            <th>工作时段</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="attendanceTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- 在职状态 -->
-        <div class="tab-pane fade" id="pane-employment" role="tabpanel">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-person-check"></i> 在职状态列表</h5>
-                        <button class="btn btn-success" onclick="showAddModal('employment')">
-                            <i class="bi bi-plus-lg"></i> 新增状态
-                        </button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th width="60">序号</th>
-                                    <th>状态编码</th>
-                                    <th>状态名称</th>
-                                    <th>备注</th>
-                                    <th width="100">状态</th>
-                                    <th width="120">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="employmentTable"></tbody>
-                        </table>
+                <!-- 员工班组（新增 v2.13.13） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "team" ? "show active" : "")" id="pane-team" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-people-fill"></i> 员工班组列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('team')">
+                                    <i class="bi bi-plus-lg"></i> 新增班组
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>班组编码</th>
+                                            <th>班组名称</th>
+                                            <th>排序</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="teamTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- 计量单位 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "unit" ? "show active" : "")" id="pane-unit" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 计量单位列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('unit')">
+                                    <i class="bi bi-plus-lg"></i> 新增单位
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>单位编码</th>
+                                            <th>单位名称</th>
+                                            <th>显示单位</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="unitTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 住宿状态 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "residence" ? "show active" : "")" id="pane-residence" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-house-door"></i> 住宿状态列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('residence')">
+                                    <i class="bi bi-plus-lg"></i> 新增状态
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>状态编码</th>
+                                            <th>状态名称</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="residenceTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 在职状态 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "employment" ? "show active" : "")" id="pane-employment" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-person-check"></i> 在职状态列表</h5>
+                                <button class="btn btn-success" onclick="showAddModal('employment')">
+                                    <i class="bi bi-plus-lg"></i> 新增状态
+                                </button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>状态编码</th>
+                                            <th>状态名称</th>
+                                            <th>备注</th>
+                                            <th width="100">状态</th>
+                                            <th width="120">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="employmentTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -340,9 +392,17 @@
                     <label class="form-label" id="nameLabel">名称</label>
                     <input type="text" class="form-control" id="editName" placeholder="请输入名称" />
                 </div>
+                <div class="mb-3" id="sortField" style="display:none;">
+                    <label class="form-label">排序号</label>
+                    <input type="number" class="form-control" id="editSort" value="0" />
+                </div>
                 <div class="mb-3" id="hoursField" style="display:none;">
                     <label class="form-label">工作时段</label>
                     <input type="text" class="form-control" id="editHours" placeholder="如 09:00-18:00" />
+                </div>
+                <div class="mb-3" id="unitField" style="display:none;">
+                    <label class="form-label">显示单位</label>
+                    <input type="text" class="form-control" id="editUnit" placeholder="如 m³" />
                 </div>
                 <div class="mb-3">
                     <label class="form-label">备注</label>
@@ -363,6 +423,18 @@
     </div>
 </div>
 
+@section Styles {
+<style>
+    .basics-nav .nav-link {
+        color: #37474f;
+        border-radius: 8px;
+        padding: 0.55rem 0.9rem;
+    }
+    .basics-nav .nav-link.active { background: #1976d2; color: #fff; }
+    .basics-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+</style>
+}
+
 @section Scripts {
 <script>
     // API 配置
@@ -380,6 +452,7 @@
         addresses: '地址',
         employeeTypes: '类型名称',
         attendanceTypes: '类型名称',
+        teams: '班组名称',
         meterUnits: '单位名称',
         residenceStatuses: '状态名称',
         employmentStatuses: '状态名称'
@@ -393,38 +466,53 @@
         address: 'addresses',
         emptype: 'employee-types',
         attendance: 'attendance-types',
+        team: 'teams',
         unit: 'meter-units',
         residence: 'residence-statuses',
         employment: 'employment-statuses'
     };
 
-    // 页面加载时获取数据
-    document.addEventListener('DOMContentLoaded', function() {
-        loadData('dept');
+    // 页面加载时根据 URL 参数或默认加载对应 tab
+    document.addEventListener('DOMContentLoaded', function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab');
+        const typeMap = {
+            'dept': 'dept', 'building': 'building', 'floor': 'floor',
+            'address': 'address', 'emptype': 'emptype', 'attendance': 'attendance',
+            'team': 'team', 'unit': 'unit', 'residence': 'residence', 'employment': 'employment'
+        };
+        const type = tabParam && typeMap[tabParam] ? typeMap[tabParam] : 'dept';
+        setActiveTab(type);
+        loadData(type);
     });
 
-    // Tab 切换时加载数据
-    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            const target = e.target.getAttribute('data-bs-target');
-            const typeMap = {
-                '#pane-dept': 'dept',
-                '#pane-building': 'building',
-                '#pane-floor': 'floor',
-                '#pane-address': 'address',
-                '#pane-emptype': 'emptype',
-                '#pane-attendance': 'attendance',
-                '#pane-unit': 'unit',
-                '#pane-residence': 'residence',
-                '#pane-employment': 'employment'
-            };
-            const type = typeMap[target];
-            if (type) loadData(type);
+    // 设置当前 tab 高亮（URL 参数持久化）
+    function setActiveTab(type) {
+        // 更新 URL 参数
+        const url = new URL(window.location);
+        url.searchParams.set('tab', type);
+        window.history.replaceState({}, '', url);
+
+        // 移除所有 active
+        document.querySelectorAll('.basics-nav .nav-link').forEach(el => el.classList.remove('active'));
+        // 激活当前
+        const btn = document.querySelector(`.basics-nav .nav-link[onclick="setActiveTab('${type}')"]`);
+        if (btn) btn.classList.add('active');
+
+        // 切换 tab pane
+        document.querySelectorAll('#basicsTabContent .tab-pane').forEach(el => {
+            el.classList.remove('show', 'active');
         });
-    });
+        const target = document.getElementById('pane-' + type);
+        if (target) target.classList.add('show', 'active');
+
+        // 加载数据
+        loadData(type);
+    }
 
     // 加载数据
     async function loadData(type) {
+        currentType = type;
         const apiType = typeToApi[type];
         try {
             const resp = await fetch(`${API_BASE}/${apiType}`);
@@ -481,7 +569,7 @@
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
                     </td>
                 </tr>`;
-            } else if (type === 'emptype') {
+            } else if (type === 'emptype' || type === 'residence' || type === 'employment') {
                 html += `<tr>
                     <td>${idx + 1}</td>
                     <td><code>${item.code}</code></td>
@@ -506,6 +594,19 @@
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
                     </td>
                 </tr>`;
+            } else if (type === 'team') {
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td><code>${item.code || '-'}</code></td>
+                    <td>${item.name}</td>
+                    <td>${item.sortOrder ?? 0}</td>
+                    <td>${item.remark || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
+                    </td>
+                </tr>`;
             } else if (type === 'unit') {
                 html += `<tr>
                     <td>${idx + 1}</td>
@@ -519,34 +620,10 @@
                         <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
                     </td>
                 </tr>`;
-            } else if (type === 'residence') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'employment') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
             }
         });
 
-        document.getElementById(tableId).innerHTML = html || '<tr><td colspan="5" class="text-center text-muted py-4">暂无数据</td></tr>';
+        document.getElementById(tableId).innerHTML = html || '<tr><td colspan="7" class="text-center text-muted py-4">暂无数据</td></tr>';
     }
 
     function getTableId(type) {
@@ -557,6 +634,7 @@
             address: 'addressTable',
             emptype: 'emptypeTable',
             attendance: 'attendanceTable',
+            team: 'teamTable',
             unit: 'unitTable',
             residence: 'residenceTable',
             employment: 'employmentTable'
@@ -570,23 +648,26 @@
         currentId = null;
         document.getElementById('editModalTitle').textContent = '新增';
         document.getElementById('editId').value = '';
-
-        // 清空表单
         document.getElementById('editCode').value = '';
         document.getElementById('editName').value = '';
         document.getElementById('editHours').value = '';
         document.getElementById('editRemark').value = '';
+        document.getElementById('editSort').value = '0';
+        document.getElementById('editUnit').value = '';
         document.getElementById('editActive').checked = true;
 
-        // 显示/隐藏编码字段
-        const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment'].includes(type);
+        const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(type);
         const showHours = type === 'attendance';
+        const showUnit = type === 'unit';
+        const showSort = type === 'team';
 
         document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
         document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
+        document.getElementById('unitField').style.display = showUnit ? 'block' : 'none';
+        document.getElementById('sortField').style.display = showSort ? 'block' : 'none';
 
-        // 动态标签
-        document.getElementById('nameLabel').textContent = labelMap[typeToApi[type]] || '名称';
+        const apiType = typeToApi[type];
+        document.getElementById('nameLabel').textContent = labelMap[apiType] || '名称';
 
         new bootstrap.Modal(document.getElementById('editModal')).show();
     }
@@ -608,12 +689,22 @@
                 document.getElementById('editName').value = data.name || data.floorNo || data.addressText || '';
                 document.getElementById('editHours').value = data.workHours || '';
                 document.getElementById('editRemark').value = data.remark || '';
+                document.getElementById('editSort').value = data.sortOrder ?? 0;
+                document.getElementById('editUnit').value = data.unit || '';
                 document.getElementById('editActive').checked = data.isActive;
 
-                const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment'].includes(type);
+                const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(type);
                 const showHours = type === 'attendance';
+                const showUnit = type === 'unit';
+                const showSort = type === 'team';
+
                 document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
                 document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
+                document.getElementById('unitField').style.display = showUnit ? 'block' : 'none';
+                document.getElementById('sortField').style.display = showSort ? 'block' : 'none';
+
+                const apiType2 = typeToApi[type];
+                document.getElementById('nameLabel').textContent = labelMap[apiType2] || '名称';
 
                 new bootstrap.Modal(document.getElementById('editModal')).show();
             }
@@ -649,21 +740,25 @@
         const apiType = typeToApi[currentType];
         const id = document.getElementById('editId').value;
 
-        let payload = {};
-        if (['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment'].includes(currentType)) {
+        let payload = { name: name };
+        if (['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(currentType)) {
             payload.code = document.getElementById('editCode').value.trim();
-            payload.name = name;
-        } else if (currentType === 'floor') {
+        }
+        if (currentType === 'floor') {
             payload.floorNo = parseInt(name);
         } else if (currentType === 'address') {
             payload.addressText = name;
-        } else {
-            payload.name = name;
         }
         payload.remark = document.getElementById('editRemark').value.trim();
         payload.isActive = document.getElementById('editActive').checked;
         if (currentType === 'attendance') {
             payload.workHours = document.getElementById('editHours').value.trim();
+        }
+        if (currentType === 'team') {
+            payload.sortOrder = parseInt(document.getElementById('editSort').value) || 0;
+        }
+        if (currentType === 'unit') {
+            payload.unit = document.getElementById('editUnit').value.trim();
         }
 
         try {

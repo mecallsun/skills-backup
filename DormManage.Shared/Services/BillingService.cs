@@ -14,6 +14,7 @@ public interface IBillingService
 
     /// <summary>获取费用标准列表（分页）</summary>
     Task<PagedResult<BillingStandard>> GetStandardsAsync(int page, int pageSize);
+    Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? isActive, int page, int pageSize);
 
     /// <summary>创建/更新费用标准</summary>
     Task<(bool ok, string message)> SaveStandardAsync(BillingStandard standard);
@@ -61,8 +62,22 @@ public class BillingService : IBillingService
     }
 
     public async Task<PagedResult<BillingStandard>> GetStandardsAsync(int page, int pageSize)
+        => await GetStandardsAsync(null, null, page, pageSize);
+
+    public async Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? isActive, int page, int pageSize)
     {
-        var query = _db.BillingStandards.OrderByDescending(s => s.IsActive).ThenByDescending(s => s.EffectiveFrom);
+        var query = _db.BillingStandards.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(s => s.StandardName.Contains(keyword));
+
+        if (isActive == "true")
+            query = query.Where(s => s.IsActive);
+        else if (isActive == "false")
+            query = query.Where(s => !s.IsActive);
+
+        query = query.OrderByDescending(s => s.IsActive).ThenByDescending(s => s.EffectiveFrom);
+
         var total = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
         return new PagedResult<BillingStandard> { Items = items, Total = total, PageIndex = page, PageSize = pageSize };
@@ -74,6 +89,10 @@ public class BillingService : IBillingService
             return (false, "标准名称必填");
         if (standard.EffectiveFrom == null)
             return (false, "生效日期必填");
+
+        // v2.13.12: 生效日期范围校验
+        if (standard.EffectiveTo.HasValue && standard.EffectiveFrom > standard.EffectiveTo)
+            return (false, "结束日期不能早于开始日期");
 
         if (standard.IsActive)
         {

@@ -144,7 +144,7 @@ public class MeterController : ControllerBase
             existing.HotMeter = request.HotMeter;
             existing.ElectricMeter = request.ElectricMeter;
             existing.Operator = string.IsNullOrEmpty(request.Operator) ? existing.Operator : request.Operator;
-            existing.Status = (byte)((request.ColdMeter != 0 || request.HotMeter != 0 || request.ElectricMeter != 0) ? 1 : 0);
+            existing.Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter);
             existing.Remark = newRemark;
             existing.UpdatedAt = DateTime.Now;
             existing.ServerCreatedAt = DateTime.Now;
@@ -164,7 +164,7 @@ public class MeterController : ControllerBase
                 HotMeter = request.HotMeter,
                 ElectricMeter = request.ElectricMeter,
                 Operator = request.Operator ?? "管理员",
-                Status = (byte)((request.ColdMeter != 0 || request.HotMeter != 0 || request.ElectricMeter != 0) ? 1 : 0),
+                Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter),
                 Remark = request.Remark,
                 ServerCreatedAt = DateTime.Now
             };

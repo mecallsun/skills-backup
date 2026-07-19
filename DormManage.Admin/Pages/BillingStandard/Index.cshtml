@@ -5,17 +5,58 @@
     Layout = "_Layout";
 }
 
+@section Styles {
+    <style>
+        .filter-btn {
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            cursor: pointer !important;
+        }
+        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+        .btn-primary.filter-btn {
+            background: #1976d2 !important;
+            border-color: #1976d2 !important;
+            color: #fff !important;
+        }
+        .btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn {
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+        }
+        .btn-outline-secondary.filter-btn:hover {
+            background: #f8f9fa !important;
+            color: #495057 !important;
+            border-color: #ced4da !important;
+        }
+    </style>
+}
+
 <div class="container-fluid">
-    <!-- 页头（v2.13.10 与原型 billing/standards.html 一致） -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-cash-stack"></i> 费用标准管理
-            <small class="text-muted fs-6">（共 <span id="totalCount">@Model.Total</span> 条）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <a href="/BillingStandard/Create" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增标准</a>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-cash-stack",
+        title = "费用标准管理",
+        count = Model.Total,
+        countLabel = "条",
+        primaryAction = new PageAction { Label = "新增标准", Url = "/BillingStandard/Create", Icon = "bi-plus-lg", Style = "success" }
+    })
 
     <!-- 当前有效标准 -->
     @if (Model.ActiveStandard != null)
@@ -27,6 +68,30 @@
             水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh
         </div>
     }
+
+    <!-- 筛选区（v2.13.12 新增，v2.13.16 统一样式） -->
+    <div class="card filter-card mb-3">
+        <div class="card-body py-2">
+            <form method="get" class="filter-row flex-nowrap">
+                <div class="col-auto filter-item">
+                    <input type="text" class="form-control form-control-sm" name="keyword" value="@ViewData["Keyword"]" placeholder="标准名称" />
+                </div>
+                <div class="col-auto filter-item">
+                    <select class="form-select form-select-sm" name="isActive">
+                        <option value="">全部状态</option>
+                        <option value="true" selected="@(ViewData["IsActive"]?.ToString() == "True")">启用</option>
+                        <option value="false" selected="@(ViewData["IsActive"]?.ToString() == "False")">停用</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <a href="/BillingStandard" class="btn btn-outline-secondary filter-btn"><i class="bi bi-arrow-clockwise"></i> 重置</a>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- 列表 -->
     <div class="card">
@@ -82,18 +147,39 @@
         </div>
     </div>
 
-    <!-- 分页 -->
-    @if (Model.Result != null && Model.Result.TotalPages > 1)
+    <!-- 分页（v2.13.12 统一页尾样式） -->
+    @if (Model.Result != null)
     {
-        <nav class="mt-3">
-            <ul class="pagination justify-content-center mb-0">
-                @for (var p = 1; p <= Model.Result.TotalPages; p++)
-                {
-                    <li class="page-item @(p == Model.Result.PageIndex ? "active" : "")">
-                        <a class="page-link" href="?page=@p">@p</a>
+        <div class="card-footer d-flex justify-content-between align-items-center pagination-footer mt-3">
+            <div class="text-muted">
+                共 <strong>@Model.Result.TotalCount</strong> 条记录，第 <strong>@Model.Result.PageIndex</strong> / <strong>@Model.Result.TotalPages</strong> 页
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.Result.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="?page=1">&laquo;</a>
                     </li>
-                }
-            </ul>
-        </nav>
+                    <li class="page-item @(Model.Result.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(Model.Result.PageIndex - 1)">&lsaquo;</a>
+                    </li>
+                    @{
+                        var start = Math.Max(1, Model.Result.PageIndex - 2);
+                        var end = Math.Min(Model.Result.TotalPages, Model.Result.PageIndex + 2);
+                        for (var p = start; p <= end; p++)
+                        {
+                            <li class="page-item @(p == Model.Result.PageIndex ? "active" : "")">
+                                <a class="page-link" href="?page=@p">@p</a>
+                            </li>
+                        }
+                    }
+                    <li class="page-item @(Model.Result.PageIndex >= Model.Result.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="?page=@(Model.Result.PageIndex + 1)">&rsaquo;</a>
+                    </li>
+                    <li class="page-item @(Model.Result.PageIndex >= Model.Result.TotalPages ? "disabled" : "")">
+                        <a class="page-link" href="?page=@Model.Result.TotalPages">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
     }
 </div>

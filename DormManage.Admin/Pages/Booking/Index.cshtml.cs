@@ -16,6 +16,9 @@ public class IndexModel : PageModel
 
     public PagedResult<DormBooking>? Result { get; set; }
 
+    /// <summary>总数（供 PageHeader 组件使用）</summary>
+    public int Total => Result?.TotalCount ?? 0;
+
     [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
 

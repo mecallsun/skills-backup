@@ -512,4 +512,61 @@ public class BasicsController : ControllerBase
     }
 
     #endregion
+
+    #region 员工班组 (Team)
+
+    /// <summary>
+    /// 获取班组列表
+    /// </summary>
+    [HttpGet("teams")]
+    public async Task<ApiResponse<PagedResult<Team>>> GetTeams(
+        [FromQuery] string? keyword,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        var result = await _service.GetTeamsAsync(keyword, page, pageSize);
+        return ApiResponse<PagedResult<Team>>.Ok(result);
+    }
+
+    /// <summary>
+    /// 获取班组详情
+    /// </summary>
+    [HttpGet("teams/{id}")]
+    public async Task<ApiResponse<Team?>> GetTeam(int id)
+    {
+        var result = await _service.GetTeamByIdAsync(id);
+        return ApiResponse<Team?>.Ok(result);
+    }
+
+    /// <summary>
+    /// 新增班组
+    /// </summary>
+    [HttpPost("teams")]
+    public async Task<ApiResponse<Team>> CreateTeam([FromBody] Team model)
+    {
+        var result = await _service.CreateTeamAsync(model);
+        return result;
+    }
+
+    /// <summary>
+    /// 更新班组
+    /// </summary>
+    [HttpPut("teams/{id}")]
+    public async Task<ApiResponse<Team>> UpdateTeam(int id, [FromBody] Team model)
+    {
+        var result = await _service.UpdateTeamAsync(id, model);
+        return result;
+    }
+
+    /// <summary>
+    /// 删除班组
+    /// </summary>
+    [HttpDelete("teams/{id}")]
+    public async Task<ApiResponse> DeleteTeam(int id)
+    {
+        var result = await _service.DeleteTeamAsync(id);
+        return result;
+    }
+
+    #endregion
 }

@@ -152,6 +152,9 @@ public class DormDbContext : DbContext
     public DbSet<SysOpLog> SysOpLogs { get; set; } = null!;
     public DbSet<SysSystemIntegration> SysSystemIntegrations { get; set; } = null!;
 
+    /// <summary>系统参数表（v2.13.19 数据库连接持久化）</summary>
+    public DbSet<SysParameter> SysParameters { get; set; } = null!;
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -437,6 +440,30 @@ public class DormDbContext : DbContext
             entity.HasIndex(e => new { e.RoleId, e.PermissionId }).IsUnique();
         });
 
+        // SysUserFilterCache（v2.13.12 新增表，用户筛选条件云端缓存）
+        modelBuilder.Entity<SysUserFilterCache>(entity =>
+        {
+            entity.ToTable("SysUserFilterCache");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.ModuleName).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.FilterJson).HasMaxLength(4000).IsRequired();
+            entity.HasIndex(e => new { e.UserId, e.ModuleName }).IsUnique();
+            entity.HasIndex(e => e.UpdatedAt);
+        });
+
+        // SysParameter（v2.13.19 数据库连接持久化表）
+        modelBuilder.Entity<SysParameter>(entity =>
+        {
+            entity.ToTable("SysParameter");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.ParamKey).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Category).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.ParamValue).HasMaxLength(2000);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.HasIndex(e => new { e.Category, e.ParamKey }).IsUnique();
+        });
+
         // 种子数据
         SeedData(modelBuilder);
     }
@@ -519,6 +546,19 @@ public class DormDbContext : DbContext
             new EmploymentStatus { Id = 1, Code = "ACTIVE", Name = "在职", Remark = "", IsActive = true },
             new EmploymentStatus { Id = 2, Code = "ONBOARDING", Name = "待入职", Remark = "", IsActive = true },
             new EmploymentStatus { Id = 3, Code = "LEFT", Name = "已离职", Remark = "", IsActive = true }
+        );
+
+        // 员工班组种子数据（v2.13.13）
+        modelBuilder.Entity<Team>().HasData(
+            new Team { Id = 1, Code = "DEFAULT", Name = "默认班组", SortOrder = 0, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 2, Code = "TEAM_A", Name = "A班", SortOrder = 1, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 3, Code = "TEAM_B", Name = "B班", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 4, Code = "TEAM_C", Name = "C班", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 5, Code = "TEAM_D", Name = "D班", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 6, Code = "TEAM_E", Name = "E班", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 7, Code = "TEAM_F", Name = "F班", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 8, Code = "TEAM_G", Name = "G班", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new Team { Id = 9, Code = "TEAM_H", Name = "H班", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
         );
 
         // 宿舍种子数据

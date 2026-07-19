@@ -14,7 +14,6 @@
             var children = allMenus.Where(m => m.ParentId == menu.Id).ToList();
             if (children.Any())
             {
-                // 含子菜单：渲染为下拉
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         @if (!string.IsNullOrWhiteSpace(menu.Icon))
@@ -41,7 +40,6 @@
             }
             else
             {
-                // 顶级菜单：直接渲染为导航项
                 var isActive = string.Equals(currentPath, menu.Route?.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
                 <li class="nav-item">
                     <a class="nav-link @(isActive ? "active" : "")" href="@menu.Route">
@@ -57,7 +55,6 @@
     }
     else
     {
-        <!-- 无权限时显示提示 -->
         <li class="nav-item">
             <span class="nav-link text-warning">
                 <i class="bi bi-exclamation-triangle"></i> 无可见菜单（请联系管理员分配权限）

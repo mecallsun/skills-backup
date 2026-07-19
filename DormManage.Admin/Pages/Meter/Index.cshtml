@@ -12,30 +12,22 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-clipboard-data-fill"></i> 抄表记录
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <button class="btn btn-success" onclick="showAddModal()">
-                <i class="bi bi-plus-lg"></i> 新增记录
-            </button>
-            <button class="btn btn-primary" onclick="showManualEntryModal()">
-                <i class="bi bi-pencil-square"></i> 手动补录
-            </button>
-            <button class="btn btn-info text-white" onclick="showBatchImportModal()">
-                <i class="bi bi-upload"></i> 批量导入
-            </button>
-            <a href="/api/meter/export?@((Model.Keyword != null ? "keyword=" + Model.Keyword : ""))@((Model.ReadMonth != null ? "&readMonth=" + Model.ReadMonth : ""))@((Model.Status.HasValue ? "&status=" + Model.Status.Value : ""))" class="btn btn-outline-success">
-                <i class="bi bi-file-earmark-excel"></i> 导出Excel
-            </a>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-clipboard-data-fill",
+        title = "抄表记录",
+        count = Model.Total,
+        countLabel = "条",
+        primaryAction = new PageAction { Label = "新增记录", OnClick = "showAddModal()", Icon = "bi-plus-lg", Style = "success" },
+        actions = new List<PageAction> {
+            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "primary" },
+            new() { Label = "批量导入", OnClick = "showBatchImportModal()", Icon = "bi-upload", Style = "info" },
+            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "success" }
+        }
+    })
 
     <!-- 筛选条件区域（一行排列，响应式） -->
-    <form method="get" class="card mb-3 filter-card">
+    <form method="get" class="card mb-3 filter-card" data-filter-form="meter">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
                 <div class="col-auto filter-item">
@@ -85,11 +77,6 @@
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
                 </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('meter')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
-                </div>
             </div>
         </div>
     </form>
@@ -128,22 +115,22 @@
                                     <td><strong>@item.DormCode</strong></td>
                                     <td>@item.ReadMonth</td>
                                     <td class="text-end">
-                                        <span class="@(item.ColdMeter == 0 ? "meter-zero" : "")">@item.ColdMeter.ToString("N2")</span>
+                                        <span class="@(item.ColdMeter == 0 ? "badge bg-info text-dark" : "")">@item.ColdMeter.ToString("N2")</span>
                                     </td>
                                     <td class="text-end">
-                                        <span class="@(item.HotMeter == 0 ? "meter-zero" : "")">@item.HotMeter.ToString("N2")</span>
+                                        <span class="@(item.HotMeter == 0 ? "badge bg-info text-dark" : "")">@item.HotMeter.ToString("N2")</span>
                                     </td>
                                     <td class="text-end">
-                                        <span class="@(item.ElectricMeter == 0 ? "meter-zero" : "")">@item.ElectricMeter.ToString("N2")</span>
+                                        <span class="@(item.ElectricMeter == 0 ? "badge bg-info text-dark" : "")">@item.ElectricMeter.ToString("N2")</span>
                                     </td>
                                     <td class="text-end">
-                                        <span class="@(item.ColdUsage == 0 ? "usage-unfinished" : "")">@item.ColdUsage.ToString("N2")</span>
+                                        <span class="@(item.ColdUsage == 0 ? "badge bg-info text-dark" : "")">@item.ColdUsage.ToString("N2")</span>
                                     </td>
                                     <td class="text-end">
-                                        <span class="@(item.HotUsage == 0 ? "usage-unfinished" : "")">@item.HotUsage.ToString("N2")</span>
+                                        <span class="@(item.HotUsage == 0 ? "badge bg-info text-dark" : "")">@item.HotUsage.ToString("N2")</span>
                                     </td>
                                     <td class="text-end">
-                                        <span class="@(item.ElectricUsage == 0 ? "usage-unfinished" : "")">@item.ElectricUsage.ToString("N2")</span>
+                                        <span class="@(item.ElectricUsage == 0 ? "badge bg-info text-dark" : "")">@item.ElectricUsage.ToString("N2")</span>
                                     </td>
                                     <td><small class="text-muted">@item.Operator</small></td>
                                     <td><small class="text-muted">@(item.DeviceSn == "-" ? "-" : item.DeviceSn)</small></td>
@@ -711,9 +698,9 @@ async function saveRecord() {
     .filter-card button.filter-btn,
     .filter-card a.filter-btn,
     .filter-card .filter-btn {
-        min-width: 100px !important;
-        max-width: 100px !important;
-        width: 100px !important;
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
         height: 38px !important;
         min-height: 38px !important;
         max-height: 38px !important;
@@ -811,23 +798,5 @@ async function saveRecord() {
         background-color: rgba(255, 193, 7, 0.1) !important;
     }
 
-    /* v2.11.15.c 样式优化：抄表数为 0 或 未抄表项的文本背景高亮
-       背景风格及高度与状态列 Badge 完全一致，背景色改为亮蓝色 #cfe2ff
-       移除旧版框线风格（border），改为纯文本背景风格
-       高度规范：padding 0.35em 0.65em + line-height 1 + font-size 0.75em（与 Bootstrap .badge 完全一致） */
-    .meter-zero {
-        display: inline-block;
-        min-width: 60px;
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        color: #084c61;
-        background: #cfe2ff;
-        border-radius: 0.375rem;
-        font-weight: 500;
-        line-height: 1;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        font-variant-numeric: tabular-nums;
-    }
+    /* v2.13.17: 已统一使用 Bootstrap badge bg-info text-dark 替代自定义 .meter-zero 类 */
 </style>

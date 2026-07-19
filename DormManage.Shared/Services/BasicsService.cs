@@ -71,6 +71,13 @@ public interface IBasicsService
     Task<ApiResponse<EmploymentStatus>> CreateEmploymentStatusAsync(EmploymentStatus model);
     Task<ApiResponse<EmploymentStatus>> UpdateEmploymentStatusAsync(int id, EmploymentStatus model);
     Task<ApiResponse> DeleteEmploymentStatusAsync(int id);
+
+    // 员工班组
+    Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<Team?> GetTeamByIdAsync(int id);
+    Task<ApiResponse<Team>> CreateTeamAsync(Team model);
+    Task<ApiResponse<Team>> UpdateTeamAsync(int id, Team model);
+    Task<ApiResponse> DeleteTeamAsync(int id);
 }
 
 /// <summary>
@@ -83,6 +90,38 @@ public class BasicsService : IBasicsService
     public BasicsService(DormDbContext db)
     {
         _db = db;
+    }
+
+    /// <summary>
+    /// 检查字典是否被业务表引用（v2.13.12 FK 防护）
+    /// </summary>
+    private async Task<string?> CheckReferencedAsync(int id)
+    {
+        // Department → SysEmployee.DepartmentId
+        if (await _db.Employees.AnyAsync(e => e.DepartmentId == id))
+            return "有员工关联此部门";
+        // Building → Dorm.BuildingId
+        if (await _db.Dorms.AnyAsync(d => d.BuildingId == id))
+            return "有宿舍关联此楼栋";
+        // Floor → Dorm.FloorId
+        if (await _db.Dorms.AnyAsync(d => d.FloorId == id))
+            return "有宿舍关联此楼层";
+        // Address → Dorm.AddressId
+        if (await _db.Dorms.AnyAsync(d => d.AddressId == id))
+            return "有宿舍关联此地址";
+        // EmployeeType → SysEmployee.EmployeeTypeId
+        if (await _db.Employees.AnyAsync(e => e.EmployeeTypeId == id))
+            return "有员工关联此类型";
+        // AttendanceType → SysEmployee.AttendanceTypeId
+        if (await _db.Employees.AnyAsync(e => e.AttendanceTypeId == id))
+            return "有员工关联此班次";
+        // ResidenceStatus → SysEmployee.ResidenceStatusId
+        if (await _db.Employees.AnyAsync(e => e.ResidenceStatusId == id))
+            return "有员工关联此住宿状态";
+        // EmploymentStatus → SysEmployee.EmploymentStatusId
+        if (await _db.Employees.AnyAsync(e => e.EmploymentStatusId == id))
+            return "有员工关联此在职状态";
+        return null;
     }
 
     #region 部门
@@ -147,6 +186,9 @@ public class BasicsService : IBasicsService
         var entity = await _db.Departments.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
 
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该部门被业务引用，无法删除。{refMsg}");
+
         _db.Departments.Remove(entity);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");
@@ -203,6 +245,9 @@ public class BasicsService : IBasicsService
         var entity = await _db.Buildings.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
 
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该楼栋被业务引用，无法删除。{refMsg}");
+
         _db.Buildings.Remove(entity);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");
@@ -258,6 +303,9 @@ public class BasicsService : IBasicsService
         var entity = await _db.Floors.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
 
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该楼层被业务引用，无法删除。{refMsg}");
+
         _db.Floors.Remove(entity);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");
@@ -312,6 +360,9 @@ public class BasicsService : IBasicsService
     {
         var entity = await _db.Addresses.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
+
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该地址被业务引用，无法删除。{refMsg}");
 
         _db.Addresses.Remove(entity);
         await _db.SaveChangesAsync();
@@ -369,6 +420,9 @@ public class BasicsService : IBasicsService
         var entity = await _db.EmployeeTypes.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
 
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该类型被业务引用，无法删除。{refMsg}");
+
         _db.EmployeeTypes.Remove(entity);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");
@@ -425,6 +479,9 @@ public class BasicsService : IBasicsService
     {
         var entity = await _db.AttendanceTypes.FindAsync(id);
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
+
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该班次被业务引用，无法删除。{refMsg}");
 
         _db.AttendanceTypes.Remove(entity);
         await _db.SaveChangesAsync();
@@ -596,6 +653,57 @@ public class BasicsService : IBasicsService
         if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
 
         _db.EmploymentStatuses.Remove(entity);
+        await _db.SaveChangesAsync();
+        return ApiResponse.Ok("删除成功");
+    }
+
+    #endregion
+
+    #region 员工班组 (Team)
+
+    public async Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 20)
+    {
+        var query = _db.Teams.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(keyword))
+            query = query.Where(t => t.Code.Contains(keyword) || t.Name.Contains(keyword));
+
+        var total = await query.CountAsync();
+        var items = await query.OrderBy(t => t.SortOrder).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return new PagedResult<Team> { Items = items, TotalCount = total, PageIndex = page, PageSize = pageSize };
+    }
+
+    public async Task<Team?> GetTeamByIdAsync(int id) => await _db.Teams.FindAsync(id);
+
+    public async Task<ApiResponse<Team>> CreateTeamAsync(Team model)
+    {
+        model.CreatedAt = DateTime.Now;
+        _db.Teams.Add(model);
+        await _db.SaveChangesAsync();
+        return ApiResponse<Team>.Ok(model, "创建成功");
+    }
+
+    public async Task<ApiResponse<Team>> UpdateTeamAsync(int id, Team model)
+    {
+        var entity = await _db.Teams.FindAsync(id);
+        if (entity == null) return ApiResponse<Team>.Fail("NOT_FOUND", "记录不存在");
+
+        entity.Name = model.Name;
+        entity.Code = model.Code;
+        entity.SortOrder = model.SortOrder;
+        entity.IsActive = model.IsActive;
+        await _db.SaveChangesAsync();
+        return ApiResponse<Team>.Ok(entity, "更新成功");
+    }
+
+    public async Task<ApiResponse> DeleteTeamAsync(int id)
+    {
+        var entity = await _db.Teams.FindAsync(id);
+        if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
+
+        var refMsg = await CheckReferencedAsync(id);
+        if (refMsg != null) return ApiResponse.Fail("REFERENCED", $"该班组被业务引用，无法删除。{refMsg}");
+
+        _db.Teams.Remove(entity);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");
     }

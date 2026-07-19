@@ -12,21 +12,15 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头（v2.13.10 与原型 dorms/list.html 对齐：宿舍档案） -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-building"></i> 宿舍档案
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 间）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(0)">
-                <i class="bi bi-plus-lg"></i> 新增宿舍
-            </button>
-            <a href="/Dorms/Create" class="btn btn-outline-success" title="在新窗口打开新增页（兼容直链）">
-                <i class="bi bi-box-arrow-up-right"></i>
-            </a>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-building",
+        title = "宿舍档案",
+        count = Model.Total,
+        countLabel = "间",
+        primaryAction = new PageAction { Label = "新增宿舍", OnClick = "openDormModal(0)", Icon = "bi-plus-lg", Style = "success" },
+        actions = new List<PageAction> { new() { Label = "新窗口新增", Icon = "bi-box-arrow-up-right", Url = "/Dorms/Create", Style = "secondary" } }
+    })
 
     <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="dorms">
@@ -68,11 +62,6 @@
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
                 </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('dorms')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
-                </div>
             </div>
         </div>
     </form>
@@ -112,7 +101,7 @@
                                     <td class="text-center">@item.RoomCount</td>
                                     <td class="text-center">@item.Capacity 人</td>
                                     <td class="text-center">
-                                        <span class="badge @(item.CurrentCount > 0 ? "bg-primary" : "bg-light text-dark")">@item.CurrentCount</span>
+                                        <span class="badge @(item.CurrentCount > 0 ? "bg-primary" : "bg-secondary")">@item.CurrentCount</span>
                                         / @item.Capacity
                                     </td>
                                     <td class="text-center">
@@ -260,9 +249,9 @@
     .filter-card button.filter-btn,
     .filter-card a.filter-btn,
     .filter-card .filter-btn {
-        min-width: 100px !important;
-        max-width: 100px !important;
-        width: 100px !important;
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
         height: 38px !important;
         min-height: 38px !important;
         max-height: 38px !important;

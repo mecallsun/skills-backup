@@ -65,6 +65,9 @@ public class IndexModel : PageModel
     /// </summary>
     public int TotalCount { get; set; }
 
+    /// <summary>总数（供 PageHeader 组件使用）</summary>
+    public int Total => Result?.TotalCount ?? 0;
+
     public async Task OnGetAsync()
     {
         // 默认月份为当前月

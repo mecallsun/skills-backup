@@ -62,16 +62,13 @@
                         <button class="nav-link @(Model.ActiveTab == "users" ? "active" : "") text-start"
                                 data-bs-toggle="pill" data-bs-target="#tab-users"
                                 onclick="setActiveTab('users')">
-                            <i class="bi bi-people"></i> 用户与角色
-                        </button>
-                        <a class="nav-link @(Model.ActiveTab == "users" ? "" : "") text-start"
-                           href="/Settings/User">
                             <i class="bi bi-person-badge"></i> 用户管理
-                        </a>
-                        <a class="nav-link @(Model.ActiveTab == "users" ? "" : "") text-start"
-                           href="/Settings/Role">
-                            <i class="bi bi-shield-lock"></i> 角色管理
-                        </a>
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "roles" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-roles"
+                                onclick="setActiveTab('roles')">
+                            <i class="bi bi-shield-lock"></i> 角色与权限
+                        </button>
                         <button class="nav-link @(Model.ActiveTab == "backup" ? "active" : "") text-start"
                                 data-bs-toggle="pill" data-bs-target="#tab-backup"
                                 onclick="setActiveTab('backup')">
@@ -235,47 +232,60 @@
                     </div>
                 </div>
 
-                <!-- 数据库连接 -->
+                <!-- 数据库连接（v2.13.19 双 UI 双向同步） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "db" ? "show active" : "")" id="tab-db">
                     <div class="card">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <strong><i class="bi bi-database"></i> 数据库连接</strong>
+                            <span class="badge bg-info text-dark">v2.13.19 双 UI 双向同步</span>
                         </div>
                         <div class="card-body">
-                            <form method="post" asp-page-handler="SaveDatabase">
-                                <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label small">数据库服务器</label>
-                                        <input type="text" name="DbServer" value="@Model.DbServer" class="form-control">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">端口号</label>
-                                        <input type="number" name="DbPort" value="@Model.DbPort" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small">数据库名称</label>
-                                        <input type="text" name="DbName" value="@Model.DbName" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small">账号</label>
-                                        <input type="text" name="DbUser" value="@Model.DbUser" class="form-control">
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small">密码</label>
-                                        <input type="password" name="DbPassword" value="@Model.DbPassword" class="form-control">
-                                    </div>
-                                    <div class="col-md-6 d-flex align-items-end">
-                                        <button type="button" class="btn btn-outline-info w-100" onclick="runDbTest()">
-                                            <i class="bi bi-plug"></i> 读写测试（深度验证）
-                                        </button>
-                                    </div>
+                            <div id="dbConfigResult" class="mb-2"></div>
+
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small">数据库提供程序</label>
+                                    <select id="dbProvider" class="form-select">
+                                        <option value="SqlServer">SQL Server</option>
+                                        <option value="Sqlite">SQLite</option>
+                                    </select>
                                 </div>
-                                <div id="dbTestResult" class="mt-3"></div>
-                                <hr>
-                                <button type="submit" class="btn btn-primary">
+                                <div class="col-md-3">
+                                    <label class="form-label small">数据库服务器</label>
+                                    <input type="text" id="dbServer" class="form-control" placeholder="localhost 或 IP">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">端口号</label>
+                                    <input type="number" id="dbPort" class="form-control" value="1433" min="1" max="65535">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">数据库名称</label>
+                                    <input type="text" id="dbName" class="form-control" placeholder="DormManage">
+                                </div>
+                                <div class="col-md-6 sqlserver-only">
+                                    <label class="form-label small">账号 <i class="bi bi-person-circle"></i></label>
+                                    <input type="text" id="dbUser" class="form-control" placeholder="sa">
+                                </div>
+                                <div class="col-md-6 sqlserver-only">
+                                    <label class="form-label small">密码（留空保持不变）<i class="bi bi-lock"></i></label>
+                                    <input type="password" id="dbPassword" class="form-control" placeholder="******">
+                                </div>
+                                <div class="col-md-12 sqlite-only" style="display:none;">
+                                    <label class="form-label small">SQLite 数据库文件路径 <i class="bi bi-file-earmark-binary"></i></label>
+                                    <input type="text" id="dbSqlitePath" class="form-control" placeholder="D:\Data\dorm.db">
+                                </div>
+                            </div>
+
+                            <div class="mt-3 d-flex gap-2 align-items-center">
+                                <button type="button" class="btn btn-outline-info" id="btnDbTest">
+                                    <i class="bi bi-plug"></i> 测试连接
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btnDbSave">
                                     <i class="bi bi-save"></i> 保存
                                 </button>
-                            </form>
+                                <span class="text-muted ms-2 small" id="dbConfigHint">保存后会自动写入 db_setting.json 并写入 SQL Server SysParameter 表</span>
+                            </div>
+                            <div id="dbTestResult" class="mt-3"></div>
                         </div>
                     </div>
                 </div>
@@ -343,89 +353,103 @@
                 </div>
 
                 <!-- 用户与角色 -->
+                <!-- 用户管理 -->
                 <div class="tab-pane fade @(Model.ActiveTab == "users" ? "show active" : "")" id="tab-users">
-                    <div class="card mb-3">
+                    <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong><i class="bi bi-people"></i> 用户管理</strong>
+                            <strong><i class="bi bi-person-badge"></i> 用户管理</strong>
                             <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增用户')">
                                 <i class="bi bi-plus-lg"></i> 新增用户
                             </button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>用户名</th>
-                                        <th>姓名</th>
-                                        <th>角色</th>
-                                        <th>最近登录</th>
-                                        <th>状态</th>
-                                        <th>备注</th>
-                                        <th width="200">操作</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var user in Model.Users)
-                                    {
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light">
                                         <tr>
-                                            <td>@user.UserName</td>
-                                            <td>@user.DisplayName</td>
-                                            <td><span class="badge bg-info">@user.Role</span></td>
-                                            <td>@user.LastLogin</td>
-                                            <td>
-                                                @if (user.IsEnabled)
-                                                {
-                                                    <span class="badge bg-success">启用</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-secondary">禁用</span>
-                                                }
-                                            </td>
-                                            <td class="text-muted small">@user.Remark</td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
-                                                <button class="btn btn-sm btn-outline-danger">删除</button>
-                                            </td>
+                                            <th>用户名</th>
+                                            <th>姓名</th>
+                                            <th>角色</th>
+                                            <th>最近登录</th>
+                                            <th>状态</th>
+                                            <th>备注</th>
+                                            <th width="200">操作</th>
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var user in Model.Users)
+                                        {
+                                            <tr>
+                                                <td>@user.UserName</td>
+                                                <td>@user.DisplayName</td>
+                                                <td><span class="badge bg-info">@user.Role</span></td>
+                                                <td>@user.LastLogin</td>
+                                                <td>
+                                                    @if (user.IsEnabled)
+                                                    {
+                                                        <span class="badge bg-success">启用</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-secondary">禁用</span>
+                                                    }
+                                                </td>
+                                                <td class="text-muted small">@user.Remark</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+                </div>
 
+                <!-- 角色与权限 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "roles" ? "show active" : "")" id="tab-roles">
                     <div class="card">
-                        <div class="card-header bg-light">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <strong><i class="bi bi-shield-lock"></i> 角色权限矩阵</strong>
+                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增角色')">
+                                <i class="bi bi-plus-lg"></i> 新增角色
+                            </button>
                         </div>
-                        <div class="table-responsive">
-                            <table class="table table-bordered mb-0 align-middle text-center">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>模块</th>
-                                        <th>管理员</th>
-                                        <th>财务</th>
-                                        <th>PDA 操作员</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var perm in Model.PermissionMatrix)
-                                    {
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered mb-0 align-middle text-center">
+                                    <thead class="table-light">
                                         <tr>
-                                            <td class="text-start">@perm.Module</td>
-                                            <td>
-                                                @if (perm.AdminAccess) { <text>✅</text> } else { <text>❌</text> }
-                                            </td>
-                                            <td>
-                                                @if (perm.FinanceAccess) { <text>✅</text> } else { <text>❌</text> }
-                                            </td>
-                                            <td>
-                                                @if (perm.PdaAccess) { <text>✅</text> } else { <text>❌</text> }
-                                            </td>
+                                            <th>角色</th>
+                                            @foreach (var perm in Model.PermissionMatrix.Take(1))
+                                            {
+                                                <th>管理员</th>
+                                                <th>财务</th>
+                                                <th>PDA 操作员</th>
+                                            }
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var perm in Model.PermissionMatrix)
+                                        {
+                                            <tr>
+                                                <td class="text-start">@perm.Module</td>
+                                                <td>
+                                                    @if (perm.AdminAccess) { <text>✅</text> } else { <text>❌</text> }
+                                                </td>
+                                                <td>
+                                                    @if (perm.FinanceAccess) { <text>✅</text> } else { <text>❌</text> }
+                                                </td>
+                                                <td>
+                                                    @if (perm.PdaAccess) { <text>✅</text> } else { <text>❌</text> }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -603,43 +627,119 @@
 
 @section Scripts {
     <script>
+        // v2.13.19: 数据库连接双 UI 双向同步 JS
+        const DB_API = '/api/v1/system/dbconfig';
+
         function setActiveTab(tab) {
-            // 更新 URL 参数
             const url = new URL(window.location);
             url.searchParams.set('tab', tab);
             window.history.replaceState({}, '', url);
         }
 
-        function toggleService(which) {
-            alert(`原型演示：${which === 'pda' ? 'PDA' : 'Web'} 服务状态切换\n（实际由托盘守护进程控制）`);
+        // 加载当前数据库配置
+        function loadDbConfig() {
+            fetch(DB_API).then(r => r.json()).then(res => {
+                if (!res.success) return;
+                const c = res.data;
+                document.getElementById('dbProvider').value = c.provider || 'SqlServer';
+                document.getElementById('dbServer').value = c.dbServer || '';
+                document.getElementById('dbPort').value = c.dbPort || 1433;
+                document.getElementById('dbName').value = c.dbName || '';
+                document.getElementById('dbUser').value = c.dbUser || '';
+                document.getElementById('dbSqlitePath').value = c.sqlitePath || '';
+                document.getElementById('dbPassword').value = '';
+                toggleProviderUI();
+            });
         }
 
-        function runDbTest() {
+        // 切换 SqlServer / Sqlite 字段可见性
+        function toggleProviderUI() {
+            const p = document.getElementById('dbProvider').value;
+            const sqlserverOnly = document.querySelectorAll('.sqlserver-only');
+            const sqliteOnly = document.querySelectorAll('.sqlite-only');
+            sqlserverOnly.forEach(el => el.style.display = p === 'SqlServer' ? '' : 'none');
+            sqliteOnly.forEach(el => el.style.display = p === 'Sqlite' ? '' : 'none');
+        }
+
+        // 测试连接（真实 HTTP 调用）
+        async function runDbTest() {
             const box = document.getElementById('dbTestResult');
-            box.innerHTML = '<div class="text-muted small">正在测试...</div>';
+            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在测试连接...</div>';
 
-            const steps = [
-                'TCP 连接测试',
-                'SQL 登录验证',
-                '数据库可见性检查',
-                'CREATE 权限测试',
-                'INSERT 权限测试',
-                'SELECT 权限测试',
-                'UPDATE 权限测试',
-                'DELETE + DROP 清理'
-            ];
+            const payload = {
+                provider: document.getElementById('dbProvider').value,
+                dbServer: document.getElementById('dbServer').value,
+                dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
+                dbName: document.getElementById('dbName').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged',
+                sqlitePath: document.getElementById('dbSqlitePath').value
+            };
 
-            let i = 0;
-            const lines = [];
-            const timer = setInterval(() => {
-                lines.push(`<div class="step-line db-test-step visible"><i class="bi bi-check-circle-fill text-success"></i> <span>${i + 1}. ${steps[i]}</span> <span class="badge bg-success">通过</span></div>`);
-                box.innerHTML = `<div class="alert alert-light border mb-0">${lines.join('')}</div>`;
-                i++;
-                if (i >= steps.length) {
-                    clearInterval(timer);
-                    box.innerHTML = `<div class="alert alert-success mb-0"><strong><i class="bi bi-check2-all"></i> 8 步深度验证全部通过</strong>，数据库连接与读写权限正常。</div>`;
+            try {
+                const res = await fetch(DB_API + '/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    box.innerHTML = `<div class="alert alert-success mb-0"><strong><i class="bi bi-check2-all"></i> ${json.message}</strong></div>`;
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;
                 }
-            }, 300);
+            } catch (e) {
+                box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> 测试失败: ${e.message}</div>`;
+            }
+        }
+
+        // 保存配置（真实 HTTP 调用 → 触发双 UI 广播）
+        async function saveDbConfig() {
+            const box = document.getElementById('dbConfigResult');
+            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在保存...</div>';
+
+            const payload = {
+                provider: document.getElementById('dbProvider').value,
+                dbServer: document.getElementById('dbServer').value,
+                dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
+                dbName: document.getElementById('dbName').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged',
+                sqlitePath: document.getElementById('dbSqlitePath').value
+            };
+
+            try {
+                const res = await fetch(DB_API + '/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    box.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> ${json.message}</div>`;
+                    // 触发 TrayApp IPC 同步广播（如果托盘可达）
+                    if (window.fetchTrayIpc) window.fetchTrayIpc('dbconfig.updated', payload);
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;
+                }
+            } catch (e) {
+                box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> 保存失败: ${e.message}</div>`;
+            }
+        }
+
+        // DOM Ready 初始化（仅当 tab=db 选中时）
+        document.addEventListener('DOMContentLoaded', function () {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'db') {
+                loadDbConfig();
+                document.getElementById('dbProvider').addEventListener('change', toggleProviderUI);
+                document.getElementById('btnDbTest').addEventListener('click', runDbTest);
+                document.getElementById('btnDbSave').addEventListener('click', saveDbConfig);
+            }
+        });
+
+        function toggleService(which) {
+            alert(`原型演示：${which === 'pda' ? 'PDA' : 'Web'} 服务状态切换`);
         }
 
         function testConnection(id) {

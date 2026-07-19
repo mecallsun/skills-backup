@@ -7,7 +7,7 @@ using System.Text.Json;
 namespace DormManage.Shared.Services;
 
 /// <summary>
-/// 服务 IPC 通信（P1-11）
+/// 服务 IPC 通信（P1-11，v2.13.19 增加数据库配置双向同步）
 ///
 /// 协议：TCP + JSON 行（每条命令一行 JSON）
 /// 默认端口：5099（127.0.0.1）
@@ -18,6 +18,9 @@ namespace DormManage.Shared.Services;
 /// { "command": "start", "service": "api" }
 /// { "command": "stop", "service": "api" }
 /// { "command": "restart", "service": "all" }
+/// { "command": "getdbconfig" }                                                -- v2.13.19 新增
+/// { "command": "setdbconfig", "payload": { DatabaseConfigDto 字段 } }          -- v2.13.19 新增
+/// { "command": "dbconfig.updated", "payload": { DatabaseConfigDto 字段 } }     -- TrayApp 主动推送
 ///
 /// 响应格式：
 /// { "success": true, "message": "已启动", "data": { ... } }

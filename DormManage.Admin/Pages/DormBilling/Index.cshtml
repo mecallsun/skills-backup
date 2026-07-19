@@ -17,14 +17,14 @@
         .filter-item { flex-shrink: 0; }
         .filter-item-stats { min-width: 90px; max-width: 140px; flex: 1 1 auto; }
         .filter-btn {
-            min-width: 100px !important;
-            max-width: 100px !important;
-            width: 100px !important;
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
             height: 38px !important;
             min-height: 38px !important;
             max-height: 38px !important;
             line-height: 38px !important;
-            padding: 0 16px !important;
+            padding: 0 12px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -43,24 +43,18 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-building-add"></i> 宿舍账单
-            <small class="text-muted fs-6">（共 <span id="totalCount">@Model.TotalCount</span> 条）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <button class="btn btn-success" onclick="generate(false)">
-                <i class="bi bi-bar-chart"></i> 生成
-            </button>
-            <button class="btn btn-info text-white" onclick="generate(true)">
-                <i class="bi bi-arrow-repeat"></i> 重生成
-            </button>
-            <a href="#" class="btn btn-outline-success" onclick="exportBilling(event)">
-                <i class="bi bi-file-earmark-excel"></i> 导出Excel
-            </a>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-building-add",
+        title = "宿舍账单",
+        count = Model.TotalCount,
+        countLabel = "条",
+        primaryAction = new PageAction { Label = "生成", OnClick = "generate(false)", Icon = "bi-bar-chart", Style = "success" },
+        actions = new List<PageAction> {
+            new() { Label = "重生成", OnClick = "generate(true)", Icon = "bi-arrow-repeat", Style = "info" },
+            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success" }
+        }
+    })
 
     <!-- 筛选条件区域 -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="dormBilling">
@@ -113,11 +107,6 @@
                     <a href="/DormBilling" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
-                </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('dormBilling')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
                 </div>
             </div>
         </div>
@@ -173,7 +162,7 @@
                                         }
                                         else
                                         {
-                                            <span class="badge bg-warning">未发布</span>
+                                            <span class="badge bg-warning text-dark">未发布</span>
                                         }
                                     </td>
                                     <td class="text-center">
@@ -194,42 +183,35 @@
                 </table>
             </div>
 
-            <!-- 分页 -->
+            <!-- 分页（v2.13.16 统一页尾样式） -->
             @if (Model.TotalPages > 1)
             {
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="page-info">
-                            共 <strong>@Model.TotalCount</strong> 条记录，
-                            第 <strong>@Model.CurrentPage</strong> / @Model.TotalPages 页
-                            @if (Model.Result?.Items.Any() == true)
-                            {
-                                <span>（显示 @Model.StartIndex - @Math.Min(Model.StartIndex + Model.Result.Items.Count - 1, Model.TotalCount)）</span>
-                            }
-                        </div>
-                        <nav>
-                            <ul class="pagination mb-0">
-                                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" href="?@Model.GetQueryString(1)">首页</a>
-                                </li>
-                                <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                                    <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage - 1)">上一页</a>
-                                </li>
-                                @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
-                                {
-                                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                        <a class="page-link" href="?@Model.GetQueryString(i)">@i</a>
-                                    </li>
-                                }
-                                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                                    <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage + 1)">下一页</a>
-                                </li>
-                                <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                                    <a class="page-link" href="?@Model.GetQueryString(Model.TotalPages)">末页</a>
-                                </li>
-                            </ul>
-                        </nav>
+                <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
+                    <div class="text-muted">
+                        共 <strong>@Model.TotalCount</strong> 条记录，第 <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPages</strong> 页
                     </div>
+                    <nav>
+                        <ul class="pagination pagination-sm mb-0">
+                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="?@Model.GetQueryString(1)">&laquo;</a>
+                            </li>
+                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage - 1)">&lsaquo;</a>
+                            </li>
+                            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" href="?@Model.GetQueryString(i)">@i</a>
+                                </li>
+                            }
+                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage + 1)">&rsaquo;</a>
+                            </li>
+                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" href="?@Model.GetQueryString(Model.TotalPages)">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             }
         </div>

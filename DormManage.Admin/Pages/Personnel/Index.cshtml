@@ -13,21 +13,18 @@
 
 <div class="container-fluid">
 @Html.AntiForgeryToken()
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-people-fill"></i> 人员清单
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 人）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <a href="/Personnel/Create" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> 新增
-            </a>
-            <a href="/Personnel/Import" class="btn btn-info text-white">
-                <i class="bi bi-upload"></i> 导入
-            </a>
-            <button class="btn btn-outline-success" onclick="location.href='/api/v1/personnel/export'">
-                <i class="bi bi-file-earmark-excel"></i> 导出
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-people-fill",
+        title = "人员清单",
+        count = Model.Total,
+        countLabel = "人",
+        primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success" },
+        actions = new List<PageAction> {
+            new() { Label = "导入", Url = "/Personnel/Import", Icon = "bi-upload", Style = "info" },
+            new() { Label = "导出", OnClick = "location.href='/api/v1/personnel/export'", Icon = "bi-file-earmark-excel", Style = "success" }
+        }
+    })
             </button>
         </div>
     </div>
@@ -122,11 +119,6 @@
                     <a href="/Personnel" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
-                </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('personnel')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
                 </div>
             </div>
         </div>
@@ -290,14 +282,14 @@
     .filter-card button.filter-btn,
     .filter-card a.filter-btn,
     .filter-card .filter-btn {
-        min-width: 100px !important;
-        max-width: 100px !important;
-        width: 100px !important;
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
         height: 38px !important;
         min-height: 38px !important;
         max-height: 38px !important;
         line-height: 38px !important;
-        padding: 0 16px !important;
+        padding: 0 12px !important;
         display: inline-flex !important;
         align-items: center !important;
         justify-content: center !important;

@@ -57,6 +57,9 @@ public class IndexModel : PageModel
     /// </summary>
     public PagedResult<PersonnelDto>? Result { get; set; }
 
+    /// <summary>总数（供 PageHeader 组件使用）</summary>
+    public int Total => Result?.TotalCount ?? 0;
+
     /// <summary>
     /// 员工类型列表（用于筛选下拉）
     /// </summary>

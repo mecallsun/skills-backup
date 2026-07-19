@@ -12,27 +12,19 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-wallet2"></i> 员工账单
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <button class="btn btn-success" onclick="generateBilling()">
-                <i class="bi bi-plus-circle"></i> 生成分摊
-            </button>
-            <button class="btn btn-warning text-white" onclick="regenerateBilling()">
-                <i class="bi bi-arrow-clockwise"></i> 重新生成
-            </button>
-            <button class="btn btn-primary" onclick="publishAll()">
-                <i class="bi bi-check2-all"></i> 全部发布
-            </button>
-            <a href="#" class="btn btn-outline-success" onclick="exportBilling(event)">
-                <i class="bi bi-file-earmark-excel"></i> 导出Excel
-            </a>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-wallet2",
+        title = "员工账单",
+        count = Model.Total,
+        countLabel = "条",
+        primaryAction = new PageAction { Label = "生成分摊", OnClick = "generateBilling()", Icon = "bi-plus-circle", Style = "success" },
+        actions = new List<PageAction> {
+            new() { Label = "重新生成", OnClick = "regenerateBilling()", Icon = "bi-arrow-clockwise", Style = "warning" },
+            new() { Label = "全部发布", OnClick = "publishAll()", Icon = "bi-check2-all", Style = "primary" },
+            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success" }
+        }
+    })
 
     <!-- 筛选条件区域（一行排列，响应式） -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="employeeBilling">
@@ -63,11 +55,6 @@
                     <a href="/EmployeeBilling" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
-                </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('employeeBilling')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
                 </div>
             </div>
         </div>
@@ -185,9 +172,9 @@
     .filter-card button.filter-btn,
     .filter-card a.filter-btn,
     .filter-card .filter-btn {
-        min-width: 100px !important;
-        max-width: 100px !important;
-        width: 100px !important;
+        min-width: 90px !important;
+        max-width: 90px !important;
+        width: 90px !important;
         height: 38px !important;
         min-height: 38px !important;
         max-height: 38px !important;

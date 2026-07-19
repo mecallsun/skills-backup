@@ -170,6 +170,20 @@ public class DormsController : ControllerBase
         if (await _db.Dorms.AnyAsync(d => d.DormCode == request.DormCode && d.Id != id))
             return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该宿舍号已存在");
 
+        // v2.13.12: 容量变更约束 — 减少容量时不能超过当前入住人数
+        var currentStaying = await _db.DormBookings
+            .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == 2);
+        if (request.Capacity < currentStaying)
+            return ApiResponse<DormDto>.Fail("CAPACITY_EXCEEDED", $"当前入住 {currentStaying} 人，容量不能少于入住人数");
+
+        // v2.13.12: 减少容量时自动清空多余床位号
+        if (request.Capacity < dorm.Capacity)
+        {
+            var bedNos = (dorm.BedNumbers ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (bedNos.Length > request.Capacity)
+                dorm.BedNumbers = string.Join(",", bedNos.Take(request.Capacity));
+        }
+
         var building = await _basicsService.GetBuildingByIdAsync(request.BuildingId);
         var address = await _basicsService.GetAddressByIdAsync(request.AddressId);
 
@@ -213,10 +227,11 @@ public class DormsController : ControllerBase
         if (dorm == null)
             return ApiResponse.Fail("NOT_FOUND", "宿舍不存在");
 
-        // 检查是否有入住记录
-        var hasBookings = await _db.DormBookings.AnyAsync(b => b.DormCode == dorm.DormCode && b.Status == 2);
-        if (hasBookings)
-            return ApiResponse.Fail("HAS_BOOKINGS", "该宿舍有在宿人员，无法删除");
+        // v2.13.12: 检查在宿 + 预约记录（两者均阻止删除）
+        var hasActiveBookings = await _db.DormBookings
+            .AnyAsync(b => b.DormCode == dorm.DormCode && (b.Status == 2 || b.Status == 1));
+        if (hasActiveBookings)
+            return ApiResponse.Fail("HAS_BOOKINGS", "该宿舍有在宿或预约人员，无法删除");
 
         _db.Dorms.Remove(dorm);
         await _db.SaveChangesAsync();

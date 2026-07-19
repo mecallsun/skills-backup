@@ -17,11 +17,17 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 
+    [BindProperty(SupportsGet = true)]
+    public string? Keyword { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? IsActive { get; set; }
+
     public int Total => Result?.Total ?? 0;
 
     public async Task OnGetAsync()
     {
         ActiveStandard = await _service.GetActiveStandardAsync();
-        Result = await _service.GetStandardsAsync(PageIndex, 20);
+        Result = await _service.GetStandardsAsync(Keyword, IsActive, PageIndex, 20);
     }
 }

@@ -55,6 +55,7 @@ builder.Services.AddScoped<IDormService, DormService>();          // v2.12.42 BU
 builder.Services.AddScoped<IDashboardService, DashboardService>();  // v2.13.3: 首页数据看板聚合服务
 builder.Services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();  // v2.13.3: 数据库深度验证
 builder.Services.AddScoped<IBillingService, BillingService>();              // v2.13.9: 费用管理服务
+builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService>();  // v2.13.12: 用户筛选条件云端缓存
 builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 
 // 注册 v2.11.24 数据清洗后台服务（启动时一次性 FK 归一）

@@ -12,24 +12,18 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-clipboard-check"></i> 办理登记
-            <small class="text-muted fs-6">（共 <span id="totalCount">@totalCount</span> 条）</small>
-        </h2>
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#checkInModal">
-                <i class="bi bi-box-arrow-in-right"></i> 办理入住
-            </button>
-            <button type="button" class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#checkOutModal">
-                <i class="bi bi-box-arrow-right"></i> 办理退房
-            </button>
-            <button class="btn btn-outline-secondary" onclick="exportExcel()">
-                <i class="bi bi-download"></i> 导出
-            </button>
-        </div>
-    </div>
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-clipboard-check",
+        title = "办理登记",
+        count = Model.Total,
+        countLabel = "条",
+        primaryAction = new PageAction { Label = "办理入住", OnClick = "document.getElementById('checkInModal').classList.add('show'); document.getElementById('checkInModal').style.display='block';", Icon = "bi-box-arrow-in-right", Style = "success" },
+        actions = new List<PageAction> {
+            new() { Label = "办理退房", OnClick = "document.getElementById('checkOutModal').classList.add('show'); document.getElementById('checkOutModal').style.display='block';", Icon = "bi-box-arrow-right", Style = "info" },
+            new() { Label = "导出", OnClick = "exportExcel()", Icon = "bi-download", Style = "secondary" }
+        }
+    })
 
     <!-- 筛选表单 -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="booking">
@@ -82,11 +76,6 @@
                     <a href="/Booking" class="btn btn-outline-secondary filter-btn">
                         <i class="bi bi-arrow-clockwise"></i> 重置
                     </a>
-                </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-danger filter-btn" onclick="FilterPersistence.reset('booking')" title="清除 localStorage 中该模块的筛选缓存">
-                        <i class="bi bi-trash"></i> 清除
-                    </button>
                 </div>
             </div>
         </div>
@@ -241,9 +230,9 @@
 <div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background:#1976d2;color:#fff;border-radius:12px 12px 0 0;">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-box-arrow-in-right"></i> 办理入住</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-4">
@@ -346,9 +335,9 @@
 <div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background:#00838f;color:#fff;border-radius:12px 12px 0 0;">
+            <div class="modal-header">
                 <h5 class="modal-title"><i class="bi bi-box-arrow-right"></i> 办理退房</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="关闭"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
             </div>
             <div class="modal-body p-4">
                 <div class="row g-4">

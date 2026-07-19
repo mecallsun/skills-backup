@@ -572,8 +572,9 @@ public class BookingService : IBookingService
         if (booking == null)
             return ApiResponse<DormBooking>.Fail("NOT_FOUND", "记录不存在");
 
-        if (booking.Status == BookingStatus.CheckedOut || booking.Status == BookingStatus.Cancelled)
-            return ApiResponse<DormBooking>.Fail("STATUS_ERROR", "「已退房」或「已取消」的记录不能修改");
+        // v2.13.12: 仅预约状态(Status=1)可修改
+        if (booking.Status != BookingStatus.Reserved)
+            return ApiResponse<DormBooking>.Fail("STATUS_ERROR", "仅预约状态的记录可以修改");
 
         booking.BookingDate = request.BookingDate;
         booking.Reason = request.Reason;
