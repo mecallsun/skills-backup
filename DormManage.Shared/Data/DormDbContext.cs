@@ -561,7 +561,8 @@ public class DormDbContext : DbContext
             new Team { Id = 9, Code = "TEAM_H", Name = "H班", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
         );
 
-        // 宿舍种子数据
+        /*
+        // 宿舍种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
         modelBuilder.Entity<Dorm>().HasData(
             new Dorm { Id = 1, DormCode = "D-001", BuildingId = 1, BuildingName = "1号楼", FloorId = 1, AddressId = 1, AddressText = "园区A栋", Capacity = 4, Gender = 1, IsActive = true },
             new Dorm { Id = 2, DormCode = "D-002", BuildingId = 1, BuildingName = "1号楼", FloorId = 1, AddressId = 1, AddressText = "园区A栋", Capacity = 4, Gender = 1, IsActive = true },
@@ -570,7 +571,7 @@ public class DormDbContext : DbContext
             new Dorm { Id = 5, DormCode = "D-005", BuildingId = 2, BuildingName = "2号楼", FloorId = 2, AddressId = 2, AddressText = "园区B栋", Capacity = 6, Gender = 2, IsActive = true }
         );
 
-        // 员工种子数据（v2.11.18 新增 EmploymentStatusId FK 字段；v2.11.20 新增 ResidenceStatusId FK 字段）
+        // 员工种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
         modelBuilder.Entity<SysEmployee>().HasData(
             new SysEmployee { Id = 1, EmployeeCode = "EMP-2026-001", RealName = "张三", DepartmentId = 1, Department = "生产部", EmployeeTypeId = 1, Phone = "13800000001", EmploymentStatusId = 1, Status = 1, HireDate = DateOnly.Parse("2025-01-15"), DormCode = "D-001", ResidenceStatusId = 1, IsActive = true },
             new SysEmployee { Id = 2, EmployeeCode = "EMP-2026-002", RealName = "李四", DepartmentId = 2, Department = "技术部", EmployeeTypeId = 1, Phone = "13800000002", EmploymentStatusId = 1, Status = 1, HireDate = DateOnly.Parse("2025-02-20"), DormCode = "D-002", ResidenceStatusId = 1, IsActive = true },
@@ -584,7 +585,7 @@ public class DormDbContext : DbContext
             new SysEmployee { Id = 10, EmployeeCode = "EMP-2026-010", RealName = "陈二", DepartmentId = 3, Department = "行政部", EmployeeTypeId = 4, Phone = "13800000010", EmploymentStatusId = 2, Status = 2, HireDate = DateOnly.Parse("2026-08-01"), ResidenceStatusId = 2, IsActive = true }
         );
 
-        // 办理记录种子数据
+        // 办理记录种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
         modelBuilder.Entity<DormBooking>().HasData(
             new DormBooking { Id = 1, EmployeeId = 1, EmployeeCode = "EMP-2026-001", EmployeeName = "张三", Phone = "13800000001", Department = "生产部", DormCode = "D-001", Type = 1, BookingDate = DateOnly.Parse("2025-01-15"), Status = 2, Reason = "入职", RegistrationDate = DateTime.Parse("2025-01-15 10:00:00"), Registrar = "admin", IsActive = true },
             new DormBooking { Id = 2, EmployeeId = 2, EmployeeCode = "EMP-2026-002", EmployeeName = "李四", Phone = "13800000002", Department = "技术部", DormCode = "D-002", Type = 1, BookingDate = DateOnly.Parse("2025-02-20"), Status = 2, Reason = "入职", RegistrationDate = DateTime.Parse("2025-02-20 14:30:00"), Registrar = "admin", IsActive = true },
@@ -597,6 +598,7 @@ public class DormDbContext : DbContext
             new DormBooking { Id = 9, EmployeeId = 9, EmployeeCode = "EMP-2026-009", EmployeeName = "钱一", Phone = "13800000009", Department = "后勤部", DormCode = "D-005", Type = 1, BookingDate = DateOnly.Parse("2024-12-01"), Status = 2, Reason = "入职", RegistrationDate = DateTime.Parse("2024-12-01 15:00:00"), Registrar = "admin", IsActive = true },
             new DormBooking { Id = 10, EmployeeId = 1, EmployeeCode = "EMP-2026-001", EmployeeName = "张三", Phone = "13800000001", Department = "生产部", DormCode = "D-001", Type = 2, BookingDate = DateOnly.Parse("2025-06-30"), Status = 3, Reason = "离职", RegistrationDate = DateTime.Parse("2025-06-30 17:00:00"), Registrar = "admin", IsActive = true }
         );
+        */
 
         // 系统角色种子数据
         modelBuilder.Entity<SysRole>().HasData(

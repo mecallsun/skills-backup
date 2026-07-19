@@ -103,7 +103,21 @@ if (dbProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
     using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<DormDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataImportService>>();
         db.Database.EnsureCreated();
+
+        // v2.13.19: 从行政宿舍 Excel 导入正式主数据
+        var excelPath = Path.Combine(builder.Environment.ContentRootPath, "..", "行政宿舍资料", "员工宿舍明细表.xlsx");
+        if (File.Exists(excelPath))
+        {
+            var importer = new DataImportService(db, logger);
+            var result = await importer.ImportAsync(excelPath);
+            app.Logger.LogInformation("行政宿舍数据导入完成: {Result}", result);
+        }
+        else
+        {
+            app.Logger.LogWarning("未找到行政宿舍数据文件: {Path}", excelPath);
+        }
     }
 }
 
