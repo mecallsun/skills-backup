@@ -1,0 +1,217 @@
+@page
+@model DormManage.Admin.Pages.Account.ProfileModel
+@{
+    ViewData["Title"] = "个人中心";
+    Layout = "_Layout";
+}
+
+<div class="container-fluid">
+@Html.AntiForgeryToken()
+    <!-- 页头（v2.13.12 个人中心） -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-person-circle"></i> 个人中心
+            <small class="text-muted fs-6">账号信息与个性化设置</small>
+        </h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/">首页</a></li>
+                <li class="breadcrumb-item active" aria-current="page">个人中心</li>
+            </ol>
+        </nav>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：账号信息 -->
+        <div class="col-lg-4 mb-3">
+            <div class="card form-card">
+                <div class="form-card-header">
+                    <i class="bi bi-person-vcard text-primary"></i>
+                    <h3>账号信息</h3>
+                </div>
+                <div class="form-card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">用户名</dt>
+                        <dd class="col-sm-8"><strong>@Model.UserName</strong></dd>
+
+                        <dt class="col-sm-4 text-muted">显示名</dt>
+                        <dd class="col-sm-8">@Model.DisplayName</dd>
+
+                        <dt class="col-sm-4 text-muted">角色</dt>
+                        <dd class="col-sm-8">
+                            @foreach (var role in Model.Roles)
+                            {
+                                <span class="badge bg-primary me-1">@role</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4 text-muted">手机号</dt>
+                        <dd class="col-sm-8">@(Model.Mobile ?? "-")</dd>
+
+                        <dt class="col-sm-4 text-muted">最近登录</dt>
+                        <dd class="col-sm-8">
+                            <small class="text-muted">@(Model.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</small>
+                        </dd>
+                    </dl>
+                </div>
+                <div class="form-actions">
+                    <a href="/Account/Logout" class="btn btn-outline-danger">
+                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：个性化设置 -->
+        <div class="col-lg-8 mb-3">
+            <!-- 筛选条件持久化设置（v2.13.12 实施） -->
+            <div class="card form-card mb-3">
+                <div class="form-card-header">
+                    <i class="bi bi-funnel text-primary"></i>
+                    <h3>筛选条件持久化</h3>
+                </div>
+                <div class="form-card-body">
+                    <div class="form-section">
+                        <div class="form-section-title">存储策略</div>
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="storeFilterPreference" @(Model.StoreFilterPreference ? "checked" : "")>
+                            <label class="form-check-label" for="storeFilterPreference">
+                                <strong>存储筛选条件到云端</strong>
+                            </label>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-info-circle"></i>
+                            勾选后，您在各列表模块（人员/宿舍/办理/抄表/账单）的筛选条件将保存到云端数据库，下次登录自动加载到对应模块筛选区。取消勾选后，下次退出登录将清除本地缓存。
+                        </p>
+                        <div class="alert alert-warning py-2 small mb-0">
+                            <i class="bi bi-shield-check"></i>
+                            <strong>隐私说明：</strong>筛选条件仅保存您本人的账号下，不包含业务数据；服务端保存于 SysUserFilterCache 表。
+                        </div>
+                    </div>
+
+                    <div class="form-section" style="margin-bottom: 0;">
+                        <div class="form-section-title">当前已缓存的筛选模块</div>
+                        <div id="cacheListArea">
+                            @if (Model.CachedModules != null && Model.CachedModules.Any())
+                            {
+                                <div class="list-group">
+                                    @foreach (var item in Model.CachedModules)
+                                    {
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                <strong>@GetModuleDisplayName(item.ModuleName)</strong>
+                                                <small class="text-muted ms-2">@item.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetFilterCache('@item.ModuleName')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mb-3"><i class="bi bi-info-circle"></i> 暂无已缓存的筛选模块</p>
+                            }
+                        </div>
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="resetAllFilterCache()">
+                                <i class="bi bi-trash"></i> 清除全部云端筛选缓存
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearLocalStorageCache()">
+                                <i class="bi bi-hdd"></i> 清除本地缓存
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 操作日志（v2.13.12 后续扩展：当前 SysOpLog 实体仅有 Id/CreatedAt 字段，暂不展示） -->
+            <!-- 后续将在 SysOpLog 完整化后启用最近操作记录 -->
+        </div>
+    </div>
+</div>
+
+@functions {
+    /// <summary>模块标识到中文显示名映射</summary>
+    public string GetModuleDisplayName(string module)
+    {
+        return module switch
+        {
+            "personnel" => "人员清单",
+            "dorms" => "宿舍档案",
+            "booking" => "办理登记",
+            "meter" => "抄表记录",
+            "billingStandard" => "费用标准",
+            "dormBilling" => "宿舍账单",
+            "employeeBilling" => "员工账单",
+            _ => module
+        };
+    }
+}
+
+@section Styles {
+<style>
+    .form-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); border: 1px solid #eee; overflow: hidden; }
+    .form-card-header { padding: .75rem 1.25rem; border-bottom: 1px solid #eee; background: #fafbfc; display: flex; align-items: center; gap: .5rem; }
+    .form-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1976d2; }
+    .form-card-body { padding: 1rem 1.25rem; }
+    .form-section { margin-bottom: .75rem; }
+    .form-section-title { font-size: .85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: .5rem; margin-bottom: .5rem; }
+    .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: .75rem 1.25rem; display: flex; justify-content: flex-end; gap: .75rem; }
+</style>
+}
+
+@section Scripts {
+<script>
+    // v2.13.12 个人中心：保存"存储筛选条件"开关到 localStorage
+    // （与前端 filter-persistence.js 联动：true = 双写 localStorage+服务端；false = 仅 localStorage）
+    document.getElementById('storeFilterPreference').addEventListener('change', function(e) {
+        var enabled = e.target.checked;
+        localStorage.setItem('jinge.storeFilterPreference', enabled ? 'true' : 'false');
+        if (enabled) {
+            // 立即把当前所有模块的 localStorage 缓存推送到服务端
+            if (window.FilterPersistence && FilterPersistence.syncAllToServer) {
+                FilterPersistence.syncAllToServer();
+            }
+        }
+        // 提示用户
+        var msg = enabled ? '已开启云端筛选条件同步，下次登录将自动加载。' : '已关闭云端同步。退出登录时将自动清除本地缓存。';
+        alert(msg);
+    });
+
+    function resetFilterCache(module) {
+        if (!confirm('确定要清除【' + getModuleDisplayName(module) + '】的云端筛选缓存吗？')) return;
+        fetch('/api/v1/user/filter-cache?module=' + module, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) { alert('已清除'); location.reload(); }
+                else { alert('清除失败：' + (res?.message || '未知错误')); }
+            });
+    }
+
+    function resetAllFilterCache() {
+        if (!confirm('确定清除所有模块的云端筛选缓存吗？')) return;
+        fetch('/api/v1/user/filter-cache/all', { method: 'DELETE' })
+            .then(r => r.json())
+            .then(res => {
+                if (res && res.success) { alert('已清除全部云端缓存'); location.reload(); }
+                else { alert('清除失败：' + (res?.message || '未知错误')); }
+            });
+    }
+
+    function clearLocalStorageCache() {
+        if (!confirm('确定清除所有模块的本地筛选缓存吗？')) return;
+        if (window.FilterPersistence && FilterPersistence.resetAll) {
+            FilterPersistence.resetAll();
+            alert('已清除本地缓存');
+        }
+    }
+
+    function getModuleDisplayName(module) {
+        var names = { 'personnel':'人员清单','dorms':'宿舍档案','booking':'办理登记','meter':'抄表记录','billingStandard':'费用标准','dormBilling':'宿舍账单','employeeBilling':'员工账单' };
+        return names[module] || module;
+    }
+</script>
+}
