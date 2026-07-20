@@ -1,9 +1,9 @@
 # 方案文档索引
 
-> **版本**：v2.13.33（入住 BUG + 工号姓名关联修复）
+> **版本**：v2.13.34（办理入住弹窗 100% 原型对齐）
 > **日期**：2026-07-20
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
-> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复
+> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐
 
 ## 使用说明
 
@@ -104,6 +104,7 @@
 | **84** | [**4 页面 500 错误修复报告**](./84-4页面500错误修复报告-v2.13.31.md) | **v2.13.31** | ✅ **最新** | **4 页面 500 错误全面修复（Settings/Profile/Account/Login）** |
 | **85** | [**数据源热加载与 EF 拦截器日志**](./85-数据源热加载与EF拦截器日志-v2.13.32.md) | **v2.13.32** | ✅ **最新** | **数据源热加载 + EF 拦截器日志（AppConfigRuntime + IDbContextFactory + DatabaseOperationInterceptor + DatabaseConfigFileWatcher 跨进程同步）** |
 | **86** | [**办理入住与工号姓名关联修复**](./86-办理入住与工号姓名关联修复-v2.13.33.md) | **v2.13.33** | ✅ **最新** | **BUG #1 selectCiEmp 卡死修复 + BUG #2 EmployeeName 双管齐下（实时覆盖 + Repair API 写回） + PageHeader「修复姓名关联」按钮** |
+| **87** | [**办理入住弹窗 100% 原型对齐**](./87-办理入住弹窗100%原型对齐-v2.13.34.md) | **v2.13.34** | ✅ **最新** | **checkInModal 100% 对齐原型 booking/check-in.html（11 项不一致修复 + 操作类型 radio + 单列布局 + form-card 系列样式 + 考勤班次 Badge + 校验 alert）** |
 
 ---
 
@@ -167,10 +168,10 @@
 
 | 位置 | 当前版本 |
 |------|---------|
-| **项目总版本** | **v2.13.33**（2026-07-20） |
-| 托盘程序可见版本 | v2.13.33 |
-| Web Admin 登录页徽章 | v2.13.33 |
-| Web Admin 顶部品牌栏 | v2.13.33 |
+| **项目总版本** | **v2.13.34**（2026-07-20） |
+| 托盘程序可见版本 | v2.13.34 |
+| Web Admin 登录页徽章 | v2.13.34 |
+| Web Admin 顶部品牌栏 | v2.13.34 |
 | 数据库同步功能版本 | v2.13.19 |
 | SQL 默认参数 | `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__` |
 
@@ -201,3 +202,4 @@
 | 2026-07-20 | **v2.13.32 数据源热加载 + EF 拦截器日志** | **AppConfigRuntime** 单例 + **IDbContextFactory** 热切换 + **DatabaseOperationInterceptor**（采样 1/100 + 慢查询/错误 100%） + **DatabaseConfigFileWatcher** 跨进程同步 + SysParameter 升级为运行时真源 + 文档 85 |
 | 2026-07-20 | **v2.13.32-hotfix 托盘测试连接 + SysParameter BUG** | 托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 修复传密文写 SysParameter 的 BUG（应传明文） |
 | 2026-07-20 | **v2.13.33 办理入住 BUG + 工号姓名关联修复** | **BUG #1**：selectCiEmp 卡死（新增 ciSearchResults/coSearchResults 缓存 + 重写完整填充逻辑）+ **BUG #2**：EmployeeName 双管齐下（GetListAsync 实时覆盖 + Repair API 写回）+ PageHeader「修复姓名关联」按钮 + 文档 86 + CLAUDE.md / INDEX.md 全面同步 |
+| 2026-07-20 | **v2.13.34 办理入住弹窗 100% 原型对齐** | checkInModal 11 项不一致修复（单列布局 + form-card 系列样式 + 操作类型 radio + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge + 校验 alert + "提交"按钮 + breadcrumb）+ PageHeader 移除冗余"办理退房"按钮（合并到入住弹窗 opType=2）+ 文档 87 |
