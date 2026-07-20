@@ -1,9 +1,9 @@
 # 方案文档索引
 
-> **版本**：v2.13.29（代码质量优化）
+> **版本**：v2.13.33（入住 BUG + 工号姓名关联修复）
 > **日期**：2026-07-20
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
-> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 100% 完整 + BUG 修复 + 代码质量优化
+> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复
 
 ## 使用说明
 
@@ -79,7 +79,7 @@
 | 54 | [认证权限体系测试报告](./54-认证权限体系测试报告-v2.13.0.md) | v2.13.0 | 📦 历史归档 | RBAC 测试报告 |
 | 55 | [项目当前状态与文档代码差距分析](./55-项目当前状态与文档代码差距分析-v2.12.44.md) | v2.12.44 | 📦 历史归档 | 差距分析 |
 | 59 | [v2.13.3交付报告-25项差距完成](./59-v2.13.3交付报告-25项差距完成.md) | v2.13.3 | 📦 历史归档 | v2.13.3 交付 |
-| 60 | [菜单导航与数据关系全景图](./60-菜单导航与数据关系全景图-v2.13.3.md) | v2.13.24 | ✅ 最新 | 菜单 + 数据关系全景 |
+| 60 | [菜单导航与数据关系全景图](./60-菜单导航与数据关系全景图-v2.13.3.md) | v2.13.33 | ✅ 最新 | 菜单 + 数据关系全景（含 v2.13.33 EmployeeName 同步策略） |
 | 61 | [端到端集成调试报告](./61-端到端集成调试报告-v2.13.3.md) | v2.13.3 | 📦 历史归档 | 端到端调试 |
 | 62 | [托盘右键异常修复报告](./62-托盘右键异常修复报告-v2.13.4.md) | v2.13.4 | 📦 历史归档 | 托盘右键修复 |
 | 63 | [托盘右键异常修复冒烟测试报告](./63-托盘右键异常修复冒烟测试报告-v2.13.4.md) | v2.13.4 | 📦 历史归档 | 托盘右键冒烟测试 |
@@ -101,6 +101,9 @@
 | **81** | [**BUG 修复报告 v2.13.28 — 数据库连接传播断裂 + Settings 按钮失效**](./81-BUG修复报告-v2.13.28-数据库连接传播断裂.md) | **v2.13.28** | ✅ **最新** | **P0 修复：环境变量优先级提升 + 默认配置修正 + Settings 按钮无条件绑定** |
 | **82** | [**v2.13.29 代码质量优化报告**](./82-v2.13.29代码质量优化报告.md) | **v2.13.29** | ✅ **最新** | **代码 TODO 清理（4 处） + OperationLogService 统一日志 + GlobalExceptionMiddleware 全局异常 + PerformanceMonitoringMiddleware API 性能监控** |
 | **83** | [**数据源统一修复 v2.13.30 — DashboardService 全真源**](./83-数据源统一修复-v2.13.30.md) | **v2.13.30** | ✅ **最新** | **P0 修复：DashboardService 删除演示数据生成器（MockDormBill/MockEmployeeBill/Random 兜底）+ 7 项 KPI + 8 项图表全部从 DormDbContext 真源查询** |
+| **84** | [**4 页面 500 错误修复报告**](./84-4页面500错误修复报告-v2.13.31.md) | **v2.13.31** | ✅ **最新** | **4 页面 500 错误全面修复（Settings/Profile/Account/Login）** |
+| **85** | [**数据源热加载与 EF 拦截器日志**](./85-数据源热加载与EF拦截器日志-v2.13.32.md) | **v2.13.32** | ✅ **最新** | **数据源热加载 + EF 拦截器日志（AppConfigRuntime + IDbContextFactory + DatabaseOperationInterceptor + DatabaseConfigFileWatcher 跨进程同步）** |
+| **86** | [**办理入住与工号姓名关联修复**](./86-办理入住与工号姓名关联修复-v2.13.33.md) | **v2.13.33** | ✅ **最新** | **BUG #1 selectCiEmp 卡死修复 + BUG #2 EmployeeName 双管齐下（实时覆盖 + Repair API 写回） + PageHeader「修复姓名关联」按钮** |
 
 ---
 
@@ -164,10 +167,10 @@
 
 | 位置 | 当前版本 |
 |------|---------|
-| **项目总版本** | **v2.13.30**（2026-07-20） |
-| 托盘程序可见版本 | v2.13.30 |
-| Web Admin 登录页徽章 | v2.13.30 |
-| Web Admin 顶部品牌栏 | v2.13.30 |
+| **项目总版本** | **v2.13.33**（2026-07-20） |
+| 托盘程序可见版本 | v2.13.33 |
+| Web Admin 登录页徽章 | v2.13.33 |
+| Web Admin 顶部品牌栏 | v2.13.33 |
 | 数据库同步功能版本 | v2.13.19 |
 | SQL 默认参数 | `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__` |
 
@@ -194,3 +197,7 @@
 | 2026-07-20 | **v2.13.28 数据库连接传播断裂修复** | **P0 BUG 修复**：Program.cs 环境变量优先级提升（`effectiveProvider`）+ 三个 `appsettings.json` 默认 Provider 修正为 SqlServer + Settings 页面按钮无条件绑定 + ConfigService/ProcessManager 日志增强 + 文档 81 |
 | 2026-07-20 | **v2.13.29 代码质量优化** | 代码 TODO 清理（BookingController 真实用户名 + Settings stub 删除 + Personnel/Meter Import 真实 ClosedXML 解析） + OperationLogService 统一操作日志 + BusinessException 业务异常 + GlobalExceptionMiddleware（Api/Admin）+ PerformanceMonitoringMiddleware API 性能监控 + 文档 82 |
 | 2026-07-20 | **v2.13.30 数据源统一修复** | **P0 修复**：DashboardService 删除演示数据生成器（MockDormBill/MockEmployeeBill/Random 兜底）+ 7 项 KPI + 8 项图表全部从 DormDbContext 真源查询 + KPI 1 入住人数双重统计（DormBookings.Staying ∪ DormCode 非空）+ 文档 83 |
+| 2026-07-20 | **v2.13.31 4 页面 500 错误修复** | 修复 Settings/Profile/Account/Login 4 页面 500 错误 + 文档 84 |
+| 2026-07-20 | **v2.13.32 数据源热加载 + EF 拦截器日志** | **AppConfigRuntime** 单例 + **IDbContextFactory** 热切换 + **DatabaseOperationInterceptor**（采样 1/100 + 慢查询/错误 100%） + **DatabaseConfigFileWatcher** 跨进程同步 + SysParameter 升级为运行时真源 + 文档 85 |
+| 2026-07-20 | **v2.13.32-hotfix 托盘测试连接 + SysParameter BUG** | 托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 修复传密文写 SysParameter 的 BUG（应传明文） |
+| 2026-07-20 | **v2.13.33 办理入住 BUG + 工号姓名关联修复** | **BUG #1**：selectCiEmp 卡死（新增 ciSearchResults/coSearchResults 缓存 + 重写完整填充逻辑）+ **BUG #2**：EmployeeName 双管齐下（GetListAsync 实时覆盖 + Repair API 写回）+ PageHeader「修复姓名关联」按钮 + 文档 86 + CLAUDE.md / INDEX.md 全面同步 |

@@ -69,7 +69,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 |--------|--------|-------------|-------|-------------|
 | **Dashboard** | `/` | — | `Index.cshtml` | DashboardService (7 KPIs, 8 charts) |
 | **Auth/RBAC** | `/Account/*` | `Auth/UserController`, `Auth/RoleController` | `Login`, `Logout`, `Profile` | SysUser, SysRole, SysUserRole, SysPermission |
-| **Booking** | `/Booking/*`, `/api/v1/bookings` | `BookingController` | `Index`, `Edit`, `CheckIn`, `CheckOut` | DormBooking |
+| **Booking** | `/Booking/*`, `/api/v1/bookings` | `BookingController` | `Index`, `Edit`, `CheckIn`, `CheckOut` | DormBooking（EmployeeName ↔ SysEmployee.RealName 双管齐下同步：v2.13.33 GetListAsync 实时覆盖 + Repair API 写回） |
 | **Dorms** | `/Dorms/*`, `/api/dorms` | `DormsController` | `Index`, `Create`, `Edit`, `Details`, `History` | Dorm |
 | **Personnel** | `/Personnel/*`, `/api/v1/personnel` | `PersonnelController` | `Index`, `Create`, `Edit`, `Import` | SysEmployee |
 | **Meter** | `/Meter/*`, `/api/meter/*` | `MeterController` | `Index`, `Entry`, `Edit`, `Detail`, `Import` | MeterRecord |
@@ -94,6 +94,8 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 
 **Concurrency:** Booking operations use serializable transactions with execution policy retry. Dorm deletion blocks if active bookings exist.
 
+**Hot-reload config:** v2.13.32 introduced `AppConfigRuntime` singleton + `IDbContextFactory<DormDbContext>` for runtime DB connection switching (no restart needed). Files: `AppConfigManager.cs`, `AppConfigRuntime.cs`, `DatabaseOperationInterceptor.cs`, `DatabaseConfigFileWatcher.cs`.
+
 **Filter persistence:** User filter conditions stored in localStorage (browser) + optional database cache via `SysUserFilterCache` (cross-device sync). Module: `ISysUserFilterCacheService`.
 
 ### Configuration
@@ -115,14 +117,16 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **Baseline:** `00-方案文档/05-原型与代码基线对照.md` (25 prototype pages ↔ 26 Razor views)
 - **Delivery Reports:** `00-方案文档/68-模块100%对齐交付报告-v2.13.10.md`, `69-优化项交付报告-v2.13.11.md`
 - **v2.13.24 全量交付：** `00-方案文档/78-v2.13.24最终交付报告.md` + `75-数据库Schema与代码映射文档-v2.13.24.md` + `76-入住记录与抄表记录业务深度文档-v2.13.24.md`
+- **v2.13.32 数据源热加载：** `00-方案文档/85-数据源热加载与EF拦截器日志-v2.13.32.md` — `AppConfigRuntime` 单例 + `IDbContextFactory` + `DatabaseOperationInterceptor` + `DatabaseConfigFileWatcher` 跨进程同步
+- **v2.13.33 办理入住 BUG + 工号姓名关联修复：** `00-方案文档/86-办理入住与工号姓名关联修复-v2.13.33.md` — BUG #1 selectCiEmp 卡死 + BUG #2 EmployeeName 双管齐下同步（GetListAsync 实时覆盖 + Repair API 写回 + PageHeader 修复按钮）
 - **HTML Prototypes:** `00-方案文档/04-HTML原型/` 共 25 个原型页面 + `_shared/` 共享资源（v2.12.3 起统一为「共用页头 + Tab 页签切换」三层架构）。
 
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.24（2026-07-20 全量对齐终极版）
-- **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现
-- **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储）
+- **项目当前版本：** v2.13.33（2026-07-20 入住 BUG + 工号姓名关联修复版）
+- **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
+- **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
 - **No CORS, no HTTPS redirect** — assumes trusted local network deployment.
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -131,3 +135,5 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **Warning suppression:** Projects globally suppress `CS1998`, `CS8602`, `CS8629`, `CS0618`. These are known nullable/async warnings acknowledged by the team.
 - **Data cleanup:** `DataCleanupHostedService` runs at startup to normalize invalid FK references in employees.
 - **Git redact filter:** `filter.redactdb` replaces DB credentials with `__DB_USER__`/`__DB_PASSWORD__` on `git add`; working tree keeps real values.
+- **v2.13.32 数据源热加载：** 通过 `AppConfigRuntime` 单例 + `IDbContextFactory<DormDbContext>`，Web 端或托盘修改数据库配置并保存后，**无需重启服务**即可让 Api/Admin 下次请求自动切换到新连接；`DatabaseOperationInterceptor` 输出 `[DB-CONN]` / `[DB-EXEC]` / `[DB-EXEC-SLOW]` 运行时日志，提供连接可观测性（详见 `Settings → 数据库连接` 页面顶部"🗄️ Server/Database"徽章，30s 轮询）。**配套修复**：托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 写 SysParameter 不再使用密文（v2.13.32-hotfix）。
+- **v2.13.33 Repair API：** Booking 模块新增 `POST /api/v1/bookings/repair-employee-names`，用于批量回填历史 `DormBooking.EmployeeName`（按 `EmployeeId` 优先 / `EmployeeCode` 次之对齐 `SysEmployee.RealName`，返回 `updated/skipped/notFound` 计数）。**`/Booking` 页面 PageHeader 新增「修复姓名关联」按钮**。同时修复 BUG #1：`selectCiEmp` 卡死（增加 `ciSearchResults/coSearchResults` 缓存，按 empId 查员工并完整填充 `dataset.empId` + 员工信息展示区）。

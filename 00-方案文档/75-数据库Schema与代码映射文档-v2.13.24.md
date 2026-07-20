@@ -147,8 +147,10 @@
 | **10** | **宿舍容量减少 (DormService.UpdateCapacityAsync)** | **Dorm → Employee + Booking** | **BedNo 重新分配 → Employee + Booking** | **DormService.cs** |
 | **11** | **抄表记录保存 (MeterController.SaveRecord)** | **MeterRecord → Dorm** | **LastXxxMeter/LastReadMonth/LastReadAt** | **MeterController.cs** |
 | 12 | 标记离职 (PersonnelService.MarkLeftAsync) | — | EmploymentStatusId=3 + DormCode="" | PersonnelService.cs |
+| **13** | **列表查询 (BookingService.GetListAsync)** | **Employee → Booking（RAM 覆盖）** | **RealName → EmployeeName（实时覆盖，不写 DB）** | **BookingService.cs** |
+| **14** | **修复姓名关联 (BookingService.RepairBookingEmployeeNamesAsync)** | **Employee → Booking（DB 写回）** | **RealName → EmployeeName + UpdatedAt（写回 DB）** | **BookingService.cs + BookingController.cs** |
 
-**联动覆盖率：12/12 = 100%**
+**联动覆盖率：14/14 = 100%**（含 v2.13.33 +2 条 EmployeeName 同步：实时覆盖 + Repair 写回）
 
 ---
 
