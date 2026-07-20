@@ -1,7 +1,7 @@
 @page
 @model DormManage.Admin.Pages.Personnel.EditModel
 @{
-    ViewData["Title"] = "编辑员工";
+    ViewData["Title"] = "编辑人员";
     Layout = "_Layout";
 }
 
@@ -10,7 +10,7 @@
     <!-- 页头（v2.12.27 与原型 edit.html 一致） -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
-            <i class="bi bi-person-gear"></i> 编辑员工
+            <i class="bi bi-person-gear"></i> 编辑人员
             <small class="text-muted ms-2 fs-6">@Model.EmployeeCode · @Model.RealName</small>
         </h2>
         <nav aria-label="breadcrumb">
@@ -138,7 +138,13 @@
         if (!confirm('确定要将该员工标记为离职吗？')) return;
         const f = document.createElement('form');
         f.method = 'post';
-        f.action = '?handler=MarkLeft';
+        f.action = '?handler=MarkLeft&id=@Model.Id';
+        // v2.13.40 BUG 修复：必须把 Id 一起 POST，否则 OnPostMarkLeft 会收到 Id=0，跳转 Edit?id=0 失败
+        const idInput = document.createElement('input');
+        idInput.type = 'hidden';
+        idInput.name = 'Id';
+        idInput.value = '@Model.Id';
+        f.appendChild(idInput);
         const t = document.querySelector('input[name="__RequestVerificationToken"]');
         if (t) f.appendChild(t.cloneNode());
         document.body.appendChild(f);

@@ -296,7 +296,7 @@
 @section Scripts {
 <script>
     function markLeft(id, name) {
-        if (!confirm('确定将员工 ' + name + ' 标记为离职吗？')) return;
+        if (!confirm('确定将人员 ' + name + ' 标记为离职吗？')) return;
         const f = document.createElement('form');
         f.method = 'post';
         f.action = '/Personnel?handler=MarkLeft&id=' + id;
@@ -307,7 +307,7 @@
     }
 
     function del(id, name) {
-        if (!confirm('确定删除员工 ' + name + ' 吗？此操作不可恢复。')) return;
+        if (!confirm('确定删除人员 ' + name + ' 吗？此操作不可恢复。')) return;
         const f = document.createElement('form');
         f.method = 'post';
         f.action = '/Personnel?handler=Delete&id=' + id;

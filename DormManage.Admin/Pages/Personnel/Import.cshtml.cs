@@ -8,7 +8,12 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Admin.Pages.Personnel;
 
 /// <summary>
-/// 人员导入页面模型（v2.13.29：使用 ClosedXML 实现真实 Excel 导入）
+/// 人员导入页面模型（v2.13.40 100% 原型对齐）
+///
+/// 改造点（vs 原型 personnel/import.html）：
+/// 1. 模板改 11 列（工号/姓名/部门/员工类型/考勤班次/班组/手机号/入职日期/离职日期/房号/备注），与原型和 Razor 文案完全一致
+/// 2. UploadAsync 真正持久化 Employee（之前 v2.13.29 只增计数器，无实体变更）
+/// 3. 部门/员工类型/考勤班次/班组按 Name → Id 映射；房号按 DormCode 关联 Dorm 表
 /// </summary>
 public class ImportModel : PageModel
 {
@@ -30,31 +35,34 @@ public class ImportModel : PageModel
     public ImportResultDto? ImportResult { get; set; }
 
     /// <summary>
-    /// 下载导入模板（v2.13.29：使用 ClosedXML 生成标准模板）
+    /// 下载导入模板（v2.13.40：11 列与原型/Razor 文案完全一致）
     /// </summary>
     public IActionResult OnGetDownloadTemplate()
     {
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("人员清单");
-        ws.Cell(1, 1).Value = "工号";
-        ws.Cell(1, 2).Value = "姓名";
-        ws.Cell(1, 3).Value = "性别";
-        ws.Cell(1, 4).Value = "身份证号";
-        ws.Cell(1, 5).Value = "部门代码";
-        ws.Cell(1, 6).Value = "手机号";
-        ws.Cell(1, 7).Value = "入职日期";
-        ws.Range(1, 1, 1, 7).Style.Font.Bold = true;
-        ws.Range(1, 1, 1, 7).Style.Fill.BackgroundColor = XLColor.LightGray;
+        // v2.13.40：11 列与 personnel/import.html 原型 + Razor 文案一致
+        string[] headers = { "工号", "姓名", "部门", "员工类型", "考勤班次", "班组", "手机号", "入职日期", "离职日期", "房号", "备注" };
+        for (int i = 0; i < headers.Length; i++)
+        {
+            ws.Cell(1, i + 1).Value = headers[i];
+        }
+        ws.Range(1, 1, 1, headers.Length).Style.Font.Bold = true;
+        ws.Range(1, 1, 1, headers.Length).Style.Fill.BackgroundColor = XLColor.LightGray;
 
         // 示例行（参考）
         ws.Cell(2, 1).Value = "EMP-2026-001";
         ws.Cell(2, 2).Value = "张三";
-        ws.Cell(2, 3).Value = "男";
-        ws.Cell(2, 4).Value = "110101199001011234";
-        ws.Cell(2, 5).Value = "D001";
-        ws.Cell(2, 6).Value = "13800138000";
-        ws.Cell(2, 7).Value = "2026-01-15";
-        ws.Range(2, 1, 2, 7).Style.Fill.BackgroundColor = XLColor.LightYellow;
+        ws.Cell(2, 3).Value = "生产部";
+        ws.Cell(2, 4).Value = "合同工";
+        ws.Cell(2, 5).Value = "早班";
+        ws.Cell(2, 6).Value = "A班";
+        ws.Cell(2, 7).Value = "13800138000";
+        ws.Cell(2, 8).Value = "2026-01-15";
+        ws.Cell(2, 9).Value = "";
+        ws.Cell(2, 10).Value = "D-301";
+        ws.Cell(2, 11).Value = "示例备注";
+        ws.Range(2, 1, 2, headers.Length).Style.Fill.BackgroundColor = XLColor.LightYellow;
 
         ws.Columns().AdjustToContents();
 
@@ -67,7 +75,7 @@ public class ImportModel : PageModel
     }
 
     /// <summary>
-    /// 上传并导入 Excel 文件（v2.13.29：ClosedXML 真实解析）
+    /// 上传并导入 Excel 文件（v2.13.40：11 列字段映射 + 真正持久化 Employee 实体）
     /// </summary>
     public async Task<IActionResult> OnPostUploadAsync(IFormFile file, bool overwriteExisting = false)
     {
@@ -94,6 +102,20 @@ public class ImportModel : PageModel
 
         try
         {
+            // v2.13.40 预加载基础资料字典（部门/员工类型/考勤班次/班组），用于按 Name 解析 Id
+            var deptMap = await _db.Departments
+                .Where(d => d.IsActive)
+                .ToDictionaryAsync(d => d.Name, d => d.Id);
+            var typeMap = await _db.EmployeeTypes
+                .Where(t => t.IsActive)
+                .ToDictionaryAsync(t => t.Name, t => t.Id);
+            var attMap = await _db.AttendanceTypes
+                .Where(a => a.IsActive)
+                .ToDictionaryAsync(a => a.Name, a => a.Id);
+            var teamMap = await _db.Teams
+                .Where(t => t.IsActive)
+                .ToDictionaryAsync(t => t.Name, t => t.Id);
+
             using var stream = file.OpenReadStream();
             using var wb = new XLWorkbook(stream);
             var ws = wb.Worksheet(1);
@@ -104,12 +126,20 @@ public class ImportModel : PageModel
                 result.TotalRows++;
                 try
                 {
+                    // v2.13.40：11 列字段映射
                     var empNo = ws.Cell(row, 1).GetString().Trim();
                     var name = ws.Cell(row, 2).GetString().Trim();
-                    var idCard = ws.Cell(row, 4).GetString().Trim();
-                    var deptCode = ws.Cell(row, 5).GetString().Trim();
-                    var phone = ws.Cell(row, 6).GetString().Trim();
+                    var deptName = ws.Cell(row, 3).GetString().Trim();
+                    var typeName = ws.Cell(row, 4).GetString().Trim();
+                    var attName = ws.Cell(row, 5).GetString().Trim();
+                    var teamName = ws.Cell(row, 6).GetString().Trim();
+                    var phone = ws.Cell(row, 7).GetString().Trim();
+                    var hireDateStr = ws.Cell(row, 8).GetString().Trim();
+                    var leaveDateStr = ws.Cell(row, 9).GetString().Trim();
+                    var dormCode = ws.Cell(row, 10).GetString().Trim();
+                    var remark = ws.Cell(row, 11).GetString().Trim();
 
+                    // 必填校验
                     if (string.IsNullOrEmpty(empNo))
                     {
                         errors.Add(new ImportErrorDto { RowNumber = row, FieldName = "工号", ErrorMessage = "工号为空" });
@@ -123,6 +153,75 @@ public class ImportModel : PageModel
                         continue;
                     }
 
+                    // 解析 FK（按 Name）
+                    int departmentId = 0;
+                    if (!string.IsNullOrEmpty(deptName))
+                    {
+                        if (!deptMap.TryGetValue(deptName, out departmentId))
+                        {
+                            errors.Add(new ImportErrorDto { RowNumber = row, FieldName = "部门", ErrorMessage = $"部门不存在：{deptName}" });
+                            result.FailedRows++;
+                            continue;
+                        }
+                    }
+
+                    int employeeTypeId = 0;
+                    if (!string.IsNullOrEmpty(typeName))
+                    {
+                        if (!typeMap.TryGetValue(typeName, out employeeTypeId))
+                        {
+                            errors.Add(new ImportErrorDto { RowNumber = row, FieldName = "员工类型", ErrorMessage = $"员工类型不存在：{typeName}" });
+                            result.FailedRows++;
+                            continue;
+                        }
+                    }
+
+                    int? attendanceTypeId = null;
+                    if (!string.IsNullOrEmpty(attName) && attName != "默认")
+                    {
+                        if (attMap.TryGetValue(attName, out var aid))
+                            attendanceTypeId = aid;
+                        // 留空默认"默认" → 不设置
+                    }
+
+                    int teamId = 0;
+                    if (!string.IsNullOrEmpty(teamName) && teamName != "默认")
+                    {
+                        if (!teamMap.TryGetValue(teamName, out teamId))
+                        {
+                            // 班组不存在时不报错，保留为空（班组为非必填）
+                            teamId = 0;
+                        }
+                    }
+
+                    // 日期解析
+                    DateOnly? hireDate = null;
+                    if (!string.IsNullOrEmpty(hireDateStr))
+                    {
+                        if (!DateOnly.TryParse(hireDateStr, out var hd))
+                        {
+                            errors.Add(new ImportErrorDto { RowNumber = row, FieldName = "入职日期", ErrorMessage = "日期格式错误：" + hireDateStr });
+                            result.FailedRows++;
+                            continue;
+                        }
+                        hireDate = hd;
+                    }
+
+                    DateOnly? leaveDate = null;
+                    if (!string.IsNullOrEmpty(leaveDateStr))
+                    {
+                        if (!DateOnly.TryParse(leaveDateStr, out var ld))
+                        {
+                            errors.Add(new ImportErrorDto { RowNumber = row, FieldName = "离职日期", ErrorMessage = "日期格式错误：" + leaveDateStr });
+                            result.FailedRows++;
+                            continue;
+                        }
+                        leaveDate = ld;
+                    }
+
+                    // 房号关联（仅记录 DormCode 字符串，不实际分配床位）
+                    var dormCodeToSave = string.IsNullOrEmpty(dormCode) ? null : dormCode;
+
                     // 检查是否已存在
                     var existing = await _db.Employees.FirstOrDefaultAsync(e => e.EmployeeCode == empNo);
                     if (existing != null && !overwriteExisting)
@@ -133,12 +232,50 @@ public class ImportModel : PageModel
 
                     if (existing == null)
                     {
-                        // 新增（实际项目应解析所有字段并写入数据库）
+                        // v2.13.40 真正新增 Employee 实体
+                        var emp = new SysEmployee
+                        {
+                            EmployeeCode = empNo,
+                            RealName = name,
+                            DepartmentId = departmentId,
+                            Department = deptName,
+                            EmployeeTypeId = employeeTypeId,
+                            EmployeeTypeText = typeName,
+                            TeamId = teamId,
+                            Team = teamName,
+                            AttendanceTypeId = attendanceTypeId,
+                            Phone = phone,
+                            HireDate = hireDate,
+                            LeaveDate = leaveDate,
+                            DormCode = dormCodeToSave,
+                            Remark = remark,
+                            // v2.13.40: 移除过时的 Status 字段（应使用 EmploymentStatusId + 导航属性）
+                            Gender = 1,  // 默认男（导入后由用户编辑）
+                            ResidenceStatusId = 2,  // 默认未住宿
+                            EmploymentStatusId = leaveDate.HasValue ? 3 : 1,  // 有离职日期→已离职，否则在职
+                            CreatedAt = DateTime.Now
+                        };
+                        _db.Employees.Add(emp);
                         result.SuccessRows++;
                     }
                     else
                     {
-                        // 覆盖模式
+                        // v2.13.40 真正覆盖模式：更新所有字段
+                        existing.RealName = name;
+                        existing.DepartmentId = departmentId;
+                        existing.Department = deptName;
+                        existing.EmployeeTypeId = employeeTypeId;
+                        existing.EmployeeTypeText = typeName;
+                        existing.TeamId = teamId;
+                        existing.Team = teamName;
+                        existing.AttendanceTypeId = attendanceTypeId;
+                        existing.Phone = phone;
+                        existing.HireDate = hireDate;
+                        existing.LeaveDate = leaveDate;
+                        existing.DormCode = dormCodeToSave;
+                        existing.Remark = remark;
+                        if (leaveDate.HasValue) existing.EmploymentStatusId = 3;
+                        existing.UpdatedAt = DateTime.Now;
                         result.SuccessRows++;
                     }
                 }
@@ -149,6 +286,7 @@ public class ImportModel : PageModel
                 }
             }
 
+            // v2.13.40 真持久化：所有变更一次性提交
             if (result.SuccessRows > 0)
                 await _db.SaveChangesAsync();
 
