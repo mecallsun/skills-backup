@@ -51,6 +51,10 @@ public sealed class SettingsForm : Form
     private TextBox _txtSqlitePath = null!;
     private Button _btnSqliteBrowse = null!;
 
+    // v2.13.32-hotfix: 数据库连接测试按钮 + 测试结果标签
+    private Button _btnDbTest = null!;
+    private Label _lblDbTestResult = null!;
+
     // 存储
     private TextBox _txtImageRoot = null!;
     private Button _btnImageBrowse = null!;
@@ -129,6 +133,10 @@ public sealed class SettingsForm : Form
         _txtSqlitePath = new TextBox();
         _btnSqliteBrowse = new Button { Text = "浏览..." };
 
+        // v2.13.32-hotfix: 测试连接按钮（无破坏性，仅测试当前填写的字段，不保存任何东西）
+        _btnDbTest = new Button { Text = "测试连接", Size = new Size(90, 32) };
+        _lblDbTestResult = new Label { Text = "", AutoSize = true, ForeColor = Color.Gray };
+
         _txtImageRoot = new TextBox();
         _btnImageBrowse = new Button { Text = "浏览..." };
 
@@ -165,6 +173,8 @@ public sealed class SettingsForm : Form
         AddLabeledRow(layout, "账号", _txtDbUser);
         AddLabeledRow(layout, "密码", _txtDbPassword);
         AddLabeledRow(layout, "SQLite 数据库路径", BuildSqlitePanel());
+        // v2.13.32-hotfix: 在数据库字段下方加"测试连接"行（按钮 + 结果标签）
+        AddLabeledRow(layout, "", BuildDbTestRow());
         AddLabeledRow(layout, "图片存储根路径", BuildPathRow(_txtImageRoot, _btnImageBrowse, BrowseImageFolder));
         AddLabeledRow(layout, "启动时自动启动服务", _chkAutoStart);
         AddLabeledRow(layout, "异常时自动重启", _chkAutoRestart);
@@ -245,6 +255,7 @@ public sealed class SettingsForm : Form
         _btnAdminBrowse.Click += (_, _) => BrowseExe(_txtAdminPath);
         _btnSqliteBrowse.Click += (_, _) => BrowseSqliteFile();
         _btnImageBrowse.Click += (_, _) => BrowseImageFolder();
+        _btnDbTest.Click += async (_, _) => await BtnDbTestAsync();  // v2.13.32-hotfix
         _cmbProvider.SelectedIndexChanged += (_, _) => UpdateProviderVisibility();
     }
 
@@ -327,6 +338,23 @@ public sealed class SettingsForm : Form
         return p;
     }
 
+    // v2.13.32-hotfix: 测试连接按钮行（按钮 + 实时结果标签）
+    private Control BuildDbTestRow()
+    {
+        var p = new FlowLayoutPanel
+        {
+            Dock = DockStyle.Fill,
+            FlowDirection = FlowDirection.LeftToRight,
+            AutoSize = true,
+            AutoSizeMode = AutoSizeMode.GrowAndShrink,
+            WrapContents = false
+        };
+        p.Controls.Add(_btnDbTest);
+        p.Controls.Add(new Label { Text = "  ", AutoSize = true });
+        p.Controls.Add(_lblDbTestResult);
+        return p;
+    }
+
     #endregion
 
     #region 配置加载与保存
@@ -395,6 +423,54 @@ public sealed class SettingsForm : Form
         catch
         {
             // 状态刷新失败时静默，不影响其他 UI
+        }
+    }
+
+    // v2.13.32-hotfix: 测试连接按钮（不保存任何东西，仅验证当前填写的字段）
+    // 密码留空时使用哨兵 "unchanged"，由 AppConfigManager.ResolveUnchangedPasswordAsync 替换为旧密码
+    private async Task BtnDbTestAsync()
+    {
+        try
+        {
+            _btnDbTest.Enabled = false;
+            _lblDbTestResult.Text = "正在测试...";
+            _lblDbTestResult.ForeColor = Color.Gray;
+
+            var provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer";
+            var dbDto = new DatabaseConfigDto
+            {
+                Provider = provider,
+                DbServer = _txtDbServer.Text.Trim(),
+                DbPort = (int)_numDbPort.Value,
+                DbName = _txtDbName.Text.Trim(),
+                DbUser = _txtDbUser.Text.Trim(),
+                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text,
+                SqlitePath = _txtSqlitePath.Text.Trim()
+            };
+
+            var (ok, msg) = await AppConfigManager.Instance.TestDbConnectionAsync(dbDto);
+            if (ok)
+            {
+                _lblDbTestResult.Text = "✓ " + msg;
+                _lblDbTestResult.ForeColor = Color.FromArgb(40, 167, 69);
+                _log.Info($"[DB-TEST] 连接成功：Provider={provider}, Server={dbDto.DbServer}, Db={dbDto.DbName}");
+            }
+            else
+            {
+                _lblDbTestResult.Text = "✕ " + msg;
+                _lblDbTestResult.ForeColor = Color.FromArgb(220, 53, 69);
+                _log.Warn($"[DB-TEST] 连接失败：Provider={provider}, Server={dbDto.DbServer}, Db={dbDto.DbName}, Msg={msg}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _lblDbTestResult.Text = "✕ " + ex.Message;
+            _lblDbTestResult.ForeColor = Color.FromArgb(220, 53, 69);
+            _log.Error("[DB-TEST] 异常", ex);
+        }
+        finally
+        {
+            _btnDbTest.Enabled = true;
         }
     }
 

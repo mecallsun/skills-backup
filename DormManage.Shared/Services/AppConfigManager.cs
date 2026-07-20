@@ -216,9 +216,12 @@ public class AppConfigManager
                 _current = newConfig;
 
                 // Step 5: 写入数据库 (此处需要 DbContext，通过回调实现)
+                // v2.13.32-hotfix BUG: 之前传的是 encrypted（DbPassword=AES 密文），导致 BuildConnectionString()
+                // 把密文当明文密码，SQL Server 认证失败，后台任务静默失败，SysParameter 表从未更新
+                // 修复：传 newConfig（明文 DbPassword），让 WriteToDatabaseAsync 用新配置去写 SysParameter
                 _ = Task.Run(async () =>
                 {
-                    try { await WriteToDatabaseAsync(encrypted); }
+                    try { await WriteToDatabaseAsync(newConfig); }
                     catch (Exception ex) { Console.WriteLine($"[AppConfigManager] DB 写入失败: {ex.Message}"); }
                 });
 
