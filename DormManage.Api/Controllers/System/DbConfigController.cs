@@ -126,4 +126,47 @@ public class DbConfigController : ControllerBase
             return ApiResponse<DatabaseHealthReport>.Fail("DEEP_TEST_FAILED", ex.Message);
         }
     }
+
+    /// <summary>
+    /// v2.13.32 运行时重载（手动触发，从文件 + DB 重新加载最新配置）
+    /// 通常由 SaveConfig 内部自动调用（AppConfigManager.ApplyExternalConfiguration）；
+    /// 本接口用于运维手动热切换场景。
+    /// </summary>
+    [HttpPost("runtime-reload")]
+    public ApiResponse Reload()
+    {
+        try
+        {
+            AppConfigRuntime.Instance.Reload();
+            return ApiResponse.Ok("运行时配置已重载");
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.Fail("RELOAD_FAILED", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// v2.13.32 运行时连接信息（页头连接健康徽章轮询用）
+    /// </summary>
+    [HttpGet("runtime-info")]
+    public ApiResponse<object> RuntimeInfo()
+    {
+        try
+        {
+            var cfg = AppConfigRuntime.Instance.GetCurrent();
+            return ApiResponse<object>.Ok(new
+            {
+                provider = cfg.Provider,
+                server = cfg.DbServer,
+                database = cfg.DbName,
+                // 安全：仅暴露非敏感信息（user/password 永远不返回）
+                lastReloadedAt = AppConfigRuntime.Instance.LastReloadedAt
+            });
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<object>.Fail("INFO_FAILED", ex.Message);
+        }
+    }
 }

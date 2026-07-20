@@ -505,20 +505,14 @@ public sealed class SettingsForm : Form
             _config.Update(newConfig);
             _log.Info($"配置已保存：ApiPort={apiPort}, AdminPort={adminPort}, Provider={provider}, DbServer={dbDto.DbServer}");
 
-            var ok = MessageBox.Show(this,
-                "数据库配置已保存并写入 SysParameter 表。是否立即重启服务以使配置生效？",
-                "保存成功",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-            if (ok == DialogResult.Yes)
-            {
-                try { await _process.RestartAllAsync(); }
-                catch (Exception ex)
-                {
-                    _log.Error("保存后重启失败", ex);
-                    ShowError($"重启失败：{ex.Message}");
-                }
-            }
+            // v2.13.32：热加载架构 - 保存后 Api/Admin 下次请求自动切换连接，无需重启
+            // AppConfigManager.SaveConfigurationAsync 已自动触发 AppConfigRuntime.ApplyExternalConfiguration
+            // 子进程通过 db_setting.json FileSystemWatcher 监听变更（DatabaseConfigFileWatcher.cs）
+            MessageBox.Show(this,
+                "数据库配置已热加载，无需重启服务。\n\n所有 Api/Admin 进程的下一次 HTTP 请求将自动切换到新连接。\nSysParameter 表已在后台任务中同步更新。",
+                "保存成功 (v2.13.32 热加载)",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
 
             DialogResult = DialogResult.OK;
             Close();

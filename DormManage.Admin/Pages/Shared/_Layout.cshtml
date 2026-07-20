@@ -339,9 +339,13 @@
         <a href="/" class="brand">
             <i class="bi bi-droplet-half brand-icon"></i>
             <span class="brand-text">金戈宿舍管理系统</span>
-            <span class="brand-version">v2.13.31</span>
+            <span class="brand-version">v2.13.32</span>
         </a>
         <div class="user-area">
+            <!-- v2.13.32：连接健康徽章（每 30s 轮询 runtime-info） -->
+            <span id="dbIndicator" class="badge bg-info" title="点击刷新数据库连接信息" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                <i class="bi bi-database"></i> <span id="dbIndicatorText">加载中...</span>
+            </span>
             <a href="/Account/Profile" class="user-pill">
                 <i class="bi bi-person-circle"></i>
                 @displayName
@@ -417,6 +421,30 @@
                 }
             }
         });
+
+        // v2.13.32：连接健康徽章轮询 + 点击刷新
+        (function() {
+            var elText = document.getElementById('dbIndicatorText');
+            var elBadge = document.getElementById('dbIndicator');
+            if (!elText || !elBadge) return;
+            function loadRuntimeInfo() {
+                fetch('/api/v1/system/dbconfig/runtime-info')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(j) {
+                        if (j && j.success && j.data) {
+                            elText.textContent = (j.data.server || '?') + '/' + (j.data.database || '?');
+                            elBadge.title = 'Provider: ' + j.data.provider + '\n最后重载: ' + new Date(j.data.lastReloadedAt).toLocaleString();
+                        } else {
+                            elText.textContent = '离线';
+                        }
+                    })
+                    .catch(function() { elText.textContent = '离线'; });
+            }
+            loadRuntimeInfo();
+            setInterval(loadRuntimeInfo, 30000);
+            elBadge.addEventListener('click', loadRuntimeInfo);
+            window.refreshDbIndicator = loadRuntimeInfo;
+        })();
     </script>
 </body>
 </html>

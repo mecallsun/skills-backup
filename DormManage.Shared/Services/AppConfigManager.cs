@@ -7,11 +7,14 @@ namespace DormManage.Shared.Services;
 
 /// <summary>
 /// 统一配置中心服务（v2.13.19 数据库连接双 UI 双向同步机制核心）
+/// v2.13.32 增强：增加 Current 同步属性、ApplyExternalConfiguration 入口，
+///             保存后自动触发 AppConfigRuntime.Reload() 实现热加载
 ///
 /// 设计要点：
 /// - 单例：全应用进程一个实例，避免读写竞争
 /// - 双擎持久化：先写本地文件（崩溃保险）→ 再写 SQL Server SysParameter 表
 /// - 触发广播：保存成功后触发 OnDatabaseConfigUpdated 事件订阅者
+/// - 热加载链路：SaveConfigurationAsync → Current = encrypted → AppConfigRuntime.Reload()
 /// </summary>
 public class AppConfigManager
 {
@@ -21,11 +24,75 @@ public class AppConfigManager
     private readonly string _filePath;
     private readonly object _lock = new();
 
+    // v2.13.32：进程内缓存最新配置（volatile + lock 双重保险）
+    // 关键：保存成功后立即更新此字段；FileWatcher / IPC 触发时也更新
+    private volatile DatabaseConfigDto? _current;
+
     /// <summary>
     /// 数据库配置变更事件（订阅者: Web 端 SignalR Hub、TrayApp UI Dispatcher）
     /// 事件参数为完整 DatabaseConfigDto（含 AES-256 加密后的密码）
     /// </summary>
     public event EventHandler<DatabaseConfigDto>? OnDatabaseConfigUpdated;
+
+    /// <summary>
+    /// v2.13.32 同步访问当前配置（无 IO，立即返回）
+    /// IDbContextFactory 在每次 CreateDbContext 时调用此属性获取最新连接串
+    /// 首次访问触发 lazy load（从 db_setting.json 或 SysParameter 表读取）
+    /// </summary>
+    public DatabaseConfigDto Current
+    {
+        get
+        {
+            if (_current is not null) return _current;
+            lock (_lock)
+            {
+                _current ??= LoadFromFileInternal() ?? BuildFallback();
+            }
+            return _current!;
+        }
+    }
+
+    /// <summary>
+    /// v2.13.32 外部注入配置（FileWatcher / IPC / 测试场景直接调用，不读文件）
+    /// 与 SaveConfigurationAsync 的区别：本方法不写文件、不写 DB、不触发文件 IO
+    /// 仅更新内存缓存 + 触发 OnDatabaseConfigUpdated 事件
+    /// </summary>
+    public void ApplyExternalConfiguration(DatabaseConfigDto config)
+    {
+        if (config is null) throw new ArgumentNullException(nameof(config));
+        lock (_lock)
+        {
+            _current = config;
+        }
+        try
+        {
+            OnDatabaseConfigUpdated?.Invoke(this, config);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AppConfigManager] ApplyExternalConfiguration 订阅者异常: {ex.Message}");
+        }
+        // 同步触发 AppConfigRuntime 重载（v2.13.32：让 IDbContextFactory 下次 CreateDbContext 拿到新配置）
+        try { AppConfigRuntime.Instance.ApplyExternalConfiguration(config); }
+        catch (Exception ex) { Console.WriteLine($"[AppConfigManager] AppConfigRuntime.Apply 异常: {ex.Message}"); }
+    }
+
+    /// <summary>
+    /// 硬编码兜底默认（v2.13.22 统一值）
+    /// </summary>
+    private static DatabaseConfigDto BuildFallback()
+    {
+        return new DatabaseConfigDto
+        {
+            Provider = "SqlServer",
+            DbServer = "192.168.1.237",
+            DbPort = 1433,
+            DbName = "WaterMeterDB",
+            DbUser = "__DB_USER__",
+            DbPassword = "__DB_PASSWORD__",
+            SqlitePath = string.Empty
+        };
+    }
 
     private AppConfigManager()
     {
@@ -145,6 +212,9 @@ public class AppConfigManager
                 File.WriteAllText(tempPath, json);
                 File.Move(tempPath, _filePath, overwrite: true);
 
+                // v2.13.32：保存成功后立即更新内存缓存（用解密版 newConfig，因为后续 BuildConnectionString 需要明文密码）
+                _current = newConfig;
+
                 // Step 5: 写入数据库 (此处需要 DbContext，通过回调实现)
                 _ = Task.Run(async () =>
                 {
@@ -152,10 +222,14 @@ public class AppConfigManager
                     catch (Exception ex) { Console.WriteLine($"[AppConfigManager] DB 写入失败: {ex.Message}"); }
                 });
 
-                // Step 6: 触发广播
+                // Step 6: 触发广播（订阅者：托盘 UI / 信号推送）
                 OnDatabaseConfigUpdated?.Invoke(this, encrypted);
 
-                return (true, "数据库配置保存成功（本地文件已同步，数据库记录已写入后台任务）");
+                // v2.13.32 热加载链路：保存成功后触发 Runtime 重载，让 IDbContextFactory 下次 CreateDbContext 拿到新连接串
+                try { AppConfigRuntime.Instance.ApplyExternalConfiguration(newConfig); }
+                catch (Exception ex) { Console.WriteLine($"[AppConfigManager] AppConfigRuntime.Apply 异常: {ex.Message}"); }
+
+                return (true, "数据库配置保存成功（已热加载，所有页面下次请求自动切换到新连接，无需重启服务）");
             }
             catch (Exception ex)
             {
@@ -166,31 +240,47 @@ public class AppConfigManager
 
     /// <summary>
     /// 异步读取当前配置（优先文件，其次数据库）
+    /// v2.13.32：同时刷新 _current 内存缓存，确保 FileWatcher 等场景下一致性
     /// </summary>
     public async Task<DatabaseConfigDto?> LoadAsync(Func<DatabaseConfigDto>? sqlFallback = null)
     {
-        lock (_lock)
+        var loaded = LoadFromFileInternal();
+        if (loaded is not null)
         {
-            if (File.Exists(_filePath))
-            {
-                try
-                {
-                    var json = File.ReadAllText(_filePath);
-                    var config = JsonSerializer.Deserialize<DatabaseConfigDto>(json, new JsonSerializerOptions
-                    {
-                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                    });
-                    if (config != null) return DecryptConfig(config);
-                }
-                catch (IOException ex)
-                {
-                    Console.WriteLine($"[AppConfigManager] IO 异常: {ex.Message}");
-                }
-            }
+            lock (_lock) { _current = loaded; }
+            return loaded;
         }
 
         // 文件不存在 → 返回数据库 fallback
-        return sqlFallback != null ? DecryptConfig(sqlFallback.Invoke()) : null;
+        var fallback = sqlFallback != null ? DecryptConfig(sqlFallback.Invoke()) : null;
+        if (fallback is not null)
+        {
+            lock (_lock) { _current = fallback; }
+        }
+        return fallback;
+    }
+
+    /// <summary>
+    /// v2.13.32：内部同步文件读取（Current 属性 lazy load 使用）
+    /// 必须已持有 _lock 才会调用 → 不再加锁
+    /// </summary>
+    private DatabaseConfigDto? LoadFromFileInternal()
+    {
+        if (!File.Exists(_filePath)) return null;
+        try
+        {
+            var json = File.ReadAllText(_filePath);
+            var config = JsonSerializer.Deserialize<DatabaseConfigDto>(json, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+            return config is null ? null : DecryptConfig(config);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[AppConfigManager] LoadFromFileInternal 异常: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>

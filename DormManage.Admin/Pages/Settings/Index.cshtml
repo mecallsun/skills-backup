@@ -709,9 +709,10 @@
         }
 
         // 保存配置（真实 HTTP 调用 → 触发双 UI 广播）
+        // v2.13.32 热加载：保存成功后自动调用 /runtime-reload，连接立即切换无需重启
         async function saveDbConfig() {
             const box = document.getElementById('dbConfigResult');
-            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在保存...</div>';
+            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在保存并热加载...</div>';
 
             const payload = {
                 provider: document.getElementById('dbProvider').value,
@@ -731,8 +732,14 @@
                 });
                 const json = await res.json();
                 if (json.success) {
-                    box.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> ${json.message}</div>`;
-                    // 触发 TrayApp IPC 同步广播
+                    // v2.13.32：保存成功 → 触发 runtime-reload（确保整个 Api/Admin 进程立即切换）
+                    try {
+                        await fetch(DB_API + '/runtime-reload', { method: 'POST' });
+                    } catch (e) { /* 失败不影响主流程 */ }
+                    // v2.13.32：刷新顶部连接健康徽章
+                    if (typeof refreshDbIndicator === 'function') refreshDbIndicator();
+                    box.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-lightning-charge-fill"></i> <strong>${json.message}</strong><br/><small class="text-muted">所有页面下次刷新自动使用新连接，无需重启服务。</small></div>`;
+                    // 触发 TrayApp IPC 同步广播（兼容托盘端 SettingsForm）
                     fetchTrayIpc('dbconfig.updated', payload);
                 } else {
                     box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;

@@ -342,7 +342,10 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 if (refreshed is not null)
                     _config.UpdateDatabaseSection(refreshed);
 
-                _log.Info($"IPC setdbconfig/dbconfig.updated 成功：Provider={dto.Provider}, Server={dto.DbServer}, Db={dto.DbName}");
+                // v2.13.32：保存成功后 AppConfigManager 已自动触发 AppConfigRuntime.ApplyExternalConfiguration
+                // 所有 Api/Admin 进程的下次 HTTP 请求自动走新连接，无需重启
+                // 数据库配置变化对子进程（Api/Admin）通过 db_setting.json FileSystemWatcher 自动同步
+                _log.Info($"IPC setdbconfig/dbconfig.updated 成功并已热加载：Provider={dto.Provider}, Server={dto.DbServer}, Db={dto.DbName}（Api/Admin 下次请求自动切换）");
             }
 
             respond(new ServiceIpc.IpcResponse { Success = ok, Message = msg });

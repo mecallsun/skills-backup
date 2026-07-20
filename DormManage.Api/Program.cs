@@ -16,34 +16,38 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 配置数据库（v2.12.42 BUGFIX: 支持 SQLite/SQL Server 切换）
-// v2.13.28 CRITICAL FIX: dbProvider 优先从环境变量推断（托盘进程注入）
-var envConnStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN");
-var envDbPath = Environment.GetEnvironmentVariable("DormManage_DB_PATH");
-var envProvider = Environment.GetEnvironmentVariable("DormManage_DB_PROVIDER");
+// v2.13.32 数据源热加载架构：
+// AddDbContextFactory 替代 AddDbContext，每次 CreateDbContext() 都从 AppConfigRuntime 读取最新配置
+// 保留 AddScoped<DormDbContext> 让现有 Service / Page / Controller 构造函数签名零改动
+// 切换连接 → AppConfigRuntime.ApplyExternalConfiguration → 下次 HTTP 请求自动用新连接
+//
+// 配置回退优先级（AppConfigRuntime 内部 4 级回退）：
+//   1. SysParameter 表（运行时真源 - 后续版本支持）
+//   2. db_setting.json（AES-256 字段式）
+//   3. appsettings.json ConnectionStrings.Default
+//   4. 硬编码默认 192.168.1.237/WaterMeterDB/__DB_USER__/__DB_PASSWORD__
+//
+// 环境变量优先级仅作为冷启动兜底（首次启动 db_setting.json 不存在时）
 
-var effectiveProvider = !string.IsNullOrEmpty(envProvider)
-    ? envProvider
-    : (!string.IsNullOrEmpty(envConnStr) ? "SqlServer"
-    : (!string.IsNullOrEmpty(envDbPath) ? "Sqlite"
-    : (builder.Configuration["Database:Provider"] ?? "SqlServer")));
-
-var configConnStr = builder.Configuration.GetConnectionString("Default");
-var connectionString = !string.IsNullOrEmpty(envConnStr) ? envConnStr
-    : (configConnStr ?? "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;");
-
-builder.Services.AddDbContext<DormDbContext>(options =>
+var contentRootPath = builder.Environment.ContentRootPath;
+builder.Services.AddDbContextFactory<DormDbContext>((sp, options) =>
 {
-    if (effectiveProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+    // 关键：每次 CreateDbContext 都从 Runtime 读取最新配置
+    var cfg = AppConfigRuntime.Instance.GetCurrent();
+
+    if (string.Equals(cfg.Provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
     {
-        var dbPath = Path.Combine(builder.Environment.ContentRootPath, "dorm.db");
-        options.UseSqlite($"Data Source={dbPath}");
+        var sqlitePath = !string.IsNullOrWhiteSpace(cfg.SqlitePath)
+            ? cfg.SqlitePath
+            : Path.Combine(contentRootPath, "dorm.db");
+        options.UseSqlite($"Data Source={sqlitePath}");
     }
     else
     {
         // 默认 SQL Server（生产）
         // v2.12.42 BUGFIX: 兼容 SQL Server 2014，使用低版本兼容级别（避免 OPENJSON 等 2016+ 特性）
-        options.UseSqlServer(connectionString, sqlOptions =>
+        // v2.13.32: cfg.BuildConnectionString() 始终返回最新保存的连接串
+        options.UseSqlServer(cfg.BuildConnectionString(), sqlOptions =>
         {
             sqlOptions.UseCompatibilityLevel(120);  // SQL Server 2014 兼容级别
             // 缩短重试参数，避免启动期长时间阻塞
@@ -54,7 +58,23 @@ builder.Services.AddDbContext<DormDbContext>(options =>
             sqlOptions.CommandTimeout(10);  // 单条命令 10s 超时
         });
     }
+
+    // v2.13.32: 注入 EF Interceptor（连接/命令日志）
+    var interceptor = sp.GetService<DormManage.Shared.Data.Interceptors.DatabaseOperationInterceptor>();
+    if (interceptor is not null)
+        options.AddInterceptors(interceptor);
 });
+
+// 保留 Scoped DbContext 注入（调用方零改动；容器负责 Dispose factory.CreateDbContext() 返回的实例）
+builder.Services.AddScoped<DormDbContext>(sp =>
+    sp.GetRequiredService<IDbContextFactory<DormDbContext>>().CreateDbContext());
+
+// v2.13.32: 注册 EF Interceptor 与运行时配置中心
+builder.Services.AddSingleton<DormManage.Shared.Data.Interceptors.DatabaseOperationInterceptor>();
+builder.Services.AddSingleton<IAppConfigRuntime>(sp => AppConfigRuntime.Instance);
+
+// v2.13.32: 注册 FileSystemWatcher 跨进程同步（监听 db_setting.json 变更）
+builder.Services.AddHostedService<DatabaseConfigFileWatcher>();
 
 // 注册服务
 builder.Services.AddScoped<IBasicsService, BasicsService>();
@@ -77,6 +97,9 @@ builder.Services.AddHostedService<DataCleanupHostedService>();
 
 var app = builder.Build();
 
+// v2.13.32 热加载：启动时同步预热 AppConfigRuntime（避免首个请求触发 lazy load 阻塞）
+AppConfigRuntime.Instance.GetCurrent();
+
 // v2.13.25：启动同步校验 + 数据库初始化（Kestrel 绑定前）
 // 1) 数据库连通性、关键表检测、字典种子、管理员种子、AppVersion 登记
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
@@ -86,7 +109,9 @@ var startupReport = await DatabaseInitializer.InitializeAsync(
 app.Logger.LogInformation(startupReport.ToBanner());
 
 // 确保数据库创建（仅 SQLite 需要；SQL Server 假定数据库已存在）
-if (effectiveProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+// v2.13.32: 改为运行时真源 AppConfigRuntime
+var runtimeProvider = AppConfigRuntime.Instance.GetCurrent().Provider;
+if (string.Equals(runtimeProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
 {
     using (var scope = app.Services.CreateScope())
     {
@@ -113,6 +138,6 @@ app.UseSwaggerUI();
 
 app.MapControllers();
 
-app.Logger.LogInformation("DormManage.Api 启动成功 - DB Provider: {Provider}, Port: {Port}", effectiveProvider, kestrelPort);
+app.Logger.LogInformation("DormManage.Api 启动成功 - DB Provider: {Provider}, Port: {Port}", runtimeProvider, kestrelPort);
 
 app.Run();
