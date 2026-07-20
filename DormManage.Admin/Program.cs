@@ -92,6 +92,13 @@ builder.Services.AddHttpContextAccessor();  // Cookie 认证需要 IHttpContextA
 
 var app = builder.Build();
 
+// v2.13.25：启动同步校验 + 数据库初始化（Kestrel 绑定前）
+var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
+    .CreateLogger("Startup");
+var startupReport = await DatabaseInitializer.InitializeAsync(
+    app.Services, startupLogger, CancellationToken.None);
+app.Logger.LogInformation(startupReport.ToBanner());
+
 // v2.12.44: 显式绑定 Kestrel 到托盘注入的端口（修复 5000 vs 5001 问题）
 var kestrelPort = Environment.GetEnvironmentVariable("DormManage_KESTREL_PORT") ?? "5001";
 app.Urls.Clear();

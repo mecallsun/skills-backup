@@ -61,10 +61,18 @@ builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 // 注册 v2.11.24 数据清洗后台服务（启动时一次性 FK 归一）
 // 规范文档：00-方案文档/43-无效FK归一通用规范-v2.11.24.md
 // v2.12.44: 改为后台服务（StartAsync 立即返回，真正工作在 ExecuteAsync 中执行）
-// 原版用 IHostedService 会阻塞 Kestrel 绑定端口
+// v2.13.25: 延迟从 30s 调整为 5s（启动机制保证表已就绪）
 builder.Services.AddHostedService<DataCleanupHostedService>();
 
 var app = builder.Build();
+
+// v2.13.25：启动同步校验 + 数据库初始化（Kestrel 绑定前）
+// 1) 数据库连通性、关键表检测、字典种子、管理员种子、AppVersion 登记
+var startupLogger = app.Services.GetRequiredService<ILoggerFactory>()
+    .CreateLogger("Startup");
+var startupReport = await DatabaseInitializer.InitializeAsync(
+    app.Services, startupLogger, CancellationToken.None);
+app.Logger.LogInformation(startupReport.ToBanner());
 
 // 确保数据库创建（仅 SQLite 需要；SQL Server 假定数据库已存在）
 if (dbProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
