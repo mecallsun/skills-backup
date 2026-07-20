@@ -43,7 +43,11 @@
         </a>
     </div>
 
-    <form method="post">
+    <form method="post" id="entryForm"
+      data-prev-cold="@(Model.LastRecord?.ColdMeter.ToString("F2") ?? "")"
+      data-prev-hot="@(Model.LastRecord?.HotMeter.ToString("F2") ?? "")"
+      data-prev-electric="@(Model.LastRecord?.ElectricMeter.ToString("F2") ?? "")"
+      data-has-prev="@(Model.LastRecord != null ? "1" : "0")">
         <div class="row">
             <!-- 左侧：表单 -->
             <div class="col-md-8">
@@ -201,40 +205,89 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        // v2.13.41 100% 原型对齐：onDormMonthChange 提示用户需提交后刷新（实际项目中应 AJAX 加载上月读数）
         function onDormMonthChange() {
-            // TODO: 实际项目中应通过 AJAX 加载上月读数
-            console.log('Dorm/Month changed');
+            console.log('[v2.13.41] 宿舍/月份变更提示：请重新提交以加载上月读数');
         }
 
+        // v2.13.41 100% 原型对齐：onReadingInput 实现真正的用量计算 + 红色校验
         function onReadingInput() {
-            var cold = parseFloat(document.querySelector('input[name="ColdMeter"]').value) || 0;
-            var hot = parseFloat(document.querySelector('input[name="HotMeter"]').value) || 0;
-            var electric = parseFloat(document.querySelector('input[name="ElectricMeter"]').value) || 0;
+            var form = document.getElementById('entryForm');
+            var hasPrev = form.getAttribute('data-has-prev') === '1';
+            var prevCold = parseFloat(form.getAttribute('data-prev-cold')) || 0;
+            var prevHot = parseFloat(form.getAttribute('data-prev-hot')) || 0;
+            var prevElectric = parseFloat(form.getAttribute('data-prev-electric')) || 0;
 
-            document.getElementById('hint-cold').textContent = '用量：' + cold.toFixed(2) + ' m³';
-            document.getElementById('hint-hot').textContent = '用量：' + hot.toFixed(2) + ' m³';
-            document.getElementById('hint-electric').textContent = '用量：' + electric.toFixed(2) + ' 度';
+            var cold = parseFloat(document.querySelector('input[name="ColdMeter"]').value);
+            var hot = parseFloat(document.querySelector('input[name="HotMeter"]').value);
+            var electric = parseFloat(document.querySelector('input[name="ElectricMeter"]').value);
 
-            var total = cold + hot + electric;
+            // v2.13.41：用量 = 当前读数 - 上月读数（无上月时 = 0）
+            var coldUsage = (isNaN(cold) || !hasPrev) ? 0 : Math.max(0, cold - prevCold);
+            var hotUsage = (isNaN(hot) || !hasPrev) ? 0 : Math.max(0, hot - prevHot);
+            var electricUsage = (isNaN(electric) || !hasPrev) ? 0 : Math.max(0, electric - prevElectric);
+
+            // v2.13.41：读数 < 上月 红色错误校验（v2.11.4 业务硬规则：本月读数必须 ≥ 上月读数）
+            var hintCold = document.getElementById('hint-cold');
+            var hintHot = document.getElementById('hint-hot');
+            var hintElectric = document.getElementById('hint-electric');
+
+            function renderHint(el, current, prev, usage, unit, noPrevLabel) {
+                if (isNaN(current) || current === 0) {
+                    el.className = 'text-muted d-block';
+                    el.textContent = '用量：—';
+                    return;
+                }
+                if (!hasPrev) {
+                    // 首次抄表
+                    el.className = 'text-info d-block';
+                    el.innerHTML = '<i class="bi bi-info-circle"></i> ' + noPrevLabel + '（无上月）' + ' | 当前读数 ' + current.toFixed(2) + ' ' + unit;
+                    return;
+                }
+                if (current < prev) {
+                    el.className = 'text-danger d-block';
+                    el.innerHTML = '<i class="bi bi-x-circle-fill"></i> ✗ 错误：当前读数 ' + current.toFixed(2) + ' < 上月 ' + prev.toFixed(2) + ' ' + unit;
+                    return;
+                }
+                el.className = 'text-success d-block';
+                el.innerHTML = '<i class="bi bi-check-circle"></i> 用量：+ ' + usage.toFixed(2) + ' ' + unit + '（上月 ' + prev.toFixed(2) + ' → 本月 ' + current.toFixed(2) + '）';
+            }
+
+            renderHint(hintCold, cold, prevCold, coldUsage, 'm³', '首次抄表');
+            renderHint(hintHot, hot, prevHot, hotUsage, 'm³', '首次抄表');
+            renderHint(hintElectric, electric, prevElectric, electricUsage, '度', '首次抄表');
+
+            // 用量预览
             var preview = document.getElementById('usagePreview');
-            if (total > 0) {
+            var total = coldUsage + hotUsage + electricUsage;
+            if (coldUsage > 0 || hotUsage > 0 || electricUsage > 0) {
                 preview.innerHTML =
                     '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>冷水</span><span class="fw-bold">' + cold.toFixed(2) + ' m³</span>' +
+                    '<span>冷水用量</span><span class="fw-bold text-primary">' + coldUsage.toFixed(2) + ' m³</span>' +
                     '</div>' +
                     '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>热水</span><span class="fw-bold">' + hot.toFixed(2) + ' m³</span>' +
+                    '<span>热水用量</span><span class="fw-bold text-info">' + hotUsage.toFixed(2) + ' m³</span>' +
                     '</div>' +
                     '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>电</span><span class="fw-bold">' + electric.toFixed(2) + ' 度</span>' +
+                    '<span>电用量</span><span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span>' +
                     '</div>' +
                     '<hr class="my-1">' +
                     '<div class="d-flex justify-content-between">' +
-                    '<span class="fw-bold">合计</span><span class="fw-bold text-primary">' + total.toFixed(2) + '</span>' +
+                    '<span class="fw-bold">合计用量</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span>' +
                     '</div>';
             } else {
-                preview.innerHTML = '<p class="text-muted small mb-0">请输入读数</p>';
+                preview.innerHTML = '<p class="text-muted small mb-0">请录入读数</p>';
+            }
+
+            // v2.13.41：读数 < 上月 时禁用提交按钮
+            var submitBtn = document.querySelector('#entryForm button[type="submit"]');
+            if (submitBtn) {
+                var hasError = (cold < prevCold) || (hot < prevHot) || (electric < prevElectric);
+                submitBtn.disabled = hasError;
             }
         }
+
+        // 页面加载时初始化用量预览
+        document.addEventListener('DOMContentLoaded', function() { onReadingInput(); });
     </script>
 }

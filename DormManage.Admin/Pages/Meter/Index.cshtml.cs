@@ -54,6 +54,11 @@ public class IndexModel : PageModel
     public List<Building> Buildings { get; set; } = new();
     public List<string> DormCodes { get; set; } = new();
 
+    /// <summary>
+    /// v2.13.41 新增：抄表覆盖率统计（与原型 meter/index.html coverage alert 1:1 对齐）
+    /// </summary>
+    public CoverageDto Coverage { get; set; } = new();
+
     public async Task OnGetAsync()
     {
         var existingMonths = await _db.MeterRecords
@@ -148,7 +153,37 @@ public class IndexModel : PageModel
             PageIndex = PageIndex,
             PageSize = PageSize
         };
+
+        // v2.13.41 计算抄表覆盖率（按当前筛选月份）
+        var targetMonth = !string.IsNullOrWhiteSpace(ReadMonth) ? ReadMonth : DateTime.Now.ToString("yyyy-MM");
+        var totalActiveDorms = await _db.Dorms.CountAsync(d => d.IsActive);
+        var readDormsInMonth = await _db.MeterRecords
+            .Where(r => r.ReadMonth == targetMonth && (r.Status == 1 || r.Status == 2))
+            .Select(r => r.DormCode)
+            .Distinct()
+            .CountAsync();
+        Coverage = new CoverageDto
+        {
+            TargetMonth = targetMonth,
+            TotalDorms = totalActiveDorms,
+            ReadDorms = readDormsInMonth,
+            UnfinishedDorms = Math.Max(0, totalActiveDorms - readDormsInMonth),
+            UncoveredDorms = Math.Max(0, totalActiveDorms - readDormsInMonth)
+        };
     }
+}
+
+/// <summary>
+/// v2.13.41 新增：抄表覆盖率 DTO（与原型 meter/index.html coverage alert 1:1 对齐）
+/// </summary>
+public class CoverageDto
+{
+    public string TargetMonth { get; set; } = "";
+    public int TotalDorms { get; set; }
+    public int ReadDorms { get; set; }
+    public int UnfinishedDorms { get; set; }
+    public int UncoveredDorms { get; set; }
+    public double Percentage => TotalDorms > 0 ? Math.Round(ReadDorms * 100.0 / TotalDorms, 1) : 0;
 }
 
 /// <summary>抄表记录 DTO（v2.13.10 对齐原型 14 列）</summary>

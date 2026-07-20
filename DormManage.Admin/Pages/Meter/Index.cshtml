@@ -26,6 +26,29 @@
         }
     })
 
+    @* v2.13.41 100% 原型对齐：抄表覆盖率进度 alert *@
+    <div class="alert alert-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger") d-flex justify-content-between align-items-center mb-3" role="alert">
+        <div>
+            <i class="bi bi-pie-chart-fill"></i>
+            <strong>@Model.Coverage.TargetMonth</strong> 抄表进度：
+            已抄 <strong class="fs-5">@Model.Coverage.ReadDorms</strong> / <strong>@Model.Coverage.TotalDorms</strong> 间
+            （<strong>@Model.Coverage.Percentage%</strong>）
+            @if (Model.Coverage.UnfinishedDorms > 0)
+            {
+                <span class="ms-2">· 未完成 <strong class="text-danger">@Model.Coverage.UnfinishedDorms</strong> 间</span>
+            }
+            @if (Model.Coverage.UncoveredDorms > 0)
+            {
+                <span class="ms-2">· 未覆盖 <strong class="text-warning">@Model.Coverage.UncoveredDorms</strong> 间</span>
+            }
+        </div>
+        <div class="progress" style="width: 200px; height: 12px;">
+            <div class="progress-bar bg-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger")"
+                 role="progressbar" style="width: @Model.Coverage.Percentage%"
+                 aria-valuenow="@Model.Coverage.Percentage" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </div>
+
     <!-- 筛选条件区域（一行排列，响应式） -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="meter">
         <div class="card-body py-2">

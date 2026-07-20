@@ -6,6 +6,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Meter;
 
+/// <summary>
+/// 抄表记录详情页面模型（v2.13.41 100% 原型对齐）
+///
+/// 改造点（vs 原型 meter/detail.html）：
+/// 1. 补 CreatedAt（ServerCreatedAt）/ DeviceSn / ReadDate 字段
+/// 2. 补 CorrectionReason / CorrectedBy 字段（用于 Remark 历史格式化）
+/// 3. 提供按状态的操作按钮上下文（StatusAction 可用性）
+/// </summary>
 public class DetailModel : PageModel
 {
     private readonly DormDbContext _db;
@@ -18,6 +26,11 @@ public class DetailModel : PageModel
     public MeterRecordDetailDto Record { get; set; } = new();
     public UsageInfo Usage { get; set; } = new();
     public ComparisonInfo? Comparison { get; set; }
+
+    /// <summary>
+    /// v2.13.41 新增：详情页操作上下文（按状态决定可用按钮）
+    /// </summary>
+    public DetailActions Actions { get; set; } = new();
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -39,7 +52,14 @@ public class DetailModel : PageModel
             Operator = record.Operator,
             Status = record.Status,
             StatusName = record.GetStatusName(),
-            Remark = record.Remark
+            Remark = record.Remark,
+            // v2.13.41 新增字段
+            DeviceSn = record.DeviceSn,
+            CreatedAt = record.ServerCreatedAt,
+            ReadDate = record.ReadDate,
+            CorrectionReason = record.CorrectionReason,
+            CorrectedBy = record.CorrectedBy,
+            CorrectedAt = record.CorrectedAt
         };
 
         // 计算用量 — 取该宿舍所有正常记录，在内存中找上月
@@ -60,11 +80,22 @@ public class DetailModel : PageModel
                 PreviousCold = prevRecord.ColdMeter,
                 PreviousHot = prevRecord.HotMeter,
                 PreviousElectric = prevRecord.ElectricMeter,
+                PreviousReadMonth = prevRecord.ReadMonth,
                 CurrentCold = record.ColdMeter,
                 CurrentHot = record.HotMeter,
                 CurrentElectric = record.ElectricMeter
             };
         }
+
+        // v2.13.41 新增：按状态决定操作按钮可用性
+        // Status: 0=草稿/占位, 1=正常, 2=已修正, 3=已取消
+        Actions = new DetailActions
+        {
+            CanDelete = record.Status == 0 || record.Status == 3,  // 草稿/取消可删
+            CanEdit = record.Status == 1,  // 仅正常记录可修正
+            CanReEntry = record.Status == 0 || record.Status == 3,  // 占位/取消可补录
+            CanCorrect = record.Status == 1 || record.Status == 2  // 正常/已修正可二次修正
+        };
 
         return Page();
     }
@@ -82,6 +113,14 @@ public class MeterRecordDetailDto
     public byte Status { get; set; }
     public string StatusName { get; set; } = "";
     public string? Remark { get; set; }
+
+    // v2.13.41 新增
+    public string? DeviceSn { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateOnly? ReadDate { get; set; }
+    public string? CorrectionReason { get; set; }
+    public string? CorrectedBy { get; set; }
+    public DateTime? CorrectedAt { get; set; }
 }
 
 public class UsageInfo
@@ -96,7 +135,19 @@ public class ComparisonInfo
     public decimal PreviousCold { get; set; }
     public decimal PreviousHot { get; set; }
     public decimal PreviousElectric { get; set; }
+    public string PreviousReadMonth { get; set; } = "";
     public decimal CurrentCold { get; set; }
     public decimal CurrentHot { get; set; }
     public decimal CurrentElectric { get; set; }
+}
+
+/// <summary>
+/// v2.13.41 新增：详情页操作按钮上下文
+/// </summary>
+public class DetailActions
+{
+    public bool CanDelete { get; set; }
+    public bool CanEdit { get; set; }
+    public bool CanReEntry { get; set; }
+    public bool CanCorrect { get; set; }
 }

@@ -4,102 +4,308 @@
     ViewData["Title"] = "抄表记录详情";
 }
 
-<div class="container-fluid px-4 py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0"><i class="bi bi-clipboard-data"></i> 抄表记录详情 <small class="text-muted">@Model.Record.DormCode / @Model.Record.ReadMonth</small></h2>
-        <a href="/Meter" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
-    </div>
-
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="text-muted small">宿舍号</label>
-                    <div class="fw-bold">@Model.Record.DormCode</div>
-                </div>
-                <div class="col-md-3">
-                    <label class="text-muted small">抄表月份</label>
-                    <div class="fw-bold">@Model.Record.ReadMonth</div>
-                </div>
-                <div class="col-md-3">
-                    <label class="text-muted small">操作员</label>
-                    <div class="fw-bold">@Model.Record.Operator</div>
-                </div>
-                <div class="col-md-3">
-                    <label class="text-muted small">状态</label>
-                    <div><span class="badge @(Model.Record.Status == 1 ? "bg-success" : Model.Record.Status == 2 ? "bg-warning text-dark" : "bg-secondary")">@Model.Record.StatusName</span></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">冷水表读数 (m³)</label>
-                    <div class="fw-bold fs-5">@Model.Record.ColdMeter</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">热水表读数 (m³)</label>
-                    <div class="fw-bold fs-5">@Model.Record.HotMeter</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">电表读数 (kWh)</label>
-                    <div class="fw-bold fs-5">@Model.Record.ElectricMeter</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">冷水用量</label>
-                    <div class="fw-bold text-primary">@Model.Usage.ColdUsage m³</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">热水用量</label>
-                    <div class="fw-bold text-primary">@Model.Usage.HotUsage m³</div>
-                </div>
-                <div class="col-md-4">
-                    <label class="text-muted small">用电用量</label>
-                    <div class="fw-bold text-primary">@Model.Usage.ElectricUsage kWh</div>
-                </div>
-                @if (!string.IsNullOrEmpty(Model.Record.Remark))
-                {
-                    <div class="col-12">
-                        <label class="text-muted small">备注</label>
-                        <div class="text-muted">@Model.Record.Remark</div>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    @if (Model.Comparison != null)
-    {
-        <div class="card">
-            <div class="card-header"><i class="bi bi-graph-up"></i> 用量对比</div>
-            <div class="card-body p-0">
-                <table class="table table-bordered mb-0">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>冷水(m³)</th>
-                            <th>热水(m³)</th>
-                            <th>电(kWh)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="fw-bold">上月</td>
-                            <td>@Model.Comparison.PreviousCold</td>
-                            <td>@Model.Comparison.PreviousHot</td>
-                            <td>@Model.Comparison.PreviousElectric</td>
-                        </tr>
-                        <tr class="table-primary">
-                            <td class="fw-bold">本月</td>
-                            <td>@Model.Comparison.CurrentCold</td>
-                            <td>@Model.Comparison.CurrentHot</td>
-                            <td>@Model.Comparison.CurrentElectric</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-bold">用量</td>
-                            <td class="text-success fw-bold">@Model.Usage.ColdUsage</td>
-                            <td class="text-success fw-bold">@Model.Usage.HotUsage</td>
-                            <td class="text-success fw-bold">@Model.Usage.ElectricUsage</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+@section Styles {
+<style>
+    /* v2.13.41 100% 原型对齐：左右分栏布局 */
+    .details-row { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 12px; }
+    .details-left { flex: 1 1 0; min-width: 0; }
+    .details-right { width: 320px; flex-shrink: 0; }
+    /* v2.13.41 数字样式：tabular-nums + 1.6rem */
+    .reading-big {
+        font-size: 1.6rem;
+        font-weight: bold;
+        font-variant-numeric: tabular-nums;
     }
+    /* v2.13.41 照片占位 */
+    .photo-ph {
+        height: 200px;
+        background: #1a1a1a;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+    }
+    .photo-ph .wm {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        font-size: 0.7rem;
+        opacity: 0.6;
+    }
+    /* v2.13.41 Remark 历史格式化 */
+    .remark-history { font-size: 0.85rem; }
+    .remark-history .correction-row {
+        background: #fff3cd;
+        border-left: 3px solid #ffc107;
+        padding: 4px 8px;
+        margin-top: 4px;
+        border-radius: 4px;
+    }
+    @@media (max-width: 768px) {
+        .details-row { flex-wrap: wrap; }
+        .details-right { width: 100%; }
+    }
+</style>
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- v2.13.41 页头：标题 + 操作按钮（按状态动态显示） -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-clipboard-data"></i> 抄表记录详情
+            <small class="text-muted">@Model.Record.DormCode / @Model.Record.ReadMonth</small>
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="/Meter" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+            @* v2.13.41 新增：按状态动态显示 3 个操作按钮（与原型 1:1 对齐） *@
+            @if (Model.Actions.CanReEntry)
+            {
+                <a href="/Meter/Entry?dormCode=@Model.Record.DormCode&month=@Model.Record.ReadMonth" class="btn btn-outline-primary">
+                    <i class="bi bi-plus-circle"></i> 补录
+                </a>
+            }
+            @if (Model.Actions.CanCorrect)
+            {
+                <a href="/Meter/Edit?id=@Model.Record.Id" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil"></i> 修正读数
+                </a>
+            }
+            @if (Model.Actions.CanDelete)
+            {
+                <button type="button" class="btn btn-outline-danger" onclick="deleteRecord(@Model.Record.Id, '@Model.Record.DormCode', '@Model.Record.ReadMonth')">
+                    <i class="bi bi-trash"></i> 删除记录
+                </button>
+            }
+        </div>
+    </div>
+
+    @* v2.13.41 左右分栏布局：左侧主信息+用量对比；右侧照片+操作说明 *@
+    <div class="details-row">
+        @* ===== 左侧：基本信息 + 三表读数 + 用量对比 ===== *@
+        <div class="details-left">
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <i class="bi bi-info-circle"></i> <strong>基本信息</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="text-muted small">宿舍号</label>
+                            <div class="fw-bold">@Model.Record.DormCode</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">抄表月份</label>
+                            <div class="fw-bold">@Model.Record.ReadMonth</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">操作员</label>
+                            <div class="fw-bold">@Model.Record.Operator</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">状态</label>
+                            <div><span class="badge @(Model.Record.Status == 1 ? "bg-success" : Model.Record.Status == 2 ? "bg-warning text-dark" : "bg-secondary")">@Model.Record.StatusName</span></div>
+                        </div>
+                        @* v2.13.41 新增：抄表时间 + PDA 设备 *@
+                        <div class="col-md-3">
+                            <label class="text-muted small">抄表时间</label>
+                            <div class="fw-bold">@(Model.Record.ReadDate?.ToString("yyyy-MM-dd") ?? Model.Record.CreatedAt.ToString("yyyy-MM-dd HH:mm"))</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">PDA 设备</label>
+                            <div class="fw-bold"><i class="bi bi-phone"></i> @(Model.Record.DeviceSn ?? "Web 后台补录")</div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="text-muted small">入库时间</label>
+                            <div class="fw-bold text-muted small">@Model.Record.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* v2.13.41 三表读数卡片：冷水/热水/电（数字 tabular-nums + 1.6rem） *@
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="card border-left-primary" style="border-left: 4px solid #1976d2;">
+                        <div class="card-body text-center">
+                            <i class="bi bi-droplet-fill text-primary" style="font-size: 1.4rem;"></i>
+                            <div class="text-muted small">冷水表读数 (m³)</div>
+                            <div class="reading-big text-primary">@Model.Record.ColdMeter.ToString("0.00")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card" style="border-left: 4px solid #0dcaf0;">
+                        <div class="card-body text-center">
+                            <i class="bi bi-steam text-info" style="font-size: 1.4rem;"></i>
+                            <div class="text-muted small">热水表读数 (m³)</div>
+                            <div class="reading-big text-info">@Model.Record.HotMeter.ToString("0.00")</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card" style="border-left: 4px solid #ffc107;">
+                        <div class="card-body text-center">
+                            <i class="bi bi-lightning-fill text-warning" style="font-size: 1.4rem;"></i>
+                            <div class="text-muted small">电表读数 (kWh)</div>
+                            <div class="reading-big text-warning">@Model.Record.ElectricMeter.ToString("0.00")</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @* v2.13.41 用量对比表（与原型 1:1 对齐：表头「冷水/热水/电」+ 行「上月/本月/用量」） *@
+            @if (Model.Comparison != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <i class="bi bi-graph-up"></i> <strong>用量对比</strong>
+                        <small class="text-muted ms-2">对比 @Model.Comparison.PreviousReadMonth 月读数</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <table class="table table-bordered mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th></th>
+                                    <th><i class="bi bi-droplet-fill text-primary"></i> 冷水(m³)</th>
+                                    <th><i class="bi bi-steam text-info"></i> 热水(m³)</th>
+                                    <th><i class="bi bi-lightning-fill text-warning"></i> 电(kWh)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">上月</td>
+                                    <td class="reading-big">@Model.Comparison.PreviousCold.ToString("0.00")</td>
+                                    <td class="reading-big">@Model.Comparison.PreviousHot.ToString("0.00")</td>
+                                    <td class="reading-big">@Model.Comparison.PreviousElectric.ToString("0.00")</td>
+                                </tr>
+                                <tr class="table-primary">
+                                    <td class="fw-bold">本月</td>
+                                    <td class="reading-big">@Model.Comparison.CurrentCold.ToString("0.00")</td>
+                                    <td class="reading-big">@Model.Comparison.CurrentHot.ToString("0.00")</td>
+                                    <td class="reading-big">@Model.Comparison.CurrentElectric.ToString("0.00")</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">用量</td>
+                                    <td class="text-success fw-bold reading-big">@Model.Usage.ColdUsage.ToString("0.00")</td>
+                                    <td class="text-success fw-bold reading-big">@Model.Usage.HotUsage.ToString("0.00")</td>
+                                    <td class="text-success fw-bold reading-big">@Model.Usage.ElectricUsage.ToString("0.00")</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            @* v2.13.41 Remark 历史格式化（识别 [覆盖前数据] / [修正原因]） *@
+            @if (!string.IsNullOrEmpty(Model.Record.Remark) || !string.IsNullOrEmpty(Model.Record.CorrectionReason))
+            {
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <i class="bi bi-card-text"></i> <strong>备注 / 修正历史</strong>
+                    </div>
+                    <div class="card-body remark-history">
+                        @if (!string.IsNullOrEmpty(Model.Record.Remark))
+                        {
+                            <div>@Model.Record.Remark</div>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Record.CorrectionReason))
+                        {
+                            <div class="correction-row">
+                                <i class="bi bi-clock-history text-warning"></i>
+                                <strong>修正记录</strong> @Model.Record.CorrectionReason
+                                @if (!string.IsNullOrEmpty(Model.Record.CorrectedBy))
+                                {
+                                    <span class="text-muted ms-2">by @Model.Record.CorrectedBy</span>
+                                }
+                                @if (Model.Record.CorrectedAt.HasValue)
+                                {
+                                    <span class="text-muted ms-2">at @Model.Record.CorrectedAt.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ===== 右侧：照片占位 + 操作说明 ===== *@
+        <div class="details-right">
+            @* v2.13.41 照片占位（原型 .photo-ph：黑色 200px + watermark） *@
+            <div class="card mb-3">
+                <div class="card-header bg-light">
+                    <i class="bi bi-camera"></i> <strong>抄表照片</strong>
+                </div>
+                <div class="card-body">
+                    <div class="photo-ph">
+                        <div class="text-center">
+                            <i class="bi bi-image" style="font-size: 2.5rem; opacity: 0.3;"></i>
+                            <div class="mt-2" style="opacity: 0.7;">暂无照片</div>
+                        </div>
+                        <div class="wm">@Model.Record.DormCode | @Model.Record.ReadMonth</div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="bi bi-folder"></i> 存储路径：<code>/uploads/@(Model.Record.ReadMonth)/@Model.Record.DormCode/</code>
+                    </small>
+                </div>
+            </div>
+
+            @* v2.13.41 操作说明卡片（按状态给出说明） *@
+            <div class="card">
+                <div class="card-header bg-light">
+                    <i class="bi bi-question-circle"></i> <strong>操作说明</strong>
+                </div>
+                <div class="card-body">
+                    @switch (Model.Record.Status)
+                    {
+                        case 0:
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-info-circle"></i> 当前为<strong>草稿/占位</strong>状态，可删除或补录。
+                            </div>
+                            break;
+                        case 1:
+                            <div class="alert alert-success small mb-0">
+                                <i class="bi bi-check-circle"></i> 当前为<strong>正常</strong>状态，可修正读数。
+                            </div>
+                            break;
+                        case 2:
+                            <div class="alert alert-warning small mb-0">
+                                <i class="bi bi-clock-history"></i> 当前为<strong>已修正</strong>状态，可再次修正或删除。
+                            </div>
+                            break;
+                        case 3:
+                            <div class="alert alert-secondary small mb-0">
+                                <i class="bi bi-x-circle"></i> 当前为<strong>已取消</strong>状态，可删除或重新补录。
+                            </div>
+                            break;
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+<script>
+    // v2.13.41 删除记录
+    function deleteRecord(id, dormCode, month) {
+        if (!confirm('确定删除 ' + dormCode + ' / ' + month + ' 的抄表记录吗？\n此操作不可恢复！')) return;
+        var token = document.querySelector('input[name="__RequestVerificationToken"]');
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['RequestVerificationToken'] = token.value;
+        fetch('/api/v1/meter/' + id, { method: 'DELETE', headers: headers, credentials: 'same-origin' })
+            .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, body: j }; }); })
+            .then(function(res) {
+                if (res.ok && (res.body.success === undefined || res.body.success !== false)) {
+                    alert('✓ 删除成功');
+                    location.href = '/Meter';
+                } else {
+                    alert('✗ 删除失败：' + (res.body.message || res.body.error || res.body || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('✗ 请求失败：' + err.message); });
+    }
+</script>
+}
