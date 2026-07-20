@@ -97,6 +97,7 @@
 | **76** | [**入住记录与抄表记录业务深度文档**](./76-入住记录与抄表记录业务深度文档-v2.13.24.md) | **v2.13.24** | ✅ **最新** | **DormBooking 23 字段 + MeterRecord 26 字段 + 双向联动矩阵** |
 | **78** | [**v2.13.24 最终交付报告**](./78-v2.13.24最终交付报告.md) | **v2.13.24** | ✅ **最新** | **v2.13.24 全量交付总报告（合并 73+74+75+76）** |
 | **79** | [**系统启动机制与生产部署文档**](./79-系统启动机制与生产部署文档-v2.13.25.md) | **v2.13.25** | ✅ **最新** | **DatabaseInitializer 启动校验 + FK 归一优化 + 三 EXE 生产部署包** |
+| **80** | [**个人中心与账号安全功能需求文档**](./80-个人中心与账号安全功能需求文档-v2.13.26.md) | **v2.13.26** | ✅ **最新** | **个人信息编辑 + 微信绑定 + 密码修改 + 密码找回（安全问题）4 大模块完整落地** |
 
 ---
 
@@ -186,3 +187,4 @@
 |------|------|------|
 | 2026-07-19 | v2.13.24 文档梳理 | 修正 DPAPI→AES-256、统一文件名版本号、清理 .bak、加废弃声明、新建 INDEX |
 | 2026-07-20 | **v2.13.25 生产启动机制** | 新建 **DatabaseInitializer**（6 步启动校验 + 9 张字典种子 + 默认 admin）+ DataCleanupHostedService 30s→5s + Admin csproj `ErrorOnDuplicatePublishOutputFiles=false` 发布修复 + 三 EXE 生产发布包（publish-final）+ 文档 79（启动机制与生产部署）|
+| 2026-07-20 | **v2.13.26 个人中心与账号安全** | 新建 **SysUserSelfService**（10 个方法：profile/password/security-question/forgot/wechat）+ **SelfController**（10 个 API 端点）+ **Profile.cshtml** 重写（3 Tab：基本资料/账号安全/偏好设置）+ **ForgotPassword.cshtml** 密码找回 3 步向导 + SysUser 扩展 6 字段 + SysUserSecurityQuestion 新表 + DatabaseInitializer 安全问题种子 + 文档 80 |

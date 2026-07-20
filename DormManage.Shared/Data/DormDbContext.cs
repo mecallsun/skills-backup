@@ -155,6 +155,9 @@ public class DormDbContext : DbContext
     /// <summary>系统参数表（v2.13.19 数据库连接持久化）</summary>
     public DbSet<SysParameter> SysParameters { get; set; } = null!;
 
+    /// <summary>用户安全问题表（v2.13.26 密码找回）</summary>
+    public DbSet<SysUserSecurityQuestion> SysUserSecurityQuestions { get; set; } = null!;
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -455,9 +458,19 @@ public class DormDbContext : DbContext
             entity.Property(e => e.UserName).HasColumnName("Username").HasMaxLength(32).IsRequired();
             entity.Property(e => e.Phone).HasColumnName("Mobile").HasMaxLength(16);       // 真实列名 Mobile
             entity.Property(e => e.LastLoginTime).HasColumnName("LastLoginAt");           // 真实列名 LastLoginAt
+            entity.Property(e => e.WeChatOpenId).HasMaxLength(64);
+            entity.Property(e => e.PasswordResetToken).HasMaxLength(128);
             entity.Ignore(e => e.EmployeeId);  // 真实表无此列
             entity.Ignore(e => e.UpdatedAt);   // 真实表无此列（代码仅赋值不查询，忽略即可）
             entity.HasIndex(e => e.UserName).IsUnique();
+            entity.HasIndex(e => e.WeChatOpenId).IsUnique().HasFilter(null);  // SQL Server: WHERE WeChatOpenId IS NOT NULL
+        });
+
+        // SysUserSecurityQuestion（v2.13.26 密码找回 - 安全问题表）
+        modelBuilder.Entity<SysUserSecurityQuestion>(entity =>
+        {
+            entity.ToTable("SysUserSecurityQuestion");
+            entity.HasIndex(e => new { e.UserId, e.QuestionIndex }).IsUnique();
         });
 
         // SysRole（真实表 SysRole，主键 RoleId）

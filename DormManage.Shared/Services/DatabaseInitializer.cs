@@ -305,6 +305,34 @@ public static class DatabaseInitializer
             counts["BillingStandard"] = 1;
         }
 
+        // v2.13.26 启动种子：默认 admin 的安全问题（仅当 SysUserSecurityQuestion 表为空时执行）
+        var adminIdForSq = await db.SysUsers
+            .Where(u => u.UserName == "admin")
+            .Select(u => (int?)u.Id)
+            .FirstOrDefaultAsync(ct);
+        if (adminIdForSq.HasValue && !await db.SysUserSecurityQuestions.AnyAsync(q => q.UserId == adminIdForSq.Value, ct))
+        {
+            db.SysUserSecurityQuestions.AddRange(
+                new SysUserSecurityQuestion
+                {
+                    UserId = adminIdForSq.Value,
+                    QuestionIndex = 1,
+                    Question = "您出生的城市是？",
+                    AnswerHash = AesEncryptor.Encrypt("suzhou"),   // 默认 admin 密码找回答案（小写）
+                    CreatedAt = DateTime.Now
+                },
+                new SysUserSecurityQuestion
+                {
+                    UserId = adminIdForSq.Value,
+                    QuestionIndex = 2,
+                    Question = "您的工号末四位是？",
+                    AnswerHash = AesEncryptor.Encrypt("0000"),
+                    CreatedAt = DateTime.Now
+                }
+            );
+            counts["SysUserSecurityQuestion"] = 2;
+        }
+
         if (counts.Any())
         {
             try

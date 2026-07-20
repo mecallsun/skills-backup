@@ -16,6 +16,8 @@
     <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <!-- v2.13.26: Shared 扩展需 ASP.NET Core 引用（HttpContext 抽象） -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

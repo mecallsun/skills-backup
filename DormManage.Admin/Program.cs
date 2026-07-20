@@ -10,6 +10,7 @@ builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");                          // 所有页面默认需要认证
     options.Conventions.AllowAnonymousToPage("/Account/Login");         // 登录页匿名访问
+    options.Conventions.AllowAnonymousToPage("/Account/ForgotPassword"); // v2.13.26 密码找回匿名访问
     options.Conventions.AllowAnonymousToPage("/Error");                 // 错误页匿名访问
     options.Conventions.AllowAnonymousToPage("/Privacy");               // 隐私页匿名访问
 });
@@ -85,6 +86,7 @@ builder.Services.AddScoped<IDashboardService, DashboardService>();  // v2.13.3: 
 builder.Services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();  // v2.13.3: 数据库深度验证
 builder.Services.AddScoped<IBillingService, BillingService>();              // v2.13.9: 费用管理服务
 builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService>();  // v2.13.12: 用户筛选条件云端缓存
+builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13.26: 个人中心与账号安全
 
 // v2.13.0: 认证服务
 builder.Services.AddScoped<DormManage.Admin.Services.IAuthService, DormManage.Admin.Services.AuthService>();

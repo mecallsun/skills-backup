@@ -349,9 +349,34 @@ CREATE TABLE [dbo].[SysUser] (
     [LastLoginAt]    DATETIME       NULL,
     [LastLoginIp]    NVARCHAR(64)   NULL,
     [CreatedAt]      DATETIME       NOT NULL DEFAULT (GETDATE()),
+    -- v2.13.26 个人中心与账号安全
+    [WeChatOpenId]               NVARCHAR(64)  NULL,
+    [WeChatBindAt]               DATETIME      NULL,
+    [PasswordResetToken]         NVARCHAR(128) NULL,
+    [PasswordResetTokenExpiry]   DATETIME      NULL,
+    [PasswordResetFailedCount]   INT           NOT NULL DEFAULT ((0)),
+    [PasswordResetLockedUntil]   DATETIME      NULL,
     CONSTRAINT [PK_SysUser] PRIMARY KEY ([UserId]),
     CONSTRAINT [UQ_SysUser_Username] UNIQUE ([Username])
 );
+CREATE UNIQUE INDEX [IX_SysUser_WeChatOpenId]
+    ON [dbo].[SysUser]([WeChatOpenId]) WHERE [WeChatOpenId] IS NOT NULL;
+
+-- 20.1 SysUserSecurityQuestion（v2.13.26 密码找回 - 安全问题）
+CREATE TABLE [dbo].[SysUserSecurityQuestion] (
+    [Id]            INT            IDENTITY(1,1) NOT NULL,
+    [UserId]        INT            NOT NULL,
+    [QuestionIndex] INT            NOT NULL,
+    [Question]      NVARCHAR(200)  NOT NULL,
+    [AnswerHash]    NVARCHAR(500)  NOT NULL,    -- AES-256 加密存储
+    [CreatedAt]     DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]     DATETIME       NULL,
+    CONSTRAINT [PK_SysUserSecurityQuestion] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SQ_User_Index] UNIQUE ([UserId], [QuestionIndex]),
+    CONSTRAINT [FK_SQ_User] FOREIGN KEY ([UserId]) REFERENCES [dbo].[SysUser]([UserId]) ON DELETE CASCADE
+);
+CREATE INDEX [IX_SQ_User] ON [dbo].[SysUserSecurityQuestion]([UserId]);
+GO
 
 -- 21. SysUserRole（用户角色关联）
 CREATE TABLE [dbo].[SysUserRole] (
