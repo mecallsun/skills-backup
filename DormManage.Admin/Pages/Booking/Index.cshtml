@@ -21,6 +21,8 @@
         primaryAction = new PageAction { Label = "办理入住", OnClick = "document.getElementById('checkInModal').classList.add('show'); document.getElementById('checkInModal').style.display='block';", Icon = "bi-box-arrow-in-right", Style = "success" },
         actions = new List<PageAction> {
             new() { Label = "办理退房", OnClick = "document.getElementById('checkOutModal').classList.add('show'); document.getElementById('checkOutModal').style.display='block';", Icon = "bi-box-arrow-right", Style = "info" },
+            // v2.13.32-hotfix BUG #2: 一键修复 DormBooking.EmployeeName 与档案 RealName 的关联（按工号反查人员清单）
+            new() { Label = "修复姓名关联", OnClick = "repairEmployeeNames()", Icon = "bi-arrow-repeat", Style = "warning" },
             new() { Label = "导出", OnClick = "exportExcel()", Icon = "bi-download", Style = "secondary" }
         }
     })
@@ -667,7 +669,9 @@ async function cancelToday(id) {
 }
 
 // ==================== 办理入住弹窗逻辑 ====================
-let ciSelectedEmp = null;
+// v2.13.32-hotfix: 保存最近一次员工搜索结果，供 selectCiEmp 按 empId 查详情（避免重新搜索）
+let ciSearchResults = [];
+let coSearchResults = [];
 
 // 初始化入住弹窗
 document.addEventListener('DOMContentLoaded', function() {
@@ -677,12 +681,16 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('ciBookingDate').valueAsDate = new Date();
             document.getElementById('ciRegistrar').value = 'admin'; // TODO: 从当前用户上下文获取
             document.getElementById('ciEmpKeyword').value = '';
+            document.getElementById('ciEmpKeyword').dataset.empId = '';
+            delete document.getElementById('ciEmpKeyword').dataset.empCode;
+            delete document.getElementById('ciEmpKeyword').dataset.empName;
             document.getElementById('ciEmpInfo').style.display = 'none';
             document.getElementById('ciEmpWarn').style.display = 'none';
             document.getElementById('ciDormSelect').innerHTML = '<option value="">请先选择员工和入住日期</option>';
             document.getElementById('ciDormHint').textContent = '';
             document.getElementById('ciValidationPanel').innerHTML = '<p class="text-muted small">请先选择员工</p>';
             document.getElementById('ciEmpHistory').innerHTML = '<p class="text-muted small">请先选择员工</p>';
+            ciSearchResults = [];
         });
     }
 
@@ -693,10 +701,14 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('coCheckoutDate').valueAsDate = new Date();
             document.getElementById('coRegistrar').value = 'admin';
             document.getElementById('coEmpKeyword').value = '';
+            document.getElementById('coEmpKeyword').dataset.empId = '';
+            delete document.getElementById('coEmpKeyword').dataset.empCode;
+            delete document.getElementById('coEmpKeyword').dataset.empName;
             document.getElementById('coEmpInfo').style.display = 'none';
             document.getElementById('coStepRecord').style.display = 'none';
             document.getElementById('coStepDate').style.display = 'none';
             document.getElementById('coValidationPanel').innerHTML = '<p class="text-muted small">请先选择员工</p>';
+            coSearchResults = [];
         });
     }
 });
@@ -704,12 +716,14 @@ document.addEventListener('DOMContentLoaded', function() {
 // ===== 入住弹窗：员工搜索 =====
 function onCiEmpSearch() {
     const kw = document.getElementById('ciEmpKeyword').value.trim();
-    if (!kw) { document.getElementById('ciEmpSuggestions').style.display = 'none'; return; }
+    if (!kw) { document.getElementById('ciEmpSuggestions').style.display = 'none'; ciSearchResults = []; return; }
     // 调用 API 搜索员工
     fetch(`/api/v1/bookings/employee-search?keyword=${encodeURIComponent(kw)}`)
         .then(r => r.json())
         .then(res => {
             if (res.success && res.data.length > 0) {
+                // v2.13.32-hotfix: 保存搜索结果到全局变量，selectCiEmp 据此填充详情
+                ciSearchResults = res.data;
                 const sug = document.getElementById('ciEmpSuggestions');
                 sug.innerHTML = res.data.slice(0, 10).map(e =>
                     `<div class="suggestion-item" onclick="selectCiEmp(${e.id})">
@@ -719,9 +733,10 @@ function onCiEmpSearch() {
                 ).join('');
                 sug.style.display = 'block';
             } else {
+                ciSearchResults = [];
                 document.getElementById('ciEmpSuggestions').style.display = 'none';
             }
-        }).catch(() => { document.getElementById('ciEmpSuggestions').style.display = 'none'; });
+        }).catch(() => { ciSearchResults = []; document.getElementById('ciEmpSuggestions').style.display = 'none'; });
 }
 
 function showCiSuggestions() { document.getElementById('ciEmpSuggestions').style.display = 'block'; }
@@ -737,12 +752,83 @@ document.addEventListener('click', function(e) {
 
 async function selectCiEmp(empId) {
     document.getElementById('ciEmpSuggestions').style.display = 'none';
+    // v2.13.32-hotfix: 从最近一次搜索结果中查员工，填充员工信息展示区 + 设置 dataset
+    const emp = ciSearchResults.find(x => x.id === empId);
+    if (!emp) {
+        alert('员工信息已失效，请重新搜索');
+        return;
+    }
+    const kw = document.getElementById('ciEmpKeyword');
+    kw.dataset.empId = emp.id;
+    kw.dataset.empCode = emp.employeeCode || '';
+    kw.dataset.empName = emp.realName || '';
+
+    document.getElementById('ciEmpCode').textContent = emp.employeeCode || '-';
+    document.getElementById('ciEmpName').textContent = emp.realName || '-';
+    document.getElementById('ciEmpPhone').textContent = emp.phone || '-';
+    document.getElementById('ciEmpDept').textContent = emp.department || '-';
+    document.getElementById('ciEmpType').textContent = '-';  // EmployeeSearchResult 当前未返回该字段
+    document.getElementById('ciEmpAtt').textContent = '-';
+    document.getElementById('ciEmpInfo').style.display = 'block';
+
+    // 校验提示：如果员工已分配宿舍，给出醒目提示
+    if (emp.dormCode) {
+        document.getElementById('ciEmpWarn').innerHTML =
+            `<div class="alert alert-warning py-2 mb-0"><i class="bi bi-exclamation-triangle"></i> 该员工当前已分配宿舍 <strong>${emp.dormCode}</strong>，办理入住前请确认是否调宿。</div>`;
+        document.getElementById('ciEmpWarn').style.display = 'block';
+    } else {
+        document.getElementById('ciEmpWarn').style.display = 'none';
+    }
+
+    document.getElementById('ciValidationPanel').innerHTML =
+        `<p class="mb-1"><i class="bi bi-check2 text-success"></i> 已选择：<strong>${emp.realName}</strong>（${emp.employeeCode}）</p>
+         <p class="mb-1 small text-muted">部门：${emp.department || '-'}</p>
+         <p class="mb-0 small text-muted">手机：${emp.phone || '-'}</p>`;
+
+    // 加载员工历史办理（取该员工的所有 DormBooking）
     try {
-        const resp = await fetch(`/api/v1/bookings/employee-search?keyword=`);
-        // 从搜索结果中找到匹配的员工（简化：通过 API 获取员工详情）
-        // 这里先用搜索回调填充
-        onCiEmpSearch();
-    } catch(e) {}
+        const histResp = await fetch(`/api/v1/bookings/employee-history/${empId}`);
+        const histRes = await histResp.json();
+        if (histRes.success && histRes.data && histRes.data.length > 0) {
+            document.getElementById('ciEmpHistory').innerHTML =
+                histRes.data.slice(0, 5).map(h =>
+                    `<div class="border-bottom py-1 small">
+                        <span class="badge bg-${h.type === 1 ? 'success' : 'warning text-dark'}">${h.type === 1 ? '入住' : '退房'}</span>
+                        ${h.dormCode} <span class="text-muted">${h.bookingDate}</span>
+                        <span class="text-muted float-end">状态：${statusName(h.status)}</span>
+                    </div>`).join('');
+        } else {
+            document.getElementById('ciEmpHistory').innerHTML = '<p class="text-muted small mb-0">该员工暂无历史办理记录</p>';
+        }
+    } catch (e) {
+        document.getElementById('ciEmpHistory').innerHTML = '<p class="text-muted small mb-0">加载历史失败</p>';
+    }
+
+    // 触发宿舍列表加载
+    refreshCiDorms();
+}
+
+function statusName(s) {
+    return s === 1 ? '预约' : s === 2 ? '在宿' : s === 3 ? '已退房' : s === 4 ? '已取消' : '-';
+}
+
+// ===== v2.13.32-hotfix BUG #2：一键修复工号姓名关联 =====
+async function repairEmployeeNames() {
+    if (!confirm('将以「人员清单」档案中的最新姓名为准，修正办理登记列表中所有工号对应的姓名。\n\n仅修正 DormBooking.EmployeeName 与 SysEmployee.RealName 不一致的记录，已一致的会跳过。\n\n继续执行？')) return;
+    try {
+        const resp = await fetch('/api/v1/bookings/repair-employee-names', { method: 'POST' });
+        const result = await resp.json();
+        if (result.success) {
+            const { updated, skipped, notFound } = result.data;
+            alert(`✅ 修复完成\n\n修正：${updated} 条\n跳过（已一致）：${skipped} 条\n未找到档案：${notFound} 条\n\n3 秒后自动刷新页面...`);
+            setTimeout(() => location.reload(), 3000);
+        } else {
+            alert('修复失败：' + (result.message || '未知错误'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('修复请求失败：' + err.message);
+    }
 }
 
 function onCiDateChange() { refreshCiDorms(); }
@@ -795,11 +881,13 @@ function refreshCiDorms() {
 // ===== 退房弹窗：员工搜索 =====
 function onCoEmpSearch() {
     const kw = document.getElementById('coEmpKeyword').value.trim();
-    if (!kw) { document.getElementById('coEmpSuggestions').style.display = 'none'; return; }
+    if (!kw) { document.getElementById('coEmpSuggestions').style.display = 'none'; coSearchResults = []; return; }
     fetch(`/api/v1/bookings/employee-search?keyword=${encodeURIComponent(kw)}`)
         .then(r => r.json())
         .then(res => {
             if (res.success && res.data.length > 0) {
+                // v2.13.32-hotfix: 保存退房搜索结果
+                coSearchResults = res.data;
                 const sug = document.getElementById('coEmpSuggestions');
                 sug.innerHTML = res.data.slice(0, 10).map(e =>
                     `<div class="suggestion-item" onclick="selectCoEmp(${e.id})">
@@ -809,15 +897,38 @@ function onCoEmpSearch() {
                 ).join('');
                 sug.style.display = 'block';
             } else {
+                coSearchResults = [];
                 document.getElementById('coEmpSuggestions').style.display = 'none';
             }
-        }).catch(() => { document.getElementById('coEmpSuggestions').style.display = 'none'; });
+        }).catch(() => { coSearchResults = []; document.getElementById('coEmpSuggestions').style.display = 'none'; });
 }
 
 function showCoSuggestions() { document.getElementById('coEmpSuggestions').style.display = 'block'; }
 
 async function selectCoEmp(empId) {
     document.getElementById('coEmpSuggestions').style.display = 'none';
+    // v2.13.32-hotfix: 从最近一次退房搜索结果查员工 + 填充员工信息展示区
+    const emp = coSearchResults.find(x => x.id === empId);
+    if (!emp) {
+        alert('员工信息已失效，请重新搜索');
+        return;
+    }
+    const kw = document.getElementById('coEmpKeyword');
+    kw.dataset.empId = emp.id;
+    kw.dataset.empCode = emp.employeeCode || '';
+    kw.dataset.empName = emp.realName || '';
+
+    document.getElementById('coEmpCode').textContent = emp.employeeCode || '-';
+    document.getElementById('coEmpName').textContent = emp.realName || '-';
+    document.getElementById('coEmpPhone').textContent = emp.phone || '-';
+    document.getElementById('coEmpDept').textContent = emp.department || '-';
+    document.getElementById('coEmpInfo').style.display = 'block';
+
+    document.getElementById('coValidationPanel').innerHTML =
+        `<p class="mb-1"><i class="bi bi-check2 text-success"></i> 已选择：<strong>${emp.realName}</strong>（${emp.employeeCode}）</p>
+         <p class="mb-1 small text-muted">部门：${emp.department || '-'}</p>
+         <p class="mb-0 small text-muted">手机：${emp.phone || '-'}</p>`;
+
     // 加载员工在宿记录
     try {
         const resp = await fetch(`${API_BASE}/staying-records/${empId}`);

@@ -90,6 +90,12 @@ public interface IBookingService
     /// </summary>
     Task<List<DormBooking>> GetStayingRecordsAsync(int employeeId);
     Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar);
+
+    /// <summary>
+    /// v2.13.32-hotfix BUG：一次性数据修复 — 把 DormBooking.EmployeeName 与 SysEmployee.RealName 不一致的记录
+    /// 用 SysEmployee.RealName 修正（按 EmployeeId 优先 / EmployeeCode 次之匹配）
+    /// </summary>
+    Task<ApiResponse<(int Updated, int Skipped, int NotFound)>> RepairBookingEmployeeNamesAsync();
 }
 
 /// <summary>
@@ -157,6 +163,8 @@ public class BookingService : IBookingService
     public async Task<PagedResult<DormBooking>> GetListAsync(string? keyword, string? department, string? dormCode, int? type, int? status, DateOnly? dateFrom, DateOnly? dateTo, int page, int pageSize)
     {
         // v2.13.24：通过 JOIN SysEmployee 实时取考勤班次（NULL 时 fallback 到 DormBooking.AttendanceTypeId）
+        // v2.13.32-hotfix BUG：同时用 SysEmployee.RealName 实时覆盖 Booking.EmployeeName，
+        //   解决「工号显示姓名与档案不一致」问题（档案改名后历史登记记录显示老姓名）。
         var query =
             from b in _db.DormBookings
             join emp in _db.Employees on b.EmployeeId equals emp.Id into empGroup
@@ -165,7 +173,9 @@ public class BookingService : IBookingService
             {
                 Booking = b,
                 // 实时取考勤班次（v2.11.7 起 DormBooking.AttendanceTypeId 与 SysEmployee.AttendanceTypeId 同步）
-                AttendanceTypeId = (int?)(emp != null ? emp.AttendanceTypeId : b.AttendanceTypeId)
+                AttendanceTypeId = (int?)(emp != null ? emp.AttendanceTypeId : b.AttendanceTypeId),
+                // v2.13.32-hotfix BUG：实时取最新姓名（档案优先；档案为空时回退登记时写入的姓名）
+                RealName = emp != null && !string.IsNullOrEmpty(emp.RealName) ? emp.RealName : b.EmployeeName
             };
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -174,6 +184,7 @@ public class BookingService : IBookingService
             query = query.Where(x =>
                 x.Booking.EmployeeCode.ToLower().Contains(keyword) ||
                 x.Booking.EmployeeName.ToLower().Contains(keyword) ||
+                x.RealName.ToLower().Contains(keyword) ||
                 (x.Booking.Phone != null && x.Booking.Phone.Contains(keyword)));
         }
 
@@ -209,12 +220,17 @@ public class BookingService : IBookingService
             .Take(pageSize)
             .ToListAsync();
 
-        // 物化：把 AttendanceTypeId 写入 DormBooking.AttendanceTypeId（v2.13.24 字段），便于 Razor 直接渲染
+        // 物化：把 AttendanceTypeId / RealName 写入 DormBooking（v2.13.32-hotfix 实时覆盖 EmployeeName）
         foreach (var item in items)
         {
             if (item.AttendanceTypeId.HasValue)
             {
                 item.Booking.AttendanceTypeId = item.AttendanceTypeId;
+            }
+            // v2.13.32-hotfix BUG：覆盖显示用姓名（仅 RAM，DB 不写）
+            if (!string.IsNullOrEmpty(item.RealName))
+            {
+                item.Booking.EmployeeName = item.RealName;
             }
         }
 
@@ -225,6 +241,62 @@ public class BookingService : IBookingService
             PageIndex = page,
             PageSize = pageSize
         };
+    }
+
+    /// <summary>
+    /// v2.13.32-hotfix BUG：一次性数据修复 — 把 DormBooking 表中 EmployeeName 与 SysEmployee.RealName 不一致的记录
+    /// 用 SysEmployee.RealName 修正（通过 EmployeeId JOIN，无 EmployeeId 时按 EmployeeCode 反查）。
+    /// 用于"以人员清单的档案姓名的工号进行数据补充更正 关联"场景。
+    /// </summary>
+    public async Task<ApiResponse<(int Updated, int Skipped, int NotFound)>> RepairBookingEmployeeNamesAsync()
+    {
+        var allBookings = await _db.DormBookings
+            .Where(b => !string.IsNullOrEmpty(b.EmployeeCode))
+            .Select(b => new { b.Id, b.EmployeeId, b.EmployeeCode, b.EmployeeName })
+            .ToListAsync();
+
+        if (allBookings.Count == 0)
+            return ApiResponse<(int, int, int)>.Ok((0, 0, 0));
+
+        var empIds = allBookings.Where(b => b.EmployeeId > 0).Select(b => b.EmployeeId).Distinct().ToList();
+        var empCodes = allBookings.Select(b => b.EmployeeCode).Distinct().ToList();
+
+        var employees = await _db.Employees
+            .Where(e => empIds.Contains(e.Id) || empCodes.Contains(e.EmployeeCode))
+            .Select(e => new { e.Id, e.EmployeeCode, e.RealName })
+            .ToListAsync();
+
+        var byId = employees.ToDictionary(e => e.Id);
+        var byCode = employees.ToDictionary(e => e.EmployeeCode);
+
+        int updated = 0, skipped = 0, notFound = 0;
+        var affected = new List<DormBooking>();
+        foreach (var b in allBookings)
+        {
+            string? latest = null;
+            if (b.EmployeeId > 0 && byId.TryGetValue(b.EmployeeId, out var byIdEmp))
+                latest = byIdEmp.RealName;
+            else if (byCode.TryGetValue(b.EmployeeCode, out var byCodeEmp))
+                latest = byCodeEmp.RealName;
+
+            if (latest is null) { notFound++; continue; }
+            if (string.IsNullOrEmpty(latest)) { skipped++; continue; }
+
+            if (string.Equals(latest, b.EmployeeName, StringComparison.Ordinal)) { skipped++; continue; }
+
+            // 找出原 booking 实体并更新
+            var entity = await _db.DormBookings.FindAsync(b.Id);
+            if (entity is null) continue;
+            entity.EmployeeName = latest;
+            entity.UpdatedAt = DateTime.Now;
+            affected.Add(entity);
+            updated++;
+        }
+
+        if (affected.Count > 0)
+            await _db.SaveChangesAsync();
+
+        return ApiResponse<(int, int, int)>.Ok((updated, skipped, notFound));
     }
 
     /// <inheritdoc/>

@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using DormManage.Shared.Data;
 using DormManage.Shared.Extensions;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
@@ -13,10 +15,12 @@ namespace DormManage.Api.Controllers.Booking;
 public class BookingController : ControllerBase
 {
     private readonly IBookingService _service;
+    private readonly DormDbContext _db;
 
-    public BookingController(IBasicsService basicsService, IBookingService bookingService)
+    public BookingController(IBasicsService basicsService, IBookingService bookingService, DormDbContext db)
     {
         _service = bookingService;
+        _db = db;
     }
 
     /// <summary>
@@ -181,6 +185,32 @@ public class BookingController : ControllerBase
     {
         var result = await _service.GetStayingRecordsAsync(employeeId);
         return ApiResponse<List<DormBooking>>.Ok(result);
+    }
+
+    /// <summary>
+    /// v2.13.32-hotfix BUG #2：获取员工的办理登记历史（按 EmployeeId，含入住/退房记录）
+    /// 供 CheckIn 弹窗"员工历史办理"区块使用
+    /// </summary>
+    [HttpGet("employee-history/{employeeId}")]
+    public async Task<ApiResponse<List<DormBooking>>> GetEmployeeHistory(int employeeId)
+    {
+        var result = await _db.DormBookings
+            .Where(b => b.EmployeeId == employeeId)
+            .OrderByDescending(b => b.BookingDate)
+            .ThenByDescending(b => b.Id)
+            .Take(50)
+            .ToListAsync();
+        return ApiResponse<List<DormBooking>>.Ok(result);
+    }
+
+    /// <summary>
+    /// v2.13.32-hotfix BUG #2：一次性数据修复 — 把 DormBooking.EmployeeName 与 SysEmployee.RealName 不一致的记录修正
+    /// 按 EmployeeId 优先 / EmployeeCode 次之匹配档案姓名
+    /// </summary>
+    [HttpPost("repair-employee-names")]
+    public async Task<ApiResponse<(int Updated, int Skipped, int NotFound)>> RepairEmployeeNames()
+    {
+        return await _service.RepairBookingEmployeeNamesAsync();
     }
 }
 
