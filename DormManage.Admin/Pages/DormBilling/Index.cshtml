@@ -124,13 +124,13 @@
                             @foreach (var item in Model.Result.Items)
                             {
                                 <tr>
-                                    <td class="text-center">@(((Model.PageIndex - 1) * Model.PageSize) + Model.Result.Items.ToList().IndexOf(item) + 1)</td>
+                                    <td class="text-center text-muted">@(((Model.PageIndex - 1) * Model.PageSize) + Model.Result.Items.ToList().IndexOf(item) + 1)</td>
                                     <td><strong>@item.DormCode</strong></td>
                                     <td>@item.BuildingName</td>
                                     <td>@item.FloorName</td>
-                                    <td class="text-end">@item.ColdUsage.ToString("F2")</td>
-                                    <td class="text-end">@item.HotUsage.ToString("F2")</td>
-                                    <td class="text-end">@item.ElectricUsage.ToString("F2")</td>
+                                    <td class="text-end">@item.ColdUsage.ToString("F2") m³</td>
+                                    <td class="text-end">@item.HotUsage.ToString("F2") m³</td>
+                                    <td class="text-end">@item.ElectricUsage.ToString("F2") 度</td>
                                     <td class="text-end">¥@item.ColdAmount.ToString("F2")</td>
                                     <td class="text-end">¥@item.HotAmount.ToString("F2")</td>
                                     <td class="text-end">¥@item.ElectricAmount.ToString("F2")</td>
@@ -322,12 +322,19 @@
                 }
             });
         }
-            location.reload();
-        }
 
+        // v2.13.43 修复：导出改为真实下载（GET 跳转触发文件下载）
         function exportBilling(e) {
             e.preventDefault();
-            alert('导出宿舍账单 Excel 文件\n（实际将下载 宿舍费用清单_' + '@Model.BillingMonth' + '.xlsx）');
+            var month = '@Model.BillingMonth';
+            var url = '/api/v1/billing/dorm-bills/export?billingMonth=' + encodeURIComponent(month);
+            // 简单触发下载：创建临时 a 标签
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = '宿舍账单_' + month + '.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
     </script>
 }

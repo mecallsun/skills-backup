@@ -41,8 +41,9 @@
                         <div>@Model.Dorm.BuildingName</div>
                     </div>
                     <div class="col-md-3">
-                        <div class="text-muted small">楼层 ID</div>
-                        <div>@Model.Dorm.FloorId</div>
+                        <div class="text-muted small">楼层</div>
+                        @* v2.13.43 修复：显示楼栋+楼层名称（之前 FloorId 数字误导） *@
+                        <div>@Model.Dorm.BuildingName @Model.Dorm.FloorId 楼</div>
                     </div>
                     <div class="col-md-3">
                         <div class="text-muted small">容量</div>
