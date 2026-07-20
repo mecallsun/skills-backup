@@ -18,9 +18,10 @@
         title = "办理登记",
         count = Model.Total,
         countLabel = "条",
-        primaryAction = new PageAction { Label = "办理入住", OnClick = "document.getElementById('checkInModal').classList.add('show'); document.getElementById('checkInModal').style.display='block';", Icon = "bi-box-arrow-in-right", Style = "success" },
+        // v2.13.36: 改为跳转到独立窗口 /Booking/CheckIn（1:1 克隆原型 booking/check-in.html 为独立 Razor Page）
+        primaryAction = new PageAction { Label = "办理入住", Url = "/Booking/CheckIn", Icon = "bi-box-arrow-in-right", Style = "success" },
         actions = new List<PageAction> {
-            // v2.13.34: 退房已合并到 checkInModal 的「操作类型 = 退房」radio 切换（100% 对齐原型），PageHeader 不再单独显示"办理退房"按钮
+            // v2.13.36: 退房已合并到 /Booking/CheckIn 独立页面的「操作类型 = 退房」radio 切换（1:1 对齐原型），PageHeader 不再单独显示"办理退房"按钮
             // v2.13.32-hotfix BUG #2: 一键修复 DormBooking.EmployeeName 与档案 RealName 的关联（按工号反查人员清单）
             new() { Label = "修复姓名关联", OnClick = "repairEmployeeNames()", Icon = "bi-arrow-repeat", Style = "warning" },
             new() { Label = "导出", OnClick = "exportExcel()", Icon = "bi-download", Style = "secondary" }
@@ -265,112 +266,8 @@
     </div>
 </div>
 
-<!-- ==================== 办理入住弹窗（v2.13.34 100% 对齐原型 booking/check-in.html） ==================== -->
-<div class="modal fade" id="checkInModal" tabindex="-1" aria-labelledby="checkInModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content" style="border-radius:12px;border:none;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
-            <div class="modal-header" style="background:#fafbfc;border-bottom:1px solid #eee;">
-                <h5 class="modal-title">
-                    <i class="bi bi-box-arrow-in-right text-primary"></i> 办理入住
-                    <small class="text-muted ms-2" style="font-size:0.75rem;font-weight:400;">办理登记 / 办理入住</small>
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="关闭"></button>
-            </div>
-            <div class="modal-body p-4" style="background:var(--bg-page);">
-                <div class="form-card">
-                    <div class="form-card-header">
-                        <i class="bi bi-clipboard-plus text-primary"></i>
-                        <h3>入住信息录入</h3>
-                    </div>
-
-                    <div class="form-card-body">
-                        <!-- 区块 1：员工选择（v2.13.34 对齐原型：姓名模糊筛选） -->
-                        <div class="form-section">
-                            <div class="form-section-title">员工选择</div>
-                            <div class="position-relative">
-                                <input type="text" id="ciEmpKeyword" class="form-control" placeholder="姓名（模糊筛选）" oninput="onCiEmpSearch()" onfocus="showCiSuggestions()" autocomplete="off">
-                                <div id="ciEmpSuggestions" class="suggestion-list" style="display:none;"></div>
-                            </div>
-                            <div class="emp-info-card" id="ciEmpInfo" style="display:none;">
-                                <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="ciEmpCode"></span></span>
-                                <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="ciEmpName"></span></span>
-                                <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="ciEmpPhone"></span></span>
-                                <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="ciEmpDept"></span></span>
-                                <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="ciEmpType"></span></span>
-                                <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="ciEmpAtt"></span></span>
-                            </div>
-                            <div id="ciEmpWarn" class="alert mt-2 mb-0 py-2" style="display:none;font-size:0.85rem;"></div>
-                        </div>
-
-                        <!-- 区块 2：入住日期与原因（v2.13.34 对齐原型：title + 3 列） -->
-                        <div class="form-section">
-                            <div class="form-section-title">入住日期与原因</div>
-                            <div class="row g-2">
-                                <div class="col-md-4 form-field">
-                                    <label class="form-label">入住日期<span class="required">*</span></label>
-                                    <input type="date" id="ciBookingDate" class="form-control" onchange="onCiDateChange()">
-                                </div>
-                                <div class="col-md-4 form-field">
-                                    <label class="form-label">原因</label>
-                                    <select id="ciReason" class="form-select">
-                                        <option value="入职">入职</option>
-                                        <option value="调岗">调岗</option>
-                                        <option value="换房">换房</option>
-                                        <option value="预约">预约</option>
-                                        <option value="其他">其他</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4 form-field">
-                                    <label class="form-label">登记人</label>
-                                    <input type="text" id="ciRegistrar" class="form-control" disabled>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 区块 3：操作类型（v2.13.34 新增对齐原型 radio 切换） -->
-                        <div class="form-section">
-                            <div class="form-section-title">操作类型</div>
-                            <div class="btn-group" role="group">
-                                <input type="radio" class="btn-check" name="ciOpType" id="ciOpIn" value="1" checked onchange="onCiTypeChange()">
-                                <label class="btn btn-outline-success" for="ciOpIn"><i class="bi bi-box-arrow-in-right"></i> 入住</label>
-                                <input type="radio" class="btn-check" name="ciOpType" id="ciOpOut" value="2" onchange="onCiTypeChange()">
-                                <label class="btn btn-outline-warning" for="ciOpOut"><i class="bi bi-box-arrow-right"></i> 退房</label>
-                            </div>
-                        </div>
-
-                        <!-- 区块 4a：选择房间（仅入住时显示） -->
-                        <div class="form-section" id="ciStepDorm">
-                            <div class="form-section-title">选择房间</div>
-                            <select id="ciDormSelect" class="form-select" onchange="onCiDormSelect()">
-                                <option value="">请先选择员工和入住日期</option>
-                            </select>
-                            <small class="text-muted mt-1 d-block" id="ciDormHint">系统自动过滤：余量 > 0 且与日期不冲突</small>
-                        </div>
-
-                        <!-- 区块 4b：选择在宿记录（仅退房时显示） -->
-                        <div class="form-section" id="ciStepRecord" style="display:none;">
-                            <div class="form-section-title">选择在宿记录</div>
-                            <select id="ciRecordSelect" class="form-select">
-                                <option value="">请先选择员工</option>
-                            </select>
-                            <small class="text-muted mt-1 d-block">仅显示该员工的「在宿」状态记录</small>
-                        </div>
-                    </div>
-
-                    <!-- 操作按钮区（v2.13.34 对齐原型：取消 + 提交 btn-primary） -->
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                            <i class="bi bi-x"></i> 取消
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="submitCheckIn()">
-                            <i class="bi bi-check-lg"></i> 提交
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<!-- ==================== v2.13.36: 办理入住已升级为独立页面 /Booking/CheckIn（1:1 克隆原型 booking/check-in.html） ==================== -->
+<!-- 此处不再保留 checkInModal 弹窗，避免与独立页面功能重复；保留 checkOutModal 用于列表行内"快速退房"操作 -->
 
 <!-- ==================== 办理退房弹窗 ==================== -->
 <div class="modal fade" id="checkOutModal" tabindex="-1" aria-labelledby="checkOutModalLabel" aria-hidden="true">
@@ -677,38 +574,17 @@ async function cancelToday(id) {
     }
 }
 
-// ==================== 办理入住弹窗逻辑（v2.13.34 100% 对齐原型） ====================
-// v2.13.34: 选中员工对象 + 搜索结果缓存（原型模式）
-let selectedCiEmp = null;
-let ciSearchResults = [];
-let coSearchResults = [];  // 保留给 checkOutModal（快速退房，独立页面入口）
+// ==================== v2.13.36: 办理入住已迁移到独立页面 /Booking/CheckIn ====================
+// 原 checkInModal 相关 JS（onCiEmpSearch / selectCiEmp / validateCiEmp / onCiTypeChange /
+// refreshCiDorms / refreshCiRecords / submitCheckIn / confirmCloseCheckIn / isCheckInFormDirty
+// / attendanceBadge / showCiSuggestions）全部迁移到 /Pages/Booking/CheckIn.cshtml
+// 此处仅保留 checkOutModal（快速退房） + 列表行内操作（confirmCheckin / undoCheckout /
+// cancelReservation / deleteBooking / confirmCheckout / cancelToday / checkOut / repairEmployeeNames）
 
-// 初始化入住弹窗
+let coSearchResults = [];  // 仅保留给 checkOutModal（快速退房入口）
+
+// 初始化退房弹窗
 document.addEventListener('DOMContentLoaded', function() {
-    const ciModal = document.getElementById('checkInModal');
-    if (ciModal) {
-        ciModal.addEventListener('show.bs.modal', function() {
-            // 重置表单到原型默认状态
-            document.getElementById('ciBookingDate').valueAsDate = new Date();
-            document.getElementById('ciRegistrar').value = 'admin';  // TODO: 从当前登录用户上下文获取
-            document.getElementById('ciEmpKeyword').value = '';
-            document.getElementById('ciEmpKeyword').dataset.empId = '';
-            document.getElementById('ciEmpInfo').style.display = 'none';
-            document.getElementById('ciEmpWarn').style.display = 'none';
-            document.getElementById('ciDormSelect').innerHTML = '<option value="">请先选择员工和入住日期</option>';
-            document.getElementById('ciDormHint').textContent = '系统自动过滤：余量 > 0 且与日期不冲突';
-            document.getElementById('ciRecordSelect').innerHTML = '<option value="">请先选择员工</option>';
-            // 默认选中"入住" radio
-            document.getElementById('ciOpIn').checked = true;
-            document.getElementById('ciStepDorm').style.display = 'block';
-            document.getElementById('ciStepRecord').style.display = 'none';
-            // 重置全局状态
-            selectedCiEmp = null;
-            ciSearchResults = [];
-        });
-    }
-
-    // 初始化退房弹窗
     const coModal = document.getElementById('checkOutModal');
     if (coModal) {
         coModal.addEventListener('show.bs.modal', function() {
@@ -727,202 +603,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// ===== v2.13.34 100% 对齐原型 booking/check-in.html：员工模糊搜索 =====
-function onCiEmpSearch() {
-    const kw = document.getElementById('ciEmpKeyword').value.trim();
-    if (!kw) { document.getElementById('ciEmpSuggestions').style.display = 'none'; ciSearchResults = []; return; }
-    // 原型：姓名模糊筛选（不再筛选工号/手机号）
-    fetch(`/api/v1/bookings/employee-search?keyword=${encodeURIComponent(kw)}`)
-        .then(r => r.json())
-        .then(res => {
-            if (res.success && res.data.length > 0) {
-                // 服务端已经按姓名模糊匹配，再在前端二次过滤确保只显示姓名包含 kw 的员工
-                ciSearchResults = res.data.filter(e => e.realName && e.realName.includes(kw));
-                if (ciSearchResults.length === 0) { document.getElementById('ciEmpSuggestions').style.display = 'none'; return; }
-                const sug = document.getElementById('ciEmpSuggestions');
-                sug.innerHTML = ciSearchResults.slice(0, 10).map((e, i) =>
-                    `<div class="suggestion-item" onclick='selectCiEmp(${JSON.stringify(ciSearchResults[i])})'>
-                        <strong>${e.realName}</strong>
-                        <small class="text-muted ms-2">${e.employeeCode} | ${e.department || '-'} | ${e.phone || '-'}</small>
-                    </div>`
-                ).join('');
-                sug.style.display = 'block';
-            } else {
-                ciSearchResults = [];
-                document.getElementById('ciEmpSuggestions').style.display = 'none';
-            }
-        }).catch(() => { ciSearchResults = []; document.getElementById('ciEmpSuggestions').style.display = 'none'; });
-}
-
-function showCiSuggestions() { document.getElementById('ciEmpSuggestions').style.display = 'block'; }
-
 document.addEventListener('click', function(e) {
-    if (!e.target.closest('#ciEmpKeyword') && !e.target.closest('#ciEmpSuggestions')) {
-        document.getElementById('ciEmpSuggestions').style.display = 'none';
-    }
     if (!e.target.closest('#coEmpKeyword') && !e.target.closest('#coEmpSuggestions')) {
         document.getElementById('coEmpSuggestions').style.display = 'none';
     }
 });
-
-// 考勤班次 Badge（v2.13.34 对齐原型 ATTENDANCE_BADGE）
-const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
-const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
-function attendanceBadge(t) {
-    return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;
-}
-
-// 选中员工（v2.13.34 对齐原型 selectEmp(emp)）
-function selectCiEmp(emp) {
-    selectedCiEmp = emp;
-    document.getElementById('ciEmpSuggestions').style.display = 'none';
-    document.getElementById('ciEmpInfo').style.display = 'block';
-    document.getElementById('ciEmpCode').textContent = emp.employeeCode;
-    document.getElementById('ciEmpName').textContent = emp.realName;
-    document.getElementById('ciEmpPhone').textContent = emp.phone || '-';
-    document.getElementById('ciEmpDept').textContent = emp.department || '-';
-
-    // 员工类型：EmployeeSearchResult 暂未返回 employeeType，按原型逻辑 fallback 到 employeeType 字段
-    document.getElementById('ciEmpType').textContent = emp.employeeType || emp.employeeTypeName || '-';
-
-    // 考勤班次：原型渲染为彩色 Badge
-    document.getElementById('ciEmpAtt').innerHTML = attendanceBadge(emp.attendanceType || 'DEFAULT');
-
-    // 校验 + 刷新列表
-    validateCiEmp();
-    refreshCiDorms();
-    if (document.getElementById('ciOpOut').checked) refreshCiRecords();
-}
-
-// 校验员工（v2.13.34 对齐原型 validateEmp：3 种状态 alert）
-function validateCiEmp() {
-    const warn = document.getElementById('ciEmpWarn');
-    if (!selectedCiEmp) { warn.style.display = 'none'; return; }
-
-    // 调服务端 API 拿该员工最后一条办理 + 当前在宿记录
-    Promise.all([
-        fetch(`/api/v1/bookings/employee-history/${selectedCiEmp.id}`).then(r => r.json()).catch(() => ({ success: false })),
-        fetch(`/api/v1/bookings/staying-records/${selectedCiEmp.id}`).then(r => r.json()).catch(() => ({ success: false }))
-    ]).then(([histRes, stayRes]) => {
-        const list = (histRes.success && histRes.data) ? histRes.data : [];
-        const active = (stayRes.success && stayRes.data) ? stayRes.data : [];
-        const last = list.length > 0 ? list[0] : null;
-        const opType = document.querySelector('input[name="ciOpType"]:checked').value;
-
-        let msgs = [];
-        if (opType === '1' && active.length > 0) {
-            msgs.push(`员工当前已在宿 ${active[0].dormCode}（${active[0].bookingDate}），请先办理退房`);
-            warn.className = 'alert alert-danger mt-2 mb-0 py-2';
-        } else if (last && last.type === 2 && last.status === 3) {
-            msgs.push(`员工状态正常（上次退房：${last.bookingDate} ${last.dormCode}）`);
-            warn.className = 'alert alert-success mt-2 mb-0 py-2';
-        } else {
-            msgs.push('员工状态正常，可办理入住');
-            warn.className = 'alert alert-success mt-2 mb-0 py-2';
-        }
-        warn.innerHTML = msgs.join('<br>');
-        warn.style.display = 'block';
-    });
-}
-
-// 操作类型切换（v2.13.34 对齐原型 onTypeChange）
-function onCiTypeChange() {
-    const opType = document.querySelector('input[name="ciOpType"]:checked').value;
-    document.getElementById('ciStepDorm').style.display = opType === '1' ? 'block' : 'none';
-    document.getElementById('ciStepRecord').style.display = opType === '2' ? 'block' : 'none';
-    if (selectedCiEmp) {
-        validateCiEmp();
-        if (opType === '2') refreshCiRecords();
-    }
-}
-
-function onCiDateChange() { refreshCiDorms(); }
-function onCiDormSelect() { /* TODO: 显示宿舍详情 */ }
-
-// 刷新可用房间（v2.13.34 对齐原型 refreshDorms）
-function refreshCiDorms() {
-    const opType = document.querySelector('input[name="ciOpType"]:checked').value;
-    if (opType !== '1' || !selectedCiEmp) return;
-    const date = document.getElementById('ciBookingDate').value;
-    if (!date) return;
-    fetch(`${API_BASE}/available-dorms?employeeId=${selectedCiEmp.id}&bookingDate=${date}`)
-        .then(r => r.json())
-        .then(res => {
-            if (res.success) {
-                const sel = document.getElementById('ciDormSelect');
-                sel.innerHTML = '<option value="">请选择房间</option>' +
-                    res.data.map(d => `<option value="${d.dormCode}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人）</option>`).join('');
-                document.getElementById('ciDormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可用房间（含余量且日期不冲突）`;
-            }
-        }).catch(() => {});
-}
-
-// 刷新在宿记录（v2.13.34 对齐原型：opType=2 时加载员工在宿记录）
-function refreshCiRecords() {
-    if (!selectedCiEmp) return;
-    fetch(`${API_BASE}/staying-records/${selectedCiEmp.id}`)
-        .then(r => r.json())
-        .then(res => {
-            if (res.success && res.data.length > 0) {
-                const sel = document.getElementById('ciRecordSelect');
-                sel.innerHTML = '<option value="">请选择</option>' +
-                    res.data.map(r => `<option value="${r.id}">${r.dormCode}（${r.bookingDate} 入住）</option>`).join('');
-            } else {
-                const sel = document.getElementById('ciRecordSelect');
-                sel.innerHTML = '<option value="">该员工当前无在宿记录</option>';
-            }
-        }).catch(() => {});
-}
-
-// 提交（v2.13.34 对齐原型 submitForm：根据 opType 区分入住/退房）
-async function submitCheckIn() {
-    if (!selectedCiEmp) { alert('请先选择员工'); return; }
-    const opType = document.querySelector('input[name="ciOpType"]:checked').value;
-    const date = document.getElementById('ciBookingDate').value;
-    const reason = document.getElementById('ciReason').value;
-
-    try {
-        if (opType === '1') {
-            // 入住
-            const dormCode = document.getElementById('ciDormSelect').value;
-            if (!dormCode) { alert('请选择房间'); return; }
-            if (!date) { alert('请选择入住日期'); return; }
-
-            const resp = await fetch(`${API_BASE}/check-in`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ employeeId: selectedCiEmp.id, dormCode, bookingDate: date, reason, remark: '' })
-            });
-            const result = await resp.json();
-            if (result.success) {
-                alert(`✓ 入住办理成功\n员工：${selectedCiEmp.realName}\n日期：${date}\n宿舍：${dormCode}`);
-                bootstrap.Modal.getInstance(document.getElementById('checkInModal')).hide();
-                location.reload();
-            } else {
-                alert(result.message || '入住办理失败');
-            }
-        } else {
-            // 退房
-            const recordId = document.getElementById('ciRecordSelect').value;
-            if (!recordId) { alert('请选择退房记录'); return; }
-            if (!date) { alert('请选择退房日期'); return; }
-
-            const resp = await fetch(`${API_BASE}/${recordId}/check-out`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ checkOutDate: date, reason, remark: '' })
-            });
-            const result = await resp.json();
-            if (result.success) {
-                alert(`✓ 退房办理成功\n员工：${selectedCiEmp.realName}\n日期：${date}`);
-                bootstrap.Modal.getInstance(document.getElementById('checkInModal')).hide();
-                location.reload();
-            } else {
-                alert(result.message || '退房办理失败');
-            }
-        }
-    } catch (err) { console.error(err); alert('提交失败：' + err.message); }
-}
 
 function statusName(s) {
     return s === 1 ? '预约' : s === 2 ? '在宿' : s === 3 ? '已退房' : s === 4 ? '已取消' : '-';

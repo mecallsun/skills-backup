@@ -1,9 +1,9 @@
 # 方案文档索引
 
-> **版本**：v2.13.34（办理入住弹窗 100% 原型对齐）
+> **版本**：v2.13.36（办理入住独立页面 1:1 克隆原型）
 > **日期**：2026-07-20
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
-> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐
+> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型）
 
 ## 使用说明
 
@@ -105,6 +105,8 @@
 | **85** | [**数据源热加载与 EF 拦截器日志**](./85-数据源热加载与EF拦截器日志-v2.13.32.md) | **v2.13.32** | ✅ **最新** | **数据源热加载 + EF 拦截器日志（AppConfigRuntime + IDbContextFactory + DatabaseOperationInterceptor + DatabaseConfigFileWatcher 跨进程同步）** |
 | **86** | [**办理入住与工号姓名关联修复**](./86-办理入住与工号姓名关联修复-v2.13.33.md) | **v2.13.33** | ✅ **最新** | **BUG #1 selectCiEmp 卡死修复 + BUG #2 EmployeeName 双管齐下（实时覆盖 + Repair API 写回） + PageHeader「修复姓名关联」按钮** |
 | **87** | [**办理入住弹窗 100% 原型对齐**](./87-办理入住弹窗100%原型对齐-v2.13.34.md) | **v2.13.34** | ✅ **最新** | **checkInModal 100% 对齐原型 booking/check-in.html（11 项不一致修复 + 操作类型 radio + 单列布局 + form-card 系列样式 + 考勤班次 Badge + 校验 alert）** |
+| **88** | [**入住弹窗按钮与关闭交互设计**](./88-入住弹窗按钮与关闭交互设计-v2.13.35.md) | **v2.13.35** | ✅ **最新** | **5 关闭 + 1 提交触发器：取消/X/ESC/backdrop 统一 confirmCloseCheckIn + form 包裹让 type=submit 工作 + Enter 自动提交 + form-actions 快捷键提示 + modal backdrop=static/keyboard=false** |
+| **89** | [**办理入住独立页面 1:1 克隆原型**](./89-办理入住独立页面1比1克隆原型-v2.13.36.md) | **v2.13.36** | ✅ **最新** | **架构升级：Modal → 独立 Razor Page（/Booking/CheckIn）；完整复刻原型 booking/check-in.html（Tier1+Tier2+Tier3+form-card+4 区块）；Index.cshtml PageHeader 改为跳转；移除 checkInModal；保留 checkOutModal 快速退房；API mock-data.js → 真实后端 API** |
 
 ---
 
@@ -168,10 +170,10 @@
 
 | 位置 | 当前版本 |
 |------|---------|
-| **项目总版本** | **v2.13.34**（2026-07-20） |
-| 托盘程序可见版本 | v2.13.34 |
-| Web Admin 登录页徽章 | v2.13.34 |
-| Web Admin 顶部品牌栏 | v2.13.34 |
+| **项目总版本** | **v2.13.36**（2026-07-20） |
+| 托盘程序可见版本 | v2.13.36 |
+| Web Admin 登录页徽章 | v2.13.36 |
+| Web Admin 顶部品牌栏 | v2.13.36 |
 | 数据库同步功能版本 | v2.13.19 |
 | SQL 默认参数 | `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__` |
 
@@ -203,3 +205,4 @@
 | 2026-07-20 | **v2.13.32-hotfix 托盘测试连接 + SysParameter BUG** | 托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 修复传密文写 SysParameter 的 BUG（应传明文） |
 | 2026-07-20 | **v2.13.33 办理入住 BUG + 工号姓名关联修复** | **BUG #1**：selectCiEmp 卡死（新增 ciSearchResults/coSearchResults 缓存 + 重写完整填充逻辑）+ **BUG #2**：EmployeeName 双管齐下（GetListAsync 实时覆盖 + Repair API 写回）+ PageHeader「修复姓名关联」按钮 + 文档 86 + CLAUDE.md / INDEX.md 全面同步 |
 | 2026-07-20 | **v2.13.34 办理入住弹窗 100% 原型对齐** | checkInModal 11 项不一致修复（单列布局 + form-card 系列样式 + 操作类型 radio + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge + 校验 alert + "提交"按钮 + breadcrumb）+ PageHeader 移除冗余"办理退房"按钮（合并到入住弹窗 opType=2）+ 文档 87 |
+| 2026-07-20 | **v2.13.35 按钮与关闭交互设计细化** | `<form>` 包裹整个 form-card 让 type=submit 工作 + 提交按钮 type=submit（Enter 自动提交）+ 取消/X 按钮绑 confirmCloseCheckIn（已选员工时弹确认）+ ESC/backdrop 关闭走 hide.bs.modal 拦截 + modal 数据 backdrop=static/keyboard=false + form-actions 左侧快捷键提示 + 文档 88 |

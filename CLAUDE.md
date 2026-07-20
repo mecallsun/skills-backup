@@ -120,12 +120,14 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.32 数据源热加载：** `00-方案文档/85-数据源热加载与EF拦截器日志-v2.13.32.md` — `AppConfigRuntime` 单例 + `IDbContextFactory` + `DatabaseOperationInterceptor` + `DatabaseConfigFileWatcher` 跨进程同步
 - **v2.13.33 办理入住 BUG + 工号姓名关联修复：** `00-方案文档/86-办理入住与工号姓名关联修复-v2.13.33.md` — BUG #1 selectCiEmp 卡死 + BUG #2 EmployeeName 双管齐下同步（GetListAsync 实时覆盖 + Repair API 写回 + PageHeader 修复按钮）
 - **v2.13.34 办理入住弹窗 100% 原型对齐：** `00-方案文档/87-办理入住弹窗100%原型对齐-v2.13.34.md` — checkInModal 11 项不一致修复（单列布局 + form-card 系列样式 + 操作类型 radio + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge + 校验 alert + 提交按钮 + breadcrumb）
+- **v2.13.35 入住弹窗按钮与关闭交互设计：** `00-方案文档/88-入住弹窗按钮与关闭交互设计-v2.13.35.md` — 5 关闭 + 1 提交触发器（取消/X/ESC/backdrop 统一 confirmCloseCheckIn + form 包裹让 type=submit 工作 + Enter 自动提交 + modal backdrop=static/keyboard=false + form-actions 快捷键提示）
+- **v2.13.36 办理入住独立页面 1:1 克隆原型：** `00-方案文档/89-办理入住独立页面1比1克隆原型-v2.13.36.md` — 架构升级（Modal → 独立 Razor Page /Booking/CheckIn）+ 1:1 复刻原型 booking/check-in.html 三层结构 + 4 区块 + 替换 mock-data.js 为真实后端 API + 保留 checkOutModal 快速退房
 - **HTML Prototypes:** `00-方案文档/04-HTML原型/` 共 25 个原型页面 + `_shared/` 共享资源（v2.12.3 起统一为「共用页头 + Tab 页签切换」三层架构）。
 
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.34（2026-07-20 入住弹窗 100% 原型对齐版）
+- **项目当前版本：** v2.13.36（2026-07-20 办理入住升级为独立页面 1:1 克隆原型）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -139,3 +141,4 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.32 数据源热加载：** 通过 `AppConfigRuntime` 单例 + `IDbContextFactory<DormDbContext>`，Web 端或托盘修改数据库配置并保存后，**无需重启服务**即可让 Api/Admin 下次请求自动切换到新连接；`DatabaseOperationInterceptor` 输出 `[DB-CONN]` / `[DB-EXEC]` / `[DB-EXEC-SLOW]` 运行时日志，提供连接可观测性（详见 `Settings → 数据库连接` 页面顶部"🗄️ Server/Database"徽章，30s 轮询）。**配套修复**：托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 写 SysParameter 不再使用密文（v2.13.32-hotfix）。
 - **v2.13.33 Repair API：** Booking 模块新增 `POST /api/v1/bookings/repair-employee-names`，用于批量回填历史 `DormBooking.EmployeeName`（按 `EmployeeId` 优先 / `EmployeeCode` 次之对齐 `SysEmployee.RealName`，返回 `updated/skipped/notFound` 计数）。**`/Booking` 页面 PageHeader 新增「修复姓名关联」按钮**。同时修复 BUG #1：`selectCiEmp` 卡死（增加 `ciSearchResults/coSearchResults` 缓存，按 empId 查员工并完整填充 `dataset.empId` + 员工信息展示区）。
 - **v2.13.34 checkInModal 100% 原型对齐：** 11 项 UI/交互不一致全部修复（单列布局 + form-card 系列样式 + 操作类型 radio 切换入住/退房 + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge 渲染 + 校验 alert 3 种状态 + "提交"按钮 + breadcrumb）。**PageHeader 移除冗余"办理退房"按钮**（合并到 checkInModal 的 opType=2 分支）。
+- **v2.13.35 按钮与关闭交互设计：** 5 关闭 + 1 提交触发器统一化设计：`<form id="checkInForm">` 包裹整个 form-card → type=submit 工作 → Enter 自动触发 submitCheckIn；取消/X 按钮改 `id` 绑定 confirmCloseCheckIn（已选员工时弹"放弃当前录入"确认）；ESC/backdrop 关闭走 `hide.bs.modal` 拦截；modal 配 `data-bs-backdrop="static"` + `data-bs-keyboard="false"` 强制拦截；form-actions 左侧增加快捷键提示 `<kbd>Enter</kbd> 提交 · <kbd>Esc</kbd> 关闭`。
