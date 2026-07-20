@@ -55,9 +55,11 @@
                     "primary" => "btn-outline-primary",
                     "success" => "btn-outline-success",
                     "danger" => "btn-outline-danger",
+                    "warning" => "btn-outline-warning",
                     "secondary" => "btn-outline-secondary",
                     _ => "btn-outline-secondary"
                 };
+                @* v2.13.38: actions 同时支持 Url 和 OnClick 渲染（之前 OnClick 按钮不显示） *@
                 @if (!string.IsNullOrEmpty(action.Url))
                 {
                     <a href="@action.Url" class="btn @styleClass btn-sm">
@@ -67,6 +69,16 @@
                         }
                         @action.Label
                     </a>
+                }
+                else if (!string.IsNullOrEmpty(action.OnClick))
+                {
+                    <button type="button" class="btn @styleClass btn-sm" onclick="@action.OnClick">
+                        @if (!string.IsNullOrEmpty(action.Icon))
+                        {
+                            <i class="bi @action.Icon"></i>
+                        }
+                        @action.Label
+                    </button>
                 }
             }
             @if (!string.IsNullOrEmpty(Model.Subtitle))

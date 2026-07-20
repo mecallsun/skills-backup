@@ -24,6 +24,7 @@
             // v2.13.36: 退房已合并到 /Booking/CheckIn 独立页面的「操作类型 = 退房」radio 切换（1:1 对齐原型），PageHeader 不再单独显示"办理退房"按钮
             // v2.13.32-hotfix BUG #2: 一键修复 DormBooking.EmployeeName 与档案 RealName 的关联（按工号反查人员清单）
             new() { Label = "修复姓名关联", OnClick = "repairEmployeeNames()", Icon = "bi-arrow-repeat", Style = "warning" },
+            // v2.13.38: 导出走真实 API（GET /api/v1/bookings/export），JS 携带当前筛选参数
             new() { Label = "导出", OnClick = "exportExcel()", Icon = "bi-download", Style = "secondary" }
         }
     })
@@ -516,7 +517,7 @@ async function deleteBooking(id) {
             return;
         }
         alert('✓ 已删除');
-        renderList(); // 重新渲染列表
+        location.reload(); // v2.13.38 修复：原代码调用不存在的 renderList()，改为整页刷新
     } catch (err) {
         console.error(err);
         alert('删除失败');
@@ -572,6 +573,22 @@ async function cancelToday(id) {
         console.error(err);
         alert('撤销在宿失败');
     }
+}
+
+// v2.13.38: 导出当前筛选条件下的办理登记列表为 Excel
+function exportExcel() {
+    // 从当前表单读取筛选参数
+    const form = document.querySelector('form[data-filter-form="booking"]');
+    const params = new URLSearchParams();
+    if (form) {
+        for (const el of form.elements) {
+            if (el.name && el.value && el.value.trim() !== '') {
+                params.set(el.name, el.value);
+            }
+        }
+    }
+    const url = `${API_BASE}/export${params.toString() ? '?' + params.toString() : ''}`;
+    window.location.href = url;  // 直接下载（后端返回 .xlsx 文件流）
 }
 
 // ==================== v2.13.36: 办理入住已迁移到独立页面 /Booking/CheckIn ====================

@@ -304,7 +304,7 @@
             document.getElementById('empDept').textContent = emp.department || '-';
 
             // 员工类型：原型取 EMPLOYEE_TYPES 字典；这里 fallback 到 employeeType 字段（API 暂未返回 name）
-            document.getElementById('empType').textContent = emp.employeeType || emp.employeeTypeName || '-';
+            document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
 
             // 考勤班次：原型渲染为彩色 Badge
             document.getElementById('empAtt').innerHTML = attendanceBadge(emp.attendanceType || 'DEFAULT');

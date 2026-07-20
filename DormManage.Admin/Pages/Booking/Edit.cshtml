@@ -133,14 +133,21 @@ else
                         <small class="text-muted">入住/退房原因说明</small>
                     </div>
 
-                    <!-- 第二行：状态（仅预约状态可修改） -->
+                    <!-- 第二行：状态（仅预约状态可修改） v2.13.38: Type=2 退房显示「已退房」(3) 而非「在宿」(2) -->
                     @if (Model.Booking.Status == 1)
                     {
                         <div class="col-md-6">
                             <label class="form-label">状态 <span class="text-danger">*</span></label>
                             <select id="status" name="status" class="form-select">
                                 <option value="1" selected>预约</option>
-                                <option value="2">在宿</option>
+                                @if (Model.Booking.Type == 1)
+                                {
+                                    <option value="2">在宿</option>
+                                }
+                                else
+                                {
+                                    <option value="3">已退房</option>
+                                }
                                 <option value="4">已取消</option>
                             </select>
                             <small class="text-muted">仅预约状态可修改状态</small>

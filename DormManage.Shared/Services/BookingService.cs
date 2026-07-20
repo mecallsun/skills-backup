@@ -118,6 +118,8 @@ public class BookingUpdateRequest
     public DateOnly BookingDate { get; set; }
     public string? Reason { get; set; }
     public string? Remark { get; set; }
+    // v2.13.38: 新增 Status 字段（前端可下拉修改预约记录的状态：1预约/2在宿/3已退房/4已取消）
+    public int? Status { get; set; }
 }
 
 /// <summary>
@@ -132,6 +134,11 @@ public class EmployeeSearchResult
     public string? Department { get; set; }
     public DateOnly? HireDate { get; set; }
     public string? DormCode { get; set; }
+    // v2.13.38: 补充员工类型 + 考勤班次字段（供 CheckIn 页面 Badge 渲染）
+    public string? EmployeeType { get; set; }
+    public string? EmployeeTypeName { get; set; }
+    public string? AttendanceType { get; set; }
+    public string? AttendanceTypeName { get; set; }
 }
 
 /// <summary>
@@ -707,6 +714,11 @@ public class BookingService : IBookingService
         booking.BookingDate = request.BookingDate;
         booking.Reason = request.Reason;
         booking.Remark = request.Remark;
+        // v2.13.38: 当 Status 字段被传入时，更新状态（仅 Status=1 预约时前端才会传）
+        if (request.Status.HasValue)
+        {
+            booking.Status = request.Status.Value;
+        }
         booking.UpdatedAt = DateTime.Now;
 
         _db.DormBookings.Update(booking);
@@ -752,7 +764,12 @@ public class BookingService : IBookingService
                 Phone = x.Phone,
                 Department = x.Department,
                 HireDate = x.HireDate,
-                DormCode = x.DormCode
+                DormCode = x.DormCode,
+                // v2.13.38: 映射员工类型 + 考勤班次（FK Name 用于 Badge 渲染）
+                EmployeeType = x.EmployeeTypeId > 0 ? x.EmployeeTypeId.ToString() : null,
+                EmployeeTypeName = x.EmployeeType != null ? x.EmployeeType.Name : null,
+                AttendanceType = x.AttendanceTypeId.HasValue ? x.AttendanceTypeId.Value.ToString() : null,
+                AttendanceTypeName = x.AttendanceType != null ? x.AttendanceType.Name : null
             })
             .ToListAsync();
     }

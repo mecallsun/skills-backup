@@ -94,7 +94,8 @@ public class BookingController : ControllerBase
         {
             BookingDate = DateOnly.Parse(request.BookingDate),
             Reason = request.Reason,
-            Remark = request.Remark
+            Remark = request.Remark,
+            Status = request.Status  // v2.13.38: 透传 Status 字段
         });
     }
 
@@ -212,6 +213,66 @@ public class BookingController : ControllerBase
     {
         return await _service.RepairBookingEmployeeNamesAsync();
     }
+
+    /// <summary>
+    /// v2.13.38：导出办理登记列表（按当前筛选条件生成 .xlsx 文件）
+    /// </summary>
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(
+        [FromQuery] string? keyword = null,
+        [FromQuery] string? department = null,
+        [FromQuery] string? dormCode = null,
+        [FromQuery] int? type = null,
+        [FromQuery] int? status = null,
+        [FromQuery] string? dateFrom = null,
+        [FromQuery] string? dateTo = null)
+    {
+        DateOnly? df = string.IsNullOrEmpty(dateFrom) ? null : DateOnly.Parse(dateFrom);
+        DateOnly? dt = string.IsNullOrEmpty(dateTo) ? null : DateOnly.Parse(dateTo);
+
+        var pagedResult = await _service.GetListAsync(keyword, department, dormCode, type, status, df, dt, 1, 10000);
+        var items = pagedResult.Items;
+
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var sheet = workbook.Worksheets.Add("办理登记");
+        // 表头（v2.13.38 与列表 12 列对齐）
+        sheet.Cell(1, 1).Value = "序号";
+        sheet.Cell(1, 2).Value = "工号";
+        sheet.Cell(1, 3).Value = "姓名";
+        sheet.Cell(1, 4).Value = "部门";
+        sheet.Cell(1, 5).Value = "考勤班次";
+        sheet.Cell(1, 6).Value = "宿舍";
+        sheet.Cell(1, 7).Value = "类型";
+        sheet.Cell(1, 8).Value = "入退日期";
+        sheet.Cell(1, 9).Value = "状态";
+        sheet.Cell(1, 10).Value = "原因";
+        sheet.Cell(1, 11).Value = "登记人";
+        sheet.Cell(1, 12).Value = "登记时间";
+
+        for (var i = 0; i < items.Count; i++)
+        {
+            var b = items[i];
+            sheet.Cell(i + 2, 1).Value = i + 1;
+            sheet.Cell(i + 2, 2).Value = b.EmployeeCode ?? "";
+            sheet.Cell(i + 2, 3).Value = b.EmployeeName ?? "";
+            sheet.Cell(i + 2, 4).Value = b.Department ?? "";
+            sheet.Cell(i + 2, 5).Value = ""; // v2.13.38: DormBooking 暂无 AttendanceTypeName 字段，留空
+            sheet.Cell(i + 2, 6).Value = b.DormCode ?? "";
+            sheet.Cell(i + 2, 7).Value = b.Type == 1 ? "入住" : "退房";
+            sheet.Cell(i + 2, 8).Value = b.BookingDate.ToString("yyyy-MM-dd");
+            sheet.Cell(i + 2, 9).Value = b.Status switch { 1 => "预约", 2 => "在宿", 3 => "已退房", 4 => "已取消", _ => "-" };
+            sheet.Cell(i + 2, 10).Value = b.Reason ?? "";
+            sheet.Cell(i + 2, 11).Value = b.Registrar ?? "";
+            sheet.Cell(i + 2, 12).Value = b.RegistrationDate.ToString("yyyy-MM-dd HH:mm");
+        }
+
+        sheet.Columns().AdjustToContents();
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+        ms.Position = 0;
+        var fileName = $"办理登记_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+        return File(ms.ToArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
 }
 
 /// <summary>
@@ -244,4 +305,6 @@ public class UpdateRequest
     public string BookingDate { get; set; } = string.Empty;
     public string? Reason { get; set; }
     public string? Remark { get; set; }
+    // v2.13.38: 新增 Status 字段（前端可下拉修改预约记录的状态：1预约/2在宿/3已退房/4已取消）
+    public int? Status { get; set; }
 }

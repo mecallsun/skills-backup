@@ -123,12 +123,13 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.35 入住弹窗按钮与关闭交互设计：** `00-方案文档/88-入住弹窗按钮与关闭交互设计-v2.13.35.md` — 5 关闭 + 1 提交触发器（取消/X/ESC/backdrop 统一 confirmCloseCheckIn + form 包裹让 type=submit 工作 + Enter 自动提交 + modal backdrop=static/keyboard=false + form-actions 快捷键提示）
 - **v2.13.36 办理入住独立页面 1:1 克隆原型：** `00-方案文档/89-办理入住独立页面1比1克隆原型-v2.13.36.md` — 架构升级（Modal → 独立 Razor Page /Booking/CheckIn）+ 1:1 复刻原型 booking/check-in.html 三层结构 + 4 区块 + 替换 mock-data.js 为真实后端 API + 保留 checkOutModal 快速退房
 - **v2.13.37 Dashboard 首页 100% 原型对齐：** `00-方案文档/90-Dashboard首页100%原型对齐-v2.13.37.md` — 完全反向适配（KPI 3/4 静态显示 + 月份选择器硬编码 3 项 + 版本号硬编码 + 图表图例 2026年/2025年），Dashboard 综合对齐度 98% → 100%
+- **v2.13.38 Booking 全部 100% 原型对齐：** `00-方案文档/91-Booking全部100%原型对齐-v2.13.38.md` — 4 页面逐项修复：PageHeader actions OnClick 渲染 + Index 删除/导出 BUG + Edit Type=2 状态选项 + 后端 Status 字段 + CheckIn DTO FK 字段 + CheckOut 重大重构（form-card 架构 + 员工信息卡 + dateHint 校验）
 - **HTML Prototypes:** `00-方案文档/04-HTML原型/` 共 25 个原型页面 + `_shared/` 共享资源（v2.12.3 起统一为「共用页头 + Tab 页签切换」三层架构）。
 
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.37（2026-07-20 Dashboard 首页 100% 原型对齐）
+- **项目当前版本：** v2.13.38（2026-07-21 Booking 全部 4 页面 100% 原型对齐）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
