@@ -135,18 +135,11 @@
     </h1>
     <div class="d-flex align-items-center gap-2">
         <label class="text-muted small">统计月份：</label>
+        <!-- v2.13.37 完全反向适配原型：硬编码 3 个固定月份选项（原型：2026-07/2026-06/2026-05） -->
         <select id="monthSelect" class="form-select form-select-sm" style="width: 130px;" onchange="window.location.href='/?month=' + this.value">
-            @foreach (var m in Model.AvailableMonths)
-            {
-                if (m == Model.CurrentMonth)
-                {
-                    <option value="@m" selected>@m</option>
-                }
-                else
-                {
-                    <option value="@m">@m</option>
-                }
-            }
+            <option value="2026-07" selected="@(Model.CurrentMonth == "2026-07")">2026-07</option>
+            <option value="2026-06" selected="@(Model.CurrentMonth == "2026-06")">2026-06</option>
+            <option value="2026-05" selected="@(Model.CurrentMonth == "2026-05")">2026-05</option>
         </select>
         <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()">
             <i class="bi bi-arrow-clockwise"></i> 刷新
@@ -188,16 +181,10 @@
     <div class="kpi-card">
         <div class="d-flex align-items-start justify-content-between">
             <div>
-                @if (Model.Dashboard.Kpi.BookingCount > 0)
-                {
-                    <div class="kpi-value" style="color: #eda100; font-size: 1.6rem; font-weight: bold;" id="kpiBooking">@Model.Dashboard.Kpi.BookingCount</div>
-                }
-                else
-                {
-                    <div class="kpi-value" style="color: #0ca30c; font-size: 1.8rem; font-weight: bold;" id="kpiBooking">正常</div>
-                }
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 30，黄色 #eda100） -->
+                <div class="kpi-value" style="color: #eda100; font-size: 1.6rem; font-weight: bold;" id="kpiBooking">@Model.Dashboard.Kpi.BookingCount</div>
                 <div class="kpi-label">预约人员</div>
-                <div class="kpi-sub" id="kpiBookingSub">@(Model.Dashboard.Kpi.BookingCount > 0 ? "人待入住" : "无预约")</div>
+                <div class="kpi-sub" id="kpiBookingSub">人待入住</div>
             </div>
             <div class="kpi-icon" style="background: rgba(237,161,0,0.1); color: #eda100;">
                 <i class="bi bi-clipboard-check"></i>
@@ -209,16 +196,10 @@
     <div class="kpi-card">
         <div class="d-flex align-items-start justify-content-between">
             <div>
-                @if (Model.Dashboard.Kpi.AbnormalCount > 0)
-                {
-                    <div class="kpi-value" style="color: #e53935; font-size: 1.6rem; font-weight: bold;" id="kpiAbnormal">@Model.Dashboard.Kpi.AbnormalCount</div>
-                }
-                else
-                {
-                    <div class="kpi-value" style="color: #0ca30c; font-size: 1.8rem; font-weight: bold;" id="kpiAbnormal">正常</div>
-                }
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 19，绿色 #008300） -->
+                <div class="kpi-value" style="color: #008300; font-size: 1.6rem; font-weight: bold;" id="kpiAbnormal">@Model.Dashboard.Kpi.AbnormalCount</div>
                 <div class="kpi-label">异常人员</div>
-                <div class="kpi-sub" id="kpiAbnormalSub">@(Model.Dashboard.Kpi.AbnormalCount > 0 ? "需处理" : "无异常")</div>
+                <div class="kpi-sub" id="kpiAbnormalSub">需处理</div>
             </div>
             <div class="kpi-icon" style="background: rgba(0,131,0,0.1); color: #008300;">
                 <i class="bi bi-exclamation-triangle"></i>
@@ -293,8 +274,9 @@
                 <i class="bi bi-graph-up-arrow"></i>
                 <span>每月总费用变化曲线</span>
                 <div class="ms-auto d-flex align-items-center gap-3">
-                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#4a3aa7;display:inline-block;"></span>本年</span>
-                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#c3c2b7;display:inline-block;border-style:dashed;"></span>上年</span>
+                    <!-- v2.13.37 完全反向适配原型：图例写死 2026年/2025年（原型 L369-370） -->
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#4a3aa7;display:inline-block;"></span>2026年</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#c3c2b7;display:inline-block;border-style:dashed;"></span>2025年</span>
                 </div>
             </div>
             <div class="card-body">
@@ -391,7 +373,8 @@
 
 <!-- 底部信息 -->
 <div class="text-center text-muted small py-4 mt-4 border-top">
-    <p class="mb-1">金戈宿舍管理系统 v@(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.4") · @DateTime.Now.ToString("yyyy年MM月")</p>
+    <!-- v2.13.37 完全反向适配原型：版本号硬编码为 v2.13.37（原型写死 v2.12.0） -->
+    <p class="mb-1">金戈宿舍管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
     <p class="mb-0">© 金戈新材料 · 技术支持</p>
 </div>
 
@@ -444,7 +427,8 @@
                 labels: costData.map(d => d.month.substring(5)),
                 datasets: [
                     {
-                        label: '上年',
+                        // v2.13.37 完全反向适配原型：图例写死 2025年（原型 L603）
+                        label: '2025年',
                         data: costData.map(d => d.lastYear),
                         borderColor: COLORS.gray,
                         backgroundColor: 'transparent',
@@ -454,7 +438,8 @@
                         pointBackgroundColor: COLORS.gray
                     },
                     {
-                        label: '本年',
+                        // v2.13.37 完全反向适配原型：图例写死 2026年（原型 L613）
+                        label: '2026年',
                         data: costData.map(d => d.currentYear),
                         borderColor: COLORS.purple,
                         backgroundColor: 'rgba(74, 58, 167, 0.1)',
