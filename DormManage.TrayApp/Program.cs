@@ -1,4 +1,6 @@
 using System.Reflection;
+using DormManage.Shared.Models;
+using DormManage.Shared.Services;
 using DormManage.TrayApp.Services;
 
 namespace DormManage.TrayApp;
@@ -18,6 +20,11 @@ internal static class Program
 
     [STAThread]
     private static void Main()
+    {
+        RunAsync().GetAwaiter().GetResult();
+    }
+
+    private static async Task RunAsync()
     {
         // 1) 单实例锁
         const string mutexName = @"Global\DormManage.TrayApp.SingleInstance.v2";
@@ -66,6 +73,11 @@ internal static class Program
         var initialLog = new LogService(Path.Combine(AppContext.BaseDirectory, "logs"));
         var config = new ConfigService(configPath, initialLog);
         config.Load();
+
+        // v2.13.19：启动时将 db_setting.json 同步到 appsettings.json，
+        // 保证 Web 端保存的配置在 Tray 重启后生效
+        await SyncDbSettingToAppsettingsAsync(config);
+
         var logDir = string.IsNullOrWhiteSpace(config.Current.Storage.LogRoot)
             ? Path.Combine(AppContext.BaseDirectory, "logs")
             : (Path.IsPathRooted(config.Current.Storage.LogRoot)
@@ -92,6 +104,34 @@ internal static class Program
             _singleInstance.Dispose();
             _singleInstance = null;
             log.Info("=== 托盘退出 ===");
+        }
+    }
+
+    /// <summary>
+    /// v2.13.19：若 db_setting.json 存在，将字段式数据库配置同步到 appsettings.json，
+    /// 保证 Web 端保存的配置在 Tray 重启后生效。
+    /// </summary>
+    private static async Task SyncDbSettingToAppsettingsAsync(ConfigService config)
+    {
+        try
+        {
+            var dto = await AppConfigManager.Instance.LoadAsync();
+            if (dto is null) return;
+
+            config.UpdateDatabaseSection(dto);
+        }
+        catch (Exception ex)
+        {
+            // 启动同步失败不应阻塞托盘启动，记录到默认日志目录
+            try
+            {
+                var dir = Path.Combine(AppContext.BaseDirectory, "logs");
+                Directory.CreateDirectory(dir);
+                File.AppendAllText(
+                    Path.Combine(dir, $"tray-{DateTime.Now:yyyyMMdd}.log"),
+                    $"[{DateTime.Now}] 启动同步 db_setting.json 失败：{ex}\n");
+            }
+            catch { /* 兜底 */ }
         }
     }
 }
