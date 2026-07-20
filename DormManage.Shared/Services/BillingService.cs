@@ -15,6 +15,10 @@ public interface IBillingService
     /// <summary>获取费用标准列表（分页）</summary>
     Task<PagedResult<BillingStandard>> GetStandardsAsync(int page, int pageSize);
     Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? isActive, int page, int pageSize);
+    /// <summary>v2.13.20 新增适用类型筛选</summary>
+    Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? applicableType, string? isActive, int page, int pageSize);
+    /// <summary>v2.13.20 获取费用标准适用类型去重列表</summary>
+    Task<List<string>> GetStandardApplicableTypesAsync();
 
     /// <summary>创建/更新费用标准</summary>
     Task<(bool ok, string message)> SaveStandardAsync(BillingStandard standard);
@@ -30,6 +34,8 @@ public interface IBillingService
 
     /// <summary>查询员工账单列表</summary>
     Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int page, int pageSize);
+    /// <summary>v2.13.20 查询员工账单列表（新增部门/员工类型/住宿状态筛选）</summary>
+    Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int page, int pageSize);
 
     /// <summary>发布宿舍账单</summary>
     Task<(bool ok, string message)> PublishDormBillsAsync(string billingMonth);
@@ -62,14 +68,20 @@ public class BillingService : IBillingService
     }
 
     public async Task<PagedResult<BillingStandard>> GetStandardsAsync(int page, int pageSize)
-        => await GetStandardsAsync(null, null, page, pageSize);
+        => await GetStandardsAsync(null, null, null, page, pageSize);
 
     public async Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? isActive, int page, int pageSize)
+        => await GetStandardsAsync(keyword, null, isActive, page, pageSize);
+
+    public async Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? applicableType, string? isActive, int page, int pageSize)
     {
         var query = _db.BillingStandards.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(keyword))
             query = query.Where(s => s.StandardName.Contains(keyword));
+
+        if (!string.IsNullOrWhiteSpace(applicableType))
+            query = query.Where(s => s.ApplicableType != null && s.ApplicableType.Contains(applicableType));
 
         if (isActive == "true")
             query = query.Where(s => s.IsActive);
@@ -83,6 +95,20 @@ public class BillingService : IBillingService
         return new PagedResult<BillingStandard> { Items = items, Total = total, PageIndex = page, PageSize = pageSize };
     }
 
+    public async Task<List<string>> GetStandardApplicableTypesAsync()
+    {
+        var fromDb = await _db.BillingStandards
+            .Where(s => !string.IsNullOrEmpty(s.ApplicableType))
+            .Select(s => s.ApplicableType!)
+            .Distinct()
+            .OrderBy(t => t)
+            .ToListAsync();
+
+        var defaults = new[] { "全部", "合同工", "临时工", "外包", "实习生", "驻场" };
+        var combined = defaults.Union(fromDb, StringComparer.OrdinalIgnoreCase).ToList();
+        return combined;
+    }
+
     public async Task<(bool ok, string message)> SaveStandardAsync(BillingStandard standard)
     {
         if (string.IsNullOrWhiteSpace(standard.StandardName))
@@ -91,7 +117,7 @@ public class BillingService : IBillingService
             return (false, "生效日期必填");
 
         // v2.13.12: 生效日期范围校验
-        if (standard.EffectiveTo.HasValue && standard.EffectiveFrom > standard.EffectiveTo)
+        if (standard.EffectiveTo > standard.EffectiveFrom)
             return (false, "结束日期不能早于开始日期");
 
         if (standard.IsActive)
@@ -335,12 +361,32 @@ public class BillingService : IBillingService
     }
 
     public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int page, int pageSize)
+        => await GetEmployeeBillsAsync(billingMonth, dormCode, empKeyword, null, null, null, page, pageSize);
+
+    public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int page, int pageSize)
     {
         var query = _db.EmployeeBillings.AsQueryable();
         if (!string.IsNullOrWhiteSpace(billingMonth))
             query = query.Where(e => e.BillingMonth == billingMonth);
         if (!string.IsNullOrWhiteSpace(dormCode))
             query = query.Where(e => e.DormCode != null && e.DormCode.Contains(dormCode));
+
+        if (departmentId.HasValue || employeeTypeId.HasValue || residenceStatusId.HasValue || !string.IsNullOrWhiteSpace(empKeyword))
+        {
+            var employeeIds = await _db.Employees
+                .Where(e =>
+                    (!departmentId.HasValue || e.DepartmentId == departmentId.Value) &&
+                    (!employeeTypeId.HasValue || e.EmployeeTypeId == employeeTypeId.Value) &&
+                    (!residenceStatusId.HasValue || e.ResidenceStatusId == residenceStatusId.Value) &&
+                    (string.IsNullOrWhiteSpace(empKeyword) ||
+                     e.EmployeeCode.Contains(empKeyword) ||
+                     e.RealName.Contains(empKeyword) ||
+                     (e.Phone != null && e.Phone.Contains(empKeyword))))
+                .Select(e => e.Id)
+                .ToListAsync();
+
+            query = query.Where(e => employeeIds.Contains(e.EmployeeId));
+        }
 
         var total = await query.CountAsync();
         var items = await query

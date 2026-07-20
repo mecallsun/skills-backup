@@ -429,3 +429,136 @@ INNER JOIN [dbo].[Dorm] d ON d.[DormId] = r.[DormId];
 
 GO
 PRINT N'✅ 数据库结构定义完成（绝对真理源 v2.13.3）';
+
+-- =========================================================================
+-- v2.13.24 业务深度补表：DormBilling/EmployeeBilling/SysUserFilterCache/
+--   AppVersion/SysIntegration/SysParameter/SysSystemIntegration
+--   原 EF Migration 自动创建，DDL 现统一到 init_schema.sql 作为权威
+-- =========================================================================
+
+-- 27. DormBilling（宿舍账单）
+CREATE TABLE [dbo].[DormBilling] (
+    [Id]               INT            IDENTITY(1,1) NOT NULL,
+    [BillingMonth]     CHAR(7)        NOT NULL,  -- yyyy-MM
+    [DormCode]         NVARCHAR(64)   NOT NULL,
+    [BuildingName]     NVARCHAR(50)   NULL,
+    [AddressText]      NVARCHAR(200)  NULL,
+    [ResidentCount]    INT            NOT NULL DEFAULT ((0)),
+    [ColdAmount]       DECIMAL(12,2)  NOT NULL DEFAULT ((0)),
+    [HotAmount]        DECIMAL(12,2)  NOT NULL DEFAULT ((0)),
+    [ElectricAmount]   DECIMAL(12,2)  NOT NULL DEFAULT ((0)),
+    [TotalAmount]      DECIMAL(12,2)  NOT NULL DEFAULT ((0)),
+    [BillingStandardId] INT           NULL,
+    [IsPublished]      BIT            NOT NULL DEFAULT ((0)),
+    [GeneratedBy]      NVARCHAR(64)   NULL,
+    [GeneratedAt]      DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [Remark]           NVARCHAR(500)  NULL,
+    [CreatedAt]        DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]        DATETIME       NULL,
+    CONSTRAINT [PK_DormBilling] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_DormBilling_MonthDorm] UNIQUE ([BillingMonth], [DormCode])
+);
+CREATE INDEX [IX_DormBilling_Month] ON [dbo].[DormBilling]([BillingMonth] DESC);
+CREATE INDEX [IX_DormBilling_Dorm] ON [dbo].[DormBilling]([DormCode]);
+
+-- 28. EmployeeBilling（员工分摊账单）
+CREATE TABLE [dbo].[EmployeeBilling] (
+    [Id]               INT            IDENTITY(1,1) NOT NULL,
+    [BillingMonth]     CHAR(7)        NOT NULL,
+    [EmployeeId]       INT            NOT NULL,
+    [EmployeeCode]     NVARCHAR(64)   NOT NULL,
+    [EmployeeName]     NVARCHAR(128)  NOT NULL,
+    [Department]       NVARCHAR(128)  NULL,
+    [DormBillId]       INT            NULL,
+    [DormCode]         NVARCHAR(64)   NOT NULL,
+    [Days]             INT            NOT NULL DEFAULT ((0)),
+    [TotalShareAmount] DECIMAL(12,2)  NOT NULL DEFAULT ((0)),
+    [IsPublished]      BIT            NOT NULL DEFAULT ((0)),
+    [GeneratedAt]      DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [Remark]           NVARCHAR(500)  NULL,
+    [CreatedAt]        DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]        DATETIME       NULL,
+    CONSTRAINT [PK_EmployeeBilling] PRIMARY KEY ([Id]),
+    CONSTRAINT [IX_EmployeeBilling_MonthEmp] UNIQUE ([BillingMonth], [EmployeeId])
+);
+CREATE INDEX [IX_EmployeeBilling_DormBillId] ON [dbo].[EmployeeBilling]([DormBillId]);
+CREATE INDEX [IX_EmployeeBilling_Emp] ON [dbo].[EmployeeBilling]([EmployeeId]);
+
+-- 29. SysUserFilterCache（用户筛选条件云端缓存 — v2.13.12）
+CREATE TABLE [dbo].[SysUserFilterCache] (
+    [Id]         INT            IDENTITY(1,1) NOT NULL,
+    [UserId]     INT            NOT NULL,
+    [Module]     NVARCHAR(64)   NOT NULL,
+    [FilterJson] NVARCHAR(MAX)  NOT NULL,
+    [UpdatedAt]  DATETIME       NOT NULL DEFAULT (GETDATE()),
+    CONSTRAINT [PK_SysUserFilterCache] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysUserFilterCache_UserModule] UNIQUE ([UserId], [Module])
+);
+CREATE INDEX [IX_SysUserFilterCache_UserId] ON [dbo].[SysUserFilterCache]([UserId]);
+
+-- 30. AppVersion（PDA 版本管理）
+CREATE TABLE [dbo].[AppVersion] (
+    [Id]            INT            IDENTITY(1,1) NOT NULL,
+    [VersionCode]   NVARCHAR(32)   NOT NULL,
+    [VersionName]   NVARCHAR(64)   NOT NULL,
+    [Platform]      NVARCHAR(32)   NOT NULL DEFAULT (N'PDA'),
+    [DownloadUrl]   NVARCHAR(512)  NOT NULL,
+    [ReleaseNotes]  NVARCHAR(MAX)  NULL,
+    [IsMandatory]   BIT            NOT NULL DEFAULT ((0)),
+    [IsActive]      BIT            NOT NULL DEFAULT ((1)),
+    [PublishedAt]   DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [PublishedBy]   NVARCHAR(64)   NULL,
+    [CreatedAt]     DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]     DATETIME       NULL,
+    CONSTRAINT [PK_AppVersion] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_AppVersion_Code] UNIQUE ([VersionCode])
+);
+
+-- 31. SysIntegration（系统集成 HR/K3ERP 配置）
+CREATE TABLE [dbo].[SysIntegration] (
+    [Id]            INT            IDENTITY(1,1) NOT NULL,
+    [Code]          NVARCHAR(64)   NOT NULL,
+    [Name]          NVARCHAR(128)  NOT NULL,
+    [IntegrationType] NVARCHAR(32) NOT NULL,  -- HR / K3ERP / Other
+    [Endpoint]      NVARCHAR(512)  NOT NULL,
+    [AuthJson]      NVARCHAR(MAX)  NULL,
+    [IsActive]      BIT            NOT NULL DEFAULT ((1)),
+    [LastSyncAt]    DATETIME       NULL,
+    [LastSyncStatus] NVARCHAR(32)  NULL,
+    [Remark]        NVARCHAR(500)  NULL,
+    [CreatedAt]     DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]     DATETIME       NULL,
+    CONSTRAINT [PK_SysIntegration] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysIntegration_Code] UNIQUE ([Code])
+);
+
+-- 32. SysParameter（数据库连接持久化 — v2.13.19 双 UI 同步）
+CREATE TABLE [dbo].[SysParameter] (
+    [Id]          INT            IDENTITY(1,1) NOT NULL,
+    [ParamKey]    NVARCHAR(64)   NOT NULL,
+    [ParamValue]  NVARCHAR(MAX)  NULL,
+    [Category]    NVARCHAR(64)   NOT NULL DEFAULT (N'DB'),
+    [Description] NVARCHAR(500)  NULL,
+    [IsEncrypted] BIT            NOT NULL DEFAULT ((0)),
+    [UpdatedBy]   NVARCHAR(64)   NULL,
+    [UpdatedAt]   DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [CreatedAt]   DATETIME       NOT NULL DEFAULT (GETDATE()),
+    CONSTRAINT [PK_SysParameter] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysParameter_Key] UNIQUE ([ParamKey])
+);
+CREATE INDEX [IX_SysParameter_Category] ON [dbo].[SysParameter]([Category]);
+
+-- 33. SysSystemIntegration（系统集成 — 占位兼容表）
+CREATE TABLE [dbo].[SysSystemIntegration] (
+    [Id]         INT            IDENTITY(1,1) NOT NULL,
+    [Code]       NVARCHAR(64)   NOT NULL,
+    [Name]       NVARCHAR(128)  NOT NULL,
+    [IsActive]   BIT            NOT NULL DEFAULT ((1)),
+    [CreatedAt]  DATETIME       NOT NULL DEFAULT (GETDATE()),
+    [UpdatedAt]  DATETIME       NULL,
+    CONSTRAINT [PK_SysSystemIntegration] PRIMARY KEY ([Id]),
+    CONSTRAINT [UQ_SysSystemIntegration_Code] UNIQUE ([Code])
+);
+
+GO
+PRINT N'✅ v2.13.24 业务深度 7 张表 DDL 已补充完成';

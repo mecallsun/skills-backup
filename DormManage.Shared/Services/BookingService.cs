@@ -81,6 +81,11 @@ public interface IBookingService
     Task<List<DormOption>> GetAvailableDormsAsync(int employeeId, DateOnly bookingDate);
 
     /// <summary>
+    /// v2.13.20 获取所有启用房号（用于列表页房号 combobox 候选）
+    /// </summary>
+    Task<List<string>> GetAllDormCodesAsync();
+
+    /// <summary>
     /// 获取员工的在宿记录（用于退房选择）
     /// </summary>
     Task<List<DormBooking>> GetStayingRecordsAsync(int employeeId);
@@ -151,50 +156,75 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<PagedResult<DormBooking>> GetListAsync(string? keyword, string? department, string? dormCode, int? type, int? status, DateOnly? dateFrom, DateOnly? dateTo, int page, int pageSize)
     {
-        var query = _db.DormBookings.AsQueryable();
+        // v2.13.24：通过 JOIN SysEmployee 实时取考勤班次（NULL 时 fallback 到 DormBooking.AttendanceTypeId）
+        var query =
+            from b in _db.DormBookings
+            join emp in _db.Employees on b.EmployeeId equals emp.Id into empGroup
+            from emp in empGroup.DefaultIfEmpty()
+            select new
+            {
+                Booking = b,
+                // 实时取考勤班次（v2.11.7 起 DormBooking.AttendanceTypeId 与 SysEmployee.AttendanceTypeId 同步）
+                AttendanceTypeId = (int?)(emp != null ? emp.AttendanceTypeId : b.AttendanceTypeId)
+            };
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             keyword = keyword.ToLower();
             query = query.Where(x =>
-                x.EmployeeCode.ToLower().Contains(keyword) ||
-                x.EmployeeName.ToLower().Contains(keyword) ||
-                (x.Phone != null && x.Phone.Contains(keyword)));
+                x.Booking.EmployeeCode.ToLower().Contains(keyword) ||
+                x.Booking.EmployeeName.ToLower().Contains(keyword) ||
+                (x.Booking.Phone != null && x.Booking.Phone.Contains(keyword)));
         }
 
         if (!string.IsNullOrWhiteSpace(department))
         {
             var dept = department.Trim().ToLower();
-            query = query.Where(x => x.Department != null && x.Department.ToLower().Contains(dept));
+            query = query.Where(x => x.Booking.Department != null && x.Booking.Department.ToLower().Contains(dept));
         }
 
         if (!string.IsNullOrWhiteSpace(dormCode))
         {
             var dc = dormCode.Trim().ToLower();
-            query = query.Where(x => x.DormCode.ToLower().Contains(dc));
+            query = query.Where(x => x.Booking.DormCode.ToLower().Contains(dc));
         }
 
         if (type.HasValue)
-            query = query.Where(x => x.Type == type.Value);
+            query = query.Where(x => x.Booking.Type == type.Value);
 
         if (status.HasValue)
-            query = query.Where(x => x.Status == status.Value);
+            query = query.Where(x => x.Booking.Status == status.Value);
 
         if (dateFrom.HasValue)
-            query = query.Where(x => x.BookingDate >= dateFrom.Value);
+            query = query.Where(x => x.Booking.BookingDate >= dateFrom.Value);
 
         if (dateTo.HasValue)
-            query = query.Where(x => x.BookingDate <= dateTo.Value);
+            query = query.Where(x => x.Booking.BookingDate <= dateTo.Value);
 
         var total = await query.CountAsync();
         var items = await query
-            .OrderByDescending(x => x.BookingDate)
-            .ThenByDescending(x => x.Id)
+            .OrderByDescending(x => x.Booking.BookingDate)
+            .ThenByDescending(x => x.Booking.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
 
-        return new PagedResult<DormBooking> { Items = items, TotalCount = total, PageIndex = page, PageSize = pageSize };
+        // 物化：把 AttendanceTypeId 写入 DormBooking.AttendanceTypeId（v2.13.24 字段），便于 Razor 直接渲染
+        foreach (var item in items)
+        {
+            if (item.AttendanceTypeId.HasValue)
+            {
+                item.Booking.AttendanceTypeId = item.AttendanceTypeId;
+            }
+        }
+
+        return new PagedResult<DormBooking>
+        {
+            Items = items.Select(x => x.Booking).ToList(),
+            TotalCount = total,
+            PageIndex = page,
+            PageSize = pageSize
+        };
     }
 
     /// <inheritdoc/>
@@ -280,6 +310,8 @@ public class BookingService : IBookingService
             return ApiResponse<DormBooking>.Fail("NO_CAPACITY", "该宿舍已满员");
 
         // 6. 创建办理记录
+        // v2.13.24 P75：同步填充 BedNo = activeCount+1, ActualCheckInDate, CheckInOperator
+        var activeCount = currentStaying + reserved + 1;  // 含本次
         var booking = new DormBooking
         {
             EmployeeId = request.EmployeeId,
@@ -293,6 +325,11 @@ public class BookingService : IBookingService
             Status = BookingStatus.Staying,
             Reason = request.Reason,
             Remark = request.Remark,
+            // v2.13.24 P75 新增字段
+            BedNo = activeCount,
+            ActualCheckInDate = request.BookingDate,
+            CheckInOperator = registrar,
+            AttendanceTypeId = employee.AttendanceTypeId,
             RegistrationDate = DateTime.Now,
             Registrar = registrar,
             CreatedAt = DateTime.Now
@@ -340,6 +377,9 @@ public class BookingService : IBookingService
         booking.Reason = reason;
         booking.Remark = remark;
         booking.UpdatedAt = DateTime.Now;
+        // v2.13.24 P75：退房时记录实际退房日期和操作人
+        booking.ActualCheckOutDate = checkOutDate;
+        booking.CheckOutOperator = registrar;
 
         _db.DormBookings.Update(booking);
 
@@ -380,6 +420,9 @@ public class BookingService : IBookingService
         booking.Registrar = registrar;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
+        // v2.13.24 P75：快速确认入住时记录实际入住日期和操作人
+        booking.ActualCheckInDate = booking.BookingDate;
+        booking.CheckInOperator = registrar;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：同步 PERSONNEL.dormCode = 该记录的 dormCode
@@ -443,6 +486,8 @@ public class BookingService : IBookingService
         booking.Registrar = registrar;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
+        // v2.13.24 P75：取消时记录操作人
+        booking.CheckInOperator = registrar;  // 视为撤销该次预约
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销预约（未生效），不修改 PERSONNEL.dormCode
@@ -469,6 +514,8 @@ public class BookingService : IBookingService
         booking.Registrar = registrar;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
+        // v2.13.24 P75：撤销在宿时记录
+        booking.CheckInOperator = registrar;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销在宿 → 清空 PERSONNEL.dormCode
@@ -489,6 +536,7 @@ public class BookingService : IBookingService
             return ApiResponse<DormBooking>.Fail("INVALID_STATUS", "仅 Type=1 入住 && Status=2 在宿 可退房");
 
         // 创建一条退房记录
+        // v2.13.24 P75：填充 BedNo 同步、ActualCheckOutDate、CheckOutOperator
         var checkOutBooking = new DormBooking
         {
             EmployeeId = booking.EmployeeId,
@@ -497,11 +545,17 @@ public class BookingService : IBookingService
             Phone = booking.Phone,
             Department = booking.Department,
             DormCode = booking.DormCode,
+            BedNo = booking.BedNo,
             Type = BookingType.CheckOut,
             BookingDate = checkOutDate,
             Status = BookingStatus.CheckedOut,
             Reason = reason ?? "退房",
             Remark = remark,
+            ActualCheckInDate = booking.ActualCheckInDate ?? booking.BookingDate,
+            ActualCheckOutDate = checkOutDate,
+            CheckInOperator = booking.CheckInOperator,
+            CheckOutOperator = registrar,
+            AttendanceTypeId = booking.AttendanceTypeId,
             RegistrationDate = DateTime.Now,
             Registrar = registrar,
             CreatedAt = DateTime.Now
@@ -511,6 +565,8 @@ public class BookingService : IBookingService
         // 将原记录状态变更为已退房（保留作为历史）
         booking.Status = BookingStatus.CheckedOut;
         booking.UpdatedAt = DateTime.Now;
+        booking.ActualCheckOutDate = checkOutDate;
+        booking.CheckOutOperator = registrar;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：创建退房记录 → 清空 PERSONNEL.dormCode
@@ -665,6 +721,16 @@ public class BookingService : IBookingService
                 CurrentCount = stayingCounts.GetValueOrDefault(d.DormCode, 0)
             })
             .ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<string>> GetAllDormCodesAsync()
+    {
+        return await _db.Dorms
+            .Where(x => x.IsActive)
+            .OrderBy(x => x.DormCode)
+            .Select(x => x.DormCode)
+            .ToListAsync();
     }
 
     /// <inheritdoc/>

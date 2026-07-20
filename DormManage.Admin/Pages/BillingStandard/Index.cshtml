@@ -5,49 +5,6 @@
     Layout = "_Layout";
 }
 
-@section Styles {
-    <style>
-        .filter-btn {
-            min-width: 90px !important;
-            max-width: 90px !important;
-            width: 90px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            max-height: 38px !important;
-            line-height: 38px !important;
-            padding: 0 12px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 4px !important;
-            font-size: 14px !important;
-            font-weight: 400 !important;
-            vertical-align: middle !important;
-            white-space: nowrap !important;
-            text-decoration: none !important;
-            border-radius: 6px !important;
-            border: 1px solid transparent !important;
-            cursor: pointer !important;
-        }
-        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
-        .btn-primary.filter-btn {
-            background: #1976d2 !important;
-            border-color: #1976d2 !important;
-            color: #fff !important;
-        }
-        .btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
-        .btn-outline-secondary.filter-btn {
-            color: #6c757d !important;
-            border-color: #dee2e6 !important;
-        }
-        .btn-outline-secondary.filter-btn:hover {
-            background: #f8f9fa !important;
-            color: #495057 !important;
-            border-color: #ced4da !important;
-        }
-    </style>
-}
-
 <div class="container-fluid">
     <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
     @await Component.InvokeAsync("PageHeader", new {
@@ -64,34 +21,50 @@
         <div class="alert alert-success mb-3">
             <strong><i class="bi bi-check-circle"></i> 当前生效：</strong>
             @Model.ActiveStandard.StandardName
-            （@Model.ActiveStandard.EffectiveFrom.Value:yyyy-MM-dd ~ @(Model.ActiveStandard.EffectiveTo?.ToString("yyyy-MM-dd") ?? "长期")）
+            （@Model.ActiveStandard.EffectiveFrom:yyyy-MM-dd ~ @Model.ActiveStandard.EffectiveTo:yyyy-MM-dd）
             水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh
         </div>
     }
 
-    <!-- 筛选区（v2.13.12 新增，v2.13.16 统一样式） -->
-    <div class="card filter-card mb-3">
+    <!-- 筛选区（v2.13.20 统一结构与样式） -->
+    <form method="get" class="card mb-3 filter-card" data-filter-form="billingStandard">
         <div class="card-body py-2">
-            <form method="get" class="filter-row flex-nowrap">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
                 <div class="col-auto filter-item">
-                    <input type="text" class="form-control form-control-sm" name="keyword" value="@ViewData["Keyword"]" placeholder="标准名称" />
+                    <label class="form-label mb-1">标准名称</label>
+                    <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="标准名称">
                 </div>
                 <div class="col-auto filter-item">
-                    <select class="form-select form-select-sm" name="isActive">
-                        <option value="">全部状态</option>
-                        <option value="true" selected="@(ViewData["IsActive"]?.ToString() == "True")">启用</option>
-                        <option value="false" selected="@(ViewData["IsActive"]?.ToString() == "False")">停用</option>
+                    <label class="form-label mb-1">适用类型</label>
+                    <select name="applicableType" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var item in Model.ApplicableTypes)
+                        {
+                            <option value="@item" selected="@(Model.ApplicableType == item)">@item</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="isActive" class="form-select">
+                        <option value="">全部</option>
+                        <option value="true" selected="@(Model.IsActive == "true")">启用</option>
+                        <option value="false" selected="@(Model.IsActive == "false")">停用</option>
                     </select>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <a href="/BillingStandard" class="btn btn-outline-secondary filter-btn"><i class="bi bi-arrow-clockwise"></i> 重置</a>
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('billingStandard')">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 
     <!-- 列表 -->
     <div class="card">
@@ -120,8 +93,8 @@
                             <tr>
                                 <td>@((Model.Result.PageIndex - 1) * Model.Result.PageSize + i + 1)</td>
                                 <td>@item.StandardName</td>
-                                <td>@item.EffectiveFrom?.ToString("yyyy-MM-dd")</td>
-                                <td>@(item.EffectiveTo?.ToString("yyyy-MM-dd") ?? "—")</td>
+                                <td>@item.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                                <td>@item.EffectiveTo.ToString("yyyy-MM-dd")</td>
                                 <td>@item.ColdWaterUnitPrice</td>
                                 <td>@item.HotWaterUnitPrice</td>
                                 <td>@item.ElectricUnitPrice</td>
@@ -147,7 +120,7 @@
         </div>
     </div>
 
-    <!-- 分页（v2.13.12 统一页尾样式） -->
+    <!-- 分页（v2.13.21 统一为标准 3 按钮：上一页 / 当前前后 2 页 / 下一页，保留筛选参数） -->
     @if (Model.Result != null)
     {
         <div class="card-footer d-flex justify-content-between align-items-center pagination-footer mt-3">
@@ -156,28 +129,32 @@
             </div>
             <nav>
                 <ul class="pagination pagination-sm mb-0">
-                    <li class="page-item @(Model.Result.PageIndex <= 1 ? "disabled" : "")">
-                        <a class="page-link" href="?page=1">&laquo;</a>
-                    </li>
-                    <li class="page-item @(Model.Result.PageIndex <= 1 ? "disabled" : "")">
-                        <a class="page-link" href="?page=@(Model.Result.PageIndex - 1)">&lsaquo;</a>
-                    </li>
+                    @if (Model.Result.PageIndex > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@(Model.Result.PageIndex - 1)" aria-label="上一页">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                    }
                     @{
                         var start = Math.Max(1, Model.Result.PageIndex - 2);
                         var end = Math.Min(Model.Result.TotalPages, Model.Result.PageIndex + 2);
                         for (var p = start; p <= end; p++)
                         {
                             <li class="page-item @(p == Model.Result.PageIndex ? "active" : "")">
-                                <a class="page-link" href="?page=@p">@p</a>
+                                <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@p">@p</a>
                             </li>
                         }
                     }
-                    <li class="page-item @(Model.Result.PageIndex >= Model.Result.TotalPages ? "disabled" : "")">
-                        <a class="page-link" href="?page=@(Model.Result.PageIndex + 1)">&rsaquo;</a>
-                    </li>
-                    <li class="page-item @(Model.Result.PageIndex >= Model.Result.TotalPages ? "disabled" : "")">
-                        <a class="page-link" href="?page=@Model.Result.TotalPages">&raquo;</a>
-                    </li>
+                    @if (Model.Result.PageIndex < Model.Result.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@(Model.Result.PageIndex + 1)" aria-label="下一页">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                    }
                 </ul>
             </nav>
         </div>

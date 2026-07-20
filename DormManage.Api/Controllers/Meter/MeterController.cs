@@ -58,6 +58,18 @@ public class MeterController : ControllerBase
             ColdMeter = r.ColdMeter,
             HotMeter = r.HotMeter,
             ElectricMeter = r.ElectricMeter,
+            ColdUsage = r.ColdUsage,
+            HotUsage = r.HotUsage,
+            ElectricUsage = r.ElectricUsage,
+            PreviousColdReading = r.PreviousColdReading,
+            PreviousHotReading = r.PreviousHotReading,
+            PreviousElectricReading = r.PreviousElectricReading,
+            ReadDate = r.ReadDate,
+            ReadMode = r.ReadMode,
+            CorrectionReason = r.CorrectionReason,
+            CorrectedBy = r.CorrectedBy,
+            CorrectedAt = r.CorrectedAt,
+            ConfirmedAt = r.ConfirmedAt,
             Operator = r.Operator,
             Status = r.Status,
             StatusName = r?.Status.ToString() ?? "Unknown",
@@ -93,6 +105,18 @@ public class MeterController : ControllerBase
             ColdMeter = record.ColdMeter ,
             HotMeter = record.HotMeter ,
             ElectricMeter = record.ElectricMeter ,
+            ColdUsage = record.ColdUsage,
+            HotUsage = record.HotUsage,
+            ElectricUsage = record.ElectricUsage,
+            PreviousColdReading = record.PreviousColdReading,
+            PreviousHotReading = record.PreviousHotReading,
+            PreviousElectricReading = record.PreviousElectricReading,
+            ReadDate = record.ReadDate,
+            ReadMode = record.ReadMode,
+            CorrectionReason = record.CorrectionReason,
+            CorrectedBy = record.CorrectedBy,
+            CorrectedAt = record.CorrectedAt,
+            ConfirmedAt = record.ConfirmedAt,
             Operator = record.Operator,
             Status = record.Status,
             StatusName = record?.Status.ToString() ?? "Unknown",
@@ -139,15 +163,28 @@ public class MeterController : ControllerBase
             var historyEntry = $"[{DateTime.Now:yyyy-MM-dd HH:mm} 覆盖前: 冷水={existing.ColdMeter}, 热水={existing.HotMeter}, 电={existing.ElectricMeter}]";
             var newRemark = string.IsNullOrEmpty(request.Remark) ? historyEntry : request.Remark + " " + historyEntry;
 
+            // v2.13.24 P76：覆盖时计算用量 = 本次读数 - 上月读数
+            var newColdUsage = Math.Max(0, request.ColdMeter - existing.PreviousColdReading);
+            var newHotUsage = Math.Max(0, request.HotMeter - existing.PreviousHotReading);
+            var newElectricUsage = Math.Max(0, request.ElectricMeter - existing.PreviousElectricReading);
+
             // 覆盖更新
+            existing.PreviousColdReading = existing.ColdMeter;  // 更新下次的上月参考
+            existing.PreviousHotReading = existing.HotMeter;
+            existing.PreviousElectricReading = existing.ElectricMeter;
             existing.ColdMeter = request.ColdMeter;
             existing.HotMeter = request.HotMeter;
             existing.ElectricMeter = request.ElectricMeter;
+            existing.ColdUsage = newColdUsage;
+            existing.HotUsage = newHotUsage;
+            existing.ElectricUsage = newElectricUsage;
             existing.Operator = string.IsNullOrEmpty(request.Operator) ? existing.Operator : request.Operator;
-            existing.Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter);
+            existing.Status = MeterRecord.DetermineStatus(newColdUsage, newHotUsage, newElectricUsage);
             existing.Remark = newRemark;
             existing.UpdatedAt = DateTime.Now;
             existing.ServerCreatedAt = DateTime.Now;
+            if (request.ReadDate.HasValue) existing.ReadDate = request.ReadDate;
+            if (request.ReadMode.HasValue) existing.ReadMode = request.ReadMode.Value;
 
             record = existing;
             message = "更新成功";
@@ -155,6 +192,19 @@ public class MeterController : ControllerBase
         else
         {
             // 新建记录
+            // v2.13.24 P76：取上月读数作为 PreviousXxxReading，并计算用量
+            var previousRecord = await _db.MeterRecords
+                .Where(r => r.DormCode == request.DormCode && r.ReadMonth.CompareTo(request.ReadMonth) < 0)
+                .OrderByDescending(r => r.ReadMonth)
+                .FirstOrDefaultAsync();
+
+            var prevCold = previousRecord?.ColdMeter ?? 0;
+            var prevHot = previousRecord?.HotMeter ?? 0;
+            var prevElec = previousRecord?.ElectricMeter ?? 0;
+            var coldUsage = Math.Max(0, request.ColdMeter - prevCold);
+            var hotUsage = Math.Max(0, request.HotMeter - prevHot);
+            var elecUsage = Math.Max(0, request.ElectricMeter - prevElec);
+
             record = new MeterRecord
             {
                 DormId = dorm.Id,
@@ -163,9 +213,17 @@ public class MeterController : ControllerBase
                 ColdMeter = request.ColdMeter,
                 HotMeter = request.HotMeter,
                 ElectricMeter = request.ElectricMeter,
+                ColdUsage = coldUsage,
+                HotUsage = hotUsage,
+                ElectricUsage = elecUsage,
+                PreviousColdReading = prevCold,
+                PreviousHotReading = prevHot,
+                PreviousElectricReading = prevElec,
                 Operator = request.Operator ?? "管理员",
-                Status = MeterRecord.DetermineStatus(request.ColdMeter, request.HotMeter, request.ElectricMeter),
+                Status = MeterRecord.DetermineStatus(coldUsage, hotUsage, elecUsage),
                 Remark = request.Remark,
+                ReadDate = request.ReadDate ?? DateOnly.FromDateTime(DateTime.Now),
+                ReadMode = request.ReadMode ?? MeterReadMode.Manual,
                 ServerCreatedAt = DateTime.Now
             };
 
@@ -184,6 +242,18 @@ public class MeterController : ControllerBase
             ColdMeter = record.ColdMeter ,
             HotMeter = record.HotMeter ,
             ElectricMeter = record.ElectricMeter ,
+            ColdUsage = record.ColdUsage,
+            HotUsage = record.HotUsage,
+            ElectricUsage = record.ElectricUsage,
+            PreviousColdReading = record.PreviousColdReading,
+            PreviousHotReading = record.PreviousHotReading,
+            PreviousElectricReading = record.PreviousElectricReading,
+            ReadDate = record.ReadDate,
+            ReadMode = record.ReadMode,
+            CorrectionReason = record.CorrectionReason,
+            CorrectedBy = record.CorrectedBy,
+            CorrectedAt = record.CorrectedAt,
+            ConfirmedAt = record.ConfirmedAt,
             Operator = record.Operator,
             Status = record.Status,
             StatusName = record?.Status.ToString() ?? "Unknown",
@@ -211,6 +281,14 @@ public class MeterController : ControllerBase
         record.UpdatedAt = DateTime.Now;
         record.ServerCreatedAt = DateTime.Now;
         record.Status = 2; // 已修正
+        // v2.13.24 P76：修正追踪
+        record.CorrectionReason = request.CorrectionReason ?? request.Remark ?? "";
+        record.CorrectedBy = request.CorrectedBy ?? "admin";
+        record.CorrectedAt = DateTime.Now;
+        // v2.13.24 P76：修正后重新计算用量
+        if (record.PreviousColdReading > 0) record.ColdUsage = Math.Max(0, record.ColdMeter - record.PreviousColdReading);
+        if (record.PreviousHotReading > 0) record.HotUsage = Math.Max(0, record.HotMeter - record.PreviousHotReading);
+        if (record.PreviousElectricReading > 0) record.ElectricUsage = Math.Max(0, record.ElectricMeter - record.PreviousElectricReading);
 
         await _db.SaveChangesAsync();
 
@@ -223,6 +301,18 @@ public class MeterController : ControllerBase
             ColdMeter = record.ColdMeter ,
             HotMeter = record.HotMeter ,
             ElectricMeter = record.ElectricMeter ,
+            ColdUsage = record.ColdUsage,
+            HotUsage = record.HotUsage,
+            ElectricUsage = record.ElectricUsage,
+            PreviousColdReading = record.PreviousColdReading,
+            PreviousHotReading = record.PreviousHotReading,
+            PreviousElectricReading = record.PreviousElectricReading,
+            ReadDate = record.ReadDate,
+            ReadMode = record.ReadMode,
+            CorrectionReason = record.CorrectionReason,
+            CorrectedBy = record.CorrectedBy,
+            CorrectedAt = record.CorrectedAt,
+            ConfirmedAt = record.ConfirmedAt,
             Operator = record.Operator,
             Status = record.Status,
             StatusName = record?.Status.ToString() ?? "Unknown",
@@ -441,13 +531,13 @@ public class MeterController : ControllerBase
             .ThenBy(r => r.DormCode)
             .ToListAsync();
 
-        // 生成 CSV (Excel 可打开)
+        // 生成 CSV (Excel 可打开) — v2.13.24 P76：扩展列含用量
         var sb = new global::System.Text.StringBuilder();
-        sb.AppendLine("序号,宿舍号,抄表月份,冷水(m³),热水(m³),电(度),操作员,状态,备注");
+        sb.AppendLine("序号,宿舍号,抄表月份,冷水读数(m³),热水读数(m³),电读数(度),冷水用量(m³),热水用量(m³),电用量(度),操作员,状态,抄表日期,抄表方式,备注");
         var index = 1;
         foreach (var r in records)
         {
-            sb.AppendLine($"{index},{r.DormCode},{r.ReadMonth},{r.ColdMeter},{r.HotMeter},{r.ElectricMeter},{r.Operator},{r?.Status.ToString() ?? "Unknown"},{r.Remark ?? ""}");
+            sb.AppendLine($"{index},{r.DormCode},{r.ReadMonth},{r.ColdMeter},{r.HotMeter},{r.ElectricMeter},{r.ColdUsage},{r.HotUsage},{r.ElectricUsage},{r.Operator},{r?.Status.ToString() ?? "Unknown"},{r.ReadDate},{r.ReadMode},{r.Remark ?? ""}");
             index++;
         }
 
@@ -472,7 +562,7 @@ public class BatchImportResult
 }
 
 /// <summary>
-/// 抄表记录数据传输对象
+/// 抄表记录数据传输对象（v2.13.24 P76：增加用量字段 + 上月读数参考 + 业务深度字段）
 /// </summary>
 public class MeterRecordDto
 {
@@ -483,6 +573,22 @@ public class MeterRecordDto
     public decimal ColdMeter { get; set; }
     public decimal HotMeter { get; set; }
     public decimal ElectricMeter { get; set; }
+    // v2.13.24 P76：用量字段
+    public decimal ColdUsage { get; set; }
+    public decimal HotUsage { get; set; }
+    public decimal ElectricUsage { get; set; }
+    // v2.13.24 P76：上月读数参考
+    public decimal PreviousColdReading { get; set; }
+    public decimal PreviousHotReading { get; set; }
+    public decimal PreviousElectricReading { get; set; }
+    // v2.13.24 P76：业务深度字段
+    public DateOnly? ReadDate { get; set; }
+    public byte ReadMode { get; set; }
+    public string? CorrectionReason { get; set; }
+    public string? CorrectedBy { get; set; }
+    public DateTime? CorrectedAt { get; set; }
+    public DateTime? ConfirmedAt { get; set; }
+
     public string Operator { get; set; } = "";
     public byte Status { get; set; }
     public string StatusName { get; set; } = "";
@@ -491,7 +597,7 @@ public class MeterRecordDto
 }
 
 /// <summary>
-/// 抄表记录保存请求
+/// 抄表记录保存请求（v2.13.24 P76：增加可选的 ReadDate + ReadMode）
 /// </summary>
 public class MeterRecordSaveRequest
 {
@@ -502,6 +608,9 @@ public class MeterRecordSaveRequest
     public decimal ElectricMeter { get; set; }
     public string? Operator { get; set; }
     public string? Remark { get; set; }
+    // v2.13.24 P76：可选业务字段（手动补录时可填，批量导入/PDA 上传时由系统自动填）
+    public DateOnly? ReadDate { get; set; }
+    public byte? ReadMode { get; set; }
 }
 
 /// <summary>
@@ -510,6 +619,9 @@ public class MeterRecordSaveRequest
 public class MeterRecordCorrectRequest
 {
     public string? Remark { get; set; }
+    // v2.13.24 P76：修正原因 + 修正人（可选，未填时默认使用 Remark + admin）
+    public string? CorrectionReason { get; set; }
+    public string? CorrectedBy { get; set; }
 }
 
 /// <summary>

@@ -3,29 +3,36 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DormManage.Shared.Models;
 
-/// <summary>
-/// 抄表记录状态枚举
-/// </summary>
+/// <summary>抄表记录状态枚举（v2.13.24 5 项标准）</summary>
 public enum MeterRecordStatus
 {
-    /// <summary>未完成（占位记录，三表全0）</summary>
+    /// <summary>未完成（占位记录，三表全 0）</summary>
     Incomplete = 0,
 
-    /// <summary>正常（三表完整）</summary>
+    /// <summary>正常（三表完整且读数递增）</summary>
     Normal = 1,
 
     /// <summary>已修正（三表完整，已修正过）</summary>
     Corrected = 2,
 
-    /// <summary>未完成（PDA 端上传了占位但未补录）— v2.13.3 新增，区分于 Incomplete</summary>
+    /// <summary>未完成(PDA 占位)（v2.13.3 新增）</summary>
     Unfinished = 3,
 
-    /// <summary>已作废（人为取消或误录）— v2.13.3 新增</summary>
+    /// <summary>已作废（v2.13.3 新增）</summary>
     Voided = 4
 }
 
+/// <summary>抄表方式枚举（v2.13.24 P76 新增）</summary>
+public static class MeterReadMode
+{
+    public const int PDA = 1;          // PDA 端上传
+    public const int Manual = 2;        // 人工手动补录
+    public const int Import = 3;        // Excel 批量导入
+    public const int AutoGenerate = 4;  // 系统自动生成占位
+}
+
 /// <summary>
-/// 抄表状态显示名映射（中文）
+/// 抄表状态显示名映射（中文）— v2.13.24 5 项枚举
 /// </summary>
 public static class MeterStatusExtensions
 {
@@ -53,89 +60,128 @@ public static class MeterStatusExtensions
 }
 
 /// <summary>
-/// 抄表记录
+/// 抄表记录 — v2.13.24 P76 业务深度字段补全
+///
+/// 与 init_schema.sql [MeterRecord] 表 1:1 对齐 + 业务深度字段：
+/// - ColdUsage/HotUsage/ElectricUsage 用量字段（SQL NOT NULL，EF 完全缺失）
+/// - PreviousColdReading 等上月读数参考
+/// - ReadDate 业务抄表日期（区别于 ServerCreatedAt 入库时间）
+/// - ReadMode 抄表方式（PDA/手动/导入/自动）
+/// - CorrectionReason/CorrectedBy/CorrectedAt 修正追踪
+/// - ConfirmedAt PDA 确认时间
 /// </summary>
 [Table("MeterRecord")]
 public class MeterRecord : BaseEntity
 {
-    /// <summary>
-    /// 宿舍ID
-    /// </summary>
+    /// <summary>宿舍ID（FK → Dorm.DormId，SQL 有外键）</summary>
     public int DormId { get; set; }
 
-    /// <summary>
-    /// 宿舍号
-    /// </summary>
+    /// <summary>宿舍号（冗余）</summary>
     [Required]
-    [MaxLength(20)]
+    [MaxLength(32)]
     public string DormCode { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 抄表月份（yyyy-MM）
-    /// </summary>
+    /// <summary>抄表月份（yyyy-MM）</summary>
     [Required]
     [MaxLength(7)]
     public string ReadMonth { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 冷水表读数
-    /// </summary>
-    [Column(TypeName = "decimal(10,2)")]
+    // ========== 三表读数（SQL DECIMAL(12,2) NOT NULL） ==========
+
+    /// <summary>冷水表读数（DECIMAL(12,2)）</summary>
+    [Column(TypeName = "decimal(12,2)")]
     public decimal ColdMeter { get; set; }
 
-    /// <summary>
-    /// 热水表读数
-    /// </summary>
-    [Column(TypeName = "decimal(10,2)")]
+    /// <summary>热水表读数（DECIMAL(12,2)）</summary>
+    [Column(TypeName = "decimal(12,2)")]
     public decimal HotMeter { get; set; }
 
-    /// <summary>
-    /// 电表读数
-    /// </summary>
-    [Column(TypeName = "decimal(10,2)")]
+    /// <summary>电表读数（DECIMAL(12,2)）</summary>
+    [Column(TypeName = "decimal(12,2)")]
     public decimal ElectricMeter { get; set; }
 
-    /// <summary>
-    /// 操作员
-    /// </summary>
-    [MaxLength(50)]
+    // ========== v2.13.24 P76 关键补全：三表用量（SQL NOT NULL） ==========
+
+    /// <summary>冷水用量（DECIMAL(12,2) NOT NULL）— 当月读数 - 上月读数</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal ColdUsage { get; set; }
+
+    /// <summary>热水用量（DECIMAL(12,2) NOT NULL）</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal HotUsage { get; set; }
+
+    /// <summary>电用量（DECIMAL(12,2) NOT NULL）</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal ElectricUsage { get; set; }
+
+    // ========== v2.13.24 P76 新增：上月读数参考 ==========
+
+    /// <summary>上月冷水读数（v2.13.24 P76 新增）— 手动补录页"上月读数参考卡片"</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal PreviousColdReading { get; set; }
+
+    /// <summary>上月热水读数</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal PreviousHotReading { get; set; }
+
+    /// <summary>上月电读数</summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal PreviousElectricReading { get; set; }
+
+    // ========== 抄表信息 ==========
+
+    /// <summary>抄表员 / PDA 操作员（NVARCHAR(64)）</summary>
+    [MaxLength(64)]
     public string Operator { get; set; } = string.Empty;
 
-    /// <summary>
-    /// 设备序列号
-    /// </summary>
-    [MaxLength(50)]
+    /// <summary>设备序列号（NVARCHAR(128)）</summary>
+    [MaxLength(128)]
     public string? DeviceSn { get; set; }
 
-    /// <summary>
-    /// 客户端记录ID
-    /// </summary>
-    [MaxLength(50)]
+    /// <summary>客户端记录ID（NVARCHAR(128) PDA 唯一键）</summary>
+    [MaxLength(128)]
     public string? ClientRecordId { get; set; }
 
-    /// <summary>
-    /// 客户端创建时间
-    /// </summary>
+    /// <summary>客户端创建时间（PDA 端抄表时间）</summary>
     public DateTime? ClientCreatedAt { get; set; }
 
-    /// <summary>
-    /// 服务器创建时间
-    /// </summary>
+    /// <summary>服务器创建时间（入库时间）</summary>
     public DateTime ServerCreatedAt { get; set; } = DateTime.Now;
 
-    /// <summary>
-    /// 状态：0=未完成 1=正常 2=已修正
-    /// </summary>
+    /// <summary>状态（5 项枚举：0/1/2/3/4）</summary>
     public byte Status { get; set; }
 
-    /// <summary>
-    /// 备注（包含历史覆盖快照）
-    /// </summary>
-    [MaxLength(1000)]
+    /// <summary>备注（含历史覆盖快照）</summary>
+    [MaxLength(512)]
     public string? Remark { get; set; }
 
+    // ========== v2.13.24 P76 业务深度字段 ==========
+
+    /// <summary>业务抄表日期（v2.13.24 P76 新增）— 区别于 ServerCreatedAt（入库时间）</summary>
+    public DateOnly? ReadDate { get; set; }
+
+    /// <summary>抄表方式（v2.13.24 P76 新增）— 1=PDA 2=手动 3=导入 4=自动</summary>
+    public byte ReadMode { get; set; } = MeterReadMode.Manual;
+
+    /// <summary>修正原因（v2.13.24 P76 新增）— Status 由 1→2 必填</summary>
+    [MaxLength(512)]
+    public string? CorrectionReason { get; set; }
+
+    /// <summary>修正人（v2.13.24 P76 新增）</summary>
+    [MaxLength(64)]
+    public string? CorrectedBy { get; set; }
+
+    /// <summary>修正时间（v2.13.24 P76 新增）</summary>
+    public DateTime? CorrectedAt { get; set; }
+
+    /// <summary>PDA 确认时间（v2.13.24 P76 新增）— PDA 端用户点击"提交"的时间</summary>
+    public DateTime? ConfirmedAt { get; set; }
+
     /// <summary>
-    /// 自动判定状态
+    /// 自动判定状态（v2.13.24 重构：根据三表用量值判定）
+    /// - 0：未完成（任一表用量=0 或缺读数）
+    /// - 1：正常（三表读数齐全且递增）
+    /// - 2：已修正（需手动触发）
     /// </summary>
     public static byte DetermineStatus(decimal cold, decimal hot, decimal electric)
     {
@@ -144,22 +190,11 @@ public class MeterRecord : BaseEntity
         if (hot > 0) nonZeroCount++;
         if (electric > 0) nonZeroCount++;
 
-        if (nonZeroCount == 0) return 0;  // 未完成
-        if (nonZeroCount == 3) return 1;  // 正常
-        return 0;  // 部分有值也算未完成
+        if (nonZeroCount == 0) return (byte)MeterRecordStatus.Incomplete;  // 全 0：占位
+        if (nonZeroCount == 3) return (byte)MeterRecordStatus.Normal;      // 3 表齐全
+        return (byte)MeterRecordStatus.Incomplete;  // 部分：未完成
     }
 
-    /// <summary>
-    /// 获取状态名称
-    /// </summary>
-    public string GetStatusName()
-    {
-        return Status switch
-        {
-            0 => "未完成",
-            1 => "正常",
-            2 => "已修正",
-            _ => "未知"
-        };
-    }
+    /// <summary>获取状态名称（v2.13.24 5 项）</summary>
+    public string GetStatusName() => ((MeterRecordStatus)Status).GetDisplayName();
 }

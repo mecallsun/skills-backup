@@ -291,11 +291,30 @@ public class DormDbContext : DbContext
             entity.ToTable("Dorm");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("DormId"); // 真实 SQL Server 主键列名
-            entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.DormCode).HasMaxLength(32).IsRequired();
+            // v2.13.24 P0-2 新增：9 列 PDA 扫码抄表关键字段
+            entity.Property(e => e.Building).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Floor).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.RoomNo).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.DormAddress).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.DormType).HasMaxLength(16).IsRequired();
+            entity.Property(e => e.Barcode).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.HasColdMeter).HasDefaultValue(true);
+            entity.Property(e => e.HasHotMeter).HasDefaultValue(true);
+            entity.Property(e => e.HasElectricMeter).HasDefaultValue(true);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            // 原字段保留
             entity.Property(e => e.BuildingName).HasMaxLength(50);
             entity.Property(e => e.AddressText).HasMaxLength(200);
-            entity.Property(e => e.Remark).HasMaxLength(500);
+            entity.Property(e => e.BedNumbers).HasMaxLength(1000);
+            entity.Property(e => e.Remark).HasMaxLength(256);
+            // v2.13.24 P77：抄表相关冗余字段
+            entity.Property(e => e.LastReadMonth).HasMaxLength(7);
+            entity.Property(e => e.LastColdMeter).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.LastHotMeter).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.LastElectricMeter).HasColumnType("decimal(12,2)");
             entity.HasIndex(e => e.DormCode).IsUnique();
+            entity.HasIndex(e => e.Barcode).IsUnique();  // v2.13.24 新增
         });
 
         // DormBooking
@@ -306,16 +325,24 @@ public class DormDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("BookingId"); // 真实 SQL Server 主键列名
             entity.Property(e => e.Type).HasColumnName("BookingType").HasConversion<byte>(); // 真实列名 BookingType，TINYINT
             entity.Property(e => e.Status).HasConversion<byte>(); // TINYINT
-            entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
-            entity.Property(e => e.EmployeeName).HasMaxLength(50).IsRequired();
-            entity.Property(e => e.Phone).HasMaxLength(20);
-            entity.Property(e => e.Department).HasMaxLength(50);
-            entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
-            entity.Property(e => e.Reason).HasMaxLength(200);
-            entity.Property(e => e.Remark).HasMaxLength(500);
-            entity.Property(e => e.Registrar).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.EmployeeCode).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.EmployeeName).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.Department).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.DormCode).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Reason).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.Remark).HasMaxLength(1024);
+            entity.Property(e => e.Registrar).HasMaxLength(64).IsRequired();
+            // v2.13.24 P75 业务深度字段映射
+            entity.Property(e => e.MoveFromDormCode).HasMaxLength(32);
+            entity.Property(e => e.CancellationReason).HasMaxLength(512);
+            entity.Property(e => e.CheckInOperator).HasMaxLength(64);
+            entity.Property(e => e.CheckOutOperator).HasMaxLength(64);
+            // v2.13.24 P75 新增索引
             entity.HasIndex(e => new { e.EmployeeId, e.BookingDate });
             entity.HasIndex(e => new { e.DormCode, e.BookingDate });
+            entity.HasIndex(e => new { e.Status, e.BookingDate });  // 列表筛选优化
+            entity.HasIndex(e => e.EmployeeId).HasDatabaseName("IX_DormBooking_EmpStatus");
         });
 
         // MeterRecord
@@ -324,7 +351,32 @@ public class DormDbContext : DbContext
             entity.ToTable("MeterRecord");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("RecordId"); // 真实 SQL Server 主键列名（BIGINT，实体为 int，取值在 int 范围内安全）
-            entity.Property(e => e.DormCode).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.DormCode).HasMaxLength(32).IsRequired();
+            // v2.13.24 P76：三表读数对齐 SQL DECIMAL(12,2)
+            entity.Property(e => e.ColdMeter).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.HotMeter).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.ElectricMeter).HasColumnType("decimal(12,2)");
+            // v2.13.24 P76：三表用量（SQL NOT NULL 完全缺失）
+            entity.Property(e => e.ColdUsage).HasColumnType("decimal(12,2)").IsRequired();
+            entity.Property(e => e.HotUsage).HasColumnType("decimal(12,2)").IsRequired();
+            entity.Property(e => e.ElectricUsage).HasColumnType("decimal(12,2)").IsRequired();
+            // v2.13.24 P76：上月读数参考
+            entity.Property(e => e.PreviousColdReading).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.PreviousHotReading).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.PreviousElectricReading).HasColumnType("decimal(12,2)");
+            // v2.13.24 P76：字段长度对齐 SQL NVARCHAR(64/128/512)
+            entity.Property(e => e.Operator).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.DeviceSn).HasMaxLength(128);
+            entity.Property(e => e.ClientRecordId).HasMaxLength(128);
+            entity.Property(e => e.Remark).HasMaxLength(512);
+            // v2.13.24 P76：业务深度字段
+            entity.Property(e => e.CorrectionReason).HasMaxLength(512);
+            entity.Property(e => e.CorrectedBy).HasMaxLength(64);
+            // v2.13.24 P76：索引
+            entity.HasIndex(e => new { e.DormCode, e.ReadMonth }).IsUnique().HasDatabaseName("UX_MeterRecord_DormMonth");
+            entity.HasIndex(e => new { e.DeviceSn, e.ClientRecordId }).HasDatabaseName("IX_MeterRecord_ClientId");
+            entity.HasIndex(e => e.ServerCreatedAt).HasDatabaseName("IX_MeterRecord_ServerCreatedAt");
+            entity.HasIndex(e => new { e.ReadMonth, e.Operator }).HasDatabaseName("IX_MeterRecord_ReadMonth_Operator");
             entity.Property(e => e.ReadMonth).HasMaxLength(7).IsRequired();
             entity.Property(e => e.Operator).HasMaxLength(50);
             entity.Property(e => e.DeviceSn).HasMaxLength(50);
@@ -348,13 +400,18 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("BillingStandard");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.StandardName).HasMaxLength(50).IsRequired();
-            entity.HasIndex(e => e.StandardName).IsUnique();
-            entity.Property(e => e.EffectiveFrom).HasColumnType("date");
-            entity.Property(e => e.EffectiveTo).HasColumnType("date");
-            entity.Property(e => e.HotWaterUnitPrice).HasColumnType("decimal(10,2)");
-            entity.Property(e => e.ColdWaterUnitPrice).HasColumnType("decimal(10,2)");
-            entity.Property(e => e.ElectricUnitPrice).HasColumnType("decimal(10,4)");
+            entity.Property(e => e.StandardName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.ApplicableType).HasMaxLength(40).IsRequired();
+            // v2.13.24 P0-3 修复：EF Property 名与 SQL 列名对齐（HasColumnName）
+            entity.Property(e => e.HotWaterUnitPrice).HasColumnName("HotWaterPrice").HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ColdWaterUnitPrice).HasColumnName("ColdWaterPrice").HasColumnType("decimal(10,2)");
+            entity.Property(e => e.ElectricUnitPrice).HasColumnName("ElectricityPrice").HasColumnType("decimal(10,2)");
+            // v2.13.24 P0-3 新增：UpdatedAt 列
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.EffectiveFrom).HasColumnType("date").IsRequired();
+            entity.Property(e => e.EffectiveTo).HasColumnType("date").IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<DormBilling>(entity =>

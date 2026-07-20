@@ -10,7 +10,7 @@ public class DatabaseConfigDto
 {
     /// <summary>数据库服务器（IP 或 域名）</summary>
     [JsonPropertyName("dbServer")]
-    public string DbServer { get; set; } = "localhost";
+    public string DbServer { get; set; } = "192.168.1.237";
 
     /// <summary>端口（默认 1433）</summary>
     [JsonPropertyName("dbPort")]
@@ -18,15 +18,15 @@ public class DatabaseConfigDto
 
     /// <summary>数据库名称</summary>
     [JsonPropertyName("dbName")]
-    public string DbName { get; set; } = "DormManage";
+    public string DbName { get; set; } = "WaterMeterDB";
 
     /// <summary>用户名</summary>
     [JsonPropertyName("dbUser")]
-    public string DbUser { get; set; } = "sa";
+    public string DbUser { get; set; } = "__DB_USER__";
 
     /// <summary>密码（AES-256 加密后存储，前端展示时脱敏）</summary>
     [JsonPropertyName("dbPassword")]
-    public string? DbPassword { get; set; }
+    public string? DbPassword { get; set; } = "__DB_PASSWORD__";
 
     /// <summary>提供程序：SqlServer / Sqlite</summary>
     [JsonPropertyName("provider")]
