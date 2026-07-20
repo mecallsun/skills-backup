@@ -193,7 +193,7 @@
             if (EMPLOYEE_TYPES[i].id === id) { t = EMPLOYEE_TYPES[i]; break; }
         }
         if (!t) return '<span class="text-muted">-</span>';
-        var colors = { 1: 'bg-secondary', 2: 'bg-warning text-dark', 3: 'bg-info text-dark', 4: 'bg-success', 5: 'bg-primary' };
+        var colors = { 1: 'bg-secondary', 2: 'bg-warning text-dark', 3: 'bg-info text-dark', 4: 'bg-success', 5: 'bg-dark' };
         return '<span class="badge ' + (colors[id] || 'bg-secondary') + '">' + t.name + '</span>';
     }
 

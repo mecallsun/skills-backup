@@ -38,6 +38,32 @@
             flex: 1 1 0;
             min-width: 0;
         }
+
+        /* v2.13.21 基本信息项强制同一行：标签左、数据右 */
+        .info-list .info-item {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        .info-list .info-item:last-child { border-bottom: none; }
+        .info-list .info-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            width: 80px;
+            flex-shrink: 0;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+        .info-list .info-value {
+            flex: 1 1 auto;
+            margin-bottom: 0;
+            text-align: right;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        .info-list .info-value.fs-5 { font-size: 1.25rem; }
     </style>
 }
 
@@ -68,38 +94,36 @@
                     <div class="card-header">
                         <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
                     </div>
-                    <div class="card-body">
-                        <dl class="mb-0">
-                            <dt class="text-muted small">宿舍号</dt>
-                            <dd class="fw-bold fs-5">@Model.Dorm.DormCode</dd>
-                        </dl>
-                        <hr class="my-2">
-                        <dl class="mb-0">
-                            <dt class="text-muted small">楼栋</dt>
-                            <dd class="fw-bold">@Model.Dorm.BuildingName</dd>
-                        </dl>
-                        <dl class="mb-0">
-                            <dt class="text-muted small">楼层</dt>
-                            <dd class="fw-bold">@Model.Dorm.FloorId 楼</dd>
-                        </dl>
-                        <dl class="mb-0">
-                            <dt class="text-muted small">地址</dt>
-                            <dd class="fw-bold">@Model.Dorm.AddressText</dd>
-                        </dl>
-                        <hr class="my-2">
-                        <dl class="mb-0">
-                            <dt class="text-muted small">容量</dt>
-                            <dd class="fw-bold">@Model.Dorm.Capacity 人</dd>
-                        </dl>
-                        <dl class="mb-0">
-                            <dt class="text-muted small">当前入住</dt>
-                            <dd class="fw-bold @(Model.Dorm.CurrentCount >= Model.Dorm.Capacity ? "text-danger" : "text-success")">
+                    <div class="card-body info-list">
+                        <div class="info-item">
+                            <span class="info-label">宿舍号</span>
+                            <span class="info-value fs-5">@Model.Dorm.DormCode</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">楼栋</span>
+                            <span class="info-value">@Model.Dorm.BuildingName</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">楼层</span>
+                            <span class="info-value">@Model.Dorm.FloorId 楼</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">地址</span>
+                            <span class="info-value">@Model.Dorm.AddressText</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">容量</span>
+                            <span class="info-value">@Model.Dorm.Capacity 人</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">当前入住</span>
+                            <span class="info-value @(Model.Dorm.CurrentCount >= Model.Dorm.Capacity ? "text-danger" : "text-success")">
                                 @Model.Dorm.CurrentCount / @Model.Dorm.Capacity 人
-                            </dd>
-                        </dl>
-                        <dl class="mb-0">
-                            <dt class="text-muted small">性别</dt>
-                            <dd class="fw-bold">
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">性别</span>
+                            <span class="info-value">
                                 @if (Model.Dorm.Gender == 1)
                                 {
                                     <span class="badge bg-primary">男</span>
@@ -108,11 +132,11 @@
                                 {
                                     <span class="badge bg-danger">女</span>
                                 }
-                            </dd>
-                        </dl>
-                        <dl class="mb-0">
-                            <dt class="text-muted small">状态</dt>
-                            <dd class="fw-bold">
+                            </span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">状态</span>
+                            <span class="info-value">
                                 @if (Model.Dorm.IsActive)
                                 {
                                     <span class="badge bg-success">启用</span>
@@ -121,15 +145,14 @@
                                 {
                                     <span class="badge bg-secondary">停用</span>
                                 }
-                            </dd>
-                        </dl>
+                            </span>
+                        </div>
                         @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
                         {
-                            <hr class="my-2">
-                            <dl class="mb-0">
-                                <dt class="text-muted small">备注</dt>
-                                <dd class="fw-bold">@Model.Dorm.Remark</dd>
-                            </dl>
+                            <div class="info-item">
+                                <span class="info-label">备注</span>
+                                <span class="info-value">@Model.Dorm.Remark</span>
+                            </div>
                         }
                     </div>
                 </div>

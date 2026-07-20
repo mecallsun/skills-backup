@@ -13,31 +13,8 @@
 
 @section Styles {
     <style>
-        .filter-row { flex-wrap: nowrap; }
-        .filter-item { flex-shrink: 0; }
-        .filter-item-stats { min-width: 90px; max-width: 140px; flex: 1 1 auto; }
-        .filter-btn {
-            min-width: 90px !important;
-            max-width: 90px !important;
-            width: 90px !important;
-            height: 38px !important;
-            min-height: 38px !important;
-            max-height: 38px !important;
-            line-height: 38px !important;
-            padding: 0 12px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 4px !important;
-            font-size: 14px !important;
-            font-weight: 400 !important;
-            border-radius: 6px !important;
-            white-space: nowrap !important;
-        }
-        .filter-btn i { font-size: 14px !important; }
-        @@media (max-width: 768px) {
-            .filter-row { flex-wrap: wrap !important; }
-            .filter-item { flex: 1 1 45% !important; min-width: 140px !important; }
+        .filter-item-stats .form-control {
+            background: #f8f9fa !important;
         }
     </style>
 }
@@ -66,7 +43,13 @@
                 </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">房号</label>
-                    <input type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="如 D-001">
+                    <input list="dormListDormBilling" type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="选择或输入房号">
+                    <datalist id="dormListDormBilling">
+                        @foreach (var code in Model.DormCodes)
+                        {
+                            <option value="@code"></option>
+                        }
+                    </datalist>
                 </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">楼栋</label>
@@ -94,7 +77,7 @@
                 </div>
                 <div class="col-auto filter-item filter-item-stats">
                     <label class="form-label mb-1">账单合计</label>
-                    <div class="form-control text-success fw-bold" style="min-width: 120px; background: #f8f9fa;">
+                    <div class="form-control text-success fw-bold bg-light">
                         ¥@Model.Result?.Items.Sum(i => i.TotalAmount).ToString("N2")
                     </div>
                 </div>
@@ -104,9 +87,9 @@
                     </button>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <a href="/DormBilling" class="btn btn-outline-secondary filter-btn">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('dormBilling')">
                         <i class="bi bi-arrow-clockwise"></i> 重置
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -183,8 +166,8 @@
                 </table>
             </div>
 
-            <!-- 分页（v2.13.16 统一页尾样式） -->
-            @if (Model.TotalPages > 1)
+            <!-- 分页（v2.13.21 统一为标准 3 按钮：上一页 / 当前前后 2 页 / 下一页，与原型一致） -->
+            @if (Model.TotalPages > 0)
             {
                 <div class="card-footer d-flex justify-content-between align-items-center pagination-footer">
                     <div class="text-muted">
@@ -192,24 +175,28 @@
                     </div>
                     <nav>
                         <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                                <a class="page-link" href="?@Model.GetQueryString(1)">&laquo;</a>
-                            </li>
-                            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
-                                <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage - 1)">&lsaquo;</a>
-                            </li>
+                            @if (Model.CurrentPage > 1)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage - 1)" aria-label="上一页">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            }
                             @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
                             {
                                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
                                     <a class="page-link" href="?@Model.GetQueryString(i)">@i</a>
                                 </li>
                             }
-                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                                <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage + 1)">&rsaquo;</a>
-                            </li>
-                            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
-                                <a class="page-link" href="?@Model.GetQueryString(Model.TotalPages)">&raquo;</a>
-                            </li>
+                            @if (Model.CurrentPage < Model.TotalPages)
+                            {
+                                <li class="page-item">
+                                    <a class="page-link" href="?@Model.GetQueryString(Model.CurrentPage + 1)" aria-label="下一页">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            }
                         </ul>
                     </nav>
                 </div>

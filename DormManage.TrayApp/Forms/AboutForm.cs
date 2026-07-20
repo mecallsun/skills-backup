@@ -44,7 +44,7 @@ public sealed class AboutForm : Form
 
     private void InitializeUI()
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.4";
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.24";
         var msgFont = SafeMessageBoxFont();
 
         var lblTitle = new Label
@@ -77,7 +77,7 @@ public sealed class AboutForm : Form
         };
         var lblDocs = new Label
         {
-            Text = "需求文档：00-方案文档/57-DormManage.TrayApp需求规格-v2.13.4.md",
+            Text = "需求文档：00-方案文档/57-DormManage.TrayApp需求规格-v2.13.2.md",
             Font = msgFont,
             AutoSize = true,
             Location = new Point(20, 142),

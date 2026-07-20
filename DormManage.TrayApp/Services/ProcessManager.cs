@@ -73,6 +73,7 @@ public class ProcessManager
         }
 
         _log.Info($"启动 Api：{exePath} (port={cfg.Tray.ApiPort})");
+        _log.Info($"  DB Provider={cfg.Database.Provider}, ConnStrLen={cfg.Database.ConnectionString?.Length ?? 0}");
         _health.MarkApiState(ServiceState.Starting);
         ServiceStateChanged?.Invoke("Api", ServiceState.Starting);
 
@@ -117,6 +118,7 @@ public class ProcessManager
         }
 
         _log.Info($"启动 Admin：{exePath} (port={cfg.Tray.AdminPort})");
+        _log.Info($"  DB Provider={cfg.Database.Provider}, ConnStrLen={cfg.Database.ConnectionString?.Length ?? 0}");
         _health.MarkAdminState(ServiceState.Starting);
         ServiceStateChanged?.Invoke("Admin", ServiceState.Starting);
 
@@ -298,10 +300,12 @@ public class ProcessManager
         var port = isApi ? cfg.Tray.ApiPort : cfg.Tray.AdminPort;
         psi.EnvironmentVariables["DormManage_KESTREL_PORT"] = port.ToString();
 
+        // v2.13.28: 数据库连接环境变量注入（优先级最高，覆盖 appsettings.json）
         if (string.Equals(cfg.Database.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
         {
             if (!string.IsNullOrWhiteSpace(cfg.Database.ConnectionString))
                 psi.EnvironmentVariables["DormManage_DB_CONN"] = cfg.Database.ConnectionString;
+            // 注意：此方法是 static，日志由调用方记录
         }
         else if (string.Equals(cfg.Database.Provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
         {

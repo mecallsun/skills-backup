@@ -1,7 +1,9 @@
 using System.Reflection;
+using System.Text.Json;
+using DormManage.Shared.Models;
+using DormManage.Shared.Services;
 using DormManage.TrayApp.Models;
 using DormManage.TrayApp.Services;
-using DormManage.Shared.Services;
 
 namespace DormManage.TrayApp;
 
@@ -54,6 +56,9 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
 
         _process.ServiceStateChanged += OnServiceStateChanged;
         _health.ServiceStateChanged += OnServiceStateChanged;
+
+        // v2.13.19：订阅数据库配置变更事件，刷新 appsettings.json 中的 Database 段
+        AppConfigManager.Instance.OnDatabaseConfigUpdated += OnDatabaseConfigUpdated;
 
         _health.Start(
             config.Current.Tray.HealthCheckIntervalSeconds,
@@ -146,7 +151,23 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         _notifyIcon.UpdateServiceState(name, state);
     }
 
-    #region IPC 命令处理（v2.13.3 新增）
+    /// <summary>
+    /// v2.13.19：数据库配置变更事件回调，将最新字段式配置同步到 appsettings.json。
+    /// </summary>
+    private void OnDatabaseConfigUpdated(object? sender, DatabaseConfigDto e)
+    {
+        try
+        {
+            _config.UpdateDatabaseSection(e);
+            _log.Info($"收到数据库配置更新事件，已同步到 appsettings.json：Provider={e.Provider}, Server={e.DbServer}, Db={e.DbName}");
+        }
+        catch (Exception ex)
+        {
+            _log.Error("同步数据库配置到 appsettings.json 失败", ex);
+        }
+    }
+
+    #region IPC 命令处理（v2.13.3 新增 / v2.13.19 扩展数据库配置同步）
 
     private void HandleIpcCommand(ServiceIpc.IpcCommand cmd, Action<ServiceIpc.IpcResponse> respond)
     {
@@ -187,6 +208,15 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
 
                 case "restart":
                     _ = HandleRestartCommandAsync(cmd.Service, respond);
+                    break;
+
+                case "getdbconfig":
+                    _ = HandleGetDbConfigAsync(respond);
+                    break;
+
+                case "setdbconfig":
+                case "dbconfig.updated":
+                    _ = HandleSetDbConfigAsync(cmd.Payload, respond);
                     break;
 
                 default:
@@ -245,6 +275,81 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         }
         catch (Exception ex)
         {
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// v2.13.19：处理 Web 端查询数据库配置请求。
+    /// </summary>
+    private async Task HandleGetDbConfigAsync(Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            var cfg = await AppConfigManager.Instance.LoadAsync();
+            if (cfg is null)
+            {
+                respond(new ServiceIpc.IpcResponse { Success = false, Message = "数据库配置不存在" });
+                return;
+            }
+
+            // 密码脱敏返回
+            if (!string.IsNullOrEmpty(cfg.DbPassword))
+                cfg.DbPassword = "******";
+
+            respond(new ServiceIpc.IpcResponse
+            {
+                Success = true,
+                Message = "ok",
+                Data = cfg
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.Error("IPC getdbconfig 处理失败", ex);
+            respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// v2.13.19：处理 Web 端保存/推送数据库配置请求。
+    /// </summary>
+    private async Task HandleSetDbConfigAsync(Dictionary<string, object?>? payload, Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            if (payload is null)
+            {
+                respond(new ServiceIpc.IpcResponse { Success = false, Message = "缺少 payload" });
+                return;
+            }
+
+            var dto = JsonSerializer.Deserialize<DatabaseConfigDto>(JsonSerializer.Serialize(payload), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            if (dto is null)
+            {
+                respond(new ServiceIpc.IpcResponse { Success = false, Message = "无法解析数据库配置" });
+                return;
+            }
+
+            var (ok, msg) = await AppConfigManager.Instance.SaveConfigurationAsync(dto);
+            if (ok)
+            {
+                var refreshed = await AppConfigManager.Instance.LoadAsync();
+                if (refreshed is not null)
+                    _config.UpdateDatabaseSection(refreshed);
+
+                _log.Info($"IPC setdbconfig/dbconfig.updated 成功：Provider={dto.Provider}, Server={dto.DbServer}, Db={dto.DbName}");
+            }
+
+            respond(new ServiceIpc.IpcResponse { Success = ok, Message = msg });
+        }
+        catch (Exception ex)
+        {
+            _log.Error("IPC setdbconfig/dbconfig.updated 处理失败", ex);
             respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
         }
     }

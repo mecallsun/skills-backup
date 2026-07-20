@@ -260,7 +260,10 @@ public class DataImportService
     private async Task ImportEmployeesAsync(IXLWorksheet sheet, ImportResult result)
     {
         var depts = await _db.Departments.ToDictionaryAsync(d => d.Name, d => d.Id);
-        var teams = await _db.Teams.ToDictionaryAsync(t => t.Name, t => t.Id);
+        // v2.13.21 修复：Team.Name 可能重复，去重后取第一条，避免启动导入崩溃
+        var teams = (await _db.Teams.ToListAsync())
+            .GroupBy(t => t.Name)
+            .ToDictionary(g => g.Key, g => g.First().Id);
         var attendanceDefault = await _db.AttendanceTypes.FirstOrDefaultAsync(a => a.Code == "DEFAULT");
 
         foreach (var row in sheet.RowsUsed().Skip(1))

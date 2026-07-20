@@ -24,11 +24,11 @@ public class DbConfigController : ControllerBase
             // 默认回退：从 appsettings.json 读取当前环境配置
             return new DatabaseConfigDto
             {
-                DbServer = "localhost",
+                DbServer = "192.168.1.237",
                 DbPort = 1433,
-                DbName = "DormManage",
-                DbUser = "sa",
-                DbPassword = "",
+                DbName = "WaterMeterDB",
+                DbUser = "__DB_USER__",
+                DbPassword = "__DB_PASSWORD__",
                 Provider = "SqlServer",
                 SqlitePath = ""
             };
@@ -62,6 +62,8 @@ public class DbConfigController : ControllerBase
     [HttpPost("save")]
     public async Task<ApiResponse> SaveConfig([FromBody] DatabaseConfigDto config)
     {
+        // v2.13.19：前端可能发送 "unchanged" 密码哨兵，已由 AppConfigManager 处理
+
         // 安全卡口：必须先测试连接（防止保存无效参数）
         var (ok, msg) = await AppConfigManager.Instance.TestDbConnectionAsync(config);
         if (!ok)
@@ -69,9 +71,39 @@ public class DbConfigController : ControllerBase
 
         // 保存配置（双擎持久化）
         var (saveOk, saveMsg) = await AppConfigManager.Instance.SaveConfigurationAsync(config);
-        return saveOk
-            ? ApiResponse.Ok(saveMsg)
-            : ApiResponse.Fail("SAVE_FAILED", saveMsg);
+        if (!saveOk)
+            return ApiResponse.Fail("SAVE_FAILED", saveMsg);
+
+        // v2.13.19：兜底同步，主动通过 IPC 通知 TrayApp
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var ipc = new IpcClient();
+                var resp = await ipc.SendAsync(new ServiceIpc.IpcCommand
+                {
+                    Command = "dbconfig.updated",
+                    Payload = new Dictionary<string, object?>
+                    {
+                        ["provider"] = config.Provider,
+                        ["dbServer"] = config.DbServer,
+                        ["dbPort"] = config.DbPort,
+                        ["dbName"] = config.DbName,
+                        ["dbUser"] = config.DbUser,
+                        ["dbPassword"] = config.DbPassword ?? "",
+                        ["sqlitePath"] = config.SqlitePath ?? ""
+                    }
+                }, 5000);
+                // 仅记录，不阻塞 HTTP 响应
+                Console.WriteLine($"[DbConfigController] IPC dbconfig.updated: success={resp.Success}, msg={resp.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DbConfigController] IPC dbconfig.updated 失败: {ex.Message}");
+            }
+        });
+
+        return ApiResponse.Ok(saveMsg);
     }
 
     /// <summary>

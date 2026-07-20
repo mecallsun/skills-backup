@@ -45,8 +45,13 @@ public class IndexModel : PageModel
 
     public int PageSize { get; } = 20;
 
+    public List<string> DormCodes { get; set; } = new();
+
     public async Task OnGetAsync()
     {
+        // v2.13.20 为房号筛选提供 datalist 候选
+        DormCodes = await _service.GetAllDormCodesAsync();
+
         Result = await _service.GetListAsync(Keyword, Department, DormCode, Type, Status, DateFrom, DateTo, PageIndex, PageSize);
     }
 }

@@ -29,7 +29,7 @@
     <form method="get" class="card mb-3 filter-card" data-filter-form="booking">
         <div class="card-body py-2">
             <div class="row g-2 align-items-end flex-nowrap filter-row">
-                <div class="col-auto filter-item filter-item-name">
+                <div class="col-auto filter-item">
                     <label class="form-label mb-1">员工（姓名/工号/手机）</label>
                     <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="模糊查询">
                 </div>
@@ -39,7 +39,13 @@
                 </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">房号</label>
-                    <input type="text" name="dormCode" value="@Model.DormCode" class="form-control" placeholder="模糊查询">
+                    <input list="dormListBooking" type="text" name="dormCode" value="@Model.DormCode" class="form-control" placeholder="选择或输入房号">
+                    <datalist id="dormListBooking">
+                        @foreach (var code in Model.DormCodes)
+                        {
+                            <option value="@code"></option>
+                        }
+                    </datalist>
                 </div>
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">类型</label>
@@ -73,9 +79,9 @@
                     </button>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <a href="/Booking" class="btn btn-outline-secondary filter-btn">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('booking')">
                         <i class="bi bi-arrow-clockwise"></i> 重置
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -92,6 +98,7 @@
                             <th>工号</th>
                             <th>姓名</th>
                             <th>部门</th>
+                            <th class="text-center">考勤班次</th>
                             <th>宿舍</th>
                             <th class="text-center">类型</th>
                             <th class="text-center">入退日期</th>
@@ -112,6 +119,31 @@
                                     <td><strong>@item.EmployeeCode</strong></td>
                                     <td>@item.EmployeeName</td>
                                     <td>@(item.Department ?? "-")</td>
+                                    <td class="text-center">
+                                        @{
+                                            var attClass = item.AttendanceTypeId switch
+                                            {
+                                                1 => "bg-secondary",
+                                                2 => "bg-warning text-dark",
+                                                3 => "bg-warning text-dark",
+                                                4 => "bg-primary",
+                                                5 => "bg-dark",
+                                                6 => "bg-info text-dark",
+                                                _ => "bg-light text-dark"
+                                            };
+                                            var attName = item.AttendanceTypeId switch
+                                            {
+                                                1 => "默认",
+                                                2 => "早班",
+                                                3 => "中班",
+                                                4 => "晚班",
+                                                5 => "夜班",
+                                                6 => "其他",
+                                                _ => "-"
+                                            };
+                                        }
+                                        <span class="badge @attClass">@attName</span>
+                                    </td>
                                     <td>@item.DormCode</td>
                                     <td class="text-center">
                                         @if (item.Type == 1)
@@ -174,6 +206,11 @@
                                         {
                                             <button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(@item.Id)">撤销</button>
                                         }
+                                        @* v2.13.24 新增：删除按钮（仅预约/已取消状态；07-办理登记需求 §6.3 R-BOOK） *@
+                                        @if (item.Status == 1 || item.Status == 4)
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(@item.Id)" title="删除该办理登记记录">删除</button>
+                                        }
                                     </td>
                                 </tr>
                                 index++;
@@ -182,7 +219,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">暂无办理记录</td>
+                                <td colspan="12" class="text-center text-muted py-4">暂无办理记录</td>
                             </tr>
                         }
                     </tbody>
@@ -448,53 +485,6 @@
     }
     .suggestion-item:hover { background-color: #f0f7ff; }
 
-    /* 筛选按钮强制38px高度（修复版）*/
-    button.btn-primary.filter-btn,
-    button.btn-primary.filter-btn:hover,
-    button.btn-primary.filter-btn:focus,
-    a.btn-outline-secondary.filter-btn,
-    a.btn-outline-secondary.filter-btn:hover,
-    a.btn-outline-secondary.filter-btn:focus,
-    .filter-card button.filter-btn,
-    .filter-card a.filter-btn,
-    .filter-card .filter-btn {
-        min-width: 90px !important;
-        max-width: 90px !important;
-        width: 90px !important;
-        box-sizing: border-box !important;
-        height: 38px !important;
-        min-height: 38px !important;
-        max-height: 38px !important;
-        line-height: 38px !important;
-        padding: 0 12px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        font-size: 14px !important;
-        font-weight: 400 !important;
-        vertical-align: middle !important;
-        white-space: nowrap !important;
-        text-decoration: none !important;
-        border-width: 1px !important;
-    }
-    .filter-btn i, .filter-card .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
-    .filter-card .filter-item-btn { display: flex !important; align-items: flex-end !important; height: auto !important; min-height: 60px !important; }
-    .filter-card .filter-row { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
-    .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
-    .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
-    .filter-card .filter-item { min-width: 120px; flex-shrink: 0; }
-    .filter-card .filter-item:first-child { min-width: 200px; }
-    .filter-card .filter-item-name { min-width: 200px !important; max-width: 240px !important; width: 200px !important; }
-    .filter-card .filter-item-date { min-width: 160px !important; max-width: 160px !important; width: 160px !important; }
-    .filter-card input[type="date"].form-control { padding: 0.375rem 0.5rem !important; font-size: 14px !important; }
-
-    @@media (max-width: 768px) {
-        .filter-card .filter-row { flex-wrap: wrap; }
-        .filter-card .filter-item { min-width: calc(50% - 8px); }
-        .filter-card .filter-item:first-child { min-width: 100%; }
-    }
-
     .table th { white-space: nowrap; font-weight: 500; }
     .table td { vertical-align: middle; }
     .pagination-footer { background: transparent; border: none; padding: 0.75rem 0 0 0; }
@@ -502,144 +492,6 @@
 </style>
 
 @section Scripts {
-<style>
-    /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
-    /* 使用更高优先级选择器，覆盖 Bootstrap 默认 btn 样式 */
-    button.btn-primary.filter-btn,
-    button.btn-primary.filter-btn:hover,
-    button.btn-primary.filter-btn:focus,
-    a.btn-outline-secondary.filter-btn,
-    a.btn-outline-secondary.filter-btn:hover,
-    a.btn-outline-secondary.filter-btn:focus,
-    .filter-card button.filter-btn,
-    .filter-card a.filter-btn,
-    .filter-card .filter-btn {
-        /* 固定宽度 */
-        min-width: 90px !important;
-        max-width: 90px !important;
-        width: 90px !important;
-        box-sizing: border-box !important;
-        /* 固定高度 38px（核心修复）*/
-        height: 38px !important;
-        min-height: 38px !important;
-        max-height: 38px !important;
-        /* 行高等于高度，确保文字垂直居中 */
-        line-height: 38px !important;
-        /* 清除 Bootstrap 默认 padding 影响高度 */
-        padding: 0 12px !important;
-        /* Flex 居中 */
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        /* 文字样式 */
-        font-size: 14px !important;
-        font-weight: 400 !important;
-        vertical-align: middle !important;
-        white-space: nowrap !important;
-        text-decoration: none !important;
-        /* 覆盖 Bootstrap btn 边框 */
-        border-width: 1px !important;
-    }
-
-    /* 图标尺寸控制 */
-    .filter-btn i,
-    .filter-card .filter-btn i {
-        font-size: 14px !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-
-    /* 按钮容器对齐 */
-    .filter-card .filter-item-btn {
-        display: flex !important;
-        align-items: flex-end !important;
-        height: auto !important;
-        min-height: 60px !important;
-    }
-
-    /* 响应式筛选条件区域 */
-    .filter-card .filter-row {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: thin;
-    }
-
-    .filter-card .filter-row::-webkit-scrollbar {
-        height: 4px;
-    }
-
-    .filter-card .filter-row::-webkit-scrollbar-thumb {
-        background: #c0c0c0;
-        border-radius: 2px;
-    }
-
-    .filter-card .filter-item {
-        min-width: 120px;
-        flex-shrink: 0;
-    }
-
-    .filter-card .filter-item:first-child {
-        min-width: 200px;
-    }
-
-    /* 员工输入框宽度 200px */
-    .filter-card .filter-item-name {
-        min-width: 200px !important;
-        max-width: 240px !important;
-        width: 200px !important;
-    }
-
-    /* 日期输入框宽度统一固定 160px */
-    .filter-card .filter-item-date {
-        min-width: 160px !important;
-        max-width: 160px !important;
-        width: 160px !important;
-    }
-
-    /* 日期输入框内容紧凑 */
-    .filter-card input[type="date"].form-control {
-        padding: 0.375rem 0.5rem !important;
-        font-size: 14px !important;
-    }
-
-    /* 适配小屏幕 */
-    @@media (max-width: 768px) {
-        .filter-card .filter-row {
-            flex-wrap: wrap;
-        }
-
-        .filter-card .filter-item {
-            min-width: calc(50% - 8px);
-        }
-
-        .filter-card .filter-item:first-child {
-            min-width: 100%;
-        }
-    }
-
-    /* 表格样式优化 */
-    .table th {
-        white-space: nowrap;
-        font-weight: 500;
-    }
-
-    .table td {
-        vertical-align: middle;
-    }
-
-    /* 分页样式 */
-    .pagination-footer {
-        background: transparent;
-        border: none;
-        padding: 0.75rem 0 0 0;
-    }
-
-    .pagination .page-link {
-        min-width: 32px;
-        text-align: center;
-    }
-</style>
 <script>
 const API_BASE = '/api/v1/bookings';
 
@@ -742,6 +594,24 @@ async function cancelReservation(id) {
     } catch (err) {
         console.error(err);
         alert('撤销预约失败');
+    }
+}
+
+// v2.13.24 新增：删除办理登记（仅预约/已取消状态）
+async function deleteBooking(id) {
+    if (!confirm('确认删除该办理登记记录？\n注意：仅预约或已取消状态可删除。\n删除后不可恢复，请谨慎操作。')) return;
+    try {
+        const resp = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
+        if (!resp.ok) {
+            const msg = await resp.text();
+            alert('删除失败：' + (msg || resp.statusText));
+            return;
+        }
+        alert('✓ 已删除');
+        renderList(); // 重新渲染列表
+    } catch (err) {
+        console.error(err);
+        alert('删除失败');
     }
 }
 

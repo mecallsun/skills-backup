@@ -92,6 +92,15 @@ function getEmployeeTypeName(id) {
     return type ? type.name : '-';
 }
 
+// v2.13.24 新增：考勤班次 Badge 渲染助手（用于 booking/index.html 列表）
+function attendanceBadgeHtml(attendanceTypeId) {
+    const type = ATTENDANCE_TYPES_FULL.find(t => t.id === attendanceTypeId);
+    if (!type) return '<span class="badge bg-light text-dark">-</span>';
+    const code = type.code || 'DEFAULT';
+    const cls = ATTENDANCE_BADGE[code] || 'bg-secondary';
+    return `<span class="badge ${cls}">${type.name}</span>`;
+}
+
 function getEmploymentStatusName(id) {
     const status = EMPLOYMENT_STATUSES.find(s => s.id === id);
     return status ? status.name : '-';

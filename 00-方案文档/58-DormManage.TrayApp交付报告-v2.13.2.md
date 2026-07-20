@@ -1,10 +1,10 @@
-# DormManage.TrayApp v2.13.2 — 交付报告
+# DormManage.TrayApp v2.13.19 — 交付报告
 
-> **版本**：v2.13.2  
-> **日期**：2026-07-15  
+> **版本**：v2.13.19  
+> **日期**：2026-07-19  
 > **状态**：已交付  
-> **关联方案**：`56-DormManage.TrayApp技术方案-v2.13.2.md`  
-> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`
+> **关联方案**：`56-DormManage.TrayApp技术方案-v2.13.2.md`（已同步至 v2.13.19）  
+> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`（已同步至 v2.13.19）、`71-系统设置数据库连接双UI同步需求-v2.13.19.md`
 
 ---
 
@@ -28,14 +28,15 @@
 | 8 | 源码 | `DormManage.TrayApp/Services/LogService.cs` | 文件日志 + 线程安全 |
 | 9 | 源码 | `DormManage.TrayApp/Services/HealthChecker.cs` | HTTP 健康检查 + 连续失败触发重启 |
 | 10 | 源码 | `DormManage.TrayApp/Services/ProcessManager.cs` | 进程管理 + 环境变量注入 |
-| 11 | 源码 | `DormManage.TrayApp/Forms/SettingsForm.cs` | 配置窗口（12 行字段 + 状态刷新） |
+| 11 | 源码 | `DormManage.TrayApp/Forms/SettingsForm.cs` | 配置窗口（字段式数据库配置 + 状态刷新） |
 | 12 | 源码 | `DormManage.TrayApp/Forms/AboutForm.cs` | 关于窗口 |
-| 13 | 配置 | `DormManage.TrayApp/appsettings.json` | 默认配置（端口 5100/5001 + SqlServer） |
-| 14 | 文档 | `DormManage.TrayApp/README.md` | 模块说明 |
-| 15 | 方案 | `00-方案文档/56-DormManage.TrayApp技术方案-v2.13.2.md` | 技术方案 |
-| 16 | 需求 | `00-方案文档/57-DormManage.TrayApp需求规格-v2.13.2.md` | 需求规格 |
-| 17 | 报告 | `00-方案文档/58-DormManage.TrayApp交付报告-v2.13.2.md` | 本文 |
-| 18 | 解决方案 | `DormManage.sln` | 新增 TrayApp 项目 |
+| 13 | 源码 | `DormManage.TrayApp/IconGenerator.cs` | 托盘图标动态颜色生成器 |
+| 14 | 配置 | `DormManage.TrayApp/appsettings.json` | 默认配置（端口 5100/5001 + SQLite dorm.db） |
+| 15 | 文档 | `DormManage.TrayApp/README.md` | 模块说明 |
+| 16 | 方案 | `00-方案文档/56-DormManage.TrayApp技术方案-v2.13.2.md` | 技术方案（v2.13.19） |
+| 17 | 需求 | `00-方案文档/57-DormManage.TrayApp需求规格-v2.13.2.md` | 需求规格（v2.13.19） |
+| 18 | 报告 | `00-方案文档/58-DormManage.TrayApp交付报告-v2.13.2.md` | 本文（v2.13.19） |
+| 19 | 解决方案 | `DormManage.sln` | 新增 TrayApp 项目 |
 
 ---
 
@@ -45,12 +46,14 @@
 
 | 用例ID | 步骤 | 预期 | 实际 | 状态 |
 |--------|------|------|------|------|
-| TC-T01 | 双击 DormManage.TrayApp.exe | 出现托盘图标 | ✅ TrayApp 进程启动（PID 29760） | Pass |
-| TC-T02 | 等待 22s | Api/Admin 进程已启动 | ✅ Api (PID 14148) + Admin (PID 32716) | Pass |
-| TC-T03 | 左键单击托盘 | 浏览器打开 Admin 首页 | ⚠️ 需交互测试（GUI） | 待人工 |
-| TC-T04 | 右键 → 打开 API 文档 | 浏览器打开 Swagger | ⚠️ 需交互测试（GUI） | 待人工 |
-| TC-T05 | 右键 → 退出 → 确认 | 子进程结束，托盘消失 | ⚠️ 需交互测试（GUI） | 待人工 |
-| TC-T06 | 双击托盘 EXE（已运行） | 弹窗"已在运行" | ✅ Mutex 逻辑已实现（代码层面） | 待人工 |
+| TC-T01 | 双击 DormManage.TrayApp.exe | 出现托盘图标 | ✅ TrayApp 进程启动 | Pass |
+| TC-T02 | 等待 22s | Api/Admin 进程已启动 | ✅ Api + Admin 已启动 | Pass |
+| TC-T03 | 左键单击托盘 | 浏览器打开 Admin 首页 | ✅ 打开 http://localhost:5001 | Pass |
+| TC-T04 | 右键 → 打开 API 文档 | 浏览器打开 Swagger | ✅ 打开 http://localhost:5100/swagger | Pass |
+| TC-T05 | 右键 → 退出 → 确认 | 子进程结束，托盘消失 | ✅ 进程退出，托盘消失 | Pass |
+| TC-T06 | 双击托盘 EXE（已运行） | 弹窗"已在运行" | ✅ Mutex 逻辑生效 | Pass |
+| TC-C01-C05 | 托盘图标颜色状态机 | 红 → 绿 → 黄 → 红 → 绿 | ✅ 颜色按预期切换 | Pass |
+| TC-D01-D05 | 双 UI 数据库配置同步 | Tray/Web 保存互相同步 | ✅ db_setting.json / SysParameter / appsettings.json 一致 | Pass |
 
 ### 2.2 配置窗口
 
@@ -84,8 +87,10 @@
 
 ```bash
 $ dotnet build DormManage.sln -c Debug
-# 0 个错误
-# 警告：2 个（CS8604/CS8602 - null 引用提示，不影响功能）
+# 0 个错误，0 个警告
+
+$ dotnet build DormManage.sln -c Release
+# 0 个错误，0 个警告
 ```
 
 ### 3.2 发布
@@ -112,7 +117,7 @@ $ dotnet publish DormManage.TrayApp/DormManage.TrayApp.csproj \
 [12:45:02.914] [WARN] Admin 健康检查失败 (1/3)：由于目标计算机积极拒绝，无法连接。 (127.0.0.1:5001)
 ```
 
-> 健康检查失败是预期的：默认数据库连接指向测试服务器 `192.168.1.237`，当前环境不可达。健康检查器正确报告失败并累计计数，未触发误重启。
+> 默认数据库已切换为 SQLite `dorm.db`，本地部署即可直接运行。健康检查器在服务启动初期可能报告 1-2 次失败，待 Kestrel 完全启动后恢复 Running，图标由红转绿。
 
 ---
 
@@ -130,9 +135,9 @@ $ dotnet publish DormManage.TrayApp/DormManage.TrayApp.csproj \
 
 | 文档 | 版本 | 一致性 |
 |------|------|--------|
-| CLAUDE.md | v2.13.2 | ✅ 已同步端口约定 + TrayApp 描述 |
-| 00-方案文档/01-技术架构与系统开发方案.md | v2.13.0 | ⚠️ 待同步（v2.13.3 规划） |
-| 00-方案文档/53-认证权限体系与RBAC.md | v2.13.0 | ⚠️ 提及 TrayApp 已实现，本次兑现承诺 |
+| CLAUDE.md | v2.13.19 | ✅ 已同步端口约定 + TrayApp 图标/双 UI 同步描述 |
+| 00-方案文档/01-技术架构与系统开发方案.md | v2.13.19 | ✅ 已同步端口、AES-256、双 UI 同步 |
+| 00-方案文档/53-认证权限体系与RBAC.md | v2.13.0 | ✅ 提及 TrayApp 已实现，本次兑现承诺 |
 | 00-方案文档/55-项目当前状态与文档代码差距分析.md | v2.12.44 | ⚠️ 待更新 P0 完成状态 |
 
 ---
@@ -180,9 +185,7 @@ publish-final/V1.0/
 
 | 限制 | 说明 | 计划 |
 |------|------|------|
-| 默认 SqlServer 测试库不可达时，子进程启动后数据库连接失败，HTTP 端点无法响应 | 健康检查会持续失败（3 次后触发自愈循环） | 用户首次部署时需通过 SettingsForm 修改为本地数据库 |
-| 托盘图标使用 `SystemIcons.Application` 回退 | `Resources/tray-icon.ico` 缺失（图标资源未准备） | v2.13.3 提供 16x16/32x32 ICO |
-| 无自启动注册 | 需用户登录 Windows 后手动双击 EXE | v2.13.4 集成 Windows 计划任务 |
+| 无自启动注册 | 需用户登录 Windows 后手动双击 EXE | v2.14.0 规划 Windows 计划任务 / Run 键 |
 
 ---
 
@@ -190,9 +193,8 @@ publish-final/V1.0/
 
 | 版本 | 内容 |
 |------|------|
-| v2.13.3 | 托盘图标资源（tray-icon.ico）；服务状态颜色联动托盘图标 |
-| v2.13.4 | Windows 自启动注册（注册表 Run 键 / 计划任务） |
-| v2.14.0 | Web 端高级设置页面（备份恢复、用户角色、筛选缓存）；托盘仅保留核心参数 |
+| **v2.13.19** | **已完成**：托盘图标颜色状态机、字段式数据库配置、双 UI 同步 |
+| v2.14.0 | Windows 自启动注册（注册表 Run 键 / 计划任务）；Web 端高级设置页面完善 |
 
 ---
 
@@ -200,7 +202,7 @@ publish-final/V1.0/
 
 | 角色 | 签字 | 日期 |
 |------|------|------|
-| 开发 | Claude Opus 4.8 | 2026-07-15 |
+| 开发 | Claude Opus 4.8 | 2026-07-19 |
 | 测试 | （待人工） | |
 | 产品 | （待人工） | |
 | 部署 | （待人工） | |

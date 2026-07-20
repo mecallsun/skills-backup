@@ -1,17 +1,20 @@
 # DormManage.TrayApp — 托盘守护程序技术方案
 
-> **版本**：v2.13.4  
-> **日期**：2026-07-16  
+> **版本**：v2.13.19  
+> **日期**：2026-07-19  
 > **状态**：已定稿  
-> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`（v2.13.4 增量更新）  
+> **关联需求**：`57-DormManage.TrayApp需求规格-v2.13.2.md`（v2.13.19 增量更新）、`71-系统设置数据库连接双UI同步需求-v2.13.19.md`  
 > **关联修复报告**：`62-托盘右键异常修复报告-v2.13.4.md`  
 > **变更说明**：
 > - v2.13.2：DormManage.TrayApp 基础实现（单实例 + 自动启停 + 配置窗口 + 故障自愈）
 > - v2.13.3：自启动开关 + IPC 服务端 + 共用页头 Tab 组件
-> - **v2.13.4（本版）**：修复右键 → 系统设置 "UI异常，创建窗口出错"
->   - 新增 §6.5 OwnerForm 机制（关键架构修复）
->   - 新增 §10.5 异常保护策略（UI 三层兜底）
->   - 新增 §15 版本历史 v2.13.4 条目
+> - v2.13.4：修复右键 → 系统设置 "UI异常，创建窗口出错"
+> - **v2.13.19（本版）**：
+>   - 新增托盘图标颜色状态机（红/黄/绿）
+>   - SettingsForm 数据库配置改为字段式输入（与 Web /Settings 一致）
+>   - 集成 `AppConfigManager` 双擎持久化（`db_setting.json` + `SysParameter`）
+>   - 新增 IPC `getdbconfig` / `setdbconfig` / `dbconfig.updated` 命令
+>   - 清理旧版 WaterMeter 连接串示例与不一致端口描述
 
 ---
 
@@ -20,14 +23,15 @@
 v2.13.0 技术架构文档（`01-技术架构与系统开发方案.md`）与 CLAUDE.md 均明确 DormManage.TrayApp 是部署包的核心组成：
 
 > 1. 运行 `DormManage.TrayApp.exe`（托盘守护程序）
-> 2. 托盘程序自动启动：DormManage.Admin.exe（Web 管理端，端口 5001）+ DormManage.Api.exe（PDA 接口服务，端口 5000）
+> 2. 托盘程序自动启动：DormManage.Admin.exe（Web 管理端，端口 5001）+ DormManage.Api.exe（PDA 接口服务，端口 5100）
 
 但项目源码中 `DormManage.TrayApp/` 目录始终不存在，仅有 `publish-final/V1.0/start.bat` 替代实现。start.bat 缺乏托盘 UI、配置面板、健康监控、自动重启能力，**生产部署存在 P0 风险**。
 
-代码层面已为托盘协作预留 3 个环境变量：
+代码层面已为托盘协作预留 4 个环境变量：
 - `DormManage_KESTREL_PORT`（端口注入，Api 默认 5100、Admin 默认 5001）
 - `DormManage_DB_CONN`（SQL Server 连接串）
 - `DormManage_DB_PATH`（SQLite 绝对路径）
+- `DormManage_IMAGE_ROOT`（图片存储根路径）
 
 本方案正式落地 DormManage.TrayApp 源码。
 
@@ -38,9 +42,10 @@ v2.13.0 技术架构文档（`01-技术架构与系统开发方案.md`）与 CLA
 | 目标 | 说明 |
 |------|------|
 | **零配置启动** | 部署后双击 EXE 即可启动整套服务 |
-| **可视化运维** | 托盘菜单显示服务状态、CPU/内存、日志入口 |
+| **可视化运维** | 托盘菜单显示服务状态；图标颜色实时反映双服务健康状态 |
 | **故障自愈** | Api/Admin 进程异常退出后自动重启 |
-| **配置面板** | 端口、数据库、图片路径可视化调整 |
+| **配置面板** | 端口、数据库字段式参数、图片路径可视化调整 |
+| **双 UI 同步** | 托盘 SettingsForm 与 Web /Settings 数据库配置实时同步 |
 | **单实例** | 防止重复启动产生端口冲突 |
 | **职责清晰** | 仅核心服务端参数配置，无权限控制（与 Web 设置页面职责分离） |
 
@@ -53,16 +58,18 @@ v2.13.0 技术架构文档（`01-技术架构与系统开发方案.md`）与 CLA
 | UI 框架 | **WinForms** (.NET 8) | 托盘程序体积最小（~10MB），无需 WPF 重型依赖 |
 | 运行时 | .NET 8 Desktop Runtime 8.0.x | 与 Admin/Api 一致，部署简单 |
 | 进程管理 | `System.Diagnostics.Process` | 标准库，无第三方依赖 |
-| 配置存储 | `appsettings.json`（与 Admin/Api 同 schema） | 共享配置语义 |
+| 配置存储 | `appsettings.json`（运行时）+ `db_setting.json`（数据库配置双 UI 同步） | 共享配置语义；数据库配置通过 `AppConfigManager` 双擎持久化 |
 | HTTP 健康检查 | `HttpClient` | 标准库 |
 | 日志 | `Microsoft.Extensions.Logging` + 文件落盘 | 与 Admin/Api 一致 |
 | 单实例锁 | `Mutex` + 全局名 `Global\DormManage.TrayApp.SingleInstance` | 系统级互斥 |
+| 数据库配置持久化 | `AppConfigManager`（`db_setting.json` + `SysParameter` 表，AES-256 加密） | 双 UI 共享 |
+| 双 UI 通信 | TCP/JSON IPC `127.0.0.1:5099` | Web Admin / Api 与 Tray 双向同步 |
 
 **第三方包依赖**（最小化）：
 - `Microsoft.Extensions.Configuration.Json`（8.0.0）— 读写 appsettings.json
 - `Microsoft.Extensions.Logging`（8.0.0）— 日志抽象
 - `Microsoft.Extensions.Logging.File`（可选，社区包）— 文件日志
-- **不依赖** DormManage.Shared（避免传递引入 EF Core 等重型依赖到托盘进程）
+- 引用 `DormManage.Shared` 以复用 `AppConfigManager`、`DatabaseConfigDto`、`ServiceIpc`（v2.13.19）
 
 ---
 
@@ -71,22 +78,24 @@ v2.13.0 技术架构文档（`01-技术架构与系统开发方案.md`）与 CLA
 ```
 DormManage.TrayApp/
 ├── DormManage.TrayApp.csproj    # .NET 8 WinForms 项目
-├── Program.cs                    # 入口（单实例锁 + Application.Run）
-├── TrayAppContext.cs             # ApplicationContext 子类，管理 NotifyIcon 生命周期
-├── NotifyIconManager.cs          # 托盘图标与菜单封装
+├── Program.cs                    # 入口（单实例锁 + db_setting 同步 + Application.Run）
+├── TrayAppContext.cs             # ApplicationContext 子类，管理 NotifyIcon 生命周期 + IPC Server
+├── NotifyIconManager.cs          # 托盘图标与菜单封装（含动态颜色图标）
+├── IconGenerator.cs              # 32×32 实心圆点图标动态生成器（v2.13.19）
 ├── Models/
 │   ├── AppConfig.cs              # 配置模型（PDA/Web 端口、数据库、图片路径）
-│   └── ServiceState.cs           # 服务状态枚举（Stopped/Starting/Running/Crashed）
+│   └── ServiceState.cs           # 服务状态枚举（Stopped/Starting/Running/Crashed/Stopping）
 ├── Services/
 │   ├── ConfigService.cs          # 配置读写（appsettings.json）
 │   ├── ProcessManager.cs         # Admin/Api 进程生命周期管理
-│   ├── HealthChecker.cs          # HTTP 健康检查（/swagger/index.html、/health）
-│   └── LogService.cs             # 文件日志
+│   ├── HealthChecker.cs          # HTTP 健康检查
+│   ├── LogService.cs             # 文件日志
+│   └── AutoStartManager.cs       # 开机自启动
 ├── Forms/
-│   ├── SettingsForm.cs           # 配置窗口（核心服务端参数 + 服务启停 + 保存）
+│   ├── SettingsForm.cs           # 配置窗口（核心服务端参数 + 字段式数据库配置 + 服务启停）
 │   └── AboutForm.cs              # 关于窗口
 ├── Resources/
-│   └── tray-icon.ico             # 托盘图标（16x16 / 32x32）
+│   └── tray-icon.ico             # 托盘图标（静态回退，v2.13.19 起优先动态生成）
 └── README.md                     # 模块说明
 ```
 
@@ -98,28 +107,31 @@ DormManage.TrayApp/
 ┌─────────────────────────────────────────────────────────────┐
 │                  DormManage.TrayApp.exe                       │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │  Program.cs（单实例锁 → TrayAppContext.Run()）         │  │
+│  │  Program.cs（单实例锁 → db_setting 同步 → Run）        │  │
 │  └────────────────┬─────────────────────────────────────┘  │
 │                   ▼                                            │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  TrayAppContext（ApplicationContext）                   │  │
-│  │  ├─ NotifyIconManager（图标 + 右键菜单）                │  │
-│  │  │     ├─ 打开 Admin 浏览器                            │  │
-│  │  │     ├─ 打开 Api Swagger                             │  │
-│  │  │     ├─ 设置...（打开 SettingsForm）                  │  │
-│  │  │     ├─ 重启所有服务                                 │  │
-│  │  │     ├─ 查看日志                                     │  │
-│  │  │     └─ 退出                                         │  │
-│  │  ├─ ProcessManager                                     │  │
-│  │  │     ├─ StartApiAsync()                              │  │
-│  │  │     ├─ StartAdminAsync()                            │  │
-│  │  │     ├─ StopAsync()                                  │  │
-│  │  │     └─ RestartAsync()                               │  │
-│  │  ├─ HealthChecker（每 10s 探测一次）                    │  │
-│  │  │     ├─ Api: GET http://localhost:{apiPort}/swagger/  │  │
-│  │  │     └─ Admin: GET http://localhost:{adminPort}/      │  │
-│  │  ├─ ConfigService（读写 appsettings.json）              │  │
-│  │  └─ LogService（logs/tray-{date}.log）                 │  │
+│  │  ├─ NotifyIconManager（图标 + 右键菜单 + 动态颜色图标）  │  │
+│  │  │     ├─ 打开管理后台                                  │  │
+│  │  │     ├─ 打开 API 文档                                 │  │
+│  │  │     ├─ 服务状态（Api / Admin）                        │  │
+│  │  │     ├─ 系统设置...（打开 SettingsForm）               │  │
+│  │  │     ├─ 重启所有服务                                   │  │
+│  │  │     ├─ 查看日志                                       │  │
+│  │  │     ├─ 开机自启动                                     │  │
+│  │  │     ├─ 关于                                           │  │
+│  │  │     └─ 退出                                           │  │
+│  │  ├─ ProcessManager                                       │  │
+│  │  │     ├─ StartApiAsync() / StartAdminAsync()             │  │
+│  │  │     ├─ StopAllAsync() / StopApiAsync() / StopAdminAsync()│ │
+│  │  │     └─ RestartAllAsync() / HandleCrashAsync()          │  │
+│  │  ├─ HealthChecker（每 10s 探测一次）                      │  │
+│  │  │     ├─ Api: GET http://localhost:{apiPort}/swagger/index.html
+│  │  │     └─ Admin: GET http://localhost:{adminPort}/         │  │
+│  │  ├─ ConfigService（读写 appsettings.json）                │  │
+│  │  ├─ IpcServer（TCP 127.0.0.1:5099 JSON-over-lines）       │  │
+│  │  └─ LogService（logs/tray-{date}.log）                   │  │
 │  └──────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
            │                              │
@@ -154,47 +166,77 @@ Program.cs：创建全局 Mutex `Global\DormManage.TrayApp.SingleInstance`
     ↓
 加载 appsettings.json（不存在则用默认值生成）
     ↓
+从 db_setting.json 加载字段式数据库配置并同步到 appsettings.json（v2.13.19）
+    ↓
 TrayAppContext.Initialize()：
-    ├─ 创建 NotifyIcon + ContextMenuStrip
+    ├─ 创建 NotifyIcon + ContextMenuStrip（图标初始为红色）
     ├─ 启动 ProcessManager（异步）
     │     ├─ StartApiAsync：设置 DormManage_KESTREL_PORT=5100、DormManage_DB_CONN、...
     │     │                 Process.Start(DormManage.Api.exe)
     │     └─ StartAdminAsync：同上
     ├─ 启动 HealthChecker 后台任务（10s 间隔）
+    ├─ 启动 IpcServer（接收 Web Admin 命令）
+    ├─ 订阅 AppConfigManager.OnDatabaseConfigUpdated 事件
     └─ 启动 ProcessManager.Exited 事件监听（故障自愈）
     ↓
 Application.Run(context) → 阻塞
 ```
 
-### 6.2 故障自愈流程
+### 6.2 故障自愈与图标颜色状态机
 
 ```
 ProcessManager 监听子进程 Exited 事件
     ↓
 若退出码 != 0 或非用户主动 Stop：
-    ├─ 记录日志 [ERROR] Api 进程异常退出，code={exitCode}
+    ├─ 记录日志 [ERROR] Api/Admin 进程异常退出，code={exitCode}
     ├─ 等待 5s（避免频繁重启）
     ├─ 重新启动该进程
-    ├─ 通知 NotifyIcon 更新图标（红 X）
+    ├─ 通知 NotifyIcon 更新图标颜色（详见 6.2.1）
     └─ 通知 SettingsForm 更新状态文本（若已打开）
     ↓
 HealthChecker 每 10s 探测一次：
-    ├─ HTTP 200 → 状态正常（绿圆）
-    ├─ HTTP 非 200 / 超时 → 状态异常（黄三角）
-    └─ 连续 3 次异常 → 触发 RestartAsync
+    ├─ HTTP 200 → ServiceState.Running
+    ├─ HTTP 非 200 / 超时 → 累计失败次数
+    └─ 连续 3 次异常 → ServiceState.Crashed，触发 HandleCrashAsync
 ```
+
+#### 6.2.1 托盘图标颜色状态机（v2.13.19）
+
+`NotifyIconManager` 根据当前 Api / Admin 状态动态绘制实心圆点图标：
+
+| 颜色 | 条件 | 说明 |
+|------|------|------|
+| **红色** | 非（Api Running 且 Admin Running）且没有任一 Running | 启动中 / 均已停止 / 均异常 |
+| **黄色** | Api Running 与 Admin Running 恰好一个满足 | 单服务在线 |
+| **绿色** | Api Running 且 Admin Running | 双服务均正常 |
+
+图标生成：使用 `System.Drawing` 在 32×32 透明画布上绘制抗锯齿实心圆，通过 `Bitmap.GetHicon()` 转为 `Icon`。旧图标句柄在替换前调用 `DestroyIcon` 释放，避免 GDI 泄漏。
 
 ### 6.3 配置保存流程
 
 ```
 SettingsForm 点击 [保存]
     ↓
-ConfigService.UpdateAsync(new AppConfig)
-    ├─ 序列化 AppConfig 为 appsettings.json（同目录覆盖）
-    ├─ 提示用户"配置已保存，是否立即重启服务以生效？"
-    │     ├─ 是 → ProcessManager.RestartAsync()
-    │     └─ 否 → 退出 SettingsForm（下次手动重启）
-    └─ 日志记录 [INFO] 配置已更新：ApiPort=5200, AdminPort=5201, ...
+校验字段（SqlServer：服务器/数据库/账号必填；Sqlite：路径必填）
+    ↓
+构造 DatabaseConfigDto
+    ├─ 密码框为空 → DbPassword = "unchanged"（保留旧密码）
+    └─ 密码框非空 → 使用新密码
+    ↓
+AppConfigManager.SaveConfigurationAsync(dto)
+    ├─ 测试数据库连通性（失败则阻断）
+    ├─ AES-256 加密密码
+    ├─ 写入 db_setting.json（atomic rename）
+    ├─ 后台写入 SysParameter 表
+    └─ 触发 OnDatabaseConfigUpdated 事件
+    ↓
+ConfigService.UpdateDatabaseSection(dto)
+    ├─ 生成 ConnectionString
+    └─ 写回 appsettings.json
+    ↓
+提示用户"配置已保存，是否立即重启服务以生效？"
+    ├─ 是 → ProcessManager.RestartAllAsync()
+    └─ 否 → 退出 SettingsForm（下次手动重启）
 ```
 
 ### 6.4 退出流程
@@ -296,8 +338,8 @@ private DialogResult SafeShow(Func<DialogResult> showWithOwner, string fallbackT
   },
   "Database": {
     "Provider": "SqlServer",
-    "ConnectionString": "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;",
-    "SqlitePath": ""
+    "ConnectionString": "Data Source=..\dorm.db",
+    "SqlitePath": "..\dorm.db"
   },
   "Storage": {
     "ImageRoot": "Storage\\images",
@@ -334,6 +376,21 @@ public class DatabaseSection
     public string SqlitePath { get; set; } = "";
 }
 
+/// <summary>
+/// 数据库连接配置契约（字段式，v2.13.19 双 UI 同步）。
+/// 字段与 SQL Server 连接字符串一一对应，后端用 SqlConnectionStringBuilder 组装。
+/// </summary>
+public class DatabaseConfigDto
+{
+    public string DbServer { get; set; } = "localhost";
+    public int DbPort { get; set; } = 1433;
+    public string DbName { get; set; } = "DormManage";
+    public string DbUser { get; set; } = "sa";
+    public string? DbPassword { get; set; }
+    public string Provider { get; set; } = "SqlServer";
+    public string? SqlitePath { get; set; }
+}
+
 public class StorageSection
 {
     public string ImageRoot { get; set; } = "Storage\\images";
@@ -348,9 +405,41 @@ public class StorageSection
 | 环境变量 | 来源 | 说明 |
 |---------|------|------|
 | `DormManage_KESTREL_PORT` | `Tray.ApiPort` 或 `Tray.AdminPort` | Api/Admin 通过此变量绑定端口 |
-| `DormManage_DB_CONN` | `Database.ConnectionString`（Provider=SqlServer 时） | 注入 SQL Server 连接串 |
+| `DormManage_DB_CONN` | `Database.ConnectionString`（Provider=SqlServer 时） | 注入 SQL Server 连接串；字段式配置由 `DatabaseConfigDto.BuildConnectionString()` 生成 |
 | `DormManage_DB_PATH` | `Database.SqlitePath`（Provider=Sqlite 时） | 注入 SQLite 绝对路径 |
-| `DormManage_IMAGE_ROOT` | `Storage.ImageRoot` | 预留：图片存储根路径（v2.13.3+ 启用） |
+| `DormManage_IMAGE_ROOT` | `Storage.ImageRoot` | 图片存储根路径 |
+
+### 7.4 数据库配置双 UI 同步（v2.13.19）
+
+`AppConfigManager` 作为单例配置中心，负责字段式数据库配置的持久化与广播：
+
+- **本地文件**：`db_setting.json`（AES-256 加密后的密码）
+- **数据库表**：`SysParameter`（Category = "Database"）
+- **事件广播**：`OnDatabaseConfigUpdated`
+
+Tray 与 Web 的双 UI 同步路径：
+
+```
+Tray SettingsForm 保存
+    → AppConfigManager.SaveConfigurationAsync(dto)
+        → db_setting.json + SysParameter
+        → OnDatabaseConfigUpdated
+    → TrayAppContext.OnDatabaseConfigUpdated
+        → ConfigService.UpdateDatabaseSection(dto)
+        → appsettings.json
+    → Web /Settings 下次加载时读取最新配置
+
+Web /Settings 保存
+    → DbConfigController.SaveConfig(dto)
+        → AppConfigManager.SaveConfigurationAsync(dto)
+        → db_setting.json + SysParameter
+        → OnDatabaseConfigUpdated
+    → 兜底：IpcClient 发送 dbconfig.updated 到 Tray
+    → TrayAppContext.HandleIpcCommand
+        → AppConfigManager.SaveConfigurationAsync / LoadAsync
+        → ConfigService.UpdateDatabaseSection
+        → appsettings.json
+```
 
 ---
 
@@ -371,7 +460,9 @@ psi.EnvironmentVariables["DormManage_KESTREL_PORT"] = _config.Tray.ApiPort.ToStr
 if (_config.Database.Provider == "SqlServer")
     psi.EnvironmentVariables["DormManage_DB_CONN"] = _config.Database.ConnectionString;
 else if (_config.Database.Provider == "Sqlite")
-    psi.EnvironmentVariables["DormManage_DB_PATH"] = _config.Database.SqlitePath;
+    psi.EnvironmentVariables["DormManage_DB_PATH"] = Path.IsPathRooted(_config.Database.SqlitePath)
+        ? _config.Database.SqlitePath
+        : Path.Combine(AppContext.BaseDirectory, _config.Database.SqlitePath);
 
 var process = Process.Start(psi);
 process.EnableRaisingEvents = true;
@@ -462,7 +553,11 @@ public class HealthChecker
 | 服务端口 | `numApiPort` / `numAdminPort` | 数值输入，范围 1024-65535 |
 | 可执行文件 | `txtApiPath` + `btnApiBrowse` / `txtAdminPath` + `btnAdminBrowse` | 文件选择对话框，默认 Api\\DormManage.Api.exe |
 | 数据库类型 | `cmbProvider`（SqlServer/Sqlite） | DropDownList |
-| SQL Server 连接串 | `txtConnStr`（Multiline, 56px） | Provider=SqlServer 时启用 |
+| 数据库服务器 | `txtDbServer` | Provider=SqlServer 时启用 |
+| 端口号 | `numDbPort`（默认 1433） | Provider=SqlServer 时启用 |
+| 数据库名称 | `txtDbName` | Provider=SqlServer 时启用 |
+| 账号 | `txtDbUser` | Provider=SqlServer 时启用 |
+| 密码 | `txtDbPassword`（PasswordChar='*'） | Provider=SqlServer 时启用；留空表示不修改原密码 |
 | SQLite 数据库路径 | `txtSqlitePath` + `btnSqliteBrowse` | Provider=Sqlite 时启用，OpenFileDialog |
 | 图片路径 | `txtImageRoot` + `btnImageBrowse` | 文件夹选择（FolderBrowserDialog） |
 | 自动启动 | `chkAutoStart` / `chkAutoRestart` | 布尔勾选 + 中文说明 |
@@ -470,7 +565,7 @@ public class HealthChecker
 | 服务状态 | `lblApiStatus` / `lblAdminStatus`（绿圆/黄三角/红 X） | 实时刷新（1s 定时器） |
 | 操作按钮 | `[取消]` `[保存]` `[重启]` `[停止]` `[启动]`（RightToLeft 排列） | 见流程图 |
 
-**布局**：TableLayoutPanel 11 行 × 2 列，统一间距 8px，标题加粗。  
+**布局**：TableLayoutPanel 13 行 × 2 列，统一间距 8px，标题加粗。  
 **窗口尺寸**：680×620，MinimumSize 620×560。  
 **键盘交互**：ESC = 关闭（不保存）；X 按钮 = 关闭（不保存）。  
 
@@ -597,6 +692,10 @@ start "" "TrayApp\DormManage.TrayApp.exe"
 | appsettings.json 损坏 | 配置丢失 | 启动时校验 JSON，损坏则备份为 .bak 并用默认值 |
 | 单实例锁失效（多用户） | 重复启动 | 使用 Global\ 前缀，所有会话共享 |
 | 防火墙阻止 HTTP 健康检查 | 健康检查失败误报 | 仅检测 localhost，放行即可 |
+| 动态图标 GDI 句柄泄漏 | 托盘图标区域花屏/资源耗尽 | 每次切换调用 `DestroyIcon` 释放旧句柄 |
+| IPC 端口 5099 被占用 | Web 无法与 Tray 通信 | `IpcServer.Start` 失败记录日志，不影响托盘主流程 |
+| SysParameter 写入失败 | 配置未跨库同步 | 文件写入成功即返回；DB 写入异常记录日志 |
+| 密码 "unchanged" 哨兵未处理 | 原密码被覆盖导致连接失败 | `AppConfigManager` 在测试/保存前替换为旧密码 |
 
 ---
 
@@ -606,20 +705,23 @@ start "" "TrayApp\DormManage.TrayApp.exe"
 |------|------|
 | v2.13.2 | DormManage.TrayApp 基础实现：单实例 + 自动启停 + 配置窗口 + 故障自愈 |
 | v2.13.3 | 自启动开关（HKCU\Run）+ IPC 服务端（ping/status/start/stop/restart）+ 共用页头 Tab 组件 |
-| **v2.13.4（本版本）** | **修复右键 → 系统设置 "UI异常，创建窗口出错"** —— OwnerForm 机制 + SettingsForm 重构 + NotifyIconManager 加固 + 异常三层兜底 + 双 UI 职责规范 |
+| v2.13.4 | 修复右键 → 系统设置 "UI异常，创建窗口出错" —— OwnerForm 机制 + SettingsForm 重构 + NotifyIconManager 加固 + 异常三层兜底 + 双 UI 职责规范 |
+| **v2.13.19（本版本）** | **托盘图标颜色状态机 + SettingsForm 字段式数据库配置 + AppConfigManager 双擎持久化 + IPC 数据库配置同步 + 文档清理** |
 | v2.14.0（规划） | 服务端 Web 设置页面接管高级配置（备份恢复、用户角色、筛选缓存），托盘仅保留核心参数 |
 
 ---
 
 ## 16. 验收物清单
 
-- [ ] `DormManage.TrayApp/DormManage.TrayApp.csproj`
-- [ ] `Program.cs`、`TrayAppContext.cs`、`NotifyIconManager.cs`
-- [ ] `Models/AppConfig.cs`
-- [ ] `Services/ConfigService.cs`、`ProcessManager.cs`、`HealthChecker.cs`、`LogService.cs`
-- [ ] `Forms/SettingsForm.cs`、`AboutForm.cs`
-- [ ] `Resources/tray-icon.ico`
-- [ ] `appsettings.json`（默认值）
-- [ ] `README.md`
-- [ ] 编译 0 错误
-- [ ] 冒烟测试通过（双击 EXE → Api/Admin 启动 → 浏览器访问正常）
+- [x] `DormManage.TrayApp/DormManage.TrayApp.csproj`
+- [x] `Program.cs`、`TrayAppContext.cs`、`NotifyIconManager.cs`、`IconGenerator.cs`
+- [x] `Models/AppConfig.cs`、`Models/ServiceState.cs`
+- [x] `Services/ConfigService.cs`、`ProcessManager.cs`、`HealthChecker.cs`、`LogService.cs`、`AutoStartManager.cs`
+- [x] `Forms/SettingsForm.cs`、`AboutForm.cs`
+- [x] `Resources/tray-icon.ico`
+- [x] `appsettings.json`（默认值）
+- [x] 编译 0 错误（Debug / Release）
+- [x] 托盘图标颜色状态机验证（红 → 绿 / 黄 / 红）
+- [x] SettingsForm 字段式数据库配置保存并写入 `db_setting.json` + `SysParameter`
+- [x] Web /Settings 保存后通过 IPC 同步到 Tray
+- [x] 冒烟测试通过（双击 EXE → Api/Admin 启动 → 浏览器访问正常）

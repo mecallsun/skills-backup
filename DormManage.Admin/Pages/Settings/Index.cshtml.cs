@@ -68,7 +68,7 @@ public class IndexModel : PageModel
     /// <summary>
     /// 数据库服务器
     /// </summary>
-    public string DbServer { get; set; } = "localhost";
+    public string DbServer { get; set; } = "192.168.1.237";
 
     /// <summary>
     /// 数据库端口
@@ -78,17 +78,17 @@ public class IndexModel : PageModel
     /// <summary>
     /// 数据库名称
     /// </summary>
-    public string DbName { get; set; } = "DormManage";
+    public string DbName { get; set; } = "WaterMeterDB";
 
     /// <summary>
     /// 数据库账号
     /// </summary>
-    public string DbUser { get; set; } = "sa";
+    public string DbUser { get; set; } = "__DB_USER__";
 
     /// <summary>
     /// 数据库密码
     /// </summary>
-    public string DbPassword { get; set; } = "";
+    public string DbPassword { get; set; } = "__DB_PASSWORD__";
 
     /// <summary>
     /// PDA App 版本列表

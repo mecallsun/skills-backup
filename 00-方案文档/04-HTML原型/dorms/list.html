@@ -85,6 +85,7 @@
                         <tr>
                             <th width="50">序号</th>
                             <th>房号</th><th>楼栋</th><th>楼层</th><th>地址</th>
+                            <th>性别</th>
                             <th>房间数</th><th>容量</th>
                             <th>在住人数</th><th>使用率</th>
                             <th>状态</th><th width="220">操作</th>
@@ -399,7 +400,7 @@
             renderRows: (items, total, start) => {
                 const tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4">暂无宿舍</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="12" class="text-center text-muted py-4">暂无宿舍</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = items.map((d, idx) => {
@@ -420,6 +421,7 @@
                         <td>${d.building || '-'}</td>
                         <td>${d.floor || '-'}</td>
                         <td><small class="text-muted">${d.address || '-'}</small></td>
+                        <td>${d.gender === 1 ? '<span class="badge bg-info text-dark">男</span>' : d.gender === 2 ? '<span class="badge bg-danger">女</span>' : '<span class="badge bg-secondary">不限</span>'}</td>
                         <td>${d.roomCount}</td>
                         <td>${d.capacity}</td>
                         <td>

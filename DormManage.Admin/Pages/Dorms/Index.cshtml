@@ -48,7 +48,7 @@
                         <option value="false" selected="@(Model.IsActive == false)">停用</option>
                     </select>
                 </div>
-                <div class="col-auto flex-grow-1 filter-item" style="flex: 2 1 auto; max-width: 320px;">
+                <div class="col-auto filter-item">
                     <label class="form-label mb-1">关键词</label>
                     <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="房号/地址">
                 </div>
@@ -58,9 +58,9 @@
                     </button>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <a href="/Dorms" class="btn btn-outline-secondary filter-btn">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('dorms')">
                         <i class="bi bi-arrow-clockwise"></i> 重置
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
@@ -78,6 +78,7 @@
                             <th>楼栋</th>
                             <th>楼层</th>
                             <th>地址</th>
+                            <th class="text-center">性别</th>
                             <th class="text-center">房间数</th>
                             <th class="text-center">容量</th>
                             <th class="text-center">在住人数</th>
@@ -98,6 +99,20 @@
                                     <td>@item.BuildingName</td>
                                     <td>@item.FloorNo 楼</td>
                                     <td>@item.AddressText</td>
+                                    <td class="text-center">
+                                        @if (item.Gender == 1)
+                                        {
+                                            <span class="badge bg-info text-dark">男</span>
+                                        }
+                                        else if (item.Gender == 2)
+                                        {
+                                            <span class="badge bg-danger">女</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">不限</span>
+                                        }
+                                    </td>
                                     <td class="text-center">@item.RoomCount</td>
                                     <td class="text-center">@item.Capacity 人</td>
                                     <td class="text-center">
@@ -189,7 +204,6 @@
 </div>
 
 @section Scripts {
-<script src="~/js/filter-persistence.js"></script>
 <script>
     function deleteDorm(id, code) {
         if (!confirm('确定删除宿舍 "' + code + '" 吗？此操作不可恢复。')) return;
@@ -238,90 +252,6 @@
 </div>
 
 <style>
-    /* ==================== 筛选按钮强制38px高度（修复版） ==================== */
-    /* 使用更高优先级选择器，覆盖 Bootstrap 默认 btn 样式 */
-    button.btn-primary.filter-btn,
-    button.btn-primary.filter-btn:hover,
-    button.btn-primary.filter-btn:focus,
-    a.btn-outline-secondary.filter-btn,
-    a.btn-outline-secondary.filter-btn:hover,
-    a.btn-outline-secondary.filter-btn:focus,
-    .filter-card button.filter-btn,
-    .filter-card a.filter-btn,
-    .filter-card .filter-btn {
-        min-width: 90px !important;
-        max-width: 90px !important;
-        width: 90px !important;
-        height: 38px !important;
-        min-height: 38px !important;
-        max-height: 38px !important;
-        line-height: 38px !important;
-        padding: 0 12px !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 4px !important;
-        font-size: 14px !important;
-        font-weight: 400 !important;
-        vertical-align: middle !important;
-        white-space: nowrap !important;
-        text-decoration: none !important;
-        box-sizing: border-box !important;
-        border-width: 1px !important;
-    }
-
-    .filter-card .filter-btn i {
-        font-size: 14px !important;
-        line-height: 1 !important;
-        margin: 0 !important;
-    }
-
-    .filter-card .filter-item-btn {
-        display: flex !important;
-        align-items: flex-end !important;
-        min-height: 60px !important;
-    }
-
-    /* 响应式筛选条件区域 */
-    .filter-card .filter-row {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: thin;
-    }
-
-    .filter-card .filter-row::-webkit-scrollbar {
-        height: 4px;
-    }
-
-    .filter-card .filter-row::-webkit-scrollbar-thumb {
-        background: #c0c0c0;
-        border-radius: 2px;
-    }
-
-    .filter-card .filter-item {
-        min-width: 120px;
-        flex-shrink: 0;
-    }
-
-    .filter-card .filter-item:first-child {
-        min-width: 180px;
-    }
-
-    /* 适配小屏幕 */
-    @@media (max-width: 768px) {
-        .filter-card .filter-row {
-            flex-wrap: wrap;
-        }
-
-        .filter-card .filter-item {
-            min-width: calc(50% - 8px);
-        }
-
-        .filter-card .filter-item:first-child {
-            min-width: 100%;
-        }
-    }
-
     /* 表格样式优化 */
     .table th {
         white-space: nowrap;

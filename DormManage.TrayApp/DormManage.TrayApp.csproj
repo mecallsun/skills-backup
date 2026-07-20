@@ -9,10 +9,10 @@
     <AssemblyName>DormManage.TrayApp</AssemblyName>
     <RootNamespace>DormManage.TrayApp</RootNamespace>
     <LangVersion>latest</LangVersion>
-    <Version>2.13.3</Version>
+    <Version>2.13.24</Version>
     <Company>JINGE</Company>
     <Product>金戈宿舍管理系统托盘守护程序</Product>
-    <Description>DormManage.TrayApp v2.13.3 - 托盘守护 + 自动启停 + 故障自愈 + IPC 服务端</Description>
+    <Description>DormManage.TrayApp v2.13.24 - 托盘守护 + 自动启停 + 故障自愈 + IPC 服务端</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,12 +8,11 @@
 > - ✅ **新建 `_shared/` 目录**：
 >   - `layout.html` — 共用页头模板
 >   - `layout-tab.css` — Tab / 品牌栏样式（共享样式库）
->   - ~~`icon-rail.js`~~ — ~~紧凑型图标导航条渲染（已废弃，v2.12.3 移除）~~
 >   - `tab-bar.js` — Tab 页签栏渲染 + 状态管理（Tier 2）
 >   - `storage-keys.js` — localStorage key 常量定义（与 §11 筛选缓存共用 userId 隔离）
 >   - `migrate.py` / `cleanup.py` / `inject.py` — 批量迁移工具
 > - ⚠️ **renderNav() 标记为废弃**：保留以兼容旧引用，新代码请使用 `mountTabBar()`
-> - 📘 完整规范参见 [`00-方案文档/37-共用页头与Tab页签导航设计规范-v2.12.md`](../37-共用页头与Tab页签导航设计规范-v2.12.md)
+> - 📘 完整规范参见 [`00-方案文档/37-共用页头与Tab页签导航设计规范-v2.12.md`](../37-共用页头与Tab页签导航设计规范-v2.12.md)（v2.13.24 已删除原 §4 紧凑型图标导航条整章）
 
 > **目的**：在编码前快速预览 UI 与交互逻辑；与最终 Razor 视图的字段、跳转、按钮动作保持一致。
 > **本次更新（2026-07-12）**：
@@ -71,9 +70,8 @@
 ```
 04-HTML原型/
 ├── README.md                          ← 本文件
-├── mock-data.js                       ← Mock 数据 + 公共函数
-├── mock-data-rels.js                  ← 字段数据来源与关系元数据（v2.11.5）
-├── index.html                         ← 导航首页（功能模块卡片）
+├── mock-data.js                       ← Mock 数据 + 公共函数（v2.13.24 移除 mock-data-rels.js）
+├── index.html                         ← 首页/经营概览（7 KPI + 8 图表，v2.13.24 修正）
 ├── personnel/
 │   ├── list.html                      ← 人员清单（筛选+分页+操作）
 │   ├── create.html                    ← 新增人员表单
@@ -86,9 +84,32 @@
 │   └── employee-bills.html            ← 员工账单（生成/发布/导出）
 ├── booking/
 │   ├── index.html                     ← 办理登记列表（筛选+分页+操作）
-│   ├── check-in.html                  ← 办理入住（4 步表单）
-│   ├── check-out.html                 ← 办理退房（3 步表单）
+│   ├── check-in.html                  ← ⚠️ 旧版独立页（v2.11.16 已迁入 list.html 弹窗，保留仅供历史参考）
+│   ├── check-out.html                 ← ⚠️ 旧版独立页（v2.11.16 已迁入 list.html 弹窗，保留仅供历史参考）
 │   └── edit.html                      ← 修改办理登记（v2.11.15.d 重构：标准表单布局）
+├── dorms/
+│   ├── list.html                      ← 宿舍档案列表（筛选+分页+操作，含"性别"列）
+│   ├── create.html                    ← ⚠️ 旧版独立页（v2.12.37 已迁入 list.html Modal，保留仅供历史参考）
+│   ├── details.html                   ← 宿舍详情（基本信息 + 当前入住 + 历史 + 操作）
+│   ├── edit.html                      ← ⚠️ 旧版独立页（v2.12.38 已迁入 list.html Modal，保留仅供历史参考）
+│   └── history.html                   ← 住宿历史时间线
+├── meter/
+│   ├── index.html                     ← 抄表记录列表（筛选+分页+操作）
+│   ├── entry.html                     ← 手动补录抄表
+│   ├── import.html                    ← 批量导入抄表
+│   ├── detail.html                    ← 抄表详情
+│   └── edit.html                      ← 修正抄表读数
+├── basics/
+│   └── index.html                     ← 基础资料（9 类字典：部门/楼栋/楼层/地址/员工类型/考勤班次/员工班组/计量单位/住宿状态/在职状态）
+├── settings/
+│   └── index.html                     ← 系统设置（8 个 Tab：服务与端口/数据库连接/PDA 版本/用户管理/角色与权限/备份与恢复/系统集成/关于系统）
+└── _shared/                           ← 共享资源（详见 §_shared/ 目录结构）
+    ├── layout.html
+    ├── layout-tab.css
+    ├── tab-bar.js
+    ├── storage-keys.js
+    ├── filter-persistence.js
+    └── （v2.13.24 已移除：icon-rail.js / mock-data-rels.js）
 ```
 
 ## 🎨 共用页头 + Tab 页签导航（v2.12.3）
@@ -136,9 +157,8 @@ document.addEventListener('DOMContentLoaded', function() {
 | 文件 | 作用 |
 |------|------|
 | `layout.html` | 共用页头模板（参考用） |
-| `layout-tab.css` | Tab / 图标导航 / 品牌栏样式 |
-| `icon-rail.js` | Tier 2 紧凑型图标导航条渲染 |
-| `tab-bar.js` | Tier 3 Tab 页签栏 + TabManager |
+| `layout-tab.css` | Tab / 品牌栏样式 |
+| `tab-bar.js` | Tier 2 Tab 页签栏 + TabManager |
 | `storage-keys.js` | localStorage key 常量 |
 | `migrate.py` | 批量迁移工具（v2.11 → v2.12） |
 | `cleanup.py` | 清理遗留的旧导航标记 |
@@ -154,20 +174,20 @@ mountTabBar({ basePath: '..', currentUrl: 'dorms/list.html' });  // Tier 3
 TabManager.open({ title: '...', module: '...', icon: '...', url: '...' });  // 打开 Tab
 ```
 
-### 菜单链接对照表
+### 菜单链接对照表（v2.13.24 修正：与文档 60/37 一致）
 
-| 菜单项 | 首页链接 | 子页面链接 | 目标文件 |
-|--------|---------|-----------|---------|
-| 首页 | `index.html` | `../index.html` | ✅ 存在 |
-| 办理登记 | `booking/index.html` | `../booking/index.html` | ✅ 存在 |
-| 宿舍管理 | `dorms/list.html` | `../dorms/list.html` | ✅ 存在 |
-| 人员清单 | `personnel/list.html` | `../personnel/list.html` | ✅ 存在 |
-| 费用标准 | `billing/standards.html` | `../billing/standards.html` | ✅ 存在 |
-| 宿舍账单 | `billing/dorm-bills.html` | `../billing/dorm-bills.html` | ✅ 存在 |
-| 员工账单 | `billing/employee-bills.html` | `../billing/employee-bills.html` | ✅ 存在 |
-| 抄表记录 | `meter/index.html` | `../meter/index.html` | ✅ 存在 |
-| 系统设置 | `settings/index.html` | `../settings/index.html` | ✅ 存在 |
-| 个人中心 | `settings/profile.html` | `../settings/profile.html` | ✅ 存在（v2.11.5 新增） |
+| # | 菜单项 | 首页链接 | 子页面链接 | 目标文件 | 状态 |
+|---|--------|---------|-----------|---------|------|
+| 1 | 首页 | `index.html` | `../index.html` | ✅ 存在 | 经营概览（7 KPI + 8 图表） |
+| 2 | 办理登记 | `booking/index.html` | `../booking/index.html` | ✅ 存在 | 列表 + check-in.html + check-out.html + edit.html |
+| 3 | 宿舍管理 | `dorms/list.html` | `../dorms/list.html` | ✅ 存在 | 列表 + details.html + history.html（create/edit 已迁入 Modal） |
+| 4 | 人员清单 | `personnel/list.html` | `../personnel/list.html` | ✅ 存在 | 列表 + create.html + edit.html + import.html |
+| 5 | 费用标准 | `billing/standards.html` | `../billing/standards.html` | ✅ 存在 | 列表 + standard-form.html |
+| 6 | 宿舍账单 | `billing/dorm-bills.html` | `../billing/dorm-bills.html` | ✅ 存在 | 列表 + 详情弹窗 |
+| 7 | 员工账单 | `billing/employee-bills.html` | `../billing/employee-bills.html` | ✅ 存在 | 列表 + 详情弹窗 |
+| 8 | 抄表记录 | `meter/index.html` | `../meter/index.html` | ✅ 存在 | 列表 + entry.html + import.html + detail.html + edit.html |
+| 9 | 基础资料 | `basics/index.html` | `../basics/index.html` | ✅ 存在 | 9 类字典管理 |
+| 10 | 系统设置 | `settings/index.html` | `../settings/index.html` | ✅ 存在 | 8 个 Tab（含个人中心筛选缓存开关） |
 
 ### 菜单分类颜色
 
@@ -282,14 +302,14 @@ TabManager.open({ title: '...', module: '...', icon: '...', url: '...' });  // �
 
 | HTML 原型 | Razor 视图 |
 |-----------|-----------|
-| `personnel/list.html` | `Admin/Views/Personnel/Index.cshtml` |
-| `personnel/create.html` | `Admin/Views/Personnel/Create.cshtml` |
-| `personnel/edit.html` | `Admin/Views/Personnel/Edit.cshtml` |
-| `personnel/import.html` | `Admin/Views/Personnel/Import.cshtml` |
-| `billing/standards.html` | `Admin/Views/BillingStandard/Index.cshtml` |
-| `billing/standard-form.html` | `Admin/Views/BillingStandard/Create.cshtml`<br>`Admin/Views/BillingStandard/Edit.cshtml` |
-| `billing/dorm-bills.html` | `Admin/Views/DormBilling/Index.cshtml` |
-| `billing/employee-bills.html` | `Admin/Views/EmployeeBilling/Index.cshtml` |
+| `personnel/list.html` | `DormManage.Admin/Pages/Personnel/Index.cshtml` |
+| `personnel/create.html` | `DormManage.Admin/Pages/Personnel/Create.cshtml` |
+| `personnel/edit.html` | `DormManage.Admin/Pages/Personnel/Edit.cshtml` |
+| `personnel/import.html` | `DormManage.Admin/Pages/Personnel/Import.cshtml` |
+| `billing/standards.html` | `DormManage.Admin/Pages/BillingStandard/Index.cshtml` |
+| `billing/standard-form.html` | `DormManage.Admin/Pages/BillingStandard/Create.cshtml`<br>`DormManage.Admin/Pages/BillingStandard/Edit.cshtml` |
+| `billing/dorm-bills.html` | `DormManage.Admin/Pages/DormBilling/Index.cshtml` |
+| `billing/employee-bills.html` | `DormManage.Admin/Pages/EmployeeBilling/Index.cshtml` |
 
 > 对照原则：input 的 `name`/`id`、按钮的 `onclick`、`<a href>` 路径三者完全对齐。
 

@@ -27,33 +27,50 @@ public class IndexModel : PageModel
     public PagedResult<EmployeeBillingDto>? Result { get; set; }
 
     /// <summary>
-    /// 当前页码
+    /// 部门列表（用于筛选）
     /// </summary>
+    public List<DepartmentDropdownItem> Departments { get; set; } = new();
+
+    /// <summary>
+    /// 员工类型列表（用于筛选）
+    /// </summary>
+    public List<EmployeeTypeDropdownItem> EmployeeTypes { get; set; } = new();
+
+    /// <summary>
+    /// 住宿状态列表（用于筛选）
+    /// </summary>
+    public List<ResidenceStatusDropdownItem> ResidenceStatuses { get; set; } = new();
+
+    /// <summary>
+    /// 宿舍房号候选（datalist 自动完成用）
+    /// </summary>
+    public List<string> DormCodes { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 
-    /// <summary>
-    /// 每页条数
-    /// </summary>
     public int PageSize { get; set; } = 20;
 
-    /// <summary>
-    /// 计费月份
-    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string? BillingMonth { get; set; }
 
-    /// <summary>
-    /// 宿舍号
-    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string? DormCode { get; set; }
 
-    /// <summary>
-    /// 员工（工号/姓名）
-    /// </summary>
     [BindProperty(SupportsGet = true)]
     public string? EmpKeyword { get; set; }
+
+    /// <summary>v2.13.20 新增：部门筛选</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? DepartmentId { get; set; }
+
+    /// <summary>v2.13.20 新增：员工类型筛选</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? EmployeeTypeId { get; set; }
+
+    /// <summary>v2.13.20 新增：住宿状态筛选</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? ResidenceStatusId { get; set; }
 
     /// <summary>
     /// 分摊合计金额
@@ -76,8 +93,33 @@ public class IndexModel : PageModel
             BillingMonth = DateTime.Now.ToString("yyyy-MM");
         }
 
-        // 使用真实服务查询
-        var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, PageIndex, PageSize);
+        // 加载筛选下拉数据
+        Departments = await _db.Departments
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.SortOrder)
+            .Select(d => new DepartmentDropdownItem { Id = d.Id, Name = d.Name })
+            .ToListAsync();
+
+        EmployeeTypes = await _db.EmployeeTypes
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.Id)
+            .Select(e => new EmployeeTypeDropdownItem { Id = e.Id, Name = e.Name })
+            .ToListAsync();
+
+        ResidenceStatuses = await _db.ResidenceStatuses
+            .Where(r => r.IsActive)
+            .OrderBy(r => r.Id)
+            .Select(r => new ResidenceStatusDropdownItem { Id = r.Id, Name = r.Name })
+            .ToListAsync();
+
+        DormCodes = await _db.Dorms
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.DormCode)
+            .Select(d => d.DormCode)
+            .ToListAsync();
+
+        // 使用真实服务查询（v2.13.20 新增部门/员工类型/住宿状态筛选）
+        var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, DepartmentId, EmployeeTypeId, ResidenceStatusId, PageIndex, PageSize);
         Result = new PagedResult<EmployeeBillingDto>
         {
             Items = entities.Items.Select(e => new EmployeeBillingDto
@@ -111,4 +153,31 @@ public class EmployeeBillingDto
     public string BillingMonth { get; set; } = "";
     public decimal ShareAmount { get; set; }
     public bool IsPublished { get; set; }
+}
+
+/// <summary>
+/// 部门下拉项
+/// </summary>
+public class DepartmentDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>
+/// 员工类型下拉项
+/// </summary>
+public class EmployeeTypeDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>
+/// 住宿状态下拉项
+/// </summary>
+public class ResidenceStatusDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
 }

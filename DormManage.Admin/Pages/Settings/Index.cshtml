@@ -29,7 +29,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
             <i class="bi bi-gear"></i> 系统设置
-            <span class="badge bg-warning text-dark ms-2">v2.11.6</span>
+            <span class="badge bg-warning text-dark ms-2">v2.13.19</span>
         </h2>
     </div>
 
@@ -252,7 +252,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label small">数据库服务器</label>
-                                    <input type="text" id="dbServer" class="form-control" placeholder="localhost 或 IP">
+                                    <input type="text" id="dbServer" class="form-control" placeholder="192.168.1.237">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label small">端口号</label>
@@ -260,11 +260,11 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">数据库名称</label>
-                                    <input type="text" id="dbName" class="form-control" placeholder="DormManage">
+                                    <input type="text" id="dbName" class="form-control" placeholder="WaterMeterDB">
                                 </div>
                                 <div class="col-md-6 sqlserver-only">
                                     <label class="form-label small">账号 <i class="bi bi-person-circle"></i></label>
-                                    <input type="text" id="dbUser" class="form-control" placeholder="sa">
+                                    <input type="text" id="dbUser" class="form-control" placeholder="wateruser">
                                 </div>
                                 <div class="col-md-6 sqlserver-only">
                                     <label class="form-label small">密码（留空保持不变）<i class="bi bi-lock"></i></label>
@@ -597,7 +597,7 @@
                                 </tr>
                                 <tr>
                                     <th class="text-muted">当前版本</th>
-                                    <td>v2.12.0</td>
+                                    <td>v2.13.19</td>
                                 </tr>
                                 <tr>
                                     <th class="text-muted">技术栈</th>
@@ -634,6 +634,21 @@
             const url = new URL(window.location);
             url.searchParams.set('tab', tab);
             window.history.replaceState({}, '', url);
+        }
+
+        // v2.13.19：封装对 Tray 的 IPC 通知，实际通过后端 API 转发到底层 TCP 端口 5099
+        async function fetchTrayIpc(command, payload) {
+            try {
+                const res = await fetch('/api/v1/system/ipc/tray', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command, payload })
+                });
+                return await res.json();
+            } catch (e) {
+                console.warn('fetchTrayIpc 失败:', e);
+                return { success: false, message: e.message };
+            }
         }
 
         // 加载当前数据库配置
@@ -717,8 +732,8 @@
                 const json = await res.json();
                 if (json.success) {
                     box.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> ${json.message}</div>`;
-                    // 触发 TrayApp IPC 同步广播（如果托盘可达）
-                    if (window.fetchTrayIpc) window.fetchTrayIpc('dbconfig.updated', payload);
+                    // 触发 TrayApp IPC 同步广播
+                    fetchTrayIpc('dbconfig.updated', payload);
                 } else {
                     box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;
                 }
@@ -727,15 +742,15 @@
             }
         }
 
-        // DOM Ready 初始化（仅当 tab=db 选中时）
+        // DOM Ready 初始化：数据库配置区域始终可用（v2.13.28 修复：不再依赖 URL ?tab=db 参数）
         document.addEventListener('DOMContentLoaded', function () {
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') === 'db') {
-                loadDbConfig();
-                document.getElementById('dbProvider').addEventListener('change', toggleProviderUI);
-                document.getElementById('btnDbTest').addEventListener('click', runDbTest);
-                document.getElementById('btnDbSave').addEventListener('click', saveDbConfig);
-            }
+            loadDbConfig();
+            var providerEl = document.getElementById('dbProvider');
+            if (providerEl) providerEl.addEventListener('change', toggleProviderUI);
+            var testEl = document.getElementById('btnDbTest');
+            if (testEl) testEl.addEventListener('click', runDbTest);
+            var saveEl = document.getElementById('btnDbSave');
+            if (saveEl) saveEl.addEventListener('click', saveDbConfig);
         });
 
         function toggleService(which) {

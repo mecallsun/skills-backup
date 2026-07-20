@@ -36,6 +36,11 @@ public class IndexModel : PageModel
     /// </summary>
     public List<FloorDropdownItem> Floors { get; set; } = new();
 
+    /// <summary>
+    /// 宿舍房号候选（datalist 自动完成用）
+    /// </summary>
+    public List<string> DormCodes { get; set; } = new();
+
     [BindProperty(SupportsGet = true)]
     public string? BillingMonth { get; set; }
 
@@ -78,6 +83,13 @@ public class IndexModel : PageModel
             .Where(f => f.IsActive)
             .OrderBy(f => f.FloorNo)
             .Select(f => new FloorDropdownItem { Id = f.Id, FloorNo = f.FloorNo })
+            .ToListAsync();
+
+        // v2.13.20 为房号筛选提供 datalist 候选
+        DormCodes = await _db.Dorms
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.DormCode)
+            .Select(d => d.DormCode)
             .ToListAsync();
 
         // 查询账单数据（使用真实服务）

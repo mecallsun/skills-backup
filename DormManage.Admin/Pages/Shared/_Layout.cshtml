@@ -220,21 +220,54 @@
             cursor: pointer !important;
         }
         .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
-        .btn-primary.filter-btn {
+        .btn-primary.filter-btn,
+        .btn-primary.filter-btn:hover,
+        .btn-primary.filter-btn:focus,
+        button.btn-primary.filter-btn {
             background: #1976d2 !important;
             border-color: #1976d2 !important;
             color: #fff !important;
         }
-        .btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
-        .btn-outline-secondary.filter-btn {
+        .btn-primary.filter-btn:hover,
+        button.btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn,
+        .btn-outline-secondary.filter-btn:hover,
+        .btn-outline-secondary.filter-btn:focus,
+        button.btn-outline-secondary.filter-btn,
+        a.btn-outline-secondary.filter-btn {
             color: #6c757d !important;
             border-color: #dee2e6 !important;
+            background: #fff !important;
         }
-        .btn-outline-secondary.filter-btn:hover {
+        .btn-outline-secondary.filter-btn:hover,
+        button.btn-outline-secondary.filter-btn:hover,
+        a.btn-outline-secondary.filter-btn:hover {
             background: #f8f9fa !important;
             color: #495057 !important;
             border-color: #ced4da !important;
         }
+
+        /* ===== 筛选区：统计/班组/按钮容器 ===== */
+        .filter-card .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+        .filter-card .filter-item-team {
+            min-width: 108px !important;
+            max-width: 120px !important;
+        }
+        .filter-card .filter-item-btn {
+            display: flex !important;
+            align-items: flex-end !important;
+            min-height: 60px !important;
+        }
+        .filter-card .filter-row {
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
 
         /* ===== 列表卡片 ===== */
         .content-card {
@@ -292,7 +325,9 @@
             .top-bar .brand-text { font-size: 1rem; }
             .tab-item { min-width: 80px; padding: 0.65rem 0.85rem; font-size: 0.82rem; }
             .filter-row { flex-wrap: wrap; }
-            .filter-item { min-width: calc(50% - 8px) !important; }
+            .filter-item,
+            .filter-item-stats,
+            .filter-item-team { min-width: calc(50% - 8px) !important; max-width: none !important; }
             .filter-item:first-child { min-width: 100% !important; }
             .page-content { padding: 0.75rem; }
         }
@@ -304,7 +339,7 @@
         <a href="/" class="brand">
             <i class="bi bi-droplet-half brand-icon"></i>
             <span class="brand-text">金戈宿舍管理系统</span>
-            <span class="brand-version">v2.13.14</span>
+            <span class="brand-version">v2.13.28</span>
         </a>
         <div class="user-area">
             <a href="/Account/Profile" class="user-pill">

@@ -1,3 +1,5 @@
+using DormManage.Shared.Models;
+using DormManage.Shared.Services;
 using DormManage.TrayApp.Models;
 using DormManage.TrayApp.Services;
 
@@ -39,9 +41,13 @@ public sealed class SettingsForm : Form
     private TextBox _txtAdminPath = null!;
     private Button _btnAdminBrowse = null!;
 
-    // 数据库
+    // 数据库（v2.13.19：字段式输入，与 Web 端 /Settings 风格一致）
     private ComboBox _cmbProvider = null!;
-    private TextBox _txtConnStr = null!;
+    private TextBox _txtDbServer = null!;
+    private NumericUpDown _numDbPort = null!;
+    private TextBox _txtDbName = null!;
+    private TextBox _txtDbUser = null!;
+    private TextBox _txtDbPassword = null!;
     private TextBox _txtSqlitePath = null!;
     private Button _btnSqliteBrowse = null!;
 
@@ -71,7 +77,9 @@ public sealed class SettingsForm : Form
             InitializeFormProperties();
             InitializeControls();
             BuildUI();
-            LoadConfig();
+#pragma warning disable CS4014 // 构造函数中启动异步加载，无需等待
+            LoadConfigAsync();
+#pragma warning restore CS4014
             UpdateProviderVisibility();
             AttachEventHandlers();
             StartStatusTimer();
@@ -113,7 +121,11 @@ public sealed class SettingsForm : Form
         _cmbProvider = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
         _cmbProvider.Items.AddRange(new object[] { "SqlServer", "Sqlite" });
 
-        _txtConnStr = new TextBox();
+        _txtDbServer = new TextBox { Text = "192.168.1.237" };
+        _numDbPort = new NumericUpDown { Minimum = 1, Maximum = 65535, Value = 1433 };
+        _txtDbName = new TextBox { Text = "WaterMeterDB" };
+        _txtDbUser = new TextBox { Text = "__DB_USER__" };
+        _txtDbPassword = new TextBox { Text = "__DB_PASSWORD__", PasswordChar = '*' };
         _txtSqlitePath = new TextBox();
         _btnSqliteBrowse = new Button { Text = "浏览..." };
 
@@ -147,7 +159,11 @@ public sealed class SettingsForm : Form
         AddLabeledRow(layout, "Api 可执行文件", BuildPathRow(_txtApiPath, _btnApiBrowse, () => BrowseExe(_txtApiPath)));
         AddLabeledRow(layout, "Admin 可执行文件", BuildPathRow(_txtAdminPath, _btnAdminBrowse, () => BrowseExe(_txtAdminPath)));
         AddLabeledRow(layout, "数据库类型", _cmbProvider);
-        AddLabeledRow(layout, "SQL Server 连接串", BuildConnStrPanel(), rowHeight: 64);
+        AddLabeledRow(layout, "数据库服务器", _txtDbServer);
+        AddLabeledRow(layout, "端口号", _numDbPort);
+        AddLabeledRow(layout, "数据库名称", _txtDbName);
+        AddLabeledRow(layout, "账号", _txtDbUser);
+        AddLabeledRow(layout, "密码", _txtDbPassword);
         AddLabeledRow(layout, "SQLite 数据库路径", BuildSqlitePanel());
         AddLabeledRow(layout, "图片存储根路径", BuildPathRow(_txtImageRoot, _btnImageBrowse, BrowseImageFolder));
         AddLabeledRow(layout, "启动时自动启动服务", _chkAutoStart);
@@ -297,16 +313,6 @@ public sealed class SettingsForm : Form
         return p;
     }
 
-    private Control BuildConnStrPanel()
-    {
-        // 长文本框（连接串）
-        _txtConnStr.Dock = DockStyle.Fill;
-        _txtConnStr.Multiline = true;
-        _txtConnStr.ScrollBars = ScrollBars.Vertical;
-        _txtConnStr.Height = 56;
-        return _txtConnStr;
-    }
-
     private Control BuildSqlitePanel()
     {
         return BuildPathRow(_txtSqlitePath, _btnSqliteBrowse, BrowseSqliteFile);
@@ -325,21 +331,35 @@ public sealed class SettingsForm : Form
 
     #region 配置加载与保存
 
-    private void LoadConfig()
+    private async Task LoadConfigAsync()
     {
         var c = _config.Current;
         _numApiPort.Value = SafeClamp(c.Tray.ApiPort, (int)_numApiPort.Minimum, (int)_numApiPort.Maximum);
         _numAdminPort.Value = SafeClamp(c.Tray.AdminPort, (int)_numAdminPort.Minimum, (int)_numAdminPort.Maximum);
         _txtApiPath.Text = c.Tray.ApiExecutable ?? "";
         _txtAdminPath.Text = c.Tray.AdminExecutable ?? "";
-        _cmbProvider.SelectedItem = c.Database.Provider;
-        if (_cmbProvider.SelectedIndex < 0) _cmbProvider.SelectedIndex = 0;
-        _txtConnStr.Text = c.Database.ConnectionString ?? "";
-        _txtSqlitePath.Text = c.Database.SqlitePath ?? "";
         _txtImageRoot.Text = c.Storage.ImageRoot ?? "";
         _chkAutoStart.Checked = c.Tray.AutoStartServices;
         _chkAutoRestart.Checked = c.Tray.AutoRestartOnCrash;
         _numHealthInterval.Value = SafeClamp(c.Tray.HealthCheckIntervalSeconds, (int)_numHealthInterval.Minimum, (int)_numHealthInterval.Maximum);
+
+        // v2.13.19：从 AppConfigManager 读取字段式数据库配置
+        var dbConfig = await AppConfigManager.Instance.LoadAsync();
+        if (dbConfig is not null)
+        {
+            _cmbProvider.SelectedItem = dbConfig.Provider;
+            if (_cmbProvider.SelectedIndex < 0) _cmbProvider.SelectedIndex = 0;
+            _txtDbServer.Text = dbConfig.DbServer;
+            _numDbPort.Value = SafeClamp(dbConfig.DbPort, (int)_numDbPort.Minimum, (int)_numDbPort.Maximum);
+            _txtDbName.Text = dbConfig.DbName;
+            _txtDbUser.Text = dbConfig.DbUser;
+            _txtDbPassword.Text = "";
+            _txtSqlitePath.Text = dbConfig.SqlitePath ?? "";
+        }
+        else
+        {
+            _cmbProvider.SelectedIndex = 0;
+        }
     }
 
     private void UpdateProviderVisibility()
@@ -347,7 +367,11 @@ public sealed class SettingsForm : Form
         try
         {
             var isSqlite = _cmbProvider.SelectedItem?.ToString() == "Sqlite";
-            _txtConnStr.Enabled = !isSqlite;
+            _txtDbServer.Enabled = !isSqlite;
+            _numDbPort.Enabled = !isSqlite;
+            _txtDbName.Enabled = !isSqlite;
+            _txtDbUser.Enabled = !isSqlite;
+            _txtDbPassword.Enabled = !isSqlite;
             _txtSqlitePath.Enabled = isSqlite;
             _btnSqliteBrowse.Enabled = isSqlite;
         }
@@ -396,11 +420,26 @@ public sealed class SettingsForm : Form
             }
 
             var provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer";
-            if (provider == "SqlServer" && string.IsNullOrWhiteSpace(_txtConnStr.Text))
+            if (provider == "SqlServer")
             {
-                ShowError("请填写 SQL Server 连接串");
-                _txtConnStr.Focus();
-                return;
+                if (string.IsNullOrWhiteSpace(_txtDbServer.Text))
+                {
+                    ShowError("请填写数据库服务器");
+                    _txtDbServer.Focus();
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(_txtDbName.Text))
+                {
+                    ShowError("请填写数据库名称");
+                    _txtDbName.Focus();
+                    return;
+                }
+                if (string.IsNullOrWhiteSpace(_txtDbUser.Text))
+                {
+                    ShowError("请填写数据库账号");
+                    _txtDbUser.Focus();
+                    return;
+                }
             }
             if (provider == "Sqlite" && string.IsNullOrWhiteSpace(_txtSqlitePath.Text))
             {
@@ -412,6 +451,29 @@ public sealed class SettingsForm : Form
             // 端口占用检查（仅在用户主动修改时提示，不阻塞保存）
             var apiPort = (int)_numApiPort.Value;
             var adminPort = (int)_numAdminPort.Value;
+
+            var dbDto = new DatabaseConfigDto
+            {
+                Provider = provider,
+                DbServer = _txtDbServer.Text.Trim(),
+                DbPort = (int)_numDbPort.Value,
+                DbName = _txtDbName.Text.Trim(),
+                DbUser = _txtDbUser.Text.Trim(),
+                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text,
+                SqlitePath = _txtSqlitePath.Text.Trim()
+            };
+
+            // v2.13.19：保存数据库配置（双擎持久化 + 广播）
+            var (dbOk, dbMsg) = await AppConfigManager.Instance.SaveConfigurationAsync(dbDto);
+            if (!dbOk)
+            {
+                ShowError($"数据库配置保存失败：{dbMsg}");
+                _txtDbServer.Focus();
+                return;
+            }
+
+            // 同步到 appsettings.json（子进程环境变量来源）
+            _config.UpdateDatabaseSection(dbDto);
 
             var newConfig = new AppConfig
             {
@@ -428,8 +490,10 @@ public sealed class SettingsForm : Form
                 Database = new DatabaseSection
                 {
                     Provider = provider,
-                    ConnectionString = _txtConnStr.Text.Trim(),
-                    SqlitePath = _txtSqlitePath.Text.Trim()
+                    ConnectionString = dbDto.Provider == "Sqlite"
+                        ? $"Data Source={dbDto.SqlitePath}"
+                        : dbDto.BuildConnectionString(),
+                    SqlitePath = dbDto.SqlitePath ?? ""
                 },
                 Storage = new StorageSection
                 {
@@ -439,10 +503,10 @@ public sealed class SettingsForm : Form
             };
 
             _config.Update(newConfig);
-            _log.Info($"配置已保存：ApiPort={apiPort}, AdminPort={adminPort}, Provider={provider}");
+            _log.Info($"配置已保存：ApiPort={apiPort}, AdminPort={adminPort}, Provider={provider}, DbServer={dbDto.DbServer}");
 
             var ok = MessageBox.Show(this,
-                "配置已保存。是否立即重启服务以使端口/数据库配置生效？",
+                "数据库配置已保存并写入 SysParameter 表。是否立即重启服务以使配置生效？",
                 "保存成功",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);

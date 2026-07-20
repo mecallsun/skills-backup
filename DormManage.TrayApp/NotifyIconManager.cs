@@ -1,6 +1,17 @@
+using System.Diagnostics;
 using DormManage.TrayApp.Models;
 
 namespace DormManage.TrayApp;
+
+/// <summary>
+/// 托盘图标颜色状态。
+/// </summary>
+public enum TrayIconColor
+{
+    Red,
+    Yellow,
+    Green
+}
 
 /// <summary>
 /// 托盘图标 + 右键菜单管理器。
@@ -15,11 +26,10 @@ namespace DormManage.TrayApp;
 /// - 关于
 /// - 退出
 ///
-/// 托盘图标状态：
-/// - 全绿：Api + Admin 均运行中
-/// - 全灰：未启动
-/// - 黄三角：某一服务异常
-/// - 红 X：两服务都异常
+/// 托盘图标颜色状态机（v2.13.19）：
+/// - 红色：启动阶段 / 任一服务未 Running 且未全部 Running
+/// - 绿色：Api + Admin 均 Running
+/// - 黄色：Api / Admin 恰好一个 Running
 ///
 /// 【v2.13.4 修复】
 /// 1. 构造函数增加 owner: Form 参数，ContextMenuStrip 关联到该 owner，
@@ -57,7 +67,7 @@ public sealed class NotifyIconManager : IDisposable
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "金戈宿舍管理系统 v2.13.4",
+            Text = "金戈宿舍管理系统 v2.13.28",
             Visible = true
         };
 
@@ -216,7 +226,10 @@ public sealed class NotifyIconManager : IDisposable
             _miAdminStatus.Text = $"Admin：{StateText(state)}";
         }
 
-        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.4\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
+        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.28\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
+
+        // v2.13.19：同步刷新图标颜色
+        SetIconColor(EvaluateIconColor());
     }
 
     private static string StateText(ServiceState state) => state switch
@@ -234,16 +247,67 @@ public sealed class NotifyIconManager : IDisposable
         _notifyIcon.Visible = false;
     }
 
+    /// <summary>
+    /// 根据当前 Api / Admin 状态计算图标颜色。
+    /// </summary>
+    private TrayIconColor EvaluateIconColor()
+    {
+        var apiRunning = _apiState == ServiceState.Running;
+        var adminRunning = _adminState == ServiceState.Running;
+
+        if (apiRunning && adminRunning) return TrayIconColor.Green;
+        if (apiRunning || adminRunning) return TrayIconColor.Yellow;
+        return TrayIconColor.Red;
+    }
+
+    /// <summary>
+    /// 切换托盘图标颜色（v2.13.19）。
+    /// </summary>
+    public void SetIconColor(TrayIconColor color)
+    {
+        var ctx = _uiContext;
+        if (ctx is not null)
+        {
+            ctx.Post(_ => SetIconColorCore(color), null);
+        }
+        else
+        {
+            SetIconColorCore(color);
+        }
+    }
+
+    private void SetIconColorCore(TrayIconColor color)
+    {
+        try
+        {
+            var oldIcon = _notifyIcon.Icon;
+            _notifyIcon.Icon = IconGenerator.CreateSolidCircle(color);
+            try { oldIcon?.Dispose(); } catch { }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[NotifyIconManager] 切换图标颜色失败: {ex.Message}");
+        }
+    }
+
     private static Icon LoadTrayIcon()
     {
-        var iconPath = Path.Combine(AppContext.BaseDirectory, "Resources", "tray-icon.ico");
-        if (File.Exists(iconPath))
+        // v2.13.19：优先使用动态生成图标，静态 ICO 仅作为极端回退
+        try
         {
-            try { return new Icon(iconPath); }
-            catch { /* 损坏时回退 */ }
+            return IconGenerator.CreateSolidCircle(TrayIconColor.Red);
         }
-        // 回退：使用系统图标
-        return SystemIcons.Application;
+        catch
+        {
+            var iconPath = Path.Combine(AppContext.BaseDirectory, "Resources", "tray-icon.ico");
+            if (File.Exists(iconPath))
+            {
+                try { return new Icon(iconPath); }
+                catch { /* 损坏时回退 */ }
+            }
+            // 回退：使用系统图标
+            return SystemIcons.Application;
+        }
     }
 
     private static void SafeInvoke(Action action)

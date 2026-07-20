@@ -114,11 +114,17 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **UI Design:** `00-方案文档/35-列表页面统一UI设计规范-v2.11.4.md`, `37-共用页头与Tab页签导航设计规范-v2.12.md`
 - **Baseline:** `00-方案文档/05-原型与代码基线对照.md` (25 prototype pages ↔ 26 Razor views)
 - **Delivery Reports:** `00-方案文档/68-模块100%对齐交付报告-v2.13.10.md`, `69-优化项交付报告-v2.13.11.md`
-- **HTML Prototypes:** Referenced in `00-方案文档/04-HTML原型/README.md` but the `04-HTML原型/` directory does not currently exist on disk.
+- **v2.13.24 全量交付：** `00-方案文档/78-v2.13.24最终交付报告.md` + `75-数据库Schema与代码映射文档-v2.13.24.md` + `76-入住记录与抄表记录业务深度文档-v2.13.24.md`
+- **HTML Prototypes:** `00-方案文档/04-HTML原型/` 共 25 个原型页面 + `_shared/` 共享资源（v2.12.3 起统一为「共用页头 + Tab 页签切换」三层架构）。
 
 ### Important Notes
 
-- **No HTML原型 directory on disk** — the `04-HTML原型/` directory referenced in docs doesn't physically exist. Prototypes are described in `00-方案文档/04-HTML原型/README.md` but the actual `.html` files are missing.
+- **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
+- **项目当前版本：** v2.13.24（2026-07-20 全量对齐终极版）
+- **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现
+- **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储）
+- **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
+- **No CORS, no HTTPS redirect** — assumes trusted local network deployment.
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
 - **No CORS, no HTTPS redirect** — assumes trusted local network deployment.
 - **Only `FilterCacheController` has `[Authorize]`** — API endpoints rely on network trust; the Booking controller reads current user from `X-User-Name` header.

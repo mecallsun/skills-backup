@@ -45,10 +45,14 @@ public class IndexModel : PageModel
     public int? Status { get; set; }
 
     [BindProperty(SupportsGet = true)]
+    public string? DormCode { get; set; }
+
+    [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
 
     public List<string> Months { get; set; } = new();
     public List<Building> Buildings { get; set; } = new();
+    public List<string> DormCodes { get; set; } = new();
 
     public async Task OnGetAsync()
     {
@@ -66,6 +70,12 @@ public class IndexModel : PageModel
         var bld = await _basics.GetBuildingsAsync(null, 1, 100);
         Buildings = bld.Items.ToList();
 
+        DormCodes = await _db.Dorms
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.DormCode)
+            .Select(d => d.DormCode)
+            .ToListAsync();
+
         var query = _db.MeterRecords.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(ReadMonth))
@@ -80,10 +90,16 @@ public class IndexModel : PageModel
         if (Status.HasValue && Status.Value >= 0)
             query = query.Where(r => r.Status == Status.Value);
 
+        if (!string.IsNullOrWhiteSpace(DormCode))
+        {
+            var dc = DormCode.Trim();
+            query = query.Where(r => r.DormCode.Contains(dc));
+        }
+
         if (!string.IsNullOrWhiteSpace(Keyword))
         {
             var kw = Keyword.Trim();
-            query = query.Where(r => r.DormCode.Contains(kw) || (r.Remark != null && r.Remark.Contains(kw)));
+            query = query.Where(r => (r.Remark != null && r.Remark.Contains(kw)) || r.DormCode.Contains(kw));
         }
 
         var totalCount = await query.CountAsync();

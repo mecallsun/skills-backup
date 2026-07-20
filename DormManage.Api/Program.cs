@@ -16,16 +16,24 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // 配置数据库（v2.12.42 BUGFIX: 支持 SQLite/SQL Server 切换）
-// v2.12.44: 优先使用托盘进程通过环境变量注入的明文连接串 DormManage_DB_CONN
-var dbProvider = builder.Configuration["Database:Provider"] ?? "SqlServer";
+// v2.13.28 CRITICAL FIX: dbProvider 优先从环境变量推断（托盘进程注入）
 var envConnStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN");
+var envDbPath = Environment.GetEnvironmentVariable("DormManage_DB_PATH");
+var envProvider = Environment.GetEnvironmentVariable("DormManage_DB_PROVIDER");
+
+var effectiveProvider = !string.IsNullOrEmpty(envProvider)
+    ? envProvider
+    : (!string.IsNullOrEmpty(envConnStr) ? "SqlServer"
+    : (!string.IsNullOrEmpty(envDbPath) ? "Sqlite"
+    : (builder.Configuration["Database:Provider"] ?? "SqlServer")));
+
 var configConnStr = builder.Configuration.GetConnectionString("Default");
 var connectionString = !string.IsNullOrEmpty(envConnStr) ? envConnStr
     : (configConnStr ?? "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;");
 
 builder.Services.AddDbContext<DormDbContext>(options =>
 {
-    if (dbProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+    if (effectiveProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
     {
         var dbPath = Path.Combine(builder.Environment.ContentRootPath, "dorm.db");
         options.UseSqlite($"Data Source={dbPath}");
@@ -76,7 +84,7 @@ var startupReport = await DatabaseInitializer.InitializeAsync(
 app.Logger.LogInformation(startupReport.ToBanner());
 
 // 确保数据库创建（仅 SQLite 需要；SQL Server 假定数据库已存在）
-if (dbProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+if (effectiveProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
 {
     using (var scope = app.Services.CreateScope())
     {
@@ -97,6 +105,6 @@ app.UseSwaggerUI();
 
 app.MapControllers();
 
-app.Logger.LogInformation("DormManage.Api 启动成功 - DB Provider: {Provider}, Port: {Port}", dbProvider, kestrelPort);
+app.Logger.LogInformation("DormManage.Api 启动成功 - DB Provider: {Provider}, Port: {Port}", effectiveProvider, kestrelPort);
 
 app.Run();

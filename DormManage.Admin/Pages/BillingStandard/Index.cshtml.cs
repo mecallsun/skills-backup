@@ -23,11 +23,18 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? IsActive { get; set; }
 
+    /// <summary>v2.13.20 新增：适用类型筛选项（标准名称/适用类型/状态）</summary>
+    [BindProperty(SupportsGet = true)]
+    public string? ApplicableType { get; set; }
+
+    public List<string> ApplicableTypes { get; set; } = new();
+
     public int Total => Result?.Total ?? 0;
 
     public async Task OnGetAsync()
     {
         ActiveStandard = await _service.GetActiveStandardAsync();
-        Result = await _service.GetStandardsAsync(Keyword, IsActive, PageIndex, 20);
+        ApplicableTypes = await _service.GetStandardApplicableTypesAsync();
+        Result = await _service.GetStandardsAsync(Keyword, ApplicableType, IsActive, PageIndex, 20);
     }
 }

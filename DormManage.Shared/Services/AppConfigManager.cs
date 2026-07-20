@@ -39,6 +39,9 @@ public class AppConfigManager
     /// </summary>
     public async Task<(bool Success, string Message)> TestDbConnectionAsync(DatabaseConfigDto config)
     {
+        // v2.13.19：处理前端传来的 "unchanged" 密码哨兵
+        config = await ResolveUnchangedPasswordAsync(config);
+
         if (config.Provider == "Sqlite")
         {
             if (string.IsNullOrWhiteSpace(config.SqlitePath))
@@ -75,22 +78,44 @@ public class AppConfigManager
     }
 
     /// <summary>
+    /// 解决 "unchanged" 密码哨兵：读取旧配置中的真实密码替换。
+    /// </summary>
+    private async Task<DatabaseConfigDto> ResolveUnchangedPasswordAsync(DatabaseConfigDto config)
+    {
+        if (config.DbPassword != "unchanged")
+            return config;
+
+        var existing = await LoadAsync();
+        if (existing is not null && !string.IsNullOrEmpty(existing.DbPassword))
+        {
+            config.DbPassword = existing.DbPassword;
+            return config;
+        }
+
+        return config;
+    }
+
+    /// <summary>
     /// 异步保存数据库配置（双擎持久化：先文件 → 后 DB → 广播）
-    /// 1) 测试连通性（失败则不保存！）
-    /// 2) AES-256 加密密码字段
-    /// 3) 写入本地 db_setting.json（atomic rename）
-    /// 4) 写入 SQL Server SysParameter 表
-    /// 5) 失败回滚：本地文件 → 旧版本
-    /// 6) 触发 OnDatabaseConfigUpdated 事件广播
+    /// 1) 解决 "unchanged" 密码哨兵
+    /// 2) 测试连通性（失败则不保存！）
+    /// 3) AES-256 加密密码字段
+    /// 4) 写入本地 db_setting.json（atomic rename）
+    /// 5) 写入 SQL Server SysParameter 表
+    /// 6) 失败回滚：本地文件 → 旧版本
+    /// 7) 触发 OnDatabaseConfigUpdated 事件广播
     /// </summary>
     public async Task<(bool Success, string Message)> SaveConfigurationAsync(DatabaseConfigDto newConfig)
     {
-        // Step 1: 安全卡口 — 测试连通性
+        // Step 1: 解决 "unchanged" 密码哨兵（v2.13.19）
+        newConfig = await ResolveUnchangedPasswordAsync(newConfig);
+
+        // Step 2: 安全卡口 — 测试连通性
         var (connOk, connMsg) = await TestDbConnectionAsync(newConfig);
         if (!connOk)
             return (false, $"数据库连通性校验失败，无法保存：{connMsg}");
 
-        // Step 2: AES-256 加密密码
+        // Step 3: AES-256 加密密码
         var encrypted = new DatabaseConfigDto
         {
             DbServer = newConfig.DbServer,
@@ -106,7 +131,7 @@ public class AppConfigManager
         {
             try
             {
-                // Step 3: 备份旧文件 + 写入新文件（临时文件 → rename 保证原子性）
+                // Step 4: 备份旧文件 + 写入新文件（临时文件 → rename 保证原子性）
                 string? oldContent = null;
                 if (File.Exists(_filePath))
                     oldContent = File.ReadAllText(_filePath);
@@ -120,15 +145,14 @@ public class AppConfigManager
                 File.WriteAllText(tempPath, json);
                 File.Move(tempPath, _filePath, overwrite: true);
 
-                // Step 4: 写入数据库 (此处需要 DbContext，通过回调实现)
-                // 见 WriteToDatabaseAsync 调用
+                // Step 5: 写入数据库 (此处需要 DbContext，通过回调实现)
                 _ = Task.Run(async () =>
                 {
                     try { await WriteToDatabaseAsync(encrypted); }
                     catch (Exception ex) { Console.WriteLine($"[AppConfigManager] DB 写入失败: {ex.Message}"); }
                 });
 
-                // Step 5: 触发广播
+                // Step 6: 触发广播
                 OnDatabaseConfigUpdated?.Invoke(this, encrypted);
 
                 return (true, "数据库配置保存成功（本地文件已同步，数据库记录已写入后台任务）");
