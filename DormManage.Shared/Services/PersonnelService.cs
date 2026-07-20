@@ -377,13 +377,39 @@ public class PersonnelService : IPersonnelService
         emp.Gender = dto.Gender;
         emp.Phone = dto.Phone;
         if (dto.HireDate != null) emp.HireDate = dto.HireDate;
+
+        // v2.13.24 联动1：考勤班次变更 → 同步 DormBooking 冗余字段
+        var oldAttendanceTypeId = emp.AttendanceTypeId;
         emp.AttendanceTypeId = dto.AttendanceTypeId;
         emp.EmploymentStatusId = dto.EmploymentStatusId;
         emp.Status = dto.EmploymentStatusId;
         emp.DormCode = dto.DormCode ?? emp.DormCode;
         emp.BedNo = dto.BedNo ?? emp.BedNo;
         emp.Remark = dto.Remark;
+
+        // v2.13.24 联动1：若考勤班次或床位号变更，同步该员工所有 DormBooking 冗余字段
+        var bookingChanges = new List<string>();
+        if (oldAttendanceTypeId != dto.AttendanceTypeId)
+        {
+            var affected = await _db.DormBookings
+                .Where(b => b.EmployeeId == emp.Id && b.Status == BookingStatus.Staying)
+                .ExecuteUpdateAsync(s => s.SetProperty(b => b.AttendanceTypeId, dto.AttendanceTypeId));
+            bookingChanges.Add($"AttendanceTypeId({oldAttendanceTypeId}→{dto.AttendanceTypeId}, 影响{affected}条在宿记录)");
+        }
+        if (dto.BedNo.HasValue && emp.BedNo != dto.BedNo)
+        {
+            var newBedNo = dto.BedNo.Value;
+            var affected = await _db.DormBookings
+                .Where(b => b.EmployeeId == emp.Id && b.Status == BookingStatus.Staying && b.DormCode == emp.DormCode)
+                .ExecuteUpdateAsync(s => s.SetProperty(b => b.BedNo, (int?)newBedNo));
+            bookingChanges.Add($"BedNo({emp.BedNo}→{newBedNo}, 影响{affected}条在宿记录)");
+        }
+
         await _db.SaveChangesAsync();
+        if (bookingChanges.Any())
+        {
+            Console.WriteLine($"[v2.13.24 PersonnelSync] EmployeeId={emp.Id}: {string.Join("; ", bookingChanges)}");
+        }
         return (true, "保存成功");
     }
 

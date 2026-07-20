@@ -231,6 +231,17 @@ public class MeterController : ControllerBase
             message = "创建成功";
         }
 
+        // v2.13.24 P77 联动3：同步 Dorm 表抄表缓存字段（PDA 扫码抄表性能优化）
+        var dormCache = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == record.DormCode);
+        if (dormCache != null)
+        {
+            dormCache.LastReadMonth = record.ReadMonth;
+            dormCache.LastColdMeter = record.ColdMeter;
+            dormCache.LastHotMeter = record.HotMeter;
+            dormCache.LastElectricMeter = record.ElectricMeter;
+            dormCache.LastReadAt = DateTime.Now;
+        }
+
         await _db.SaveChangesAsync();
 
         return ApiResponse<MeterRecordDto>.Ok(new MeterRecordDto
