@@ -27,11 +27,11 @@ public class DormBooking : BaseEntity
     [MaxLength(128)]
     public string EmployeeName { get; set; } = string.Empty;
 
-    /// <summary>手机号（冗余）</summary>
+    /// <summary>手机号（冗余）- 允许 NULL（历史数据）</summary>
     [MaxLength(32)]
     public string? Phone { get; set; }
 
-    /// <summary>部门（冗余）</summary>
+    /// <summary>部门（冗余）- 允许 NULL（历史数据）</summary>
     [MaxLength(128)]
     public string? Department { get; set; }
 

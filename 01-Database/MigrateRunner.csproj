@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="05_RunMigration.cs" />
+    <Compile Remove="06_SyncColumns.cs" />
+    <Compile Remove="07_AlignSchema.cs" />
+    <Compile Remove="08_SysUserColumns.cs" />
+    <Compile Remove="09_AutoAlignAll.cs" />
+    <Compile Remove="10_BatchAddAll.cs" />
+    <Compile Remove="11_RenameCols.cs" />
+    <Compile Remove="12_DropDupCols.cs" />
+    <Compile Remove="13_DropWithConstraints.cs" />
+    <Compile Remove="14_AddBookingType.cs" />
+    <Compile Remove="15_CheckNulls.cs" />
+    <Compile Remove="16_FindNulls.cs" />
+    <Compile Remove="17_FixDateOnly.cs" />
+    <Compile Remove="18_RevertToDate.cs" />
+  </ItemGroup>
+</Project>

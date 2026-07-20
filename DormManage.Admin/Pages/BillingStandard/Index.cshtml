@@ -21,7 +21,7 @@
         <div class="alert alert-success mb-3">
             <strong><i class="bi bi-check-circle"></i> 当前生效：</strong>
             @Model.ActiveStandard.StandardName
-            （@Model.ActiveStandard.EffectiveFrom:yyyy-MM-dd ~ @Model.ActiveStandard.EffectiveTo:yyyy-MM-dd）
+            （@Model.ActiveStandard.EffectiveFrom:yyyy-MM-dd ~ @(Model.ActiveStandard.EffectiveTo?.ToString("yyyy-MM-dd") ?? "永久")）
             水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh
         </div>
     }
@@ -94,7 +94,7 @@
                                 <td>@((Model.Result.PageIndex - 1) * Model.Result.PageSize + i + 1)</td>
                                 <td>@item.StandardName</td>
                                 <td>@item.EffectiveFrom.ToString("yyyy-MM-dd")</td>
-                                <td>@item.EffectiveTo.ToString("yyyy-MM-dd")</td>
+                                <td>@(item.EffectiveTo?.ToString("yyyy-MM-dd") ?? "—")</td>
                                 <td>@item.ColdWaterUnitPrice</td>
                                 <td>@item.HotWaterUnitPrice</td>
                                 <td>@item.ElectricUnitPrice</td>

@@ -42,9 +42,8 @@ public class BillingStandard : BaseEntity
     [Required]
     public DateOnly EffectiveFrom { get; set; }
 
-    /// <summary>生效结束日期（DATE NOT NULL）</summary>
-    [Required]
-    public DateOnly EffectiveTo { get; set; }
+    /// <summary>生效结束日期（DATE NULL - 允许永久有效）</summary>
+    public DateOnly? EffectiveTo { get; set; }
 
     /// <summary>是否启用（BIT DEFAULT 1）</summary>
     public new bool IsActive { get; set; } = true;

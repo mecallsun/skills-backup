@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using DormManage.Shared.Models;
 
 namespace DormManage.Shared.Data;
@@ -330,8 +331,8 @@ public class DormDbContext : DbContext
             entity.Property(e => e.Status).HasConversion<byte>(); // TINYINT
             entity.Property(e => e.EmployeeCode).HasMaxLength(64).IsRequired();
             entity.Property(e => e.EmployeeName).HasMaxLength(128).IsRequired();
-            entity.Property(e => e.Phone).HasMaxLength(32).IsRequired();
-            entity.Property(e => e.Department).HasMaxLength(128).IsRequired();
+            entity.Property(e => e.Phone).HasMaxLength(32);
+            entity.Property(e => e.Department).HasMaxLength(128);
             entity.Property(e => e.DormCode).HasMaxLength(64).IsRequired();
             entity.Property(e => e.Reason).HasMaxLength(512).IsRequired();
             entity.Property(e => e.Remark).HasMaxLength(1024);
@@ -341,6 +342,7 @@ public class DormDbContext : DbContext
             entity.Property(e => e.CancellationReason).HasMaxLength(512);
             entity.Property(e => e.CheckInOperator).HasMaxLength(64);
             entity.Property(e => e.CheckOutOperator).HasMaxLength(64);
+            // v2.13.31: 移除自定义转换 - EF Core 8.0.10+ 已修复 DateOnly/DATE 映射
             // v2.13.24 P75 新增索引
             entity.HasIndex(e => new { e.EmployeeId, e.BookingDate });
             entity.HasIndex(e => new { e.DormCode, e.BookingDate });
@@ -385,6 +387,7 @@ public class DormDbContext : DbContext
             entity.Property(e => e.DeviceSn).HasMaxLength(50);
             entity.Property(e => e.ClientRecordId).HasMaxLength(50);
             entity.Property(e => e.Remark).HasMaxLength(1000);
+            // EF Core 8.0.10+ 自动处理 DateOnly/DATE 映射，无需自定义转换
             entity.HasIndex(e => new { e.DormCode, e.ReadMonth }).IsUnique();
             entity.HasIndex(e => e.ReadMonth);
         });
@@ -411,8 +414,7 @@ public class DormDbContext : DbContext
             entity.Property(e => e.ElectricUnitPrice).HasColumnName("ElectricityPrice").HasColumnType("decimal(10,2)");
             // v2.13.24 P0-3 新增：UpdatedAt 列
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
-            entity.Property(e => e.EffectiveFrom).HasColumnType("date").IsRequired();
-            entity.Property(e => e.EffectiveTo).HasColumnType("date").IsRequired();
+            // EF Core 8.0.10+ 自动处理 DateOnly/DATE 映射，无需自定义转换
             entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
             entity.Property(e => e.IsActive).HasDefaultValue(true);
         });
