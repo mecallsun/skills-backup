@@ -111,6 +111,11 @@
                             <span class="info-label">地址</span>
                             <span class="info-value">@Model.Dorm.AddressText</span>
                         </div>
+                        @* v2.13.39 房间数（原 dorms/details.html basicInfo 第 5 行） *@
+                        <div class="info-item">
+                            <span class="info-label">房间数</span>
+                            <span class="info-value">@Model.Dorm.RoomCount 间</span>
+                        </div>
                         <div class="info-item">
                             <span class="info-label">容量</span>
                             <span class="info-value">@Model.Dorm.Capacity 人</span>
@@ -197,6 +202,10 @@
                                             <th>考勤班次</th>
                                             <th>床号</th>
                                             <th>入住日期</th>
+                                            @* v2.13.39 新增 3 列：员工类型 / 已入住 / 操作（与原型 dorms/details.html 1:1 对齐） *@
+                                            <th>员工类型</th>
+                                            <th>已入住</th>
+                                            <th width="180">操作</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -207,6 +216,17 @@
                                             var attendance = Model.EmployeeAttendanceMap.ContainsKey(resident.EmployeeId)
                                                 ? Model.EmployeeAttendanceMap[resident.EmployeeId]
                                                 : null;
+                                            // v2.13.39 员工类型从 SysEmployee.EmployeeTypeId → EmployeeType.Name 关联引用
+                                            EmployeeTypeBadgeDto? empType = null;
+                                            if (resident.EmployeeTypeId.HasValue
+                                                && Model.EmployeeTypeMap.ContainsKey(resident.EmployeeTypeId.Value))
+                                            {
+                                                empType = Model.EmployeeTypeMap[resident.EmployeeTypeId.Value];
+                                            }
+                                            // v2.13.39 已入住天数（CheckInDate → today）
+                                            var stayDays = resident.CheckInDate.HasValue
+                                                ? (DateOnly.FromDateTime(DateTime.Now).DayNumber - resident.CheckInDate.Value.DayNumber)
+                                                : 0;
                                             <tr>
                                                 <td class="text-center text-muted">@(i + 1)</td>
                                                 <td><strong>@resident.EmployeeCode</strong></td>
@@ -235,6 +255,37 @@
                                                     }
                                                 </td>
                                                 <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
+                                                @* v2.13.39 员工类型 Badge（FK 关联引用 EmployeeType） *@
+                                                <td>
+                                                    @if (empType != null)
+                                                    {
+                                                        <span class="badge @empType.BadgeClass" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">@empType.Name</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                @* v2.13.39 已入住天数 Badge *@
+                                                <td>
+                                                    @if (stayDays >= 0)
+                                                    {
+                                                        <span class="badge bg-info">@stayDays 天</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
+                                                @* v2.13.39 操作列：调宿 + 退宿（与原型 1:1 对齐） *@
+                                                <td>
+                                                    <a href="/Booking/Edit?id=@resident.Id" class="btn btn-sm btn-outline-warning">
+                                                        <i class="bi bi-arrow-left-right"></i> 调宿
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="checkoutResident(@resident.Id, '@resident.EmployeeName')">
+                                                        <i class="bi bi-box-arrow-right"></i> 退宿
+                                                    </button>
+                                                </td>
                                             </tr>
                                         }
                                     </tbody>
@@ -270,6 +321,30 @@
     <script>
         // v2.11.4 (s) 查看住宿历史开关效果
         let historyVisible = false;
+
+        // v2.13.39 新增：退宿操作（POST /api/v1/bookings/{id}/check-out）
+        function checkoutResident(bookingId, name) {
+            if (!confirm('确定办理 ' + name + ' 的退宿吗？')) return;
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            var headers = { 'Content-Type': 'application/json' };
+            if (token) headers['RequestVerificationToken'] = token.value;
+
+            fetch('/api/v1/bookings/' + bookingId + '/check-out', {
+                method: 'POST',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+            .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, body: j }; }); })
+            .then(function(res) {
+                if (res.ok && res.body.success !== false) {
+                    alert('✓ ' + name + ' 已退宿');
+                    location.reload();
+                } else {
+                    alert('✗ 退宿失败：' + (res.body.message || res.body.error || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('✗ 退宿请求失败：' + err.message); });
+        }
 
         function toggleHistory() {
             historyVisible = !historyVisible;
