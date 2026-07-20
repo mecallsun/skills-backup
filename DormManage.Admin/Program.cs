@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Api.Middleware;
+using DormManage.Admin.Filters;
 using DormManage.Shared.Data;
 using DormManage.Shared.Services;
 
@@ -13,6 +15,11 @@ builder.Services.AddRazorPages(options =>
     options.Conventions.AllowAnonymousToPage("/Account/ForgotPassword"); // v2.13.26 密码找回匿名访问
     options.Conventions.AllowAnonymousToPage("/Error");                 // 错误页匿名访问
     options.Conventions.AllowAnonymousToPage("/Privacy");               // 隐私页匿名访问
+})
+.AddMvcOptions(options =>
+{
+    // v2.13.29: Razor Pages 全局异常过滤器
+    options.Filters.Add<GlobalExceptionFilter>();
 });
 
 // v2.13.0: Cookie 认证配置
@@ -100,6 +107,7 @@ builder.Services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();  //
 builder.Services.AddScoped<IBillingService, BillingService>();              // v2.13.9: 费用管理服务
 builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService>();  // v2.13.12: 用户筛选条件云端缓存
 builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13.26: 个人中心与账号安全
+builder.Services.AddScoped<IOperationLogService, OperationLogService>();  // v2.13.29: 统一操作日志
 
 // v2.13.0: 认证服务
 builder.Services.AddScoped<DormManage.Admin.Services.IAuthService, DormManage.Admin.Services.AuthService>();
@@ -144,6 +152,9 @@ if (effectiveProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
 }
 
 // 配置 HTTP 管道
+// v2.13.29: 全局异常处理中间件（最外层）
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");

@@ -1,9 +1,9 @@
 # 方案文档索引
 
-> **版本**：v2.13.28（数据库连接传播修复）
+> **版本**：v2.13.29（代码质量优化）
 > **日期**：2026-07-20
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
-> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 100% 完整 + P0 BUG 修复
+> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 100% 完整 + BUG 修复 + 代码质量优化
 
 ## 使用说明
 
@@ -99,6 +99,7 @@
 | **79** | [**系统启动机制与生产部署文档**](./79-系统启动机制与生产部署文档-v2.13.25.md) | **v2.13.25** | ✅ **最新** | **DatabaseInitializer 启动校验 + FK 归一优化 + 三 EXE 生产部署包** |
 | **80** | [**个人中心与账号安全功能需求文档**](./80-个人中心与账号安全功能需求文档-v2.13.26.md) | **v2.13.26** | ✅ **最新** | **个人信息编辑 + 微信绑定 + 密码修改 + 密码找回（安全问题）4 大模块完整落地** |
 | **81** | [**BUG 修复报告 v2.13.28 — 数据库连接传播断裂 + Settings 按钮失效**](./81-BUG修复报告-v2.13.28-数据库连接传播断裂.md) | **v2.13.28** | ✅ **最新** | **P0 修复：环境变量优先级提升 + 默认配置修正 + Settings 按钮无条件绑定** |
+| **82** | [**v2.13.29 代码质量优化报告**](./82-v2.13.29代码质量优化报告.md) | **v2.13.29** | ✅ **最新** | **代码 TODO 清理（4 处） + OperationLogService 统一日志 + GlobalExceptionMiddleware 全局异常 + PerformanceMonitoringMiddleware API 性能监控** |
 
 ---
 
@@ -162,10 +163,10 @@
 
 | 位置 | 当前版本 |
 |------|---------|
-| **项目总版本** | **v2.13.28**（2026-07-20） |
-| 托盘程序可见版本 | v2.13.28 |
-| Web Admin 登录页徽章 | v2.13.28 |
-| Web Admin 顶部品牌栏 | v2.13.28 |
+| **项目总版本** | **v2.13.29**（2026-07-20） |
+| 托盘程序可见版本 | v2.13.29 |
+| Web Admin 登录页徽章 | v2.13.29 |
+| Web Admin 顶部品牌栏 | v2.13.29 |
 | 数据库同步功能版本 | v2.13.19 |
 | SQL 默认参数 | `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__` |
 
@@ -190,3 +191,4 @@
 | 2026-07-20 | **v2.13.25 生产启动机制** | 新建 **DatabaseInitializer**（6 步启动校验 + 9 张字典种子 + 默认 admin）+ DataCleanupHostedService 30s→5s + Admin csproj `ErrorOnDuplicatePublishOutputFiles=false` 发布修复 + 三 EXE 生产发布包（publish-final）+ 文档 79（启动机制与生产部署）|
 | 2026-07-20 | **v2.13.26 个人中心与账号安全** | 新建 **SysUserSelfService**（10 个方法：profile/password/security-question/forgot/wechat）+ **SelfController**（10 个 API 端点）+ **Profile.cshtml** 重写（3 Tab：基本资料/账号安全/偏好设置）+ **ForgotPassword.cshtml** 密码找回 3 步向导 + SysUser 扩展 6 字段 + SysUserSecurityQuestion 新表 + DatabaseInitializer 安全问题种子 + 文档 80 |
 | 2026-07-20 | **v2.13.28 数据库连接传播断裂修复** | **P0 BUG 修复**：Program.cs 环境变量优先级提升（`effectiveProvider`）+ 三个 `appsettings.json` 默认 Provider 修正为 SqlServer + Settings 页面按钮无条件绑定 + ConfigService/ProcessManager 日志增强 + 文档 81 |
+| 2026-07-20 | **v2.13.29 代码质量优化** | 代码 TODO 清理（BookingController 真实用户名 + Settings stub 删除 + Personnel/Meter Import 真实 ClosedXML 解析） + OperationLogService 统一操作日志 + BusinessException 业务异常 + GlobalExceptionMiddleware（Api/Admin）+ PerformanceMonitoringMiddleware API 性能监控 + 文档 82 |

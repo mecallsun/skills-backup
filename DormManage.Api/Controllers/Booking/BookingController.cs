@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using DormManage.Shared.Extensions;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 
@@ -57,8 +58,8 @@ public class BookingController : ControllerBase
     [HttpPost("check-in")]
     public async Task<ApiResponse<DormBooking>> CheckIn([FromBody] CheckInRequest request)
     {
-        // TODO: 从登录会话获取真实用户名
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        // v2.13.29: 从登录会话/请求头获取真实用户名（替换原 TODO 兜底 admin）
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.CheckInAsync(new BookingCheckInRequest
         {
             EmployeeId = request.EmployeeId,
@@ -75,7 +76,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/check-out")]
     public async Task<ApiResponse<DormBooking>> CheckOut(int id, [FromBody] CheckOutRequest request)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.CheckOutAsync(id, DateOnly.Parse(request.CheckOutDate), request.Reason, request.Remark, registrar);
     }
 
@@ -99,7 +100,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/confirm-checkin")]
     public async Task<ApiResponse<DormBooking>> ConfirmCheckIn(int id)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.ConfirmCheckInAsync(id, registrar);
     }
 
@@ -109,7 +110,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/undo-checkout")]
     public async Task<ApiResponse<DormBooking>> UndoCheckOut(int id)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.UndoCheckOutAsync(id, registrar);
     }
 
@@ -119,7 +120,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/cancel-reservation")]
     public async Task<ApiResponse<DormBooking>> CancelReservation(int id)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.CancelReservationAsync(id, registrar);
     }
 
@@ -129,7 +130,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/confirm-checkout")]
     public async Task<ApiResponse<DormBooking>> ConfirmCheckout(int id)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.ConfirmReservedCheckOutAsync(id, registrar);
     }
 
@@ -139,7 +140,7 @@ public class BookingController : ControllerBase
     [HttpPost("{id}/cancel-today")]
     public async Task<ApiResponse<DormBooking>> CancelToday(int id)
     {
-        var registrar = Request.Headers["X-User-Name"].FirstOrDefault() ?? "admin";
+        var registrar = HttpContext.GetCurrentUserName();
         return await _service.CancelTodayAsync(id, registrar);
     }
 

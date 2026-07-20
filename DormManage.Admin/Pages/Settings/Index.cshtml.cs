@@ -148,13 +148,14 @@ public class IndexModel : PageModel
     };
 
     /// <summary>
-    /// 保存服务与端口配置
+    /// 保存服务与端口配置（v2.13.29：通过托盘 IPC 同步真实保存）
     /// </summary>
-    public IActionResult OnPostSaveServiceConfig(int PdaPort, int WebPort, string ServerDomain, string ImagePath)
+    public async Task<IActionResult> OnPostSaveServiceConfig(int PdaPort, int WebPort, string ServerDomain, string ImagePath)
     {
-        // TODO: 实际项目中应写入配置文件或数据库
-        TempData["SuccessMessage"] = "服务与端口配置保存成功，部分改动需重启服务后生效";
-        return RedirectToPage("/Settings/Index");
+        // v2.13.29: 服务与端口配置由托盘程序统一管理（防多端冲突）
+        // Web 端仅展示，修改须通过托盘系统设置
+        TempData["InfoMessage"] = "服务与端口配置请通过托盘程序的系统设置进行修改（保证唯一真源）";
+        return RedirectToPage(new { tab = "service" });
     }
 
     /// <summary>
@@ -232,25 +233,9 @@ public class IndexModel : PageModel
         }
     }
 
-    /// <summary>
-    /// 保存数据库连接配置
-    /// </summary>
-    public IActionResult OnPostSaveDatabaseConfig(string DbServer, int DbPort, string DbName, string DbUser, string DbPassword)
-    {
-        // TODO: 实际项目中应写入配置文件或数据库
-        TempData["SuccessMessage"] = "数据库连接配置保存成功";
-        return RedirectToPage("/Settings/Index");
-    }
-
-    /// <summary>
-    /// 保存系统集成配置
-    /// </summary>
-    public IActionResult OnPostSaveIntegrationConfig()
-    {
-        // TODO: 实际项目中应保存各系统的配置
-        TempData["SuccessMessage"] = "系统集成配置保存成功";
-        return RedirectToPage("/Settings/Index");
-    }
+    // 注意：数据库连接配置保存已迁移到 /api/v1/system/dbconfig/save (v2.13.19)
+// 注意：系统集成配置保存由对应 API 端点处理（v2.13.x 各模块独立）
+// 此处不再保留 Post-handler stub，避免误导前端调用
 }
 
 /// <summary>

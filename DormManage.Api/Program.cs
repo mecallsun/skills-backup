@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using DormManage.Api.HostedServices;
+using DormManage.Api.Middleware;
 using DormManage.Shared.Data;
 using DormManage.Shared.Services;
 
@@ -65,6 +66,7 @@ builder.Services.AddScoped<IDatabaseHealthService, DatabaseHealthService>();  //
 builder.Services.AddScoped<IBillingService, BillingService>();              // v2.13.9: 费用管理服务
 builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService>();  // v2.13.12: 用户筛选条件云端缓存
 builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13.26: 个人中心与账号安全服务
+builder.Services.AddScoped<IOperationLogService, OperationLogService>();  // v2.13.29: 统一操作日志
 builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 
 // 注册 v2.11.24 数据清洗后台服务（启动时一次性 FK 归一）
@@ -99,6 +101,12 @@ app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{kestrelPort}");
 
 // 配置 HTTP 管道
+// v2.13.29: 性能监控中间件（最外层，记录所有 API 请求耗时）
+app.UseMiddleware<PerformanceMonitoringMiddleware>();
+
+// v2.13.29: 全局异常处理中间件（捕获所有未处理异常）
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 // v2.12.42 BUGFIX: Swagger 在所有环境都启用（V1.0 测试需要）
 app.UseSwagger();
 app.UseSwaggerUI();
