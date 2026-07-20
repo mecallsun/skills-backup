@@ -85,24 +85,55 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model.Result != null)
+                    @if (Model.Result != null && Model.Result.Items.Count > 0)
                     {
                         @for (var i = 0; i < Model.Result.Items.Count; i++)
                         {
                             var item = Model.Result.Items[i];
-                            <tr>
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            var isCurrentlyEffective = item.IsActive
+                                && item.EffectiveFrom <= today
+                                && (!item.EffectiveTo.HasValue || item.EffectiveTo.Value >= today);
+                            var isExpired = item.EffectiveTo.HasValue && item.EffectiveTo.Value < today;
+                            <tr class="@(isCurrentlyEffective ? "table-success" : "")">
                                 <td>@((Model.Result.PageIndex - 1) * Model.Result.PageSize + i + 1)</td>
-                                <td>@item.StandardName</td>
+                                <td><strong>@item.StandardName</strong></td>
                                 <td>@item.EffectiveFrom.ToString("yyyy-MM-dd")</td>
-                                <td>@(item.EffectiveTo?.ToString("yyyy-MM-dd") ?? "—")</td>
-                                <td>@item.ColdWaterUnitPrice</td>
-                                <td>@item.HotWaterUnitPrice</td>
-                                <td>@item.ElectricUnitPrice</td>
-                                <td>@(item.ApplicableType ?? "全部")</td>
                                 <td>
-                                    @if (item.IsActive)
+                                    @if (item.EffectiveTo.HasValue)
                                     {
-                                        <span class="badge bg-success">启用</span>
+                                        @item.EffectiveTo.Value.ToString("yyyy-MM-dd")
+                                    }
+                                    else
+                    {
+                                        <span class="badge bg-success">当前生效</span>
+                                    }
+                                </td>
+                                <td>¥ @item.ColdWaterUnitPrice.ToString("F2")</td>
+                                <td>¥ @item.HotWaterUnitPrice.ToString("F2")</td>
+                                <td>¥ @item.ElectricUnitPrice.ToString("F4")</td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.ApplicableType))
+                                    {
+                                        <span class="badge bg-info text-dark">@item.ApplicableType</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">全部</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (isExpired)
+                                    {
+                                        <span class="badge bg-secondary">已过期</span>
+                                    }
+                                    else if (isCurrentlyEffective)
+                                    {
+                                        <span class="badge bg-success">当前生效</span>
+                                    }
+                                    else if (item.IsActive)
+                                    {
+                                        <span class="badge bg-warning text-dark">未生效</span>
                                     }
                                     else
                                     {
@@ -114,6 +145,19 @@
                                 </td>
                             </tr>
                         }
+                    }
+                    else
+                    {
+                        @* v2.13.42 新增：空状态提示（原型有「暂无费用标准」） *@
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.4;"></i>
+                                <div class="mt-2">暂无费用标准</div>
+                                <a href="/BillingStandard/Create" class="btn btn-sm btn-primary mt-2">
+                                    <i class="bi bi-plus-lg"></i> 新增费用标准
+                                </a>
+                            </td>
+                        </tr>
                     }
                 </tbody>
             </table>

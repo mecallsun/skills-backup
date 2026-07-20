@@ -13,12 +13,14 @@
     <div class="card">
         <div class="card-body">
             <form method="post">
-                <input type="hidden" asp-for="Id" />
+                @* v2.13.42 BUG 修复：必须把 Input.Id 一起 POST，否则 SaveStandardAsync 收到 Id=0 走新增分支 *@
+                <input type="hidden" asp-for="Input.Id" />
+                <input type="hidden" asp-for="Input.CreatedAt" />
                 <div asp-validation-summary="All" class="text-danger mb-2"></div>
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label">标准名称 <span class="text-danger">*</span></label>
-                        <input asp-for="Input.StandardName" class="form-control" required />
+                        <input asp-for="Input.StandardName" class="form-control" required maxlength="100" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">生效日期 <span class="text-danger">*</span></label>
@@ -30,24 +32,39 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">冷水单价(元/m³) <span class="text-danger">*</span></label>
-                        <input asp-for="Input.ColdWaterUnitPrice" type="number" step="0.01" class="form-control" required />
+                        <input asp-for="Input.ColdWaterUnitPrice" type="number" step="0.01" min="0" class="form-control" required />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">热水单价(元/m³) <span class="text-danger">*</span></label>
-                        <input asp-for="Input.HotWaterUnitPrice" type="number" step="0.01" class="form-control" required />
+                        <input asp-for="Input.HotWaterUnitPrice" type="number" step="0.01" min="0" class="form-control" required />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">电价(元/kWh) <span class="text-danger">*</span></label>
-                        <input asp-for="Input.ElectricUnitPrice" type="number" step="0.0001" class="form-control" required />
+                        <input asp-for="Input.ElectricUnitPrice" type="number" step="0.0001" min="0" class="form-control" required />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">适用员工类型</label>
-                        <input asp-for="Input.ApplicableType" class="form-control" />
+                        <input asp-for="Input.ApplicableType" class="form-control" list="applicableTypeList" />
+                        <datalist id="applicableTypeList">
+                            <option value="合同工"></option>
+                            <option value="临时工"></option>
+                            <option value="外包"></option>
+                            <option value="实习生"></option>
+                            <option value="驻场"></option>
+                        </datalist>
+                    </div>
+                    @* v2.13.42 新增：IsActive 复选框（编辑页之前完全缺失，无法保留停用状态） *@
+                    <div class="col-md-3 form-field d-flex align-items-end">
+                        <div class="form-check pb-2">
+                            <input type="hidden" asp-for="Input.IsActive" value="false" />
+                            <input asp-for="Input.IsActive" type="checkbox" class="form-check-input" />
+                            <label class="form-check-label" asp-for="Input.IsActive">启用此标准</label>
+                        </div>
                     </div>
                 </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                <div class="mt-4 d-flex gap-2 justify-content-end">
                     <a href="/BillingStandard" class="btn btn-outline-secondary">取消</a>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存修改</button>
                 </div>
             </form>
         </div>

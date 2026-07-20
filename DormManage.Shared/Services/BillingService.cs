@@ -104,7 +104,8 @@ public class BillingService : IBillingService
             .OrderBy(t => t)
             .ToListAsync();
 
-        var defaults = new[] { "全部", "合同工", "临时工", "外包", "实习生", "驻场" };
+        // v2.13.42 BUG 修复：去除重复「全部」选项（页面手写空值="全部"，服务不再追加）
+        var defaults = new[] { "合同工", "临时工", "外包", "实习生", "驻场" };
         var combined = defaults.Union(fromDb, StringComparer.OrdinalIgnoreCase).ToList();
         return combined;
     }
@@ -113,11 +114,11 @@ public class BillingService : IBillingService
     {
         if (string.IsNullOrWhiteSpace(standard.StandardName))
             return (false, "标准名称必填");
-        if (standard.EffectiveFrom == null)
+        if (standard.EffectiveFrom == default)
             return (false, "生效日期必填");
 
-        // v2.13.12: 生效日期范围校验
-        if (standard.EffectiveTo > standard.EffectiveFrom)
+        // v2.13.42 BUG 修复：日期校验逻辑反转 — 应该是 EffectiveTo < EffectiveFrom 时拒绝
+        if (standard.EffectiveTo.HasValue && standard.EffectiveTo.Value < standard.EffectiveFrom)
             return (false, "结束日期不能早于开始日期");
 
         if (standard.IsActive)
@@ -143,6 +144,8 @@ public class BillingService : IBillingService
             existing.ElectricUnitPrice = standard.ElectricUnitPrice;
             existing.ApplicableType = standard.ApplicableType;
             existing.IsActive = standard.IsActive;
+            // v2.13.42 BUG 修复：更新分支必须调用 SaveChangesAsync 才会真正持久化
+            await _db.SaveChangesAsync();
             return (true, "更新成功");
         }
         else
