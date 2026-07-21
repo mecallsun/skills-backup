@@ -222,14 +222,9 @@ function mountTabBar(opts) {
   const el = document.getElementById('tab-bar');
   if (!el) return;
 
-  // v2.13.52：个人中心页面（/profile/）不渲染 Tab 栏 — 子菜单本身就是导航
-  const currentPath = window.location.pathname.toLowerCase();
-  if (currentPath.includes('/profile/')) {
-    el.outerHTML = '';  // 移除 Tab 栏占位元素
-    document.body.classList.add('profile-mode');  // 加 CSS class 用于样式调整
-    return;
-  }
-
+  // ⚠️ v2.13.52 设计决策：所有页面（包括 /profile/）统一渲染 Tab 栏
+  // 个人中心页面保留顶部品牌栏 + 10 主菜单 Tab 导航，与全站 26 个 Razor/HTML 保持一致
+  // 详见 105-Profile原型保留主菜单导航设计-v2.13.52.md
   el.outerHTML = renderTabBar(opts);
   bindTabBarEvents(opts);
 }
