@@ -530,9 +530,8 @@ public class BookingService : IBookingService
 
         _db.DormBookings.Add(booking);
 
-        // 7. 更新员工的当前宿舍
-        employee.DormCode = request.DormCode;
-        _db.Employees.Update(employee);
+        // 7. 更新员工的当前宿舍 + 床位号 + 住宿状态（v2.13.77：统一通过 SyncEmployeeDormCodeAsync 联动）
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "入住办理", booking.BedNo);
 
         await _db.SaveChangesAsync();
 
@@ -577,7 +576,8 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
 
         // v2.11.18：清除员工的当前宿舍（同步 PERSONNEL.dormCode）
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "退房");
+        // v2.13.77：扩展 bedNo 参数，退房时清空 BedNo
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "退房", booking.BedNo);
 
         await _db.SaveChangesAsync();
 
@@ -619,7 +619,8 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
 
         // v2.11.18：同步 PERSONNEL.dormCode = 该记录的 dormCode
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "快速确认入住");
+        // v2.13.77：扩展 bedNo 参数，写入 BedNo
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "快速确认入住", booking.BedNo);
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
@@ -658,7 +659,8 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销退房 → 同步恢复 PERSONNEL.dormCode
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "撤销退房");
+        // v2.13.77：恢复 BedNo
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "撤销退房", booking.BedNo);
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
@@ -712,7 +714,8 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销在宿 → 清空 PERSONNEL.dormCode
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "撤销在宿");
+        // v2.13.77：清空 BedNo
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "撤销在宿", booking.BedNo);
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
@@ -763,7 +766,8 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
 
         // v2.11.18：创建退房记录 → 清空 PERSONNEL.dormCode
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "创建退房记录");
+        // v2.13.77：清空 BedNo
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "创建退房记录", booking.BedNo);
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(checkOutBooking);
@@ -772,14 +776,21 @@ public class BookingService : IBookingService
     /// <summary>
     /// v2.11.18 新增：同步 SysEmployee.DormCode
     /// v2.11.20 修订：同时同步 ResidenceStatusId（关联引用基础资料-住宿状态字典）
+    /// v2.13.77 修订：扩展 bedNo 参数，退房时同时清空 BedNo（人员清单床位列联动）
     /// </summary>
     /// <remarks>
     /// 规则：
-    /// - dormCode != null → 设置 PERSONNEL.DormCode = dormCode，ResidenceStatusId = 1(LODGED)
-    /// - dormCode == null → 清空 PERSONNEL.DormCode = NULL，ResidenceStatusId = 2(NOT_LODGED)
+    /// - dormCode != null → 设置 PERSONNEL.DormCode = dormCode，BedNo = bedNo（若提供），ResidenceStatusId = 1(LODGED)
+    /// - dormCode == null → 清空 PERSONNEL.DormCode = NULL，BedNo = NULL，ResidenceStatusId = 2(NOT_LODGED)
     /// - 异常时记录日志，不中断主流程（保证 BOOKINGS 操作不影响）
+    ///
+    /// v2.13.77 业务规则：
+    /// - 入住路径（dormCode != null）：如果提供 bedNo → 写入；不提供则保留原值（向后兼容）
+    /// - 退房路径（dormCode == null）：**始终清空 BedNo = NULL**（核心修复：之前退房不清床位号）
+    /// - 宿舍端联动：Dorm.CurrentCount 由派生查询实时计算（不存储在 Dorm 表），
+    ///   退房后下一次查询 Dorm 列表/详情自动反映 -1；Dorm.BedNumbers 是静态候选床位列表，不因退房而变
     /// </remarks>
-    private async Task SyncEmployeeDormCodeAsync(int employeeId, string? dormCode, string registrar, string operation)
+    private async Task SyncEmployeeDormCodeAsync(int employeeId, string? dormCode, string registrar, string operation, int? bedNo = null)
     {
         try
         {
@@ -788,28 +799,35 @@ public class BookingService : IBookingService
 
             if (dormCode != null)
             {
-                // 入住/撤销退房 → 同步更新 dormCode 和 住宿状态=LODGED
-                employee.DormCode = dormCode;
-                employee.ResidenceStatusId = 1; // LODGED 已住宿
-                _db.Employees.Update(employee);
-                Console.WriteLine($"[v2.11.20 SyncEmployeeDormCode] {operation}: EmployeeId={employeeId}, DormCode={dormCode}, ResidenceStatusId=1(LODGED), Registrar={registrar}");
+                // 入住/撤销退房 → 同步更新 dormCode / BedNo / 住宿状态=LODGED
+                var changed = false;
+                if (employee.DormCode != dormCode) { employee.DormCode = dormCode; changed = true; }
+                if (bedNo.HasValue && employee.BedNo != bedNo.Value) { employee.BedNo = bedNo.Value; changed = true; }
+                if (employee.ResidenceStatusId != 1) { employee.ResidenceStatusId = 1; changed = true; } // LODGED
+                if (changed)
+                {
+                    _db.Employees.Update(employee);
+                    Console.WriteLine($"[v2.13.77 SyncEmployeeDormCode] {operation}: EmployeeId={employeeId}, DormCode={dormCode}, BedNo={bedNo}, ResidenceStatusId=1(LODGED), Registrar={registrar}");
+                }
             }
             else
             {
-                // 退房/撤销入住 → 清空 dormCode 和 住宿状态=NOT_LODGED
-                if (employee.DormCode != null || employee.ResidenceStatusId != 2)
+                // 退房/撤销入住 → 清空 dormCode / BedNo / 住宿状态=NOT_LODGED
+                // v2.13.77 P0 修复：必须同时清空 BedNo，否则人员清单床位列残留旧床位号
+                if (employee.DormCode != null || employee.BedNo != null || employee.ResidenceStatusId != 2)
                 {
                     employee.DormCode = null;
+                    employee.BedNo = null;  // v2.13.77 新增：清空床位号
                     employee.ResidenceStatusId = 2; // NOT_LODGED 未住宿
                     _db.Employees.Update(employee);
-                    Console.WriteLine($"[v2.11.20 SyncEmployeeDormCode] {operation}: EmployeeId={employeeId}, DormCode=NULL, ResidenceStatusId=2(NOT_LODGED), Registrar={registrar}");
+                    Console.WriteLine($"[v2.13.77 SyncEmployeeDormCode] {operation}: EmployeeId={employeeId}, DormCode=NULL, BedNo=NULL, ResidenceStatusId=2(NOT_LODGED), Registrar={registrar}");
                 }
             }
         }
         catch (Exception ex)
         {
             // 异常时提示信息，不中断主流程（用户可在前端提示确认）
-            Console.WriteLine($"[v2.11.20 SyncEmployeeDormCode ERROR] {operation}: EmployeeId={employeeId}, Error={ex.Message}");
+            Console.WriteLine($"[v2.13.77 SyncEmployeeDormCode ERROR] {operation}: EmployeeId={employeeId}, Error={ex.Message}");
             throw new InvalidOperationException($"同步人员宿舍失败：{ex.Message}。请确认后返回重试。", ex);
         }
     }
@@ -977,8 +995,8 @@ public class BookingService : IBookingService
         booking.UpdatedAt = DateTime.Now;
         _db.DormBookings.Update(booking);
 
-        // 同步 PERSONNEL.dormCode=null
-        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "快速确认退房");
+        // 同步 PERSONNEL.dormCode=null + BedNo=NULL
+        await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "快速确认退房", booking.BedNo);
 
         await _db.SaveChangesAsync();
         return ApiResponse<DormBooking>.Ok(booking);
