@@ -250,5 +250,88 @@ BEGIN
 END;
 GO
 
+-- ============================================================
+-- 9. 人员清单 SysEmployee（v2.13.57 补充：原脚本遗漏 DormBooking/SysEmployee 表）
+-- ============================================================
+IF OBJECT_ID('dbo.SysEmployee', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.SysEmployee (
+        EmployeeId         INT            IDENTITY(1,1) NOT NULL,
+        EmployeeCode       NVARCHAR(20)   NOT NULL,           -- 工号（与 DormBooking.EmployeeCode 同源；人员清单为唯一真源）
+        RealName           NVARCHAR(50)   NOT NULL,           -- 姓名
+        DepartmentId       INT            NOT NULL DEFAULT 1,
+        Department         NVARCHAR(50)   NULL,               -- 部门冗余
+        EmployeeTypeId     INT            NOT NULL DEFAULT 1,
+        EmployeeType       NVARCHAR(64)   NULL,               -- 员工类型冗余
+        TeamId             INT            NOT NULL DEFAULT 1,
+        Gender             TINYINT        NOT NULL DEFAULT 1, -- 1=男 2=女
+        Phone              NVARCHAR(20)   NULL,
+        EmploymentStatusId INT            NOT NULL DEFAULT 1, -- 1=在职 2=待入职 3=已离职
+        Status             TINYINT        NOT NULL DEFAULT 1, -- 在职状态（冗余，已弃用）
+        HireDate           DATE           NULL,
+        LeaveDate          DATE           NULL,
+        BedNo              INT            NULL,
+        DormCode           NVARCHAR(20)   NULL,               -- 当前宿舍（入住人数单一数据源）
+        Team               NVARCHAR(20)   NULL,
+        ResidenceStatusId  INT            NOT NULL DEFAULT 2, -- 1=已住宿 2=未住宿 3=待入住
+        AttendanceTypeId   INT            NULL,
+        Remark             NVARCHAR(500)  NULL,
+        IsActive           BIT            NOT NULL DEFAULT 1,
+        CreatedAt          DATETIME       NOT NULL DEFAULT GETDATE(),
+        UpdatedAt          DATETIME       NULL,
+        CONSTRAINT PK_SysEmployee PRIMARY KEY (EmployeeId)
+    );
+    CREATE UNIQUE INDEX IX_SysEmployee_EmployeeCode ON dbo.SysEmployee(EmployeeCode);
+    CREATE INDEX IX_SysEmployee_EmploymentStatusId ON dbo.SysEmployee(EmploymentStatusId);
+    CREATE INDEX IX_SysEmployee_ResidenceStatusId ON dbo.SysEmployee(ResidenceStatusId);
+    CREATE INDEX IX_SysEmployee_DormCode ON dbo.SysEmployee(DormCode);
+END;
+GO
+
+-- ============================================================
+-- 10. 办理登记表 DormBooking（v2.13.57 补充：核心业务表 + FK 关联人员清单）
+-- ============================================================
+IF OBJECT_ID('dbo.DormBooking', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.DormBooking (
+        BookingId           INT            IDENTITY(1,1) NOT NULL,
+        EmployeeId          INT            NOT NULL,           -- FK → SysEmployee.EmployeeId（人员清单为唯一真源）
+        EmployeeCode        NVARCHAR(64)   NOT NULL,           -- 冗余：登记时存档人员清单的工号
+        EmployeeName        NVARCHAR(128)  NOT NULL,           -- 冗余：登记时存档人员清单的姓名
+        Phone               NVARCHAR(32)   NULL,               -- 冗余：登记时存档人员清单的手机号
+        Department          NVARCHAR(128)  NULL,               -- 冗余：登记时存档人员清单的部门
+        AttendanceTypeId    TINYINT        NULL,               -- 冗余：登记时存档人员清单的考勤班次
+        BedNo               INT            NULL,               -- v2.13.24 业务深度：床位号
+        MoveFromDormCode    NVARCHAR(32)   NULL,               -- v2.13.24 业务深度：调宿来源房号
+        ActualCheckInDate   DATE           NULL,               -- v2.13.24 业务深度：实际入住日期
+        ActualCheckOutDate  DATE           NULL,               -- v2.13.24 业务深度：实际退房日期
+        DormCode            NVARCHAR(64)   NOT NULL,           -- FK → Dorm.DormCode（宿舍代码）
+        BookingType         TINYINT        NOT NULL,           -- 1=入住 2=退房
+        BookingDate         DATE           NOT NULL,           -- 入退日期
+        Status              TINYINT        NOT NULL,           -- 1=预约 2=在宿 3=已退房 4=已取消
+        Reason              NVARCHAR(512)  NULL,
+        CancellationReason  NVARCHAR(512)  NULL,               -- v2.13.24 业务深度：取消原因
+        Remark              NVARCHAR(1024) NULL,
+        RegistrationDate    DATETIME       NOT NULL DEFAULT GETDATE(),
+        Registrar           NVARCHAR(64)   NOT NULL,
+        CheckInOperator     NVARCHAR(64)   NULL,               -- v2.13.24 业务深度：入住确认操作人
+        CheckOutOperator    NVARCHAR(64)   NULL,               -- v2.13.24 业务深度：退房确认操作人
+        IsActive            BIT            NOT NULL DEFAULT 1,
+        CreatedAt           DATETIME       NOT NULL DEFAULT GETDATE(),
+        UpdatedAt           DATETIME       NULL,
+        CONSTRAINT PK_DormBooking PRIMARY KEY (BookingId),
+        -- v2.13.57 P0 修复：FK 关联约束确保 DormBooking.EmployeeId 必须在 SysEmployee 中存在
+        CONSTRAINT FK_DormBooking_Employee FOREIGN KEY (EmployeeId)
+            REFERENCES dbo.SysEmployee(EmployeeId),
+        CONSTRAINT FK_DormBooking_Dorm FOREIGN KEY (DormCode)
+            REFERENCES dbo.Dorm(DormCode)
+    );
+    CREATE INDEX IX_DormBooking_EmployeeId_BookingDate ON dbo.DormBooking(EmployeeId, BookingDate);
+    CREATE INDEX IX_DormBooking_DormCode_BookingDate ON dbo.DormBooking(DormCode, BookingDate);
+    CREATE INDEX IX_DormBooking_Status_BookingDate ON dbo.DormBooking(Status, BookingDate);
+    CREATE INDEX IX_DormBooking_EmployeeId ON dbo.DormBooking(EmployeeId);
+END;
+GO
+
 PRINT '✅ 数据库结构创建完成';
 GO
