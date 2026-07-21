@@ -174,9 +174,12 @@ public class BookingService : IBookingService
         //   解决「工号显示姓名与档案不一致」问题（档案改名后历史登记记录显示老姓名）。
         // v2.13.47 BUG：补充用 SysEmployee.EmployeeCode 实时覆盖 Booking.EmployeeCode，
         //   解决「人员清单改工号后历史登记记录显示旧工号」问题（与姓名同步策略一致）。
+        // v2.13.59 P0 BUG：使用 .AsNoTracking() + 在投影中用 ?? "" 防御性处理 NULL 字段，
+        //   解决生产数据库历史脏数据（[Required] 字段实际为 NULL）导致的 SqlNullValueException。
+        //   之前 EF Core 物化 DormBooking 实体时会在 ReadObject 阶段调用 GetString(i) 抛错。
         var query =
-            from b in _db.DormBookings
-            join emp in _db.Employees on b.EmployeeId equals emp.Id into empGroup
+            from b in _db.DormBookings.AsNoTracking()
+            join emp in _db.Employees.AsNoTracking() on b.EmployeeId equals emp.Id into empGroup
             from emp in empGroup.DefaultIfEmpty()
             select new
             {
@@ -184,19 +187,19 @@ public class BookingService : IBookingService
                 // 实时取考勤班次（v2.11.7 起 DormBooking.AttendanceTypeId 与 SysEmployee.AttendanceTypeId 同步）
                 AttendanceTypeId = (int?)(emp != null ? emp.AttendanceTypeId : b.AttendanceTypeId),
                 // v2.13.32-hotfix BUG：实时取最新姓名（档案优先；档案为空时回退登记时写入的姓名）
-                RealName = emp != null && !string.IsNullOrEmpty(emp.RealName) ? emp.RealName : b.EmployeeName,
+                RealName = emp != null && !string.IsNullOrEmpty(emp.RealName) ? emp.RealName : (b.EmployeeName ?? ""),
                 // v2.13.47 BUG：实时取最新工号（人员清单为唯一真源；档案缺失时回退登记时写入的工号）
-                EmployeeCode = emp != null && !string.IsNullOrEmpty(emp.EmployeeCode) ? emp.EmployeeCode : b.EmployeeCode
+                EmployeeCode = emp != null && !string.IsNullOrEmpty(emp.EmployeeCode) ? emp.EmployeeCode : (b.EmployeeCode ?? "")
             };
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             keyword = keyword.ToLower();
             query = query.Where(x =>
-                x.EmployeeCode.ToLower().Contains(keyword) ||
-                x.Booking.EmployeeCode.ToLower().Contains(keyword) ||
-                x.Booking.EmployeeName.ToLower().Contains(keyword) ||
-                x.RealName.ToLower().Contains(keyword) ||
+                (x.EmployeeCode ?? "").ToLower().Contains(keyword) ||
+                (x.Booking.EmployeeCode ?? "").ToLower().Contains(keyword) ||
+                (x.Booking.EmployeeName ?? "").ToLower().Contains(keyword) ||
+                (x.RealName ?? "").ToLower().Contains(keyword) ||
                 (x.Booking.Phone != null && x.Booking.Phone.Contains(keyword)));
         }
 
@@ -209,7 +212,7 @@ public class BookingService : IBookingService
         if (!string.IsNullOrWhiteSpace(dormCode))
         {
             var dc = dormCode.Trim().ToLower();
-            query = query.Where(x => x.Booking.DormCode.ToLower().Contains(dc));
+            query = query.Where(x => (x.Booking.DormCode ?? "").ToLower().Contains(dc));
         }
 
         if (type.HasValue)
@@ -232,7 +235,39 @@ public class BookingService : IBookingService
             .Take(pageSize)
             .ToListAsync();
 
-        // 物化：把 AttendanceTypeId / RealName / EmployeeCode 写入 DormBooking（v2.13.32-hotfix 实时覆盖 EmployeeName；v2.13.47 BUG 修复同步 EmployeeCode）
+        // v2.13.59 物化修复：使用 BookingDto 替代直接返回 DormBooking 实体，
+        // 避免 EF Core 物化 [Required] string 字段为 NULL 时抛 SqlNullValueException。
+        var dtos = items.Select(x => new BookingListDto
+        {
+            Id = x.Booking.Id,
+            EmployeeId = x.Booking.EmployeeId,
+            EmployeeCode = x.EmployeeCode ?? "",
+            EmployeeName = x.RealName ?? "",
+            Phone = x.Booking.Phone,
+            Department = x.Booking.Department,
+            AttendanceTypeId = x.AttendanceTypeId ?? x.Booking.AttendanceTypeId,
+            BedNo = x.Booking.BedNo,
+            MoveFromDormCode = x.Booking.MoveFromDormCode,
+            ActualCheckInDate = x.Booking.ActualCheckInDate,
+            ActualCheckOutDate = x.Booking.ActualCheckOutDate,
+            DormCode = x.Booking.DormCode ?? "",
+            Type = x.Booking.Type,
+            BookingDate = x.Booking.BookingDate,
+            Status = x.Booking.Status,
+            Reason = x.Booking.Reason,
+            CancellationReason = x.Booking.CancellationReason,
+            Remark = x.Booking.Remark,
+            RegistrationDate = x.Booking.RegistrationDate,
+            Registrar = x.Booking.Registrar ?? "",
+            CheckInOperator = x.Booking.CheckInOperator,
+            CheckOutOperator = x.Booking.CheckOutOperator,
+            IsActive = x.Booking.IsActive,
+            CreatedAt = x.Booking.CreatedAt,
+            UpdatedAt = x.Booking.UpdatedAt
+        }).ToList();
+
+        // v2.13.32-hotfix / v2.13.47 物化阶段：覆盖 AttendanceTypeId / RealName / EmployeeCode
+        // v2.13.59 P0 BUG 修复：仅对非空字符串赋值（避免 NULL 覆盖回 null，符合 .AsNoTracking() 语义）
         foreach (var item in items)
         {
             if (item.AttendanceTypeId.HasValue)
@@ -258,6 +293,40 @@ public class BookingService : IBookingService
             PageIndex = page,
             PageSize = pageSize
         };
+    }
+
+    /// <summary>
+    /// v2.13.59 P0 BUG 修复：办理记录列表 DTO
+    /// 解决 EF Core 物化 DormBooking 实体时遇到 NULL 字符串字段抛 SqlNullValueException 的问题
+    /// 所有 string 字段都使用 ?? "" 默认值，DB NULL 安全
+    /// </summary>
+    public class BookingListDto
+    {
+        public int Id { get; set; }
+        public int EmployeeId { get; set; }
+        public string EmployeeCode { get; set; } = "";
+        public string EmployeeName { get; set; } = "";
+        public string? Phone { get; set; }
+        public string? Department { get; set; }
+        public int? AttendanceTypeId { get; set; }
+        public int? BedNo { get; set; }
+        public string? MoveFromDormCode { get; set; }
+        public DateOnly? ActualCheckInDate { get; set; }
+        public DateOnly? ActualCheckOutDate { get; set; }
+        public string DormCode { get; set; } = "";
+        public int Type { get; set; }
+        public DateOnly BookingDate { get; set; }
+        public int Status { get; set; }
+        public string? Reason { get; set; }
+        public string? CancellationReason { get; set; }
+        public string? Remark { get; set; }
+        public DateTime RegistrationDate { get; set; }
+        public string Registrar { get; set; } = "";
+        public string? CheckInOperator { get; set; }
+        public string? CheckOutOperator { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
     }
 
     /// <summary>

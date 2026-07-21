@@ -1,9 +1,9 @@
 # 方案文档索引
 
-> **版本**：v2.13.58（Seed 数据 DormCode FK 不匹配修复）
+> **版本**：v2.13.59（办理登记 SqlNullValueException 修复）
 > **日期**：2026-07-21
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
-> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型） + Dashboard 首页 100% 原型对齐 + Booking 全部 4 页面 100% 原型对齐
+> **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型） + Dashboard 首页 100% 原型对齐 + Booking 全部 4 页面 100% 原型对齐 + v2.13.59 SqlNullValueException 修复（HTTP 200 + 337 条记录正常显示）
 
 ## 使用说明
 
@@ -231,3 +231,4 @@
 | 2026-07-21 | **v2.13.56 Profile 禁止作为第 11 主菜单原则（硬约束）** | 用户明确禁止将 Profile 添加为第 11 主菜单 Tab：❌ 禁止修改 tab-bar.js FIXED_TABS 数组；❌ 禁止在 Profile 页面隐藏其他 10 Tab；✅ Profile 仅通过顶部「用户胶囊」`<a class="user-pill">` 进入；详见 108 + CLAUDE.md「Important Notes」同步 |
 | 2026-07-21 | **v2.13.57 住宿登记表 + 人员清单表 DDL 缺失 P0 修复** | `01_DDL_Schema.sql` 原只有 9 张表，缺失 DormBooking + SysEmployee → EF Core 查询抛 Invalid object name → 页面 Error；新增 2 张表 DDL + FK_DormBooking_Employee + FK_DormBooking_Dorm + 20 条种子数据；详见 109 |
 | 2026-07-21 | **v2.13.58 Seed 数据 DormCode 不匹配 FK 约束修复** | v2.13.57 Seed 用 D-001~D-005，但 Dorm 表种子是 D-301~D-402 → FK 约束让脚本崩溃；修正所有 DormCode 为 D-301~D-402；详见 110 |
+| 2026-07-21 | **v2.13.59 办理登记 SqlNullValueException P0 修复** | EF Core 物化 DormBooking 时遇到 [Required] string 字段 DB 实际为 NULL → 抛 SqlNullValueException → API HTTP 500 + 页面 Error；4 个字段（EmployeeCode/EmployeeName/DormCode/Registrar）改 `string?` + 移除 `IsRequired()`；同时恢复 v2.13.32-hotfix/v2.13.47 覆盖循环（之前误删导致工号=姓名）；修复后 HTTP 200 + 337 条记录 + 工号姓名正确显示（JG910013/罗文杰）；详见 111 |

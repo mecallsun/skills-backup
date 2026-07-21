@@ -329,14 +329,17 @@ public class DormDbContext : DbContext
             entity.Property(e => e.Id).HasColumnName("BookingId"); // 真实 SQL Server 主键列名
             entity.Property(e => e.Type).HasColumnName("BookingType").HasConversion<byte>(); // 真实列名 BookingType，TINYINT
             entity.Property(e => e.Status).HasConversion<byte>(); // TINYINT
-            entity.Property(e => e.EmployeeCode).HasMaxLength(64).IsRequired();
-            entity.Property(e => e.EmployeeName).HasMaxLength(128).IsRequired();
+            // v2.13.59 P0 BUG 修复：移除 EmployeeCode/EmployeeName/DormCode/Registrar 的 IsRequired()
+            // 兼容生产数据库历史 NULL 脏数据（EF Core 物化 NULL → string 时抛 SqlNullValueException）
+            // FK_DormBooking_Employee + FK_DormBooking_Dorm + CheckInOperator 业务校验保证新建数据合法
+            entity.Property(e => e.EmployeeCode).HasMaxLength(64);
+            entity.Property(e => e.EmployeeName).HasMaxLength(128);
             entity.Property(e => e.Phone).HasMaxLength(32);
             entity.Property(e => e.Department).HasMaxLength(128);
-            entity.Property(e => e.DormCode).HasMaxLength(64).IsRequired();
-            entity.Property(e => e.Reason).HasMaxLength(512).IsRequired();
+            entity.Property(e => e.DormCode).HasMaxLength(64);
+            entity.Property(e => e.Reason).HasMaxLength(512);  // v2.13.59: Reason 原本 string? 但 IsRequired 与之冲突，同步修复
             entity.Property(e => e.Remark).HasMaxLength(1024);
-            entity.Property(e => e.Registrar).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Registrar).HasMaxLength(64);
             // v2.13.24 P75 业务深度字段映射
             entity.Property(e => e.MoveFromDormCode).HasMaxLength(32);
             entity.Property(e => e.CancellationReason).HasMaxLength(512);

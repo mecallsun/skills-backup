@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 namespace DormManage.Shared.Models;
 
 /// <summary>
@@ -17,15 +18,21 @@ public class DormBooking : BaseEntity
     [Required]
     public int EmployeeId { get; set; }
 
-    /// <summary>员工工号（冗余，便于查询）</summary>
-    [Required]
+    /// <summary>
+    /// 员工工号（冗余，便于查询）
+    /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
+    /// 原因：生产数据库有 906 条历史数据可能存在 NULL 值；EF Core 物化 NULL → string (非空) 时抛 SqlNullValueException
+    /// （v2.13.32-hotfix / v2.13.47 已实现 RAM 覆盖逻辑，业务上对脏数据降级为空字符串展示即可）
+    /// </summary>
     [MaxLength(64)]
-    public string EmployeeCode { get; set; } = string.Empty;
+    public string? EmployeeCode { get; set; }
 
-    /// <summary>员工姓名（冗余）</summary>
-    [Required]
+    /// <summary>
+    /// 员工姓名（冗余）
+    /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
+    /// </summary>
     [MaxLength(128)]
-    public string EmployeeName { get; set; } = string.Empty;
+    public string? EmployeeName { get; set; }
 
     /// <summary>手机号（冗余）- 允许 NULL（历史数据）</summary>
     [MaxLength(32)]
@@ -67,10 +74,13 @@ public class DormBooking : BaseEntity
 
     // ========== 住宿信息 ==========
 
-    /// <summary>宿舍代码（FK → Dorm.DormCode）</summary>
-    [Required]
+    /// <summary>
+    /// 宿舍代码（FK → Dorm.DormCode）
+    /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
+    /// 原因：兼容历史 NULL 数据（FK_DormBooking_Dorm 约束保证新建数据合法）
+    /// </summary>
     [MaxLength(64)]
-    public string DormCode { get; set; } = string.Empty;
+    public string? DormCode { get; set; }
 
     /// <summary>类型：1=入住 2=退房</summary>
     [Required]
@@ -105,10 +115,12 @@ public class DormBooking : BaseEntity
     [Required]
     public DateTime RegistrationDate { get; set; }
 
-    /// <summary>登记人（创建记录时 = 当前登录用户名）</summary>
-    [Required]
+    /// <summary>
+    /// 登记人（创建记录时 = 当前登录用户名）
+    /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
+    /// </summary>
     [MaxLength(64)]
-    public string Registrar { get; set; } = string.Empty;
+    public string? Registrar { get; set; }
 
     /// <summary>
     /// 入住确认操作人（v2.13.24 P75 新增）— Status 由 1→2 时记录
