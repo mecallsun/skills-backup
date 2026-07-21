@@ -178,6 +178,7 @@ EF Property 名与 SQL 列名不一致时通过 `[Column]` 或 `HasColumnName` �
 | PdaDevice | Id | DeviceId | HasColumnName |
 | MeterImage | Id | ImageId | HasColumnName |
 | MeterImage | RecordId | (BIGINT FK) | 类型 long |
+| MeterRecord | RecordId | (BIGINT PK) | **v2.13.79 起类型 long**（原 int + `HasColumnType("int")` 已废止）|
 | SysOpLog | Id | LogId | HasColumnName |
 
 **映射总数：17 项，0 遗漏**

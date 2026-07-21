@@ -28,7 +28,7 @@
 |------|-----------|------|
 | Dorm | DormId | `Property(e=>e.Id).HasColumnName("DormId")` |
 | DormBooking | BookingId | `HasColumnName("BookingId")` |
-| MeterRecord | RecordId(BIGINT) | `HasColumnName("RecordId")`（实体 int，取值在 int 范围内安全） |
+| MeterRecord | RecordId(BIGINT) | `HasColumnName("RecordId")`（实体 int，取值在 int 范围内安全） | ⚠️ **v2.13.79 已修正：实体改 `new long Id` + `[Column("RecordId")]`，原因 BIGINT → Int32 cast 失败与值范围无关（详见 130 文档）|
 | SysEmployee | EmployeeId | `HasColumnName("EmployeeId")` |
 
 ### 2.2 普通列名与类型（DormBooking）

@@ -73,6 +73,15 @@ public static class MeterStatusExtensions
 [Table("MeterRecord")]
 public class MeterRecord : BaseEntity
 {
+    /// <summary>
+    /// 抄表记录ID（v2.13.79 修复：SQL BIGINT ↔ EF long 类型对齐）
+    /// 原 BaseEntity.Id 为 int，但 init_schema.sql [MeterRecord].[RecordId] 为 BIGINT IDENTITY(1,1)，
+    /// EF 物化时 Int64 → Int32 cast 失败 → /Meter 列表 Error。
+    /// 覆盖基类 int Id 为 long Id 并显式映射到 RecordId 列。
+    /// </summary>
+    [Column("RecordId")]
+    public new long Id { get; set; }
+
     /// <summary>宿舍ID（FK → Dorm.DormId，SQL 有外键）</summary>
     public int DormId { get; set; }
 

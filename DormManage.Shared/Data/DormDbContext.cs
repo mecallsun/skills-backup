@@ -363,7 +363,9 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("MeterRecord");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("RecordId").HasColumnType("int"); // v2.13.68 修复 EF int↔SQL BIGINT 读回类型转换异常（hasColumnType 强制 int 避免 SCOPE_IDENTITY→Int64→Int32 cast 失败）
+            // v2.13.79 修复：MeterRecord.RecordId 是 SQL BIGINT，EF 模型改 long Id + [Column("RecordId")] 映射
+            // 原 HasColumnType("int") + Id=int 导致 EF 物化 Int64 → Int32 cast 失败 → /Meter 列表 Error
+            // 不再需要 HasColumnName("RecordId").HasColumnType("int")，属性上的 [Column("RecordId")] 自动处理
             entity.Property(e => e.DormCode).HasMaxLength(32).IsRequired();
             // v2.13.24 P76：三表读数对齐 SQL DECIMAL(12,2)
             entity.Property(e => e.ColdMeter).HasColumnType("decimal(12,2)");
