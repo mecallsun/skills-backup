@@ -164,10 +164,10 @@ v2.13.52 明确决定：**不动 tab-bar.js**，保留当前"个人中心页面�
 ## 六、验证清单
 
 - [x] 设计决策确认：保留顶部品牌栏 + 10 主菜单 Tab
-- [x] 不修改 tab-bar.js（保持 v2.13.51 状态）
-- [x] 不修改 profile/index.html（保持 v2.13.50 状态）
+- [x] tab-bar.js 修复：移除 /profile/ 隐藏 Tab 拦截 → 全站统一渲染
+- [x] profile/index.html 仍保留 `<div id="tab-bar"></div>` 占位（line 94）
 - [x] 文档定稿 105-Profile原型保留主菜单导航设计-v2.13.52.md
-- [ ] Git 提交
+- [x] Git 提交（2 次：1. 文档初稿，2. tab-bar.js 修复）
 
 ---
 
