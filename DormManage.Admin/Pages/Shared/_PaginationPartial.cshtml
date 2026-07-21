@@ -57,7 +57,9 @@
     }
 }
 
-@if (totalPages > 0)
+@* v2.13.75 BUG 修复：dropdown + 统计信息始终显示（即使 totalPages=0），让用户随时切换 pageSize
+    只有翻页数字（« 1 2 3 … »）在 totalPages > 1 时才显示（无意义时不显示） *@
+@if (Model.TotalCount > 0)
 {
     <div class="card-footer d-flex justify-content-between align-items-center pagination-footer" style="background: #f8f9fa; border-top: 1px solid #e9ecef; padding: 8px 16px;">
         <div class="d-flex align-items-center gap-2">
@@ -77,37 +79,41 @@
             <span class="text-muted small">条</span>
         </div>
 
-        <nav>
-            <ul class="pagination pagination-sm mb-0">
-                @if (Model.PageIndex > 1)
-                {
-                    <li class="page-item">
-                        <a class="page-link" href="@Url(Model.PageIndex - 1)" aria-label="上一页">&laquo;</a>
-                    </li>
-                }
-
-                @foreach (var p in pageNumbers)
-                {
-                    if (p < 0)
+        @* v2.13.75：翻页数字仅当 totalPages > 1 时才渲染（1 页或 0 页时不显示无意义的单数字） *@
+        @if (totalPages > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @if (Model.PageIndex > 1)
                     {
-                        <li class="page-item disabled"><span class="page-link">…</span></li>
-                    }
-                    else
-                    {
-                        <li class="page-item @(p == Model.PageIndex ? "active" : "")">
-                            <a class="page-link" href="@Url(p)">@p</a>
+                        <li class="page-item">
+                            <a class="page-link" href="@Url(Model.PageIndex - 1)" aria-label="上一页">&laquo;</a>
                         </li>
                     }
-                }
 
-                @if (Model.PageIndex < totalPages)
-                {
-                    <li class="page-item">
-                        <a class="page-link" href="@Url(Model.PageIndex + 1)" aria-label="下一页">&raquo;</a>
-                    </li>
-                }
-            </ul>
-        </nav>
+                    @foreach (var p in pageNumbers)
+                    {
+                        if (p < 0)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                        else
+                        {
+                            <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                                <a class="page-link" href="@Url(p)">@p</a>
+                            </li>
+                        }
+                    }
+
+                    @if (Model.PageIndex < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url(Model.PageIndex + 1)" aria-label="下一页">&raquo;</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
     </div>
 
     <script>
