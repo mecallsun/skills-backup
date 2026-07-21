@@ -381,8 +381,10 @@ public class DormDbContext : DbContext
             entity.Property(e => e.PreviousElectricReading).HasColumnType("decimal(12,2)");
             // v2.13.24 P76：字段长度对齐 SQL NVARCHAR(64/128/512)
             entity.Property(e => e.Operator).HasMaxLength(64).IsRequired();
-            entity.Property(e => e.DeviceSn).HasMaxLength(128);
-            entity.Property(e => e.ClientRecordId).HasMaxLength(128);
+            // v2.13.80 修正：DB schema DeviceSn/ClientRecordId 都是 NVARCHAR(64)，原 HasMaxLength(128) 与 DB 不一致
+            // 注意：虽然 DB NOT NULL，但 EF 模型保留 string?，由 Service 层（MeterController.SaveRecord + EntryModel.OnPostSaveReadingsAsync）保证非空写入
+            entity.Property(e => e.DeviceSn).HasMaxLength(64);
+            entity.Property(e => e.ClientRecordId).HasMaxLength(64);
             entity.Property(e => e.Remark).HasMaxLength(512);
             // v2.13.24 P76：业务深度字段
             entity.Property(e => e.CorrectionReason).HasMaxLength(512);

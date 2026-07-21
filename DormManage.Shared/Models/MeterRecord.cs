@@ -143,12 +143,12 @@ public class MeterRecord : BaseEntity
     [MaxLength(64)]
     public string Operator { get; set; } = string.Empty;
 
-    /// <summary>设备序列号（NVARCHAR(128)）</summary>
-    [MaxLength(128)]
+    /// <summary>设备序列号（NVARCHAR(64)，SQL NOT NULL）— v2.13.80 修正 DB 一致性</summary>
+    [MaxLength(64)]
     public string? DeviceSn { get; set; }
 
-    /// <summary>客户端记录ID（NVARCHAR(128) PDA 唯一键）</summary>
-    [MaxLength(128)]
+    /// <summary>客户端记录ID（NVARCHAR(64) PDA 唯一键，SQL NOT NULL）— v2.13.80 修正 DB 一致性</summary>
+    [MaxLength(64)]
     public string? ClientRecordId { get; set; }
 
     /// <summary>客户端创建时间（PDA 端抄表时间）</summary>

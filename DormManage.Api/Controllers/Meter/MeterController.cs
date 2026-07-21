@@ -220,6 +220,14 @@ public class MeterController : ControllerBase
                 PreviousHotReading = prevHot,
                 PreviousElectricReading = prevElec,
                 Operator = request.Operator ?? "管理员",
+                // v2.13.80 修复：SQL Server ClientRecordId + DeviceSn 都是 NOT NULL，但 C# 模型为 string?
+                // 手动补录/PDA 上传时必须赋值，否则 INSERT 失败 "不能将值 NULL 插入列 ClientRecordId"
+                // 手动补录场景：DeviceSn="" + ClientRecordId="MANUAL-{Guid}"
+                DeviceSn = request.DeviceSn ?? "",
+                ClientRecordId = !string.IsNullOrWhiteSpace(request.ClientRecordId)
+                    ? request.ClientRecordId
+                    : $"MANUAL-{Guid.NewGuid():N}".Substring(0, 32),
+                ClientCreatedAt = request.ClientCreatedAt ?? DateTime.Now,
                 Status = MeterRecord.DetermineStatus(coldUsage, hotUsage, elecUsage),
                 Remark = request.Remark,
                 ReadDate = request.ReadDate ?? DateOnly.FromDateTime(DateTime.Now),
@@ -622,6 +630,10 @@ public class MeterRecordSaveRequest
     // v2.13.24 P76：可选业务字段（手动补录时可填，批量导入/PDA 上传时由系统自动填）
     public DateOnly? ReadDate { get; set; }
     public byte? ReadMode { get; set; }
+    // v2.13.80 新增：PdaDeviceSn + ClientRecordId（手动补录时不填，由系统生成）
+    public string? DeviceSn { get; set; }
+    public string? ClientRecordId { get; set; }
+    public DateTime? ClientCreatedAt { get; set; }
 }
 
 /// <summary>
