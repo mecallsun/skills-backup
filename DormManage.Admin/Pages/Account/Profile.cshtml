@@ -8,11 +8,11 @@
 <div class="container-fluid">
     @Html.AntiForgeryToken()
 
-    <!-- 页头（v2.13.26 个人中心） -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">
-            <i class="bi bi-person-circle"></i> 个人中心
-            <small class="text-muted fs-6">账号信息 · 账号安全 · 个性化设置</small>
+    <!-- v2.13.49 P0：与 Basics 风格完全一致的 page-header -->
+    <div class="page-header">
+        <h2>
+            <i class="bi bi-person-circle header-icon"></i> 个人中心
+            <span class="header-count">@Model.SubMenuCount 类账号设置</span>
         </h2>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
@@ -22,93 +22,126 @@
         </nav>
     </div>
 
-    <div class="row">
-        <!-- 左侧：账号信息 -->
-        <div class="col-lg-4 mb-3">
-            <div class="card form-card">
-                <div class="form-card-header">
-                    <i class="bi bi-person-vcard text-primary"></i>
-                    <h3>账号信息</h3>
-                </div>
-                <div class="form-card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4 text-muted">用户名</dt>
-                        <dd class="col-sm-8"><strong>@Model.UserName</strong></dd>
-
-                        <dt class="col-sm-4 text-muted">显示名</dt>
-                        <dd class="col-sm-8">@Model.DisplayName</dd>
-
-                        <dt class="col-sm-4 text-muted">角色</dt>
-                        <dd class="col-sm-8">
-                            @foreach (var role in Model.Roles)
-                            {
-                                <span class="badge bg-primary me-1">@role</span>
-                            }
-                        </dd>
-
-                        <dt class="col-sm-4 text-muted">手机号</dt>
-                        <dd class="col-sm-8">@(Model.Mobile ?? "-")</dd>
-
-                        <dt class="col-sm-4 text-muted">邮箱</dt>
-                        <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
-
-                        <dt class="col-sm-4 text-muted">最近登录</dt>
-                        <dd class="col-sm-8">
-                            <small class="text-muted">@(Model.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</small>
-                            @if (!string.IsNullOrEmpty(Model.LastLoginIp))
-                            {
-                                <small class="text-muted ms-2">@Model.LastLoginIp</small>
-                            }
-                        </dd>
-
-                        <dt class="col-sm-4 text-muted">微信绑定</dt>
-                        <dd class="col-sm-8">
-                            @if (Model.IsWeChatBound)
-                            {
-                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> 已绑定</span>
-                                <small class="text-muted d-block mt-1">@Model.WeChatBindAt?.ToString("yyyy-MM-dd HH:mm")</small>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">未绑定</span>
-                            }
-                        </dd>
-                    </dl>
-                </div>
-                <div class="form-actions">
-                    <a href="/Account/Logout" class="btn btn-outline-danger">
-                        <i class="bi bi-box-arrow-right"></i> 退出登录
-                    </a>
+    <!-- v2.13.49 P0：左侧 200px 纵向 pills 导航 + 右侧 tab 面板（与 Basics 1:1 对齐） -->
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <!-- 左侧导航（200px） -->
+        <div style="flex-shrink: 0; width: 200px;">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="nav flex-column nav-pills profile-nav" role="tablist">
+                        <button class="nav-link text-start @(Model.ActiveTab == "overview" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-overview"
+                                onclick="setProfileTab('overview')">
+                            <i class="bi bi-person-vcard"></i> 账号总览
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "profile" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-profile"
+                                onclick="setProfileTab('profile')">
+                            <i class="bi bi-person"></i> 基本资料
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "password" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-password"
+                                onclick="setProfileTab('password')">
+                            <i class="bi bi-key"></i> 修改密码
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "security" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-security"
+                                onclick="setProfileTab('security')">
+                            <i class="bi bi-shield-question"></i> 安全问题
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "wechat" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-wechat"
+                                onclick="setProfileTab('wechat')">
+                            <i class="bi bi-wechat"></i> 微信绑定
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "prefs" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-prefs"
+                                onclick="setProfileTab('prefs')">
+                            <i class="bi bi-sliders"></i> 偏好设置
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "filter" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-filter"
+                                onclick="setProfileTab('filter')">
+                            <i class="bi bi-hdd"></i> 筛选缓存
+                        </button>
+                        <button class="nav-link text-start @(Model.ActiveTab == "logs" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-logs"
+                                onclick="setProfileTab('logs')">
+                            <i class="bi bi-clock-history"></i> 操作日志
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 右侧：Tab 切换区域 -->
-        <div class="col-lg-8 mb-3">
-            <div class="card form-card">
-                <div class="form-card-header" style="padding: 0;">
-                    <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist" style="margin: 0; padding: 0 .5rem; border-bottom: none;">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="tab-profile" data-bs-toggle="tab" data-bs-target="#pane-profile" type="button">
-                                <i class="bi bi-person"></i> 基本资料
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tab-security" data-bs-toggle="tab" data-bs-target="#pane-security" type="button">
-                                <i class="bi bi-shield-lock"></i> 账号安全
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="tab-prefs" data-bs-toggle="tab" data-bs-target="#pane-prefs" type="button">
-                                <i class="bi bi-sliders"></i> 偏好设置
-                            </button>
-                        </li>
-                    </ul>
+        <!-- 右侧内容 -->
+        <div style="flex: 1 1 0%;">
+            <div class="tab-content" id="profileTabContent">
+
+                <!-- 子菜单 1: 账号总览 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "overview" ? "show active" : "")" id="pane-overview" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="mb-3"><i class="bi bi-person-vcard"></i> 账号信息</h5>
+                            <dl class="row mb-3">
+                                <dt class="col-sm-3 text-muted">用户名</dt>
+                                <dd class="col-sm-9"><strong>@Model.UserName</strong></dd>
+
+                                <dt class="col-sm-3 text-muted">显示名</dt>
+                                <dd class="col-sm-9">@Model.DisplayName</dd>
+
+                                <dt class="col-sm-3 text-muted">角色</dt>
+                                <dd class="col-sm-9">
+                                    @foreach (var role in Model.Roles)
+                                    {
+                                        <span class="badge bg-primary me-1">@role</span>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-3 text-muted">手机号</dt>
+                                <dd class="col-sm-9">@(Model.Mobile ?? "-")</dd>
+
+                                <dt class="col-sm-3 text-muted">邮箱</dt>
+                                <dd class="col-sm-9">@(Model.Email ?? "-")</dd>
+
+                                <dt class="col-sm-3 text-muted">最近登录</dt>
+                                <dd class="col-sm-9">
+                                    <small class="text-muted">@(Model.LastLoginAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</small>
+                                    @if (!string.IsNullOrEmpty(Model.LastLoginIp))
+                                    {
+                                        <small class="text-muted ms-2">@Model.LastLoginIp</small>
+                                    }
+                                </dd>
+
+                                <dt class="col-sm-3 text-muted">微信绑定</dt>
+                                <dd class="col-sm-9">
+                                    @if (Model.IsWeChatBound)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> 已绑定</span>
+                                        <small class="text-muted d-block mt-1">@Model.WeChatBindAt?.ToString("yyyy-MM-dd HH:mm")</small>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">未绑定</span>
+                                    }
+                                </dd>
+                            </dl>
+                            <div class="d-flex gap-2">
+                                <a href="/Account/Logout" class="btn btn-outline-danger">
+                                    <i class="bi bi-box-arrow-right"></i> 退出登录
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-card-body">
-                    <div class="tab-content" id="profileTabsContent">
-                        <!-- Tab 1: 基本资料 -->
-                        <div class="tab-pane fade show active" id="pane-profile" role="tabpanel">
+
+                <!-- 子菜单 2: 基本资料 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "profile" ? "show active" : "")" id="pane-profile" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-person"></i> 基本资料</h5>
+                            </div>
                             <form id="profileForm" onsubmit="return submitProfile(event)">
                                 <div class="mb-3">
                                     <label class="form-label">用户名</label>
@@ -137,78 +170,123 @@
                                 </button>
                             </form>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Tab 2: 账号安全 -->
-                        <div class="tab-pane fade" id="pane-security" role="tabpanel">
-                            <!-- 修改密码 -->
-                            <div class="form-section">
-                                <div class="form-section-title">修改密码</div>
-                                <form id="passwordForm" onsubmit="return submitPassword(event)">
-                                    <div class="mb-3">
-                                        <label class="form-label">原密码 <span class="text-danger">*</span></label>
-                                        <input type="password" class="form-control" id="pwdOld" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">新密码 <span class="text-danger">*</span></label>
-                                        <input type="password" class="form-control" id="pwdNew" minlength="8" required>
-                                        <small class="text-muted">≥8 位，含字母与数字</small>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">确认新密码 <span class="text-danger">*</span></label>
-                                        <input type="password" class="form-control" id="pwdConfirm" minlength="8" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-warning">
-                                        <i class="bi bi-key"></i> 修改密码
-                                    </button>
-                                </form>
+                <!-- 子菜单 3: 修改密码（v2.13.49 从原账号安全 Tab 拆出） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "password" ? "show active" : "")" id="pane-password" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-key"></i> 修改密码</h5>
                             </div>
-
-                            <hr>
-
-                            <!-- 安全问题 -->
-                            <div class="form-section">
-                                <div class="form-section-title">安全问题（用于密码找回）</div>
-                                <p class="text-muted small">请设置 2 个安全问题，答案保存为密文。忘记密码时需要回答这 2 个问题。</p>
-                                <div id="sqListArea">
-                                    <p class="text-muted small"><i class="bi bi-info-circle"></i> 加载中...</p>
+                            <form id="passwordForm" onsubmit="return submitPassword(event)">
+                                <div class="mb-3">
+                                    <label class="form-label">原密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="pwdOld" required>
                                 </div>
-                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openSqModal()">
-                                    <i class="bi bi-pencil"></i> 修改安全问题
+                                <div class="mb-3">
+                                    <label class="form-label">新密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="pwdNew" minlength="8" required>
+                                    <small class="text-muted">≥8 位，含字母与数字</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">确认新密码 <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="pwdConfirm" minlength="8" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-key"></i> 修改密码
                                 </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 子菜单 4: 安全问题（v2.13.49 从原账号安全 Tab 拆出） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "security" ? "show active" : "")" id="pane-security" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-shield-question"></i> 安全问题</h5>
                             </div>
+                            <p class="text-muted small">请设置 2 个安全问题，答案保存为密文。忘记密码时需要回答这 2 个问题。</p>
+                            <div id="sqListArea">
+                                <p class="text-muted small"><i class="bi bi-info-circle"></i> 加载中...</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="openSqModal()">
+                                <i class="bi bi-pencil"></i> 修改安全问题
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-                            <hr>
-
-                            <!-- 微信绑定 -->
-                            <div class="form-section">
-                                <div class="form-section-title">微信绑定</div>
-                                <div id="wechatStatus">
-                                    @if (Model.IsWeChatBound)
-                                    {
-                                        <div class="alert alert-success py-2">
-                                            <i class="bi bi-check-circle"></i> 已绑定微信 OpenID: <code>@Model.MaskedWeChatOpenId</code>
-                                            <small class="d-block mt-1">绑定时间: @Model.WeChatBindAt?.ToString("yyyy-MM-dd HH:mm")</small>
-                                        </div>
-                                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="openUnbindWeChatModal()">
-                                            <i class="bi bi-x-circle"></i> 解绑微信
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <div class="alert alert-warning py-2">
-                                            <i class="bi bi-exclamation-triangle"></i> 未绑定微信。可在扫码登录后填入 OpenID 完成绑定。
-                                        </div>
-                                        <button type="button" class="btn btn-outline-success btn-sm" onclick="openBindWeChatModal()">
-                                            <i class="bi bi-wechat"></i> 绑定微信
-                                        </button>
-                                    }
-                                </div>
+                <!-- 子菜单 5: 微信绑定（v2.13.49 从原账号安全 Tab 拆出） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "wechat" ? "show active" : "")" id="pane-wechat" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-wechat"></i> 微信绑定</h5>
+                            </div>
+                            <div id="wechatStatus">
+                                @if (Model.IsWeChatBound)
+                                {
+                                    <div class="alert alert-success py-2">
+                                        <i class="bi bi-check-circle"></i> 已绑定微信 OpenID: <code>@Model.MaskedWeChatOpenId</code>
+                                        <small class="d-block mt-1">绑定时间: @Model.WeChatBindAt?.ToString("yyyy-MM-dd HH:mm")</small>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" onclick="openUnbindWeChatModal()">
+                                        <i class="bi bi-x-circle"></i> 解绑微信
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-warning py-2">
+                                        <i class="bi bi-exclamation-triangle"></i> 未绑定微信。可在扫码登录后填入 OpenID 完成绑定。
+                                    </div>
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="openBindWeChatModal()">
+                                        <i class="bi bi-wechat"></i> 绑定微信
+                                    </button>
+                                }
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        <!-- Tab 3: 偏好设置 -->
-                        <div class="tab-pane fade" id="pane-prefs" role="tabpanel">
-                            <div class="form-section">
+                <!-- 子菜单 6: 偏好设置 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "prefs" ? "show active" : "")" id="pane-prefs" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-sliders"></i> 偏好设置</h5>
+                            </div>
+                            <div class="form-section mb-3">
+                                <div class="form-section-title">界面偏好</div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="darkModePref">
+                                    <label class="form-check-label" for="darkModePref">
+                                        深色模式
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="compactModePref">
+                                    <label class="form-check-label" for="compactModePref">
+                                        紧凑布局
+                                    </label>
+                                </div>
+                                <p class="text-muted small"><i class="bi bi-info-circle"></i> 深色/紧凑模式将在 v2.14 实施（预留接口）</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 子菜单 7: 筛选缓存 -->
+                <div class="tab-pane fade @(Model.ActiveTab == "filter" ? "show active" : "")" id="pane-filter" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-hdd"></i> 筛选条件缓存</h5>
+                            </div>
+                            <div class="form-section mb-3">
                                 <div class="form-section-title">筛选条件持久化</div>
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" id="storeFilterPreference" @(Model.StoreFilterPreference ? "checked" : "")>
@@ -256,6 +334,24 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 子菜单 8: 操作日志（v2.14 实施 - 当前为预留 Tab） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "logs" ? "show active" : "")" id="pane-logs" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 我的操作日志</h5>
+                                <small class="text-muted">v2.14 实施</small>
+                            </div>
+                            <div class="alert alert-info py-2">
+                                <i class="bi bi-info-circle"></i>
+                                本人最近 20 条操作记录将在 v2.14 版本上线（数据源 <code>SysOpLog WHERE UserId = [当前登录用户]</code>）。
+                                <br />v2.13.49 起已在 <code>SysUserSelfService</code> 6 个敏感方法（资料更新/密码修改/安全问题/密码重置/微信绑定解绑）写入 SysOpLog。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -383,6 +479,23 @@
 
 @section Styles {
 <style>
+    /* v2.13.49：与 Basics 完全一致的 pills 样式 */
+    .profile-nav .nav-link {
+        border-radius: 6px;
+        padding: 0.6rem 0.85rem;
+        margin-bottom: 2px;
+        font-size: 0.88rem;
+        color: #495057;
+        background: transparent;
+    }
+    .profile-nav .nav-link i { margin-right: 0.5rem; font-size: 1rem; }
+    .profile-nav .nav-link:hover { background: #f0f4f8; }
+    .profile-nav .nav-link.active {
+        background: #1976d2;
+        color: #fff;
+        font-weight: 500;
+    }
+
     .form-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); border: 1px solid #eee; overflow: hidden; }
     .form-card-header { padding: .75rem 1.25rem; border-bottom: 1px solid #eee; background: #fafbfc; display: flex; align-items: center; gap: .5rem; }
     .form-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1976d2; }
@@ -390,11 +503,26 @@
     .form-section { margin-bottom: .75rem; }
     .form-section-title { font-size: .85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: .5rem; margin-bottom: .5rem; }
     .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: .75rem 1.25rem; display: flex; justify-content: flex-end; gap: .75rem; }
-    .nav-tabs .nav-link { color: #607d8b; border: none; padding: .75rem 1rem; }
-    .nav-tabs .nav-link.active { color: #1976d2; background: transparent; border-bottom: 2px solid #1976d2; font-weight: 600; }
 </style>
 }
 
 @section Scripts {
 <script src="/js/profile.js"></script>
+<script>
+    // v2.13.49：URL ?tab= 持久化（与 Basics 风格一致）
+    function setProfileTab(tab) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('tab', tab);
+        window.history.replaceState({}, '', url);
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var url = new URL(window.location.href);
+        var tab = url.searchParams.get('tab');
+        if (tab) {
+            var btn = document.querySelector('.profile-nav button[data-bs-target="#pane-' + tab + '"]');
+            if (btn) btn.click();
+        }
+    });
+</script>
 }

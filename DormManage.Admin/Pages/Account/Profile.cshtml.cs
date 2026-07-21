@@ -48,6 +48,13 @@ public class ProfileModel : PageModel
     /// <summary>已缓存的筛选模块列表</summary>
     public List<FilterCacheSummary> CachedModules { get; set; } = new();
 
+    /// <summary>v2.13.49 P0：当前激活的左侧导航子菜单（默认 overview）</summary>
+    [BindProperty(SupportsGet = true)]
+    public string ActiveTab { get; set; } = "overview";
+
+    /// <summary>v2.13.49 P0：子菜单总数（page-header 显示用）</summary>
+    public int SubMenuCount => 8;
+
     public async Task<IActionResult> OnGetAsync()
     {
         var ctx = HttpContext;
