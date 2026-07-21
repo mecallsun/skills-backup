@@ -3,6 +3,10 @@
 @{
     ViewData["Title"] = "系统设置";
     Layout = "_Layout";
+
+    // v2.13.67：页面级 antiforgery token（User 面板的 JS 需要读取此 token 提交 /Settings?handler=UserXxx）
+    @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+    var pageTokens = PageAntiforgery.GetAndStoreTokens(HttpContext);
 }
 
 @section Styles {
@@ -25,11 +29,14 @@
 }
 
 <div class="container-fluid">
+    <!-- v2.13.67：页面级 antiforgery token（User + Role 面板的 AJAX form 需要此 token） -->
+    <input type="hidden" id="pageAntiforgeryToken" name="__RequestVerificationToken" value="@pageTokens.RequestToken" />
+
     <!-- 页头 -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
             <i class="bi bi-gear"></i> 系统设置
-            <span class="badge bg-warning text-dark ms-2">v2.13.19</span>
+            <span class="badge bg-warning text-dark ms-2">v2.13.67</span>
         </h2>
     </div>
 
@@ -352,43 +359,14 @@
                     </div>
                 </div>
 
-                <!-- 用户与角色 -->
-                <!-- v2.13.65 修复：用户管理 tab 改为引导到独立页面 /Settings/User（之前用 alert('原型演示') 占位符，按钮无效） -->
+                <!-- v2.13.67 用户管理子 Tab — 完整 CRUD 嵌入（之前为引导到独立页面 /Settings/User） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "users" ? "show active" : "")" id="tab-users">
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="bi bi-person-badge" style="font-size: 3rem; color: #1976d2;"></i>
-                            <h4 class="mt-3">用户管理已迁移到独立页面</h4>
-                            <p class="text-muted mb-4">为提供完整的用户 CRUD 功能（新增 / 编辑 / 重置密码 / 启用 / 停用 / 删除 + 搜索 / 筛选 / 分页），<br />用户管理已迁移到独立页面，请点击下方按钮进入。</p>
-                            <a href="/Settings/User" class="btn btn-primary btn-lg">
-                                <i class="bi bi-arrow-right-circle"></i> 进入用户管理
-                            </a>
-                            <div class="mt-3">
-                                <a href="/Settings/User" class="text-decoration-none small">
-                                    <i class="bi bi-link-45deg"></i> /Settings/User
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_UserPanel", Model)
                 </div>
 
-                <!-- v2.13.65 修复：角色管理 tab 引导到独立页面 /Settings/Role（之前用 alert('原型演示') 占位符） -->
+                <!-- v2.13.67 角色管理子 Tab — 完整 CRUD 嵌入（之前为引导到独立页面 /Settings/Role） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "roles" ? "show active" : "")" id="tab-roles">
-                    <div class="card">
-                        <div class="card-body text-center py-5">
-                            <i class="bi bi-shield-lock" style="font-size: 3rem; color: #e65100;"></i>
-                            <h4 class="mt-3">角色管理已迁移到独立页面</h4>
-                            <p class="text-muted mb-4">为提供完整的角色与权限管理功能（角色 CRUD + 权限矩阵），<br />角色管理已迁移到独立页面，请点击下方按钮进入。</p>
-                            <a href="/Settings/Role" class="btn btn-warning btn-lg text-white">
-                                <i class="bi bi-arrow-right-circle"></i> 进入角色管理
-                            </a>
-                            <div class="mt-3">
-                                <a href="/Settings/Role" class="text-decoration-none small">
-                                    <i class="bi bi-link-45deg"></i> /Settings/Role
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                    @await Html.PartialAsync("_RolePanel", Model)
                 </div>
 
                 <!-- 备份与恢复 -->
@@ -788,5 +766,324 @@
             document.body.appendChild(wrapper.firstChild);
             setTimeout(function (el) { if (el && el.parentElement) el.remove(); }, 4000, document.querySelector('.toast:last-of-type'));
         }
+
+        // ====================== v2.13.67 用户管理子 Tab JS ======================
+        const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        function showFeedback(elId, type, message) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.className = 'alert mb-3 alert-' + type;
+            el.textContent = message;
+            el.classList.remove('d-none');
+        }
+        function hideFeedback(elId) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.classList.add('d-none');
+        }
+
+        // 通用 AJAX POST helper — v2.13.67：URL 改为 /Settings?handler=UserXxx
+        async function postPanelAction(url, data, feedbackElId) {
+            try {
+                const formData = new URLSearchParams();
+                for (const [key, value] of data.entries()) {
+                    if (Array.isArray(value)) {
+                        for (const v of value) formData.append(key, v);
+                    } else if (value !== null && value !== undefined) {
+                        formData.append(key, value);
+                    }
+                }
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    body: formData.toString()
+                });
+                let j = null;
+                try { j = await resp.json(); } catch (e) {}
+                if (resp.ok && (j === null || j.success !== false)) {
+                    return { ok: true, data: j };
+                } else {
+                    const msg = j?.message || ('HTTP ' + resp.status);
+                    if (feedbackElId) showFeedback(feedbackElId, 'danger', '操作失败：' + msg);
+                    return { ok: false, message: msg };
+                }
+            } catch (e) {
+                if (feedbackElId) showFeedback(feedbackElId, 'danger', '请求失败：' + e.message);
+                return { ok: false, message: e.message };
+            }
+        }
+
+        // 启停用户（直接调 API 端点）
+        window.toggleUserStatus = async function(id, enable) {
+            if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
+            const url = '/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable');
+            const resp = await fetch(url, { method: 'POST' });
+            const j = await resp.json().catch(() => null);
+            if (resp.ok && j?.success) {
+                alert(enable ? '已启用' : '已停用');
+                location.reload();
+            } else {
+                alert('操作失败：' + (j?.message || '未知错误'));
+            }
+        };
+
+        // ============== 用户管理 Modal 事件 ==============
+        function wireUserPanel() {
+            const createModal = document.getElementById('createUserModal');
+            const editModal = document.getElementById('editUserModal');
+            const pwdModal = document.getElementById('resetPwdModal');
+            const delModal = document.getElementById('deleteConfirmModal');
+            if (!createModal) return; // 当前 tab 不是 users，跳过
+
+            // Create
+            createModal.addEventListener('show.bs.modal', function() {
+                hideFeedback('createUserFeedback');
+                document.getElementById('createUserForm').reset();
+            });
+            document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('createUserFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('createUserSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=UserCreate', data, 'createUserFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('createUserFeedback', 'success', '✓ 创建成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Edit
+            editModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('editUserFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                const id = btn.getAttribute('data-user-id');
+                const userName = btn.getAttribute('data-user-name');
+                const displayName = btn.getAttribute('data-display-name') || '';
+                const email = btn.getAttribute('data-email') || '';
+                const phone = btn.getAttribute('data-phone') || '';
+                const isActive = btn.getAttribute('data-is-active') === 'true';
+                const roleIds = (btn.getAttribute('data-role-ids') || '').split(',').filter(s => s);
+                document.getElementById('editId').value = id;
+                document.getElementById('editUserName').value = userName;
+                document.getElementById('editDisplayName').value = displayName;
+                document.getElementById('editEmail').value = email;
+                document.getElementById('editPhone').value = phone;
+                document.getElementById('editIsActive').checked = isActive;
+                document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => {
+                    cb.checked = roleIds.includes(cb.value);
+                });
+            });
+            document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('editUserFeedback');
+                const data = new FormData(this);
+                if (!document.getElementById('editIsActive').checked) data.set('IsActive', 'false');
+                else data.set('IsActive', 'true');
+                const btn = document.getElementById('editUserSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=UserUpdate', data, 'editUserFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('editUserFeedback', 'success', '✓ 更新成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Reset Password
+            pwdModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('resetPwdFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('pwdId').value = btn.getAttribute('data-user-id');
+                document.getElementById('pwdUserName').textContent = btn.getAttribute('data-user-name');
+                document.getElementById('pwdNewPassword').value = '';
+            });
+            document.getElementById('resetPwdForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('resetPwdFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('resetPwdSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>重置中...';
+                const result = await postPanelAction('/Settings?handler=UserResetPassword', data, 'resetPwdFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('resetPwdFeedback', 'success', '✓ 密码已重置！即将关闭...');
+                    setTimeout(() => bootstrap.Modal.getInstance(pwdModal)?.hide(), 600);
+                }
+            });
+
+            // Delete
+            delModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('deleteFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('deleteId').value = btn.getAttribute('data-user-id');
+                document.getElementById('deleteUserNameDisplay').textContent = btn.getAttribute('data-user-name');
+            });
+            document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('deleteFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('deleteSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>删除中...';
+                const result = await postPanelAction('/Settings?handler=UserDelete', data, 'deleteFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('deleteFeedback', 'success', '✓ 删除成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+        }
+
+        // ====================== v2.13.67 角色管理子 Tab JS ======================
+        function openEditModal(id, name, desc, sort, isActive) {
+            document.getElementById('editRoleId').value = id;
+            document.getElementById('editRoleCode').value = id;
+            document.getElementById('editRoleName').value = name;
+            document.getElementById('editRoleDesc').value = desc || '';
+            document.getElementById('editRoleSort').value = sort;
+            document.getElementById('editRoleActive').checked = isActive === 'true';
+            new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+        }
+
+        function openPermMatrixModal(roleId, roleName) {
+            document.getElementById('permRoleId').value = roleId;
+            document.getElementById('permRoleName').textContent = roleName;
+            document.querySelectorAll('.perm-cb').forEach(cb => { cb.checked = false; cb.dataset.roleId = roleId; });
+            const rolePermsJson = @Html.Raw(Json.Serialize(Model.RolePermissions.ToDictionary(
+                kv => kv.Key,
+                kv => kv.Value.ToArray())));
+            const permIds = rolePermsJson[roleId] || [];
+            permIds.forEach(pid => {
+                const cb = document.getElementById('perm_' + pid);
+                if (cb) cb.checked = true;
+            });
+            new bootstrap.Modal(document.getElementById('permMatrixModal')).show();
+        }
+
+        function selectAllPerms(checked) {
+            document.querySelectorAll('.perm-cb').forEach(cb => cb.checked = checked);
+        }
+
+        function confirmDelete(id, name) {
+            document.getElementById('deleteRoleId').value = id;
+            document.getElementById('deleteRoleNameDisplay').textContent = name;
+            new bootstrap.Modal(document.getElementById('deleteRoleConfirmModal')).show();
+        }
+
+        function wireRolePanel() {
+            const createModal = document.getElementById('createRoleModal');
+            if (!createModal) return;
+
+            // Create
+            createModal.addEventListener('show.bs.modal', function() {
+                hideFeedback('createRoleFeedback');
+                document.getElementById('createRoleForm').reset();
+            });
+            document.getElementById('createRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('createRoleFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('createRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>创建中...';
+                const result = await postPanelAction('/Settings?handler=RoleCreate', data, 'createRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('createRoleFeedback', 'success', '✓ 创建成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Edit
+            const editModal = document.getElementById('editRoleModal');
+            editModal.addEventListener('show.bs.modal', function() { hideFeedback('editRoleFeedback'); });
+            document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('editRoleFeedback');
+                const data = new FormData(this);
+                if (!document.getElementById('editRoleActive').checked) data.set('IsActive', 'false');
+                else data.set('IsActive', 'true');
+                const btn = document.getElementById('editRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=RoleUpdate', data, 'editRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('editRoleFeedback', 'success', '✓ 更新成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Permission Matrix
+            const permModal = document.getElementById('permMatrixModal');
+            permModal.addEventListener('show.bs.modal', function() { hideFeedback('permMatrixFeedback'); });
+            document.getElementById('permMatrixForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('permMatrixFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('permMatrixSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=RoleSavePermissions', data, 'permMatrixFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('permMatrixFeedback', 'success', '✓ 权限已保存！即将关闭...');
+                    setTimeout(() => bootstrap.Modal.getInstance(permModal)?.hide(), 600);
+                    setTimeout(() => location.reload(), 1200);
+                }
+            });
+
+            // Delete
+            const delModal = document.getElementById('deleteRoleConfirmModal');
+            delModal.addEventListener('show.bs.modal', function() { hideFeedback('deleteRoleFeedback'); });
+            document.getElementById('deleteRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('deleteRoleFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('deleteRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>删除中...';
+                const result = await postPanelAction('/Settings?handler=RoleDelete', data, 'deleteRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('deleteRoleFeedback', 'success', '✓ 删除成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+        }
+
+        // v2.13.67：DOM Ready 时挂载两个面板的事件监听（避免在非激活 tab 时找不到元素）
+        document.addEventListener('DOMContentLoaded', function() {
+            wireUserPanel();
+            wireRolePanel();
+        });
     </script>
 }

@@ -8,10 +8,17 @@ using DormManage.Shared.Services;
 namespace DormManage.Admin.Pages.Settings;
 
 /// <summary>
-/// 系统设置页面模型
+/// 系统设置页面模型（v2.13.67：改为 partial class 以支持嵌入 UserPanelPartial / RolePanelPartial）
 /// </summary>
-public class IndexModel : PageModel
+public partial class IndexModel : PageModel
 {
+    private readonly DormDbContext _db;
+
+    public IndexModel(DormDbContext db)
+    {
+        _db = db;
+    }
+
     [BindProperty(SupportsGet = true)]
     public string? Tab { get; set; }
 
@@ -210,7 +217,7 @@ public class IndexModel : PageModel
     }
 
     /// <summary>
-    /// 加载页面时探测托盘状态
+    /// 加载页面时探测托盘状态 + 用户/角色子 Tab 数据（v2.13.67 嵌入子 Tab 后需在 OnGet 加载）
     /// </summary>
     public async Task OnGetAsync()
     {
@@ -231,6 +238,10 @@ public class IndexModel : PageModel
         {
             TrayReachable = false;
         }
+
+        // v2.13.67：嵌入子 Tab 后，OnGet 需要同时加载 User + Role 面板数据
+        await LoadUserPanelAsync();
+        await LoadRolePanelAsync();
     }
 
     // 注意：数据库连接配置保存已迁移到 /api/v1/system/dbconfig/save (v2.13.19)

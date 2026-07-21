@@ -174,6 +174,9 @@ public class BookingService : IBookingService
         //   解决「工号显示姓名与档案不一致」问题（档案改名后历史登记记录显示老姓名）。
         // v2.13.47 BUG：补充用 SysEmployee.EmployeeCode 实时覆盖 Booking.EmployeeCode，
         //   解决「人员清单改工号后历史登记记录显示旧工号」问题（与姓名同步策略一致）。
+        // v2.13.66 BUG：补充用 SysEmployee.Department 实时覆盖 Booking.Department，
+        //   解决「住宿登记列表部门未与档案同步」问题（用户在「人员清单」修改部门后，
+        //   住宿登记列表仍显示旧部门或 NULL）。同步策略与姓名/工号完全一致。
         // v2.13.59 P0 BUG：使用 .AsNoTracking() + 在投影中用 ?? "" 防御性处理 NULL 字段，
         //   解决生产数据库历史脏数据（[Required] 字段实际为 NULL）导致的 SqlNullValueException。
         //   之前 EF Core 物化 DormBooking 实体时会在 ReadObject 阶段调用 GetString(i) 抛错。
@@ -189,7 +192,9 @@ public class BookingService : IBookingService
                 // v2.13.32-hotfix BUG：实时取最新姓名（档案优先；档案为空时回退登记时写入的姓名）
                 RealName = emp != null && !string.IsNullOrEmpty(emp.RealName) ? emp.RealName : (b.EmployeeName ?? ""),
                 // v2.13.47 BUG：实时取最新工号（人员清单为唯一真源；档案缺失时回退登记时写入的工号）
-                EmployeeCode = emp != null && !string.IsNullOrEmpty(emp.EmployeeCode) ? emp.EmployeeCode : (b.EmployeeCode ?? "")
+                EmployeeCode = emp != null && !string.IsNullOrEmpty(emp.EmployeeCode) ? emp.EmployeeCode : (b.EmployeeCode ?? ""),
+                // v2.13.66 BUG：实时取最新部门（人员清单为唯一真源；档案缺失/为空时回退冗余字段；都不存在则 NULL）
+                Department = emp != null && !string.IsNullOrEmpty(emp.Department) ? emp.Department : b.Department
             };
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -205,8 +210,11 @@ public class BookingService : IBookingService
 
         if (!string.IsNullOrWhiteSpace(department))
         {
+            // v2.13.66 BUG：部门筛选使用 emp.Department 优先（与覆盖策略一致），回退到 Booking.Department
             var dept = department.Trim().ToLower();
-            query = query.Where(x => x.Booking.Department != null && x.Booking.Department.ToLower().Contains(dept));
+            query = query.Where(x =>
+                (x.Department != null && x.Department.ToLower().Contains(dept)) ||
+                (x.Booking.Department != null && x.Booking.Department.ToLower().Contains(dept)));
         }
 
         if (!string.IsNullOrWhiteSpace(dormCode))
@@ -244,7 +252,7 @@ public class BookingService : IBookingService
             EmployeeCode = x.EmployeeCode ?? "",
             EmployeeName = x.RealName ?? "",
             Phone = x.Booking.Phone,
-            Department = x.Booking.Department,
+            Department = x.Department ?? x.Booking.Department,
             AttendanceTypeId = x.AttendanceTypeId ?? x.Booking.AttendanceTypeId,
             BedNo = x.Booking.BedNo,
             MoveFromDormCode = x.Booking.MoveFromDormCode,
@@ -267,6 +275,7 @@ public class BookingService : IBookingService
         }).ToList();
 
         // v2.13.32-hotfix / v2.13.47 物化阶段：覆盖 AttendanceTypeId / RealName / EmployeeCode
+        // v2.13.66 BUG 修复扩展：增加覆盖 Department（人员清单为唯一真源）
         // v2.13.59 P0 BUG 修复：仅对非空字符串赋值（避免 NULL 覆盖回 null，符合 .AsNoTracking() 语义）
         foreach (var item in items)
         {
@@ -283,6 +292,11 @@ public class BookingService : IBookingService
             if (!string.IsNullOrEmpty(item.EmployeeCode))
             {
                 item.Booking.EmployeeCode = item.EmployeeCode;
+            }
+            // v2.13.66 BUG：覆盖显示用部门（仅 RAM，DB 不写；人员清单为唯一真源）
+            if (!string.IsNullOrEmpty(item.Department))
+            {
+                item.Booking.Department = item.Department;
             }
         }
 
@@ -334,12 +348,13 @@ public class BookingService : IBookingService
     /// 用 SysEmployee.RealName 修正（通过 EmployeeId JOIN，无 EmployeeId 时按 EmployeeCode 反查）。
     /// 用于"以人员清单的档案姓名的工号进行数据补充更正 关联"场景。
     /// v2.13.47 BUG 扩展：同时回填 EmployeeCode（人员清单为唯一真源，工号改了后历史 DormBooking.EmployeeCode 也需同步）。
+    /// v2.13.66 BUG 扩展：同时回填 Department（人员清单为唯一真源，部门改了后历史 DormBooking.Department 也需同步）。
     /// </summary>
     public async Task<ApiResponse<(int Updated, int Skipped, int NotFound)>> RepairBookingEmployeeNamesAsync()
     {
         var allBookings = await _db.DormBookings
             .Where(b => !string.IsNullOrEmpty(b.EmployeeCode))
-            .Select(b => new { b.Id, b.EmployeeId, b.EmployeeCode, b.EmployeeName })
+            .Select(b => new { b.Id, b.EmployeeId, b.EmployeeCode, b.EmployeeName, b.Department })
             .ToListAsync();
 
         if (allBookings.Count == 0)
@@ -350,7 +365,7 @@ public class BookingService : IBookingService
 
         var employees = await _db.Employees
             .Where(e => empIds.Contains(e.Id) || empCodes.Contains(e.EmployeeCode))
-            .Select(e => new { e.Id, e.EmployeeCode, e.RealName })
+            .Select(e => new { e.Id, e.EmployeeCode, e.RealName, e.Department })
             .ToListAsync();
 
         var byId = employees.ToDictionary(e => e.Id);
@@ -363,22 +378,25 @@ public class BookingService : IBookingService
             // v2.13.47：先按 EmployeeId 取人员，再按工号反查
             SysEmployeeLite? emp = null;
             if (b.EmployeeId > 0 && byId.TryGetValue(b.EmployeeId, out var byIdEmp))
-                emp = new SysEmployeeLite { Id = byIdEmp.Id, EmployeeCode = byIdEmp.EmployeeCode, RealName = byIdEmp.RealName };
+                emp = new SysEmployeeLite { Id = byIdEmp.Id, EmployeeCode = byIdEmp.EmployeeCode, RealName = byIdEmp.RealName, Department = byIdEmp.Department };
             else if (byCode.TryGetValue(b.EmployeeCode, out var byCodeEmp))
-                emp = new SysEmployeeLite { Id = byCodeEmp.Id, EmployeeCode = byCodeEmp.EmployeeCode, RealName = byCodeEmp.RealName };
+                emp = new SysEmployeeLite { Id = byCodeEmp.Id, EmployeeCode = byCodeEmp.EmployeeCode, RealName = byCodeEmp.RealName, Department = byCodeEmp.Department };
 
             if (emp is null) { notFound++; continue; }
 
             // v2.13.47：仅修正 RealName/EmployeeCode 都不一致的记录
+            // v2.13.66 BUG：扩展为 RealName/EmployeeCode/Department 任一不一致即更新
             bool nameChanged = !string.IsNullOrEmpty(emp.RealName) && !string.Equals(emp.RealName, b.EmployeeName, StringComparison.Ordinal);
             bool codeChanged = !string.IsNullOrEmpty(emp.EmployeeCode) && !string.Equals(emp.EmployeeCode, b.EmployeeCode, StringComparison.Ordinal);
-            if (!nameChanged && !codeChanged) { skipped++; continue; }
+            bool deptChanged = !string.IsNullOrEmpty(emp.Department) && !string.Equals(emp.Department, b.Department, StringComparison.Ordinal);
+            if (!nameChanged && !codeChanged && !deptChanged) { skipped++; continue; }
 
             // 找出原 booking 实体并更新
             var entity = await _db.DormBookings.FindAsync(b.Id);
             if (entity is null) continue;
             if (nameChanged) entity.EmployeeName = emp.RealName;
             if (codeChanged) entity.EmployeeCode = emp.EmployeeCode;
+            if (deptChanged) entity.Department = emp.Department;
             entity.UpdatedAt = DateTime.Now;
             affected.Add(entity);
             updated++;
@@ -392,12 +410,14 @@ public class BookingService : IBookingService
 
     /// <summary>
     /// v2.13.47：人员清单轻量 DTO（用于 Repair API 内部传递）
+    /// v2.13.66 BUG：扩展包含 Department
     /// </summary>
     private class SysEmployeeLite
     {
         public int Id { get; set; }
         public string EmployeeCode { get; set; } = "";
         public string RealName { get; set; } = "";
+        public string? Department { get; set; }
     }
 
     /// <inheritdoc/>
