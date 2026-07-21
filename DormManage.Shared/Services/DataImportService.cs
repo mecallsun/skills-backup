@@ -313,7 +313,7 @@ public class DataImportService
                 EmployeeTypeId = 1, // 默认合同工
                 EmployeeTypeText = "合同工",
                 TeamId = teamId,
-                Team = teamName,
+                // v2.13.78：移除冗余 Team 字符串字段赋值（DB 中无此列，依赖 FK 关联显示名称）
                 Gender = gender,
                 Phone = string.IsNullOrWhiteSpace(phone) ? null : phone,
                 EmploymentStatusId = EmployeeStatus.Active,

@@ -53,6 +53,7 @@ public class EditModel : PageModel
             .Include(e => e.EmployeeType)
             .Include(e => e.AttendanceType)
             .Include(e => e.ResidenceStatus)
+            .Include(e => e.Team)  // v2.13.78 BUG 修复：班组 FK 关联
             .FirstOrDefaultAsync(e => e.Id == Booking.EmployeeId);
 
         if (employee != null)
@@ -65,7 +66,8 @@ public class EditModel : PageModel
             Phone = employee.Phone;
             HireDate = employee.HireDate;
             LeaveDate = employee.LeaveDate;
-            Team = employee.Team;
+            // v2.13.78 BUG 修复：班组名称走 FK 关联（之前 employee.Team 字符串字段被 DbContext.Ignore，永远为 null）
+            Team = employee.Team?.Name;
             ResidenceStatusName = employee.ResidenceStatus?.Name;
 
             // v2.13.11 在职状态名称映射（改用 EmploymentStatusId 关联引用基础资料-在职状态表，避免废弃 Status 属性）

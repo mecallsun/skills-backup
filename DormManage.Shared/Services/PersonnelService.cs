@@ -90,11 +90,22 @@ public class PersonnelService : IPersonnelService
             query = query.Where(e => e.EmployeeTypeId == employeeTypeId.Value);
         if (employmentStatusId.HasValue)
             query = query.Where(e => e.EmploymentStatusId == employmentStatusId.Value);
+        // v2.13.78 BUG 修复：班组筛选走 FK 关联（DB 中无 Team 字符串列）；将名称解析为 TeamId 后匹配
         if (!string.IsNullOrWhiteSpace(team))
-            query = query.Where(e => e.Team == team);
+        {
+            var teamId = await _db.Teams
+                .Where(t => t.Name == team || t.Code == team)
+                .Select(t => (int?)t.Id)
+                .FirstOrDefaultAsync();
+            if (teamId.HasValue)
+                query = query.Where(e => e.TeamId == teamId.Value);
+            else
+                query = query.Where(e => false); // 班组名称无匹配 → 空结果
+        }
 
         var total = await query.CountAsync();
         var items = await query
+            .Include(e => e.Team)  // v2.13.78 BUG 修复：包含 Team 导航属性（Web UI + API 都依赖 .Team.Name 显示班组名称）
             .OrderBy(e => e.EmployeeCode)
             .Skip((page - 1) * pageSize).Take(pageSize)
             .ToListAsync();
@@ -115,8 +126,18 @@ public class PersonnelService : IPersonnelService
             query = query.Where(e => e.EmployeeCode.Contains(keyword) || e.RealName.Contains(keyword));
         if (!string.IsNullOrWhiteSpace(department))
             query = query.Where(e => e.Department == department);
+        // v2.13.78 BUG 修复：班组筛选走 FK 关联
         if (!string.IsNullOrWhiteSpace(team))
-            query = query.Where(e => e.Team == team);
+        {
+            var teamId = await _db.Teams
+                .Where(t => t.Name == team || t.Code == team)
+                .Select(t => (int?)t.Id)
+                .FirstOrDefaultAsync();
+            if (teamId.HasValue)
+                query = query.Where(e => e.TeamId == teamId.Value);
+            else
+                query = query.Where(e => false);
+        }
 
         var employees = await query.OrderBy(e => e.EmployeeCode).ToListAsync();
 

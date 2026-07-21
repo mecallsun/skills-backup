@@ -242,7 +242,7 @@ public class ImportModel : PageModel
                             EmployeeTypeId = employeeTypeId,
                             EmployeeTypeText = typeName,
                             TeamId = teamId,
-                            Team = teamName,
+                            // v2.13.78：移除冗余 Team 字符串字段赋值（DB 中无此列，依赖 FK 关联显示名称）
                             AttendanceTypeId = attendanceTypeId,
                             Phone = phone,
                             HireDate = hireDate,
@@ -267,7 +267,7 @@ public class ImportModel : PageModel
                         existing.EmployeeTypeId = employeeTypeId;
                         existing.EmployeeTypeText = typeName;
                         existing.TeamId = teamId;
-                        existing.Team = teamName;
+                        // v2.13.78：移除冗余 Team 字符串字段赋值
                         existing.AttendanceTypeId = attendanceTypeId;
                         existing.Phone = phone;
                         existing.HireDate = hireDate;

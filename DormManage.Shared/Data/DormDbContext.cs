@@ -270,7 +270,6 @@ public class DormDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Id).HasColumnName("EmployeeId"); // 真实 SQL Server 主键列名
             entity.Property(e => e.EmployeeTypeText).HasColumnName("EmployeeType").HasMaxLength(64); // 真实冗余列 EmployeeType(nvarchar)
-            entity.Ignore(e => e.Team); // 真实表无 Team 字符串列（仅 TeamId FK）；班组显示/筛选需改 TeamId 关联，属后续增强
             entity.Property(e => e.EmployeeCode).HasMaxLength(20).IsRequired();
             entity.Property(e => e.RealName).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Department).HasMaxLength(50);
@@ -287,6 +286,11 @@ public class DormDbContext : DbContext
             entity.HasOne(e => e.ResidenceStatus)
                   .WithMany()
                   .HasForeignKey(e => e.ResidenceStatusId)
+                  .OnDelete(DeleteBehavior.Restrict);
+            // v2.13.78 BUG 修复：班组 FK 关联引用基础资料-班组表 Team（之前 SysEmployee.Team 字符串字段被 Ignore，DTO 直接读永远为 null）
+            entity.HasOne(e => e.Team)
+                  .WithMany()
+                  .HasForeignKey(e => e.TeamId)
                   .OnDelete(DeleteBehavior.Restrict);
         });
 

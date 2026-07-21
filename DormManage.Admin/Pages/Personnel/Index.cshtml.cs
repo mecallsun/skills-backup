@@ -160,6 +160,7 @@ public class IndexModel : PageModel
         var query = _db.Employees
             .Include(e => e.EmployeeType)      // 员工类型 FK 关联
             .Include(e => e.AttendanceType)    // 考勤班次 FK 关联
+            .Include(e => e.Team)              // v2.13.78 BUG 修复：班组 FK 关联（之前缺 Include 导致班组列显示"-"）
             .AsQueryable();
 
         if (DepartmentId.HasValue)
@@ -220,7 +221,8 @@ public class IndexModel : PageModel
                 DormCode = e.DormCode ?? "-",
                 BedNo = e.BedNo ?? 0,
                 TeamId = e.TeamId,
-                TeamName = e.Team ?? "-",
+                // v2.13.78 BUG 修复：班组名称走 FK 关联（之前 e.Team 字符串字段被 DbContext.Ignore，永远为 null → 显示"-"）
+                TeamName = e.Team != null ? e.Team.Name : "-",
                 IsActive = e.IsActive
             })
             .ToListAsync();

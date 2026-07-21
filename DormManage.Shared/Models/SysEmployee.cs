@@ -60,6 +60,25 @@ public class SysEmployee : BaseEntity
     /// <summary>班组ID（对应真实表 TeamId，NOT NULL）</summary>
     public int TeamId { get; set; }
 
+    /// <summary>
+    /// 班组导航属性（v2.13.78 新增，对应基础资料-班组表 Team）
+    /// </summary>
+    /// <remarks>
+    /// EF Core [ForeignKey] 关联 → Team.Id
+    /// 引用本字段的业务场景：
+    /// - 人员清单列表（班组列显示 Team.Name，按 TeamId FK 关联）
+    /// - 人员清单筛选条件（班组下拉框）
+    /// - 任何其他需要展示"班组中文名"的页面
+    ///
+    /// v2.13.78 BUG 修复：原代码 DTO 直接读 SysEmployee.Team 字符串字段，
+    /// 但 DB 实际只有 TeamId（FK）+ DormDbContext 显式 Ignore(e.Team)，
+    /// 导致列表班组列永远显示 "-" 或字符串。
+    /// 修复：① 添加本导航属性；② DormDbContext 移除 Ignore；
+    ///      ③ Personnel/Index.cshtml.cs 加 .Include(e => e.Team) + DTO 读 FK 名称。
+    /// </remarks>
+    [ForeignKey(nameof(TeamId))]
+    public Team? Team { get; set; }
+
     /// <summary>性别（1=男 2=女，对应真实表 Gender，默认 1）</summary>
     public int Gender { get; set; } = 1;
 
@@ -128,12 +147,6 @@ public class SysEmployee : BaseEntity
     [MaxLength(20)]
     public int? BedNo { get; set; }
     public string? DormCode { get; set; }
-
-    /// <summary>
-    /// 班组（v2.13.3 补充字段，对应基础资料-班组表 Team 字符串）
-    /// </summary>
-    [MaxLength(20)]
-    public string? Team { get; set; }
 
     /// <summary>
     /// 住宿状态ID（v2.11.20 新增 FK 字段，引用基础资料-住宿状态表 ResidenceStatus.Id）
