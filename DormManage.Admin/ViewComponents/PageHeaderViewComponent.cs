@@ -65,6 +65,8 @@ public class PageAction
     public string? Icon { get; set; }
     public string? Style { get; set; } = "primary"; // primary/secondary/success/danger/warning
     public string? OnClick { get; set; }
+    /// <summary>v2.13.76 RBAC：权限码（拥有该权限才渲染按钮）。空/不设置 → 始终显示</summary>
+    public string? PermissionCode { get; set; }
 }
 
 public class TabItem

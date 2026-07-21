@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "JA16Ck3K8gE=",
+  "success": true,
+  "projectFilePath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\bcrypt-hash-gen\\bcrypt-hash-gen.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Mecall\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

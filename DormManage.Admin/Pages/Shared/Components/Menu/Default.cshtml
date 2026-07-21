@@ -1,64 +1,43 @@
+@model DormManage.Admin.ViewComponents.MenuViewModel
 @using DormManage.Admin.Services
-@model (List<AuthHelperExtensions.MenuNode> TopMenus, List<AuthHelperExtensions.MenuNode> AllMenus)
 @{
     var topMenus = Model.TopMenus ?? new List<AuthHelperExtensions.MenuNode>();
-    var allMenus = Model.AllMenus ?? new List<AuthHelperExtensions.MenuNode>();
-    var currentPath = Context.Request.Path.Value?.TrimEnd('/') ?? "/";
+    var currentPath = (Model.CurrentPath ?? "").TrimEnd('/');
+
+    // v2.13.76 RBAC：仅当用户拥有该菜单权限时才渲染 tab。
+    // IAuthService.GetUserMenusAsync 已自动补齐父级（子菜单有权限 → 父级可见）。
+    string IconClass(string icon) =>
+        !string.IsNullOrWhiteSpace(icon) ? icon : "bi-circle";
+    bool IsActive(string? route)
+    {
+        if (string.IsNullOrWhiteSpace(route)) return false;
+        var r = route.TrimEnd('/');
+        if (string.Equals(r, "/", StringComparison.OrdinalIgnoreCase))
+            return currentPath == "/" || currentPath == "";
+        return currentPath == r || currentPath.StartsWith(r + "/", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
-<ul class="navbar-nav me-auto">
-    @if (topMenus.Any())
+@if (topMenus.Any())
+{
+    @foreach (var menu in topMenus.OrderBy(m => m.SortOrder).ThenBy(m => m.Id))
     {
-        @foreach (var menu in topMenus)
-        {
-            var children = allMenus.Where(m => m.ParentId == menu.Id).ToList();
-            if (children.Any())
-            {
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        @if (!string.IsNullOrWhiteSpace(menu.Icon))
-                        {
-                            <i class="bi @menu.Icon"></i>
-                        }
-                        @menu.PermissionName
-                    </a>
-                    <ul class="dropdown-menu">
-                        @foreach (var child in children)
-                        {
-                            <li>
-                                <a class="dropdown-item" href="@child.Route">
-                                    @if (!string.IsNullOrWhiteSpace(child.Icon))
-                                    {
-                                        <i class="bi @child.Icon me-2"></i>
-                                    }
-                                    @child.PermissionName
-                                </a>
-                            </li>
-                        }
-                    </ul>
-                </li>
-            }
-            else
-            {
-                var isActive = string.Equals(currentPath, menu.Route?.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
-                <li class="nav-item">
-                    <a class="nav-link @(isActive ? "active" : "")" href="@menu.Route">
-                        @if (!string.IsNullOrWhiteSpace(menu.Icon))
-                        {
-                            <i class="bi @menu.Icon"></i>
-                        }
-                        @menu.PermissionName
-                    </a>
-                </li>
-            }
-        }
+        var isActive = IsActive(menu.Route);
+        <a class="tab-item @(isActive ? "active" : "")"
+           data-tab-id="tab-@menu.PermissionCode.Replace(":", "-")"
+           data-module="@menu.PermissionCode"
+           data-url="@menu.Route"
+           href="@menu.Route"
+           data-permission="@menu.PermissionCode"
+           title="@menu.PermissionName">
+            <i class="bi @IconClass(menu.Icon) tab-icon"></i> @menu.PermissionName
+        </a>
     }
-    else
-    {
-        <li class="nav-item">
-            <span class="nav-link text-warning">
-                <i class="bi bi-exclamation-triangle"></i> 无可见菜单（请联系管理员分配权限）
-            </span>
-        </li>
-    }
-</ul>
+}
+else
+{
+    @* v2.13.76：用户没有任何菜单权限时给提示 *@
+    <span class="tab-item text-warning" style="cursor:default;opacity:0.7;">
+        <i class="bi bi-exclamation-triangle tab-icon"></i> 无可见菜单（请联系管理员分配权限）
+    </span>
+}

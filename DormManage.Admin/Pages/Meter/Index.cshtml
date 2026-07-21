@@ -18,10 +18,10 @@
         title = "抄表记录",
         count = Model.Total,
         countLabel = "条",
-        primaryAction = new PageAction { Label = "新增记录", OnClick = "showAddModal()", Icon = "bi-plus-lg", Style = "success" },
+        primaryAction = new PageAction { Label = "新增记录", OnClick = "showAddModal()", Icon = "bi-plus-lg", Style = "success", PermissionCode = "meter:entry" },
         actions = new List<PageAction> {
-            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "primary" },
-            new() { Label = "批量导入", OnClick = "showBatchImportModal()", Icon = "bi-upload", Style = "info" },
+            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "primary", PermissionCode = "meter:entry" },
+            new() { Label = "批量导入", OnClick = "showBatchImportModal()", Icon = "bi-upload", Style = "info", PermissionCode = "meter:import" },
             new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "success" }
         }
     })

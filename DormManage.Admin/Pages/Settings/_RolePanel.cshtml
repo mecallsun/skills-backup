@@ -221,12 +221,27 @@
                                     <div class="card-body py-2">
                                         @foreach (var perm in group.Items)
                                         {
-                                            <div class="form-check">
+                                            <div class="form-check @(perm.ParentId == 0 ? "perm-row-top" : "perm-row-child")">
                                                 <input class="form-check-input perm-cb" type="checkbox"
                                                        name="PermissionIds" value="@perm.Id" id="perm_@perm.Id"
-                                                       data-role-id="">
-                                                <label class="form-check-label small" for="perm_@perm.Id">
+                                                       data-role-id=""
+                                                       data-parent-id="@perm.ParentId"
+                                                       data-perm-type="@perm.PermissionType"
+                                                       data-perm-code="@perm.PermissionCode">
+                                                <label class="form-check-label small @(perm.ParentId == 0 ? "fw-bold" : "")" for="perm_@perm.Id">
                                                     @perm.PermissionName
+                                                    @if (perm.PermissionType == 1)
+                                                    {
+                                                        <span class="badge bg-primary ms-1">菜单</span>
+                                                    }
+                                                    else if (perm.PermissionType == 2)
+                                                    {
+                                                        <span class="badge bg-secondary ms-1">按钮</span>
+                                                    }
+                                                    else if (perm.PermissionType == 3)
+                                                    {
+                                                        <span class="badge bg-info ms-1">数据</span>
+                                                    }
                                                 </label>
                                             </div>
                                         }

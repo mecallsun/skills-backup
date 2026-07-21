@@ -89,6 +89,24 @@
 </head>
 <body>
     <div class="login-card">
+        @* v2.13.76 RBAC：被 PagePermissionFilter 拒绝访问后，重定向到登录页带 denied=1&from=... *@
+        @{
+            var hasDenied = ViewContext.HttpContext.Request.Query.ContainsKey("denied");
+            var fromPath = hasDenied ? ViewContext.HttpContext.Request.Query["from"].ToString() : "";
+        }
+        @if (hasDenied)
+        {
+            <div class="alert alert-warning alert-dismissible fade show m-3 mb-0" role="alert" style="border-radius:12px 12px 0 0;">
+                <i class="bi bi-shield-exclamation me-2"></i>
+                <strong>无访问权限</strong> — 您当前账号无权访问
+                @if (!string.IsNullOrEmpty(fromPath))
+                {
+                    <code>@fromPath</code>
+                }
+                ，如需访问请联系管理员在「系统设置 → 角色权限」中分配对应权限。
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
         <div class="login-header">
             <i class="bi bi-house-door"></i>
             <h3>金戈宿舍管理系统</h3>

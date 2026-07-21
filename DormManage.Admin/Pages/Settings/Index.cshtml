@@ -977,7 +977,40 @@
                 const cb = document.getElementById('perm_' + pid);
                 if (cb) cb.checked = true;
             });
+            // v2.13.76 RBAC：挂载子→父级联（按钮任一勾选 → 上级菜单必须勾选；父菜单反选时若子全未选也可反选）
+            wirePermMatrixCascade();
             new bootstrap.Modal(document.getElementById('permMatrixModal')).show();
+        }
+
+        // v2.13.76 RBAC 自动级联：父菜单（PermissionType=1 / data-parent-id=0）保持其状态；
+        // 子权限（PermissionType=2 / data-parent-id > 0）任一被勾选时，其父菜单必须勾选；
+        // 父菜单反选时，其下子权限应自动取消（一致性）。
+        function wirePermMatrixCascade() {
+            document.querySelectorAll('.perm-cb').forEach(cb => {
+                if (cb.dataset.cascadeWired === '1') return;
+                cb.dataset.cascadeWired = '1';
+                cb.addEventListener('change', onPermCbChange);
+            });
+        }
+
+        function onPermCbChange(e) {
+            const cb = e.currentTarget;
+            const permType = parseInt(cb.dataset.permType || '0', 10);
+            const parentId = parseInt(cb.dataset.parentId || '0', 10);
+            // 子权限（按钮/数据）勾选 → 上级菜单（ParentId）必须勾选
+            if (cb.checked && parentId > 0) {
+                const parentCb = document.querySelector('.perm-cb[data-parent-id="0"][value="' + parentId + '"]')
+                    || document.getElementById('perm_' + parentId);
+                if (parentCb && !parentCb.checked) parentCb.checked = true;
+            }
+            // 父菜单反选 → 其下所有子权限自动取消（避免父无权但子有权的不一致状态）
+            if (!cb.checked && permType === 1 && parentId === 0) {
+                const myValue = cb.value;
+                document.querySelectorAll('.perm-cb[data-parent-id="' + myValue + '"]').forEach(child => {
+                    child.checked = false;
+                });
+            }
+            // 父菜单勾选 → 不级联子（子独立授权，避免越权默认开启）
         }
 
         function selectAllPerms(checked) {

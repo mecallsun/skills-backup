@@ -19,11 +19,11 @@
         count = Model.Total,
         countLabel = "条",
         // v2.13.36: 改为跳转到独立窗口 /Booking/CheckIn（1:1 克隆原型 booking/check-in.html 为独立 Razor Page）
-        primaryAction = new PageAction { Label = "办理入住", Url = "/Booking/CheckIn", Icon = "bi-box-arrow-in-right", Style = "success" },
+        primaryAction = new PageAction { Label = "办理入住", Url = "/Booking/CheckIn", Icon = "bi-box-arrow-in-right", Style = "success", PermissionCode = "booking:checkin" },
         actions = new List<PageAction> {
             // v2.13.36: 退房已合并到 /Booking/CheckIn 独立页面的「操作类型 = 退房」radio 切换（1:1 对齐原型），PageHeader 不再单独显示"办理退房"按钮
             // v2.13.32-hotfix BUG #2: 一键修复 DormBooking.EmployeeName 与档案 RealName 的关联（按工号反查人员清单）
-            new() { Label = "修复姓名关联", OnClick = "repairEmployeeNames()", Icon = "bi-arrow-repeat", Style = "warning" },
+            new() { Label = "修复姓名关联", OnClick = "repairEmployeeNames()", Icon = "bi-arrow-repeat", Style = "warning", PermissionCode = "booking:checkin" },
             // v2.13.38: 导出走真实 API（GET /api/v1/bookings/export），JS 携带当前筛选参数
             new() { Label = "导出", OnClick = "exportExcel()", Icon = "bi-download", Style = "secondary" }
         }
@@ -172,48 +172,56 @@
                                     <td class="text-center"><small class="text-muted">@item.Registrar</small></td>
                                     <td class="text-center"><small class="text-muted">@item.RegistrationDate.ToString("yyyy-MM-dd HH:mm")</small></td>
                                     <td class="text-center">
-                                        @* v2.11.12 操作列顺序：修改 → 撤销退房(v2.11.10) → 入住 → 退房 → 撤销预约(v2.11.11，最右侧) *@
-                                        @if (item.Status == 1)
+                                        @* v2.13.76 RBAC：操作按钮按权限过滤（booking:checkin 即可触发入住/退房相关动作；booking:view 默认持有） *@
+                                        @if (await Html.HasPermissionAsync("booking:checkin"))
                                         {
-                                            <a href="/Booking/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
+                                            @* v2.11.12 操作列顺序：修改 → 撤销退房(v2.11.10) → 入住 → 退房 → 撤销预约(v2.11.11，最右侧) *@
+                                            @if (item.Status == 1)
+                                            {
+                                                <a href="/Booking/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-outline-secondary" disabled title="仅预约状态可修改">修改</button>
+                                            }
+                                            @* v2.11.10 新增：撤销退房按钮（仅 BookingDate=今天 && Status=3 已退房 时显示，位于修改按钮右侧） *@
+                                            @if (item.BookingDate == DateOnly.FromDateTime(DateTime.Today) && item.Status == 3)
+                                            {
+                                                <button class="btn btn-sm btn-outline-info" onclick="undoCheckout(@item.Id)">撤销</button>
+                                            }
+                                            @* v2.11.8 新增：入住快速确认按钮（仅 Type=1 入住 && Status=1 预约时显示） *@
+                                            @if (item.Type == 1 && item.Status == 1)
+                                            {
+                                                <button class="btn btn-sm btn-outline-success" onclick="confirmCheckin(@item.Id)">入住</button>
+                                            }
+                                            @* v2.11.12 退房按钮扩展：Status=2 在宿（既有）或 Type=2 退房 && Status=1 预约（新增） *@
+                                            @if (item.Status == 2)
+                                            {
+                                                <button class="btn btn-sm btn-outline-warning" onclick="checkOut(@item.Id)">退房</button>
+                                            }
+                                            else if (item.Type == 2 && item.Status == 1)
+                                            {
+                                                <button class="btn btn-sm btn-outline-warning" onclick="confirmCheckout(@item.Id)">退房</button>
+                                            }
+                                            @* v2.11.17 新增：撤销在宿按钮（仅 Type=1 入住 && Status=2 在宿 && BookingDate=今天 时显示） *@
+                                            @if (item.Type == 1 && item.Status == 2 && item.BookingDate == DateOnly.FromDateTime(DateTime.Today))
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" onclick="cancelToday(@item.Id)">撤销在宿</button>
+                                            }
+                                            @* v2.11.11 新增：撤销预约按钮（仅 Status=1 预约时显示，位置在操作列最右侧） *@
+                                            @if (item.Status == 1)
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(@item.Id)">撤销</button>
+                                            }
+                                            @* v2.13.24 新增：删除按钮（仅预约/已取消状态；07-办理登记需求 §6.3 R-BOOK） *@
+                                            @if (item.Status == 1 || item.Status == 4)
+                                            {
+                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(@item.Id)" title="删除该办理登记记录">删除</button>
+                                            }
                                         }
                                         else
                                         {
-                                            <button class="btn btn-sm btn-outline-secondary" disabled title="仅预约状态可修改">修改</button>
-                                        }
-                                        @* v2.11.10 新增：撤销退房按钮（仅 BookingDate=今天 && Status=3 已退房 时显示，位于修改按钮右侧） *@
-                                        @if (item.BookingDate == DateOnly.FromDateTime(DateTime.Today) && item.Status == 3)
-                                        {
-                                            <button class="btn btn-sm btn-outline-info" onclick="undoCheckout(@item.Id)">撤销</button>
-                                        }
-                                        @* v2.11.8 新增：入住快速确认按钮（仅 Type=1 入住 && Status=1 预约时显示） *@
-                                        @if (item.Type == 1 && item.Status == 1)
-                                        {
-                                            <button class="btn btn-sm btn-outline-success" onclick="confirmCheckin(@item.Id)">入住</button>
-                                        }
-                                        @* v2.11.12 退房按钮扩展：Status=2 在宿（既有）或 Type=2 退房 && Status=1 预约（新增） *@
-                                        @if (item.Status == 2)
-                                        {
-                                            <button class="btn btn-sm btn-outline-warning" onclick="checkOut(@item.Id)">退房</button>
-                                        }
-                                        else if (item.Type == 2 && item.Status == 1)
-                                        {
-                                            <button class="btn btn-sm btn-outline-warning" onclick="confirmCheckout(@item.Id)">退房</button>
-                                        }
-                                        @* v2.11.17 新增：撤销在宿按钮（仅 Type=1 入住 && Status=2 在宿 && BookingDate=今天 时显示） *@
-                                        @if (item.Type == 1 && item.Status == 2 && item.BookingDate == DateOnly.FromDateTime(DateTime.Today))
-                                        {
-                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelToday(@item.Id)">撤销在宿</button>
-                                        }
-                                        @* v2.11.11 新增：撤销预约按钮（仅 Status=1 预约时显示，位置在操作列最右侧） *@
-                                        @if (item.Status == 1)
-                                        {
-                                            <button class="btn btn-sm btn-outline-danger" onclick="cancelReservation(@item.Id)">撤销</button>
-                                        }
-                                        @* v2.13.24 新增：删除按钮（仅预约/已取消状态；07-办理登记需求 §6.3 R-BOOK） *@
-                                        @if (item.Status == 1 || item.Status == 4)
-                                        {
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteBooking(@item.Id)" title="删除该办理登记记录">删除</button>
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
                                         }
                                     </td>
                                 </tr>

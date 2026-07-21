@@ -18,8 +18,8 @@
         title = "宿舍档案",
         count = Model.Total,
         countLabel = "间",
-        primaryAction = new PageAction { Label = "新增宿舍", OnClick = "openDormModal(0)", Icon = "bi-plus-lg", Style = "success" },
-        actions = new List<PageAction> { new() { Label = "新窗口新增", Icon = "bi-box-arrow-up-right", Url = "/Dorms/Create", Style = "secondary" } }
+        primaryAction = new PageAction { Label = "新增宿舍", OnClick = "openDormModal(0)", Icon = "bi-plus-lg", Style = "success", PermissionCode = "dorm:create" },
+        actions = new List<PageAction> { new() { Label = "新窗口新增", Icon = "bi-box-arrow-up-right", Url = "/Dorms/Create", Style = "secondary", PermissionCode = "dorm:create" } }
     })
 
     <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->

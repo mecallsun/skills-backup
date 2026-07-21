@@ -19,9 +19,9 @@
         title = "人员清单",
         count = Model.Total,
         countLabel = "人",
-        primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success" },
+        primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "personnel:import" },
         actions = new List<PageAction> {
-            new() { Label = "导入", Url = "/Personnel/Import", Icon = "bi-upload", Style = "info" },
+            new() { Label = "导入", Url = "/Personnel/Import", Icon = "bi-upload", Style = "info", PermissionCode = "personnel:import" },
             new() { Label = "导出", OnClick = "location.href='/api/v1/personnel/export'", Icon = "bi-file-earmark-excel", Style = "success" }
         }
     })

@@ -38,6 +38,8 @@ builder.Services.AddRazorPages(options =>
 {
     // v2.13.29: Razor Pages 全局异常过滤器
     options.Filters.Add<GlobalExceptionFilter>();
+    // v2.13.76 RBAC：Razor Pages 路由级权限守卫（IAsyncPageFilter，DI 解析）
+    options.Filters.Add(new Microsoft.AspNetCore.Mvc.ServiceFilterAttribute(typeof(PagePermissionFilter)));
 });
 
 // v2.13.0: Cookie 认证配置
@@ -139,6 +141,8 @@ builder.Services.AddScoped<IBillingService, BillingService>();              // v
 builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService>();  // v2.13.12: 用户筛选条件云端缓存
 builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13.26: 个人中心与账号安全
 builder.Services.AddScoped<IOperationLogService, OperationLogService>();  // v2.13.29: 统一操作日志
+builder.Services.AddScoped<IPermissionService, PermissionService>();  // v2.13.76 RBAC 三级权限控制
+builder.Services.AddScoped<PagePermissionFilter>();                    // v2.13.76 Razor Pages 路由级权限守卫
 
 // v2.13.0: 认证服务
 builder.Services.AddScoped<DormManage.Admin.Services.IAuthService, DormManage.Admin.Services.AuthService>();

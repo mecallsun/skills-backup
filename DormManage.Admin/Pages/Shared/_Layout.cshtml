@@ -356,48 +356,9 @@
         </div>
     </div>
 
-    <!-- Tier 2: Tab 页签栏（10 个固定菜单 Tab） -->
+    <!-- Tier 2: Tab 页签栏（v2.13.76 RBAC 三级权限控制：按当前用户权限过滤） -->
     <div class="tab-bar" role="tablist">
-        <a class="tab-item @(Context.Request.Path == "/" || Context.Request.Path == "" ? "active" : "")"
-           data-tab-id="tab-home" data-module="home" data-url="/" href="/">
-            <i class="bi bi-speedometer2 tab-icon"></i> 首页
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Booking") ? "active" : "")"
-           data-tab-id="tab-booking" data-module="booking" data-url="/Booking" href="/Booking">
-            <i class="bi bi-clipboard-check tab-icon"></i> 办理登记
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Dorms") ? "active" : "")"
-           data-tab-id="tab-dorms" data-module="dorms" data-url="/Dorms" href="/Dorms">
-            <i class="bi bi-building tab-icon"></i> 宿舍管理
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Personnel") ? "active" : "")"
-           data-tab-id="tab-personnel" data-module="personnel" data-url="/Personnel" href="/Personnel">
-            <i class="bi bi-people-fill tab-icon"></i> 人员清单
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/BillingStandard") ? "active" : "")"
-           data-tab-id="tab-billing" data-module="billing" data-url="/BillingStandard" href="/BillingStandard">
-            <i class="bi bi-cash-stack tab-icon"></i> 费用标准
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/DormBilling") ? "active" : "")"
-           data-tab-id="tab-dorm-bills" data-module="dorm-bills" data-url="/DormBilling" href="/DormBilling">
-            <i class="bi bi-receipt tab-icon"></i> 宿舍账单
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/EmployeeBilling") ? "active" : "")"
-           data-tab-id="tab-employee-bills" data-module="employee-bills" data-url="/EmployeeBilling" href="/EmployeeBilling">
-            <i class="bi bi-wallet2 tab-icon"></i> 员工账单
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Meter") ? "active" : "")"
-           data-tab-id="tab-meter" data-module="meter" data-url="/Meter" href="/Meter">
-            <i class="bi bi-clipboard-data tab-icon"></i> 抄表记录
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Basics") ? "active" : "")"
-           data-tab-id="tab-basics" data-module="basics" data-url="/Basics" href="/Basics">
-            <i class="bi bi-database tab-icon"></i> 基础资料
-        </a>
-        <a class="tab-item @(Context.Request.Path.StartsWithSegments("/Settings") ? "active" : "")"
-           data-tab-id="tab-settings" data-module="settings" data-url="/Settings" href="/Settings">
-            <i class="bi bi-gear tab-icon"></i> 系统设置
-        </a>
+        @await Component.InvokeAsync("Menu")
     </div>
 
     <!-- Tier 3: 页面内容区 -->
