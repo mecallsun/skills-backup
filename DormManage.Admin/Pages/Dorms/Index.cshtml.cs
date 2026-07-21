@@ -80,29 +80,60 @@ public class IndexModel : PageModel
         }
 
         var totalCount = await query.CountAsync();
-        var items = await query
+        var dormList = await query
             .OrderBy(d => d.DormCode)
             .Skip((PageIndex - 1) * PageSize)
             .Take(PageSize)
-            .Select(d => new DormDto
-            {
-                Id = d.Id,
-                DormCode = d.DormCode,
-                BuildingName = d.BuildingName ?? "",
-                FloorNo = d.FloorId,
-                AddressText = d.AddressText ?? "",
-                RoomCount = d.RoomCount,
-                Capacity = d.Capacity,
-                Gender = d.Gender,
-                CurrentCount = _db.DormBookings.Count(b => b.DormCode == d.DormCode && b.Status == 2),
-                IsActive = d.IsActive,
-                HasBookingHistory = _db.DormBookings.Any(b => b.DormCode == d.DormCode)
-            })
             .ToListAsync();
 
-        // v2.12.41 计算 CanDelete：仅当当前无在宿人员 且 无办理登记历史时才允许删除
+        // v2.13.85 派生性别（基于当前在宿人员实时计算）
+        // JOIN DormBookings(Status=2) → SysEmployee 拿男女人数
+        var dormCodes = dormList.Select(d => d.DormCode).ToList();
+        var genderStats = await _db.DormBookings
+            .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.Gender })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                MaleCount = g.Count(x => x.Gender == 1),
+                FemaleCount = g.Count(x => x.Gender == 2)
+            })
+            .ToDictionaryAsync(x => x.DormCode);
+
+        var items = dormList.Select(d => new DormDto
+        {
+            Id = d.Id,
+            DormCode = d.DormCode,
+            BuildingName = d.BuildingName ?? "",
+            FloorNo = d.FloorId,
+            AddressText = d.AddressText ?? "",
+            RoomCount = d.RoomCount,
+            Capacity = d.Capacity,
+            Gender = d.Gender,
+            CurrentCount = _db.DormBookings.Count(b => b.DormCode == d.DormCode && b.Status == 2),
+            IsActive = d.IsActive,
+            HasBookingHistory = _db.DormBookings.Any(b => b.DormCode == d.DormCode),
+            // v2.13.85 派生性别字段
+            MaleCount = genderStats.GetValueOrDefault(d.DormCode)?.MaleCount ?? 0,
+            FemaleCount = genderStats.GetValueOrDefault(d.DormCode)?.FemaleCount ?? 0
+        }).ToList();
+
+        // v2.13.85 计算 EffectiveGender 派生：男>0=1 / 女>0=2 / 空房间=0
         foreach (var item in items)
         {
+            if (item.MaleCount > 0 && item.FemaleCount > 0)
+            {
+                // 极端情况（理论上 v2.13.84 后不会发生）→ 取多数
+                item.EffectiveGender = item.MaleCount >= item.FemaleCount ? 1 : 2;
+            }
+            else if (item.MaleCount > 0) item.EffectiveGender = 1;
+            else if (item.FemaleCount > 0) item.EffectiveGender = 2;
+            else item.EffectiveGender = 0;
+
+            // v2.12.41 计算 CanDelete：仅当当前无在宿人员 且 无办理登记历史时才允许删除
             item.CanDelete = (item.CurrentCount == 0 && !item.HasBookingHistory);
         }
 
@@ -162,4 +193,14 @@ public class DormDto
     public bool HasBookingHistory { get; set; }
     /// <summary>是否可删除（v2.12.41）</summary>
     public bool CanDelete { get; set; }
+
+    // ========== v2.13.85 派生性别字段 ==========
+    /// <summary>当前在宿男员工数（实时派生）</summary>
+    public int MaleCount { get; set; }
+    /// <summary>当前在宿女员工数（实时派生）</summary>
+    public int FemaleCount { get; set; }
+    /// <summary>派生性别（v2.13.85）：男>0=1 / 女>0=2 / 空房间=0（不限）</summary>
+    public int EffectiveGender { get; set; }
+    /// <summary>派生性别中文名（"男" / "女" / "无"）</summary>
+    public string EffectiveGenderName => EffectiveGender == 1 ? "男" : EffectiveGender == 2 ? "女" : "无";
 }

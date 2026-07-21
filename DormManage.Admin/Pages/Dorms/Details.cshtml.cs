@@ -73,6 +73,21 @@ public class DetailsModel : PageModel
             CurrentCount = await _db.DormBookings.CountAsync(b => b.DormCode == dorm.DormCode && b.Status == 2)
         };
 
+        // v2.13.85 派生性别：JOIN DormBookings(Status=2) → SysEmployee 拿男女人数
+        var genderStats2 = await _db.DormBookings
+            .Where(b => b.DormCode == dorm.DormCode && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => e.Gender)
+            .GroupBy(g => 1)
+            .Select(g => new { MaleCount = g.Count(x => x == 1), FemaleCount = g.Count(x => x == 2) })
+            .FirstOrDefaultAsync();
+        int male = genderStats2?.MaleCount ?? 0;
+        int female = genderStats2?.FemaleCount ?? 0;
+        Dorm.EffectiveGender = male > 0 ? 1 : (female > 0 ? 2 : 0);
+        Dorm.MaleCount = male;
+        Dorm.FemaleCount = female;
+
         // 当前入住人员
         var currentBookings = await _db.DormBookings
             .Where(b => b.DormCode == dorm.DormCode && b.Status == 2)
@@ -177,6 +192,12 @@ public class DormDetailDto
     public int Gender { get; set; }
     public string? Remark { get; set; }
     public bool IsActive { get; set; }
+
+    // ========== v2.13.85 派生性别字段 ==========
+    public int MaleCount { get; set; }
+    public int FemaleCount { get; set; }
+    public int EffectiveGender { get; set; }
+    public string EffectiveGenderName => EffectiveGender == 1 ? "男" : EffectiveGender == 2 ? "女" : "无";
     public int CurrentCount { get; set; }
 }
 

@@ -142,13 +142,15 @@ public class PersonnelService : IPersonnelService
         var employees = await query.OrderBy(e => e.EmployeeCode).ToListAsync();
 
         var sb = new StringBuilder();
-        // 标题行
-        sb.AppendLine("工号,姓名,部门,员工类型,入职日期,离职日期,考勤班次,联系电话,备注");
+        // v2.13.83：标题行增加「性别」列作为第 3 列
+        sb.AppendLine("工号,姓名,性别,部门,员工类型,入职日期,离职日期,考勤班次,联系电话,备注");
 
         foreach (var e in employees)
         {
             sb.Append(EscapeCsv(e.EmployeeCode)).Append(',');
             sb.Append(EscapeCsv(e.RealName)).Append(',');
+            // v2.13.83 性别列：1=男, 2=女, 其他=未知
+            sb.Append(e.Gender == 1 ? "男" : (e.Gender == 2 ? "女" : "未知")).Append(',');
             sb.Append(EscapeCsv(e.Department ?? "")).Append(',');
             sb.Append(e.EmployeeTypeId.ToString()).Append(',');
             sb.Append(e.HireDate?.ToString("yyyy-MM-dd") ?? "").Append(',');
@@ -179,6 +181,7 @@ public class PersonnelService : IPersonnelService
         int Col(string name) => Array.FindIndex(headers, h => h.Trim().Equals(name, StringComparison.OrdinalIgnoreCase));
         var idxEmpCode = Col("工号");
         var idxName = Col("姓名");
+        var idxGender = Col("性别");  // v2.13.83 新增：性别列（可选）
         var idxDept = Col("部门");
         var idxTypeId = Col("员工类型");
         var idxHire = Col("入职日期");
@@ -214,6 +217,14 @@ public class PersonnelService : IPersonnelService
                 DateOnly? leave = TryParseDate(cols, idxLeave);
                 int? typeId = TryParseInt(cols, idxTypeId);
                 int? attId = TryParseInt(cols, idxAttendance);
+                // v2.13.83 性别解析：支持「男/女」中文或「1/2」数字
+                int gender = 1;
+                if (idxGender >= 0 && idxGender < cols.Length)
+                {
+                    var gStr = cols[idxGender].Trim();
+                    if (gStr == "男" || gStr == "1") gender = 1;
+                    else if (gStr == "女" || gStr == "2") gender = 2;
+                }
 
                 if (existing.TryGetValue(empCode, out var emp))
                 {
@@ -226,6 +237,7 @@ public class PersonnelService : IPersonnelService
                     if (attId.HasValue) emp.AttendanceTypeId = attId;
                     if (idxPhone >= 0) emp.Phone = Get(cols, idxPhone);
                     if (idxRemark >= 0) emp.Remark = Get(cols, idxRemark);
+                    emp.Gender = gender;  // v2.13.83 同步性别
                     emp.UpdatedAt = DateTime.Now;
                     result.UpdateCount++;
                 }
@@ -236,6 +248,7 @@ public class PersonnelService : IPersonnelService
                     {
                         EmployeeCode = empCode,
                         RealName = name,
+                        Gender = gender,  // v2.13.83
                         Department = idxDept >= 0 ? Get(cols, idxDept) : null,
                         EmployeeTypeId = typeId ?? 1,
                         HireDate = hire,

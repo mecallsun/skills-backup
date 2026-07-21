@@ -41,8 +41,8 @@ public class ImportModel : PageModel
     {
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("人员清单");
-        // v2.13.40：11 列与 personnel/import.html 原型 + Razor 文案一致
-        string[] headers = { "工号", "姓名", "部门", "员工类型", "考勤班次", "班组", "手机号", "入职日期", "离职日期", "房号", "备注" };
+        // v2.13.83：12 列（含「性别」作为第 3 列），与 personnel/import.html 原型 + Razor 文案一致
+        string[] headers = { "工号", "姓名", "性别", "部门", "员工类型", "考勤班次", "班组", "手机号", "入职日期", "离职日期", "房号", "备注" };
         for (int i = 0; i < headers.Length; i++)
         {
             ws.Cell(1, i + 1).Value = headers[i];
@@ -53,15 +53,16 @@ public class ImportModel : PageModel
         // 示例行（参考）
         ws.Cell(2, 1).Value = "EMP-2026-001";
         ws.Cell(2, 2).Value = "张三";
-        ws.Cell(2, 3).Value = "生产部";
-        ws.Cell(2, 4).Value = "合同工";
-        ws.Cell(2, 5).Value = "早班";
-        ws.Cell(2, 6).Value = "A班";
-        ws.Cell(2, 7).Value = "13800138000";
-        ws.Cell(2, 8).Value = "2026-01-15";
-        ws.Cell(2, 9).Value = "";
-        ws.Cell(2, 10).Value = "D-301";
-        ws.Cell(2, 11).Value = "示例备注";
+        ws.Cell(2, 3).Value = "男";  // v2.13.83 性别示例
+        ws.Cell(2, 4).Value = "生产部";
+        ws.Cell(2, 5).Value = "合同工";
+        ws.Cell(2, 6).Value = "早班";
+        ws.Cell(2, 7).Value = "A班";
+        ws.Cell(2, 8).Value = "13800138000";
+        ws.Cell(2, 9).Value = "2026-01-15";
+        ws.Cell(2, 10).Value = "";
+        ws.Cell(2, 11).Value = "D-301";
+        ws.Cell(2, 12).Value = "示例备注";
         ws.Range(2, 1, 2, headers.Length).Style.Fill.BackgroundColor = XLColor.LightYellow;
 
         ws.Columns().AdjustToContents();
@@ -126,18 +127,27 @@ public class ImportModel : PageModel
                 result.TotalRows++;
                 try
                 {
-                    // v2.13.40：11 列字段映射
+                    // v2.13.83：12 列字段映射（含「性别」作为第 3 列）
                     var empNo = ws.Cell(row, 1).GetString().Trim();
                     var name = ws.Cell(row, 2).GetString().Trim();
-                    var deptName = ws.Cell(row, 3).GetString().Trim();
-                    var typeName = ws.Cell(row, 4).GetString().Trim();
-                    var attName = ws.Cell(row, 5).GetString().Trim();
-                    var teamName = ws.Cell(row, 6).GetString().Trim();
-                    var phone = ws.Cell(row, 7).GetString().Trim();
-                    var hireDateStr = ws.Cell(row, 8).GetString().Trim();
-                    var leaveDateStr = ws.Cell(row, 9).GetString().Trim();
-                    var dormCode = ws.Cell(row, 10).GetString().Trim();
-                    var remark = ws.Cell(row, 11).GetString().Trim();
+                    var genderStr = ws.Cell(row, 3).GetString().Trim();
+                    var deptName = ws.Cell(row, 4).GetString().Trim();
+                    var typeName = ws.Cell(row, 5).GetString().Trim();
+                    var attName = ws.Cell(row, 6).GetString().Trim();
+                    var teamName = ws.Cell(row, 7).GetString().Trim();
+                    var phone = ws.Cell(row, 8).GetString().Trim();
+                    var hireDateStr = ws.Cell(row, 9).GetString().Trim();
+                    var leaveDateStr = ws.Cell(row, 10).GetString().Trim();
+                    var dormCode = ws.Cell(row, 11).GetString().Trim();
+                    var remark = ws.Cell(row, 12).GetString().Trim();
+
+                    // v2.13.83 性别解析（中文「男/女」或数字「1/2」）
+                    int gender = 1;
+                    if (!string.IsNullOrEmpty(genderStr))
+                    {
+                        if (genderStr == "男" || genderStr == "1") gender = 1;
+                        else if (genderStr == "女" || genderStr == "2") gender = 2;
+                    }
 
                     // 必填校验
                     if (string.IsNullOrEmpty(empNo))
@@ -250,7 +260,7 @@ public class ImportModel : PageModel
                             DormCode = dormCodeToSave,
                             Remark = remark,
                             // v2.13.40: 移除过时的 Status 字段（应使用 EmploymentStatusId + 导航属性）
-                            Gender = 1,  // 默认男（导入后由用户编辑）
+                            Gender = gender,  // v2.13.83 从第 3 列解析（不再硬编码 1）
                             ResidenceStatusId = 2,  // 默认未住宿
                             EmploymentStatusId = leaveDate.HasValue ? 3 : 1,  // 有离职日期→已离职，否则在职
                             CreatedAt = DateTime.Now
@@ -274,6 +284,7 @@ public class ImportModel : PageModel
                         existing.LeaveDate = leaveDate;
                         existing.DormCode = dormCodeToSave;
                         existing.Remark = remark;
+                        existing.Gender = gender;  // v2.13.83 覆盖模式下也更新性别
                         if (leaveDate.HasValue) existing.EmploymentStatusId = 3;
                         existing.UpdatedAt = DateTime.Now;
                         result.SuccessRows++;

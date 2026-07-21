@@ -204,6 +204,8 @@ public class IndexModel : PageModel
                 EmployeeCode = e.EmployeeCode,
                 RealName = e.RealName,
                 Phone = e.Phone ?? "-",
+                // v2.13.83 性别字段（SysEmployee.Gender：1=男 2=女 0=未知）
+                Gender = e.Gender,
                 DepartmentId = e.DepartmentId,
                 Department = e.Department ?? "-",
                 // v2.11.7 员工类型 FK 关联：通过 EmployeeTypeId 关联 EmployeeType 主键
@@ -260,6 +262,9 @@ public class PersonnelDto
     public string EmployeeCode { get; set; } = "";
     public string RealName { get; set; } = "";
     public string Phone { get; set; } = "";
+    /// <summary>v2.13.83 新增：性别（1=男 2=女 0=未知）</summary>
+    public int Gender { get; set; }
+    public string GenderName => Gender == 1 ? "男" : Gender == 2 ? "女" : "未知";
     public int DepartmentId { get; set; }
     public string Department { get; set; } = "";
 

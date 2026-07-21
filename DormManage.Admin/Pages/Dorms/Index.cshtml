@@ -100,17 +100,18 @@
                                     <td>@item.FloorNo 楼</td>
                                     <td>@item.AddressText</td>
                                     <td class="text-center">
-                                        @if (item.Gender == 1)
+                                        @* v2.13.85 派生性别：基于当前在宿人员实时计算 *@
+                                        @if (item.EffectiveGender == 1)
                                         {
-                                            <span class="badge bg-info text-dark">男</span>
+                                            <span class="badge bg-info text-dark" title="男 @item.MaleCount 人">男</span>
                                         }
-                                        else if (item.Gender == 2)
+                                        else if (item.EffectiveGender == 2)
                                         {
-                                            <span class="badge bg-danger">女</span>
+                                            <span class="badge bg-danger" title="女 @item.FemaleCount 人">女</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-secondary">不限</span>
+                                            <span class="badge bg-secondary" title="空房间或无在宿人员">无</span>
                                         }
                                     </td>
                                     <td class="text-center">@item.RoomCount</td>

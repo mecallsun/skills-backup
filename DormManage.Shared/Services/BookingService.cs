@@ -152,6 +152,16 @@ public class DormOption
     public int Capacity { get; set; }
     public int CurrentCount { get; set; }
     public int AvailableCount => Capacity - CurrentCount;
+
+    // ========== v2.13.84 性别约束新增字段 ==========
+    /// <summary>当前在宿男员工数（Status=2 JOIN SysEmployee.Gender=1）</summary>
+    public int MaleCount { get; set; }
+    /// <summary>当前在宿女员工数（Status=2 JOIN SysEmployee.Gender=2）</summary>
+    public int FemaleCount { get; set; }
+    /// <summary>是否住满（CurrentCount >= Capacity）</summary>
+    public bool IsFull => CurrentCount >= Capacity;
+    /// <summary>不可选原因（"已住满" / "与现有男/女员工冲突" / ""=可分配）</summary>
+    public string BlockReason { get; set; } = "";
 }
 
 /// <summary>
@@ -501,6 +511,36 @@ public class BookingService : IBookingService
         var available = dorm.Capacity - currentStaying - reserved;
         if (available <= 0)
             return ApiResponse<DormBooking>.Fail("NO_CAPACITY", "该宿舍已满员");
+
+        // 5.5 v2.13.84 性别约束（业务硬约束三层防御的第二层：Service 层兜底）
+        // 即使前端 disabled/隐藏了不同性别房间，恶意请求绕过时仍由 Service 校验拒绝
+        var stayingGenders = await _db.DormBookings
+            .Where(x => x.DormCode == request.DormCode && x.Status == BookingStatus.Staying)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => e.Gender)
+            .ToListAsync();
+
+        if (stayingGenders.Any())
+        {
+            // 房间已有在宿人员 → 必须同性别
+            int empGender = employee.Gender;
+            if (empGender == 0)
+                return ApiResponse<DormBooking>.Fail("EMP_GENDER_UNKNOWN",
+                    "员工档案性别未知，请先在「人员清单」完善性别信息");
+
+            bool hasMale = stayingGenders.Any(g => g == 1);
+            bool hasFemale = stayingGenders.Any(g => g == 2);
+
+            if (empGender == 1 && hasFemale)
+                return ApiResponse<DormBooking>.Fail("DORM_GENDER_CONFLICT",
+                    $"该宿舍当前在宿女员工 {stayingGenders.Count(g => g == 2)} 人，禁止男员工入住");
+
+            if (empGender == 2 && hasMale)
+                return ApiResponse<DormBooking>.Fail("DORM_GENDER_CONFLICT",
+                    $"该宿舍当前在宿男员工 {stayingGenders.Count(g => g == 1)} 人，禁止女员工入住");
+        }
+        // 空房间或同性别 → 放行
 
         // 6. 创建办理记录
         // v2.13.24 P75：同步填充 BedNo = activeCount+1, ActualCheckInDate, CheckInOperator
@@ -909,13 +949,32 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<List<DormOption>> GetAvailableDormsAsync(int employeeId, DateOnly bookingDate)
     {
-        // 获取当前在宿人数和预约入住人数
-        var stayingCounts = await _db.DormBookings
-            .Where(x => x.Status == BookingStatus.Staying)
-            .GroupBy(x => x.DormCode)
-            .Select(g => new { DormCode = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.DormCode, x => x.Count);
+        // v2.13.84 性别约束：先获取员工性别（Gender=0/1/2）
+        var employee = await _db.Employees.AsNoTracking()
+            .Where(e => e.Id == employeeId)
+            .Select(e => new { e.Gender })
+            .FirstOrDefaultAsync();
+        if (employee == null) return new List<DormOption>();
+        int empGender = employee.Gender;
 
+        // v2.13.84 性别分布：JOIN DormBookings(Status=2) → SysEmployee 拿在宿人员 Gender 分布
+        var stayingDetails = await _db.DormBookings
+            .Where(x => x.Status == BookingStatus.Staying)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.Gender })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                TotalCount = g.Count(),
+                MaleCount = g.Count(x => x.Gender == 1),
+                FemaleCount = g.Count(x => x.Gender == 2)
+            })
+            .ToListAsync();
+        var stayingMap = stayingDetails.ToDictionary(x => x.DormCode);
+
+        // 预约入住人数（保留原逻辑）
         var reservedCounts = await _db.DormBookings
             .Where(x => x.Type == BookingType.CheckIn && x.Status == BookingStatus.Reserved && x.BookingDate <= bookingDate)
             .GroupBy(x => x.DormCode)
@@ -926,22 +985,55 @@ public class BookingService : IBookingService
             .Where(x => x.IsActive)
             .ToListAsync();
 
-        return availableDorms
-            .Where(d =>
+        // v2.13.84 三层过滤：余量 + 性别 + 完全隐藏住满
+        var result = new List<DormOption>();
+        foreach (var d in availableDorms)
+        {
+            var staying = stayingMap.GetValueOrDefault(d.DormCode);
+            var totalCount = staying?.TotalCount ?? 0;
+            var maleCount = staying?.MaleCount ?? 0;
+            var femaleCount = staying?.FemaleCount ?? 0;
+            var reserved = reservedCounts.GetValueOrDefault(d.DormCode, 0);
+            var available = d.Capacity - totalCount - reserved;
+
+            // 规则 1：余量 > 0（与原逻辑一致，住满则 available <= 0 自动 skip）
+            if (available <= 0) continue;
+
+            // 规则 2：v2.13.84 性别约束
+            // - 空房间（totalCount=0）：可选（任何 Gender 员工都能进）
+            // - 员工 Gender=0（未知）：仅当房间为空时可选（用户决策）
+            // - 员工 Gender=1（男）：现有必须是男（femaleCount=0）
+            // - 员工 Gender=2（女）：现有必须是女（maleCount=0）
+            if (totalCount == 0)
             {
-                var staying = stayingCounts.GetValueOrDefault(d.DormCode, 0);
-                var reserved = reservedCounts.GetValueOrDefault(d.DormCode, 0);
-                return d.Capacity - staying - reserved > 0;
-            })
-            .Select(d => new DormOption
+                // 空房间 → 放行
+            }
+            else if (empGender == 0)
+            {
+                continue;  // 性别未知员工禁止入住有人的房间
+            }
+            else if (empGender == 1 && femaleCount > 0)
+            {
+                continue;  // 男员工禁止进入有女员工的房间
+            }
+            else if (empGender == 2 && maleCount > 0)
+            {
+                continue;  // 女员工禁止进入有男员工的房间
+            }
+
+            result.Add(new DormOption
             {
                 DormCode = d.DormCode,
                 BuildingName = d.BuildingName ?? "",
                 AddressText = d.AddressText ?? "",
                 Capacity = d.Capacity,
-                CurrentCount = stayingCounts.GetValueOrDefault(d.DormCode, 0)
-            })
-            .ToList();
+                CurrentCount = totalCount,
+                MaleCount = maleCount,
+                FemaleCount = femaleCount
+            });
+        }
+
+        return result;
     }
 
     /// <inheritdoc/>

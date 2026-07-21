@@ -54,6 +54,14 @@ public class EditModel : PageModel
     /// </summary>
     public bool IsActiveOriginal { get; set; }
 
+    // ========== v2.13.85 派生性别字段（视图层只读展示） ==========
+    /// <summary>当前在宿男员工数（实时计算）</summary>
+    public int MaleCount { get; set; }
+    /// <summary>当前在宿女员工数（实时计算）</summary>
+    public int FemaleCount { get; set; }
+    /// <summary>派生性别：1=男 / 2=女 / 0=无（空房）</summary>
+    public int EffectiveGender { get; set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var dorm = await _db.Dorms.FindAsync(id);
@@ -81,8 +89,27 @@ public class EditModel : PageModel
         };
         IsActiveOriginal = dorm.IsActive;
 
+        // v2.13.85 派生性别：JOIN DormBookings(Status=2) → SysEmployee 拿男女人数
+        await LoadEffectiveGenderAsync(dorm.DormCode);
+
         await LoadBasicsAsync();
         return Page();
+    }
+
+    /// <summary>v2.13.85 派生性别计算</summary>
+    private async Task LoadEffectiveGenderAsync(string dormCode)
+    {
+        var stats = await _db.DormBookings
+            .Where(b => b.DormCode == dormCode && b.Status == BookingStatus.Staying)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => e.Gender)
+            .GroupBy(g => 1)
+            .Select(g => new { MaleCount = g.Count(x => x == 1), FemaleCount = g.Count(x => x == 2) })
+            .FirstOrDefaultAsync();
+        MaleCount = stats?.MaleCount ?? 0;
+        FemaleCount = stats?.FemaleCount ?? 0;
+        EffectiveGender = MaleCount > 0 ? 1 : (FemaleCount > 0 ? 2 : 0);
     }
 
     public async Task<IActionResult> OnPostAsync()
@@ -92,6 +119,7 @@ public class EditModel : PageModel
         {
             CurrentCount = await _db.DormBookings
                 .CountAsync(b => b.DormCode == dormForCount.DormCode && b.Status == BookingStatus.Staying);
+            await LoadEffectiveGenderAsync(dormForCount.DormCode);
         }
 
         if (!ModelState.IsValid)

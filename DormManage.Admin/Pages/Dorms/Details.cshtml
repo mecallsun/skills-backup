@@ -97,17 +97,18 @@
                             <tr>
                                 <th width="60" class="text-muted">性别</th>
                                 <td>
-                                    @if (Model.Dorm.Gender == 1)
+                                    @* v2.13.85 派生性别：基于当前在宿人员实时计算（不读 Dorm.Gender 静态字段） *@
+                                    @if (Model.Dorm.EffectiveGender == 1)
                                     {
-                                        <span class="badge bg-primary">男</span>
+                                        <span class="badge bg-info text-dark" title="男 @Model.Dorm.MaleCount 人">男</span>
                                     }
-                                    else if (Model.Dorm.Gender == 2)
+                                    else if (Model.Dorm.EffectiveGender == 2)
                                     {
-                                        <span class="badge bg-danger">女</span>
+                                        <span class="badge bg-danger" title="女 @Model.Dorm.FemaleCount 人">女</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">不限</span>
+                                        <span class="badge bg-secondary" title="空房间或无在宿人员">无</span>
                                     }
                                 </td>
                             </tr>

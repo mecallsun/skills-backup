@@ -203,7 +203,7 @@
                         <select id="dormSelect" class="form-select" onchange="onDormSelect()">
                             <option value="">请先选择员工和入住日期</option>
                         </select>
-                        <small class="text-muted mt-1 d-block" id="dormHint">系统自动过滤：余量 > 0 且与日期不冲突</small>
+                        <small class="text-muted mt-1 d-block" id="dormHint">系统自动过滤：余量 > 0、与已入住人员性别相同（同性别或空房间）— v2.13.84</small>
                     </div>
 
                     <!-- 区块 4b：选择在宿记录（仅退房时显示）（v2.13.36 新增对齐原型需求） -->
@@ -366,7 +366,7 @@
         // ===== 7. 宿舍选择（v2.13.36 对齐原型占位） =====
         function onDormSelect() { /* TODO: 显示宿舍详情 */ }
 
-        // ===== 8. 刷新可用房间（v2.13.36 对齐原型 L253-262） =====
+        // ===== 8. 刷新可用房间（v2.13.36 对齐原型 L253-262，v2.13.84 性别约束） =====
         async function refreshDorms() {
             const opType = document.querySelector('input[name="opType"]:checked').value;
             if (opType !== '1' || !selectedEmp) return;
@@ -378,8 +378,19 @@
                 if (res.success) {
                     const sel = document.getElementById('dormSelect');
                     sel.innerHTML = '<option value="">请选择房间</option>' +
-                        res.data.map(d => `<option value="${d.dormCode}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人）</option>`).join('');
-                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可用房间（含余量且日期不冲突）`;
+                        res.data.map(d => {
+                            // v2.13.84 性别提示拼接（用户决策：option 文本追加 Badge）
+                            let genderSummary = '';
+                            if (d.currentCount === 0) {
+                                genderSummary = '<span class="badge bg-success">空房</span>';
+                            } else {
+                                if (d.maleCount > 0) genderSummary += `<span class="badge bg-primary">男 ${d.maleCount}</span> `;
+                                if (d.femaleCount > 0) genderSummary += `<span class="badge bg-danger">女 ${d.femaleCount}</span> `;
+                                genderSummary = genderSummary.trim();
+                            }
+                            return `<option value="${d.dormCode}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary}）</option>`;
+                        }).join('');
+                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（性别相符或空房间）`;
                 }
             } catch (err) {
                 console.error('加载可用房间失败', err);

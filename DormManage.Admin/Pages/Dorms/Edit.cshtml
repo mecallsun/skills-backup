@@ -111,12 +111,21 @@
                 <div class="form-section-title">其他</div>
                 <div class="row g-2">
                     <div class="col-md-6 form-field">
-                        <label class="form-label">性别<span class="required">*</span></label>
-                        <select class="form-select" asp-for="Dorm.Gender" required>
-                            <option value="1" selected="@(Model.Dorm.Gender == 1)">男</option>
-                            <option value="2" selected="@(Model.Dorm.Gender == 2)">女</option>
-                        </select>
-                        <span class="text-danger small" asp-validation-for="Dorm.Gender"></span>
+                        @* v2.13.85 派生性别：基于当前在宿人员实时计算，不可手工编辑 *@
+                        <label class="form-label">性别 <small class="text-muted">（派生自当前在宿人员）</small></label>
+                        @if (Model.EffectiveGender == 1)
+                        {
+                            <div><span class="badge bg-info text-dark" title="男 @Model.MaleCount 人">男</span> <small class="text-muted">@Model.MaleCount 人在宿</small></div>
+                        }
+                        else if (Model.EffectiveGender == 2)
+                        {
+                            <div><span class="badge bg-danger" title="女 @Model.FemaleCount 人">女</span> <small class="text-muted">@Model.FemaleCount 人在宿</small></div>
+                        }
+                        else
+                        {
+                            <div><span class="badge bg-secondary">无</span> <small class="text-muted">空房间或无在宿人员</small></div>
+                        }
+                        <input type="hidden" asp-for="Dorm.Gender" value="@Model.Dorm.Gender" />
                     </div>
                     <div class="col-md-6 form-field d-flex align-items-end">
                         <div class="form-check pb-2">

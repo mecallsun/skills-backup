@@ -131,6 +131,7 @@
                             <th width="60" class="text-center">序号</th>
                             <th>工号</th>
                             <th>姓名</th>
+                            <th>性别</th>
                             <th>手机号</th>
                             <th>部门</th>
                             <th>员工类型</th>
@@ -177,6 +178,21 @@
                                     <td class="text-center text-muted">@index</td>
                                     <td><strong>@item.EmployeeCode</strong></td>
                                     <td>@item.RealName</td>
+                                    <td>
+                                        @* v2.13.83 性别 Badge：男=primary蓝 / 女=danger粉 / 未知=secondary *@
+                                        @if (item.Gender == 1)
+                                        {
+                                            <span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>
+                                        }
+                                        else if (item.Gender == 2)
+                                        {
+                                            <span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary text-dark">未知</span>
+                                        }
+                                    </td>
                                     <td>@item.Phone</td>
                                     <td>@item.Department</td>
                                     <td>
@@ -221,7 +237,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="14" class="text-center text-muted py-4">暂无人员数据</td>
+                                <td colspan="15" class="text-center text-muted py-4">暂无人员数据</td>
                             </tr>
                         }
                     </tbody>
