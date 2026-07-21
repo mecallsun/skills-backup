@@ -220,8 +220,16 @@ function bindTabBarEvents(opts = {}) {
 // 挂载 Tab 栏
 function mountTabBar(opts) {
   const el = document.getElementById('tab-bar');
-  if (el) {
-    el.outerHTML = renderTabBar(opts);
-    bindTabBarEvents(opts);
+  if (!el) return;
+
+  // v2.13.52：个人中心页面（/profile/）不渲染 Tab 栏 — 子菜单本身就是导航
+  const currentPath = window.location.pathname.toLowerCase();
+  if (currentPath.includes('/profile/')) {
+    el.outerHTML = '';  // 移除 Tab 栏占位元素
+    document.body.classList.add('profile-mode');  // 加 CSS class 用于样式调整
+    return;
   }
+
+  el.outerHTML = renderTabBar(opts);
+  bindTabBarEvents(opts);
 }
