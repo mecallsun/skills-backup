@@ -6,13 +6,20 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头（v2.13.17 使用 PageHeader 组件） -->
+    <!-- v2.13.65：页面级 antiforgery token（form 内已无 asp-page-handler 自动注入，需要手动放一个供 JS 读取） -->
+    @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+    @{
+        var pageTokens = PageAntiforgery.GetAndStoreTokens(HttpContext);
+    }
+    <input type="hidden" id="pageAntiforgeryToken" name="__RequestVerificationToken" value="@pageTokens.RequestToken" />
+
+    <!-- v2.13.65 改用 Bootstrap 5 原生 modal 触发（data-bs-toggle + data-bs-target），不再依赖内联 onclick -->
     @await Component.InvokeAsync("PageHeader", new {
         icon = "bi-person-badge",
         title = "用户管理",
         count = Model.TotalCount,
         countLabel = "人",
-        primaryAction = new PageAction { Label = "新增用户", OnClick = "var m = new bootstrap.Modal(document.getElementById('createUserModal')); m.show();", Icon = "bi-plus-lg", Style = "primary" }
+        primaryAction = new PageAction { Label = "新增用户", Url = "#createUserModal", Icon = "bi-plus-lg", Style = "primary" }
     })
 
     @if (!string.IsNullOrEmpty(Model.SuccessMessage))
@@ -24,7 +31,7 @@
         <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
     }
 
-    <!-- 筛选区（v2.13.64 新增 — 与原型 settings/index.html 用户 Tab 一致：搜索 + 角色筛选 + 状态筛选） -->
+    <!-- 筛选区 -->
     <div class="filter-card">
         <form method="get" class="filter-row">
             <div class="filter-item">
@@ -159,8 +166,17 @@
                                 }
                             </td>
                             <td>
+                                <!-- v2.13.65 改用 data-bs-toggle="modal" + 自定义 JS 填充字段，不再依赖内联 onclick -->
                                 <button class="btn btn-sm btn-outline-primary"
-                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleIds', '@u.UserName')">
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#editUserModal"
+                                        data-user-id="@u.Id"
+                                        data-user-name="@u.UserName"
+                                        data-display-name="@u.DisplayName"
+                                        data-email="@u.Email"
+                                        data-phone="@u.Phone"
+                                        data-is-active="@u.IsActive.ToString().ToLower()"
+                                        data-role-ids="@u.RoleIds">
                                     <i class="bi bi-pencil"></i> 编辑
                                 </button>
                                 @if (u.IsActive)
@@ -176,13 +192,19 @@
                                     </button>
                                 }
                                 <button class="btn btn-sm btn-outline-warning"
-                                        onclick="openPwdModal(@u.Id, '@u.UserName')">
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#resetPwdModal"
+                                        data-user-id="@u.Id"
+                                        data-user-name="@u.UserName">
                                     <i class="bi bi-key"></i> 重置密码
                                 </button>
                                 @if (u.UserName != "admin")
                                 {
                                     <button class="btn btn-sm btn-outline-danger"
-                                            onclick="confirmDelete(@u.Id, '@u.UserName')">
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#deleteConfirmModal"
+                                            data-user-id="@u.Id"
+                                            data-user-name="@u.UserName">
                                         <i class="bi bi-trash"></i> 删除
                                     </button>
                                 }
@@ -196,7 +218,6 @@
                 </tbody>
             </table>
         </div>
-        @* 分页页尾（v2.13.64 统一风格） *@
         @if (Model.TotalCount > 0)
         {
             <div class="pagination-footer">
@@ -238,17 +259,17 @@
     }
 }
 
-<!-- 新增用户 Modal -->
+<!-- 新增用户 Modal — v2.13.65 改用 data-bs-toggle="modal" + AJAX fetch 提交，失败显示 feedback；不再依赖 onclick 字符串 -->
 <div class="modal fade" id="createUserModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="post" asp-page-handler="Create">
+            <form id="createUserForm">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-person-plus"></i> 新增用户</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                    <div id="createUserFeedback" class="alert d-none mb-3"></div>
                     <div class="mb-3">
                         <label class="form-label">用户名 <span class="text-danger">*</span></label>
                         <input type="text" name="UserName" class="form-control" required maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="英文字母/数字/下划线" />
@@ -288,25 +309,25 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 创建</button>
+                    <button type="submit" class="btn btn-primary" id="createUserSubmit"><i class="bi bi-check-lg"></i> 创建</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- 编辑用户 Modal -->
+<!-- 编辑用户 Modal — v2.13.65 改用 AJAX fetch 提交 -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <form method="post" asp-page-handler="Update">
+            <form id="editUserForm">
                 <input type="hidden" name="Id" id="editId">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-pencil"></i> 编辑用户</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                    <div id="editUserFeedback" class="alert d-none mb-3"></div>
                     <div class="mb-3">
                         <label class="form-label">用户名</label>
                         <input type="text" id="editUserName" class="form-control" disabled>
@@ -349,87 +370,274 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存</button>
+                    <button type="submit" class="btn btn-primary" id="editUserSubmit"><i class="bi bi-check-lg"></i> 保存</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- 重置密码 Modal -->
+<!-- 重置密码 Modal — v2.13.65 改用 AJAX fetch 提交 -->
 <div class="modal fade" id="resetPwdModal" tabindex="-1">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content">
-            <form method="post" asp-page-handler="ResetPassword">
+            <form id="resetPwdForm">
                 <input type="hidden" name="Id" id="pwdId">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-key"></i> 重置密码</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="resetPwdFeedback" class="alert d-none mb-3"></div>
                     <p>为用户 <strong id="pwdUserName"></strong> 设置新密码：</p>
-                    <input type="password" name="NewPassword" class="form-control" required minlength="6">
+                    <input type="password" name="NewPassword" id="pwdNewPassword" class="form-control" required minlength="6">
                     <div class="form-text">至少 6 位</div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="submit" class="btn btn-warning"><i class="bi bi-key"></i> 重置</button>
+                    <button type="submit" class="btn btn-warning" id="resetPwdSubmit"><i class="bi bi-key"></i> 重置</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- 删除确认表单（隐藏） -->
-<form id="deleteForm" method="post" asp-page-handler="Delete" style="display:none;">
-    <input type="hidden" name="Id" id="deleteId">
-</form>
+<!-- 删除确认 Modal — v2.13.65 改用确认弹窗替代原生 confirm() -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form id="deleteForm">
+                <input type="hidden" name="Id" id="deleteId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger"></i> 删除确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteFeedback" class="alert d-none mb-3"></div>
+                    <p>确定要删除用户 <strong id="deleteUserNameDisplay"></strong> 吗？</p>
+                    <p class="text-muted small mb-0">此操作不可撤销。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger" id="deleteSubmit"><i class="bi bi-trash"></i> 确认删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
+    <!-- v2.13.65 完整 JS 重写：用 addEventListener 而非内联 onclick，Bootstrap data-bs-* 原生 modal 触发，AJAX fetch 异步提交并显示反馈 -->
     <script>
-        function openEditModal(id, displayName, email, phone, isActive, roleIdsStr, userName) {
+        // 获取 antiforgery token（页面级别的 form 之外的 meta）
+        const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        // ====== 公共 feedback 显示 ======
+        function showFeedback(elId, type, message) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.className = 'alert mb-3 alert-' + type;
+            el.textContent = message;
+            el.classList.remove('d-none');
+        }
+        function hideFeedback(elId) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.classList.add('d-none');
+        }
+
+        // ====== 通用 AJAX POST helper（form 提交，绕过 Razor Pages handler） ======
+        // v2.13.65：使用 API 端点而非 Razor Pages handler，避免 modal 关闭与重定向耦合
+        async function postUserAction(url, data, feedbackElId) {
+            try {
+                const formData = new URLSearchParams();
+                for (const [key, value] of data.entries()) {
+                    if (Array.isArray(value)) {
+                        for (const v of value) formData.append(key, v);
+                    } else if (value !== null && value !== undefined) {
+                        formData.append(key, value);
+                    }
+                }
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    body: formData.toString()
+                });
+                let j = null;
+                try { j = await resp.json(); } catch (e) {}
+                if (resp.ok && (j === null || j.success !== false)) {
+                    return { ok: true, data: j };
+                } else {
+                    const msg = j?.message || ('HTTP ' + resp.status);
+                    if (feedbackElId) showFeedback(feedbackElId, 'danger', '操作失败：' + msg);
+                    return { ok: false, message: msg };
+                }
+            } catch (e) {
+                if (feedbackElId) showFeedback(feedbackElId, 'danger', '请求失败：' + e.message);
+                return { ok: false, message: e.message };
+            }
+        }
+
+        // ====== 启停用户（保持 API 风格 fetch） ======
+        window.toggleUserStatus = async function(id, enable) {
+            if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
+            const url = '/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable');
+            const resp = await fetch(url, { method: 'POST' });
+            const j = await resp.json().catch(() => null);
+            if (resp.ok && j?.success) {
+                alert(enable ? '已启用' : '已停用');
+                location.reload();
+            } else {
+                alert('操作失败：' + (j?.message || '未知错误'));
+            }
+        };
+
+        // ====== Create Modal：监听 submit 事件 + Bootstrap modal 事件填充 form ======
+        document.getElementById('createUserModal').addEventListener('show.bs.modal', function() {
+            hideFeedback('createUserFeedback');
+            document.getElementById('createUserForm').reset();
+        });
+
+        document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('createUserFeedback');
+            const data = new FormData(this);
+            const submitBtn = document.getElementById('createUserSubmit');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+            const result = await postUserAction(
+                '/Settings/User?handler=Create',
+                data,
+                'createUserFeedback'
+            );
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+            if (result.ok) {
+                showFeedback('createUserFeedback', 'success', '✓ 创建成功！即将刷新...');
+                setTimeout(() => location.reload(), 800);
+            }
+            // 失败时 postUserAction 内部已显示 feedback
+        });
+
+        // ====== Edit Modal：用 data-* 属性填充字段（Bootstrap 5.2+ 原生能力） ======
+        document.getElementById('editUserModal').addEventListener('show.bs.modal', function(event) {
+            hideFeedback('editUserFeedback');
+            const btn = event.relatedTarget; // 触发 modal 的按钮
+            if (!btn) return;
+            const id = btn.getAttribute('data-user-id');
+            const userName = btn.getAttribute('data-user-name');
+            const displayName = btn.getAttribute('data-display-name') || '';
+            const email = btn.getAttribute('data-email') || '';
+            const phone = btn.getAttribute('data-phone') || '';
+            const isActive = btn.getAttribute('data-is-active') === 'true';
+            const roleIds = (btn.getAttribute('data-role-ids') || '').split(',').filter(s => s);
+
             document.getElementById('editId').value = id;
             document.getElementById('editUserName').value = userName;
             document.getElementById('editDisplayName').value = displayName;
-            document.getElementById('editEmail').value = email || '';
-            document.getElementById('editPhone').value = phone || '';
-            document.getElementById('editIsActive').checked = isActive === 'true';
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editPhone').value = phone;
+            document.getElementById('editIsActive').checked = isActive;
 
-            // v2.13.64 重构：按 RoleIds（逗号分隔的 Id 字符串）勾选匹配角色，替代原"按名称前缀匹配"易误判
-            const roleIds = (roleIdsStr || '').split(',').map(s => s.trim()).filter(s => s);
+            // 按 RoleIds Id 严格勾选
             document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => {
                 cb.checked = roleIds.includes(cb.value);
             });
-            new bootstrap.Modal(document.getElementById('editUserModal')).show();
-        }
+        });
 
-        // v2.13.64 BUG 修复：调用正确的端点 /enable 或 /disable（之前调用 /enable 或 /disable 已正确）
-        function toggleUserStatus(id, enable) {
-            if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
-            fetch('/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable'), { method: 'POST' })
-                .then(r => r.json())
-                .then(j => {
-                    if (j.success) {
-                        alert(enable ? '已启用' : '已停用');
-                        location.reload();
-                    } else {
-                        alert('操作失败：' + (j.message || '未知错误'));
-                    }
-                })
-                .catch(err => alert('请求失败：' + err.message));
-        }
-
-        function openPwdModal(id, userName) {
-            document.getElementById('pwdId').value = id;
-            document.getElementById('pwdUserName').textContent = userName;
-            new bootstrap.Modal(document.getElementById('resetPwdModal')).show();
-        }
-
-        function confirmDelete(id, userName) {
-            if (confirm(`确定要删除用户 ${userName} 吗？此操作不可撤销。`)) {
-                document.getElementById('deleteId').value = id;
-                document.getElementById('deleteForm').submit();
+        document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('editUserFeedback');
+            const data = new FormData(this);
+            // IsActive checkbox: unchecked 时字段不会提交，需要手动加 'false'
+            if (!document.getElementById('editIsActive').checked) {
+                data.set('IsActive', 'false');
+            } else {
+                data.set('IsActive', 'true');
             }
-        }
+            const submitBtn = document.getElementById('editUserSubmit');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+            const result = await postUserAction(
+                '/Settings/User?handler=Update',
+                data,
+                'editUserFeedback'
+            );
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+            if (result.ok) {
+                showFeedback('editUserFeedback', 'success', '✓ 更新成功！即将刷新...');
+                setTimeout(() => location.reload(), 800);
+            }
+        });
+
+        // ====== Reset Password Modal ======
+        document.getElementById('resetPwdModal').addEventListener('show.bs.modal', function(event) {
+            hideFeedback('resetPwdFeedback');
+            const btn = event.relatedTarget;
+            if (!btn) return;
+            document.getElementById('pwdId').value = btn.getAttribute('data-user-id');
+            document.getElementById('pwdUserName').textContent = btn.getAttribute('data-user-name');
+            document.getElementById('pwdNewPassword').value = '';
+        });
+
+        document.getElementById('resetPwdForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('resetPwdFeedback');
+            const data = new FormData(this);
+            const submitBtn = document.getElementById('resetPwdSubmit');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>重置中...';
+            const result = await postUserAction(
+                '/Settings/User?handler=ResetPassword',
+                data,
+                'resetPwdFeedback'
+            );
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+            if (result.ok) {
+                showFeedback('resetPwdFeedback', 'success', '✓ 密码已重置！即将关闭...');
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('resetPwdModal'));
+                    modal?.hide();
+                }, 600);
+            }
+        });
+
+        // ====== Delete Confirm Modal ======
+        document.getElementById('deleteConfirmModal').addEventListener('show.bs.modal', function(event) {
+            hideFeedback('deleteFeedback');
+            const btn = event.relatedTarget;
+            if (!btn) return;
+            document.getElementById('deleteId').value = btn.getAttribute('data-user-id');
+            document.getElementById('deleteUserNameDisplay').textContent = btn.getAttribute('data-user-name');
+        });
+
+        document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('deleteFeedback');
+            const data = new FormData(this);
+            const submitBtn = document.getElementById('deleteSubmit');
+            const origHtml = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>删除中...';
+            const result = await postUserAction(
+                '/Settings/User?handler=Delete',
+                data,
+                'deleteFeedback'
+            );
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origHtml;
+            if (result.ok) {
+                showFeedback('deleteFeedback', 'success', '✓ 删除成功！即将刷新...');
+                setTimeout(() => location.reload(), 800);
+            }
+        });
     </script>
 }

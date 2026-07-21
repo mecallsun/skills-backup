@@ -7,8 +7,9 @@ using DormManage.Shared.Models;
 namespace DormManage.Admin.Pages.Settings;
 
 /// <summary>
-/// 用户管理独立页面（P1-2）
-/// v2.13.64 升级：添加搜索/角色筛选/状态筛选/分页 + RoleIds 用于回显已勾选角色
+/// 用户管理独立页面
+/// v2.13.65 改造：PageModel handler 改为返回 JSON (ApiResponse 风格) 而非 RedirectToPage，
+/// 让前端 JS fetch 能正确判断成功/失败并显示 feedback；GET 仍然走 OnGetAsync 返回 Page。
 /// </summary>
 public class UserModel : PageModel
 {
@@ -19,7 +20,6 @@ public class UserModel : PageModel
         _db = db;
     }
 
-    // ====== v2.13.64 新增：查询参数 ======
     [BindProperty(SupportsGet = true)] public string? Search { get; set; }
     [BindProperty(SupportsGet = true)] public int? RoleId { get; set; }
     [BindProperty(SupportsGet = true)] public string? Status { get; set; }
@@ -42,7 +42,7 @@ public class UserModel : PageModel
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
         public string RoleNames { get; set; } = "";
-        public string RoleIds { get; set; } = "";  // v2.13.64 新增：用于回显勾选角色
+        public string RoleIds { get; set; } = "";
         public bool IsActive { get; set; }
         public bool IsLocked { get; set; }
         public DateTime? LastLoginTime { get; set; }
@@ -64,19 +64,14 @@ public class UserModel : PageModel
         if (TempData["ErrorMessage"] is string e) ErrorMessage = e;
     }
 
+    // v2.13.65：handler 改为返回 JSON，便于 AJAX 接收；前端 createUserForm.fetch → 解析 JSON → 显示 feedback
     public async Task<IActionResult> OnPostCreateAsync(string UserName, string DisplayName, string Password, string Email, string Phone, int[] SelectedRoleIds)
     {
         if (string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(DisplayName))
-        {
-            TempData["ErrorMessage"] = "用户名、姓名、密码为必填项";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = "用户名、姓名、密码为必填项" });
 
         if (await _db.SysUsers.AnyAsync(u => u.UserName == UserName))
-        {
-            TempData["ErrorMessage"] = $"用户名 {UserName} 已存在";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = $"用户名 {UserName} 已存在" });
 
         var user = new SysUser
         {
@@ -96,25 +91,18 @@ public class UserModel : PageModel
         if (SelectedRoleIds?.Length > 0)
         {
             foreach (var rid in SelectedRoleIds.Distinct())
-            {
                 _db.SysUserRoles.Add(new SysUserRole { UserId = user.Id, RoleId = rid });
-            }
             await _db.SaveChangesAsync();
         }
 
-        TempData["SuccessMessage"] = $"用户 {UserName} 创建成功";
-        return RedirectToPage();
+        return new JsonResult(new { success = true, message = $"用户 {UserName} 创建成功", userId = user.Id });
     }
 
-    // v2.13.64 BUG 修复：IsActive 现在用 string 类型（避免和 hidden 冲突，参考 v2.13.62 经验教训）
     public async Task<IActionResult> OnPostUpdateAsync(int Id, string DisplayName, string Email, string Phone, bool IsActive, int[] SelectedRoleIds)
     {
         var user = await _db.SysUsers.FindAsync(Id);
         if (user is null)
-        {
-            TempData["ErrorMessage"] = "用户不存在";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = "用户不存在" });
 
         user.DisplayName = DisplayName.Trim();
         user.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
@@ -122,36 +110,26 @@ public class UserModel : PageModel
         user.IsActive = IsActive;
         user.UpdatedAt = DateTime.Now;
 
-        // 替换用户-角色关联
         var oldRoles = _db.SysUserRoles.Where(ur => ur.UserId == Id);
         _db.SysUserRoles.RemoveRange(oldRoles);
         if (SelectedRoleIds?.Length > 0)
         {
             foreach (var rid in SelectedRoleIds.Distinct())
-            {
                 _db.SysUserRoles.Add(new SysUserRole { UserId = Id, RoleId = rid });
-            }
         }
         await _db.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"用户 {user.UserName} 更新成功";
-        return RedirectToPage();
+        return new JsonResult(new { success = true, message = $"用户 {user.UserName} 更新成功" });
     }
 
     public async Task<IActionResult> OnPostResetPasswordAsync(int Id, string NewPassword)
     {
         if (string.IsNullOrWhiteSpace(NewPassword) || NewPassword.Length < 6)
-        {
-            TempData["ErrorMessage"] = "密码长度至少 6 位";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = "密码长度至少 6 位" });
 
         var user = await _db.SysUsers.FindAsync(Id);
         if (user is null)
-        {
-            TempData["ErrorMessage"] = "用户不存在";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = "用户不存在" });
 
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(NewPassword);
         user.FailedLoginCount = 0;
@@ -159,39 +137,33 @@ public class UserModel : PageModel
         user.UpdatedAt = DateTime.Now;
         await _db.SaveChangesAsync();
 
-        TempData["SuccessMessage"] = $"用户 {user.UserName} 密码已重置";
-        return RedirectToPage();
+        return new JsonResult(new { success = true, message = $"用户 {user.UserName} 密码已重置" });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int Id)
     {
         var user = await _db.SysUsers.FindAsync(Id);
         if (user is null)
-        {
-            TempData["ErrorMessage"] = "用户不存在";
-            return RedirectToPage();
-        }
+            return new JsonResult(new { success = false, message = "用户不存在" });
         if (user.UserName == "admin")
+            return new JsonResult(new { success = false, message = "内置 admin 账号不允许删除" });
+
+        // v2.13.65 修复：使用 ExecuteDeleteAsync 避免 EF Core 并发检查（DbUpdateConcurrencyException）
+        // EF Core 在 Remove + SaveChangesAsync 时会携带原值做 WHERE，并发时 0 rows affected 抛异常
+        // ExecuteDeleteAsync 是 SQL DELETE 直发，无并发检查
+        try
         {
-            TempData["ErrorMessage"] = "内置 admin 账号不允许删除";
-            return RedirectToPage();
+            await _db.SysUserRoles.Where(ur => ur.UserId == Id).ExecuteDeleteAsync();
+            await _db.SysUserSecurityQuestions.Where(sq => sq.UserId == Id).ExecuteDeleteAsync();
+            await _db.SysOpLogs.Where(l => l.UserId == Id).ExecuteDeleteAsync();
+            await _db.SysUserFilterCaches.Where(c => c.UserId == Id).ExecuteDeleteAsync();
+            await _db.SysUsers.Where(u => u.Id == Id).ExecuteDeleteAsync();
+            return new JsonResult(new { success = true, message = $"用户 {user.UserName} 已删除" });
         }
-
-        // v2.13.64 修复：级联清理所有引用该用户的子表（FK 约束）
-        var urs = _db.SysUserRoles.Where(ur => ur.UserId == Id);
-        _db.SysUserRoles.RemoveRange(urs);
-        var sqs = _db.SysUserSecurityQuestions.Where(sq => sq.UserId == Id);
-        _db.SysUserSecurityQuestions.RemoveRange(sqs);
-        var logs = _db.SysOpLogs.Where(l => l.UserId == Id);
-        _db.SysOpLogs.RemoveRange(logs);
-        var filters = _db.SysUserFilterCaches.Where(c => c.UserId == Id);
-        _db.SysUserFilterCaches.RemoveRange(filters);
-
-        _db.SysUsers.Remove(user);
-        await _db.SaveChangesAsync();
-
-        TempData["SuccessMessage"] = $"用户 {user.UserName} 已删除";
-        return RedirectToPage();
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"删除失败：{ex.Message}" });
+        }
     }
 
     private async Task LoadDataAsync()
@@ -201,23 +173,19 @@ public class UserModel : PageModel
 
         var query = _db.SysUsers.AsQueryable();
 
-        // 搜索：用户名 OR 姓名
         if (!string.IsNullOrWhiteSpace(Search))
         {
             var kw = Search.Trim();
             query = query.Where(u => u.UserName.Contains(kw) || u.DisplayName.Contains(kw));
         }
 
-        // 状态筛选
         if (Status == "active") query = query.Where(u => u.IsActive && !u.IsLocked);
         else if (Status == "disabled") query = query.Where(u => !u.IsActive);
         else if (Status == "locked") query = query.Where(u => u.IsLocked);
 
-        // 角色筛选：先取所有用户，然后 join 过滤（这里采用先列出再 Join，配合 In-memory 更直观）
         var allUsers = await query.OrderByDescending(u => u.CreatedAt).ToListAsync();
         var userRoles = await _db.SysUserRoles.ToListAsync();
 
-        // 角色筛选（在内存中二次过滤，因 join 复杂）
         if (RoleId.HasValue)
         {
             var userIdsInRole = userRoles.Where(ur => ur.RoleId == RoleId.Value).Select(ur => ur.UserId).ToHashSet();
@@ -225,12 +193,7 @@ public class UserModel : PageModel
         }
 
         TotalCount = allUsers.Count;
-
-        // 分页
-        var pagedUsers = allUsers
-            .Skip((PageIndex - 1) * PageSize)
-            .Take(PageSize)
-            .ToList();
+        var pagedUsers = allUsers.Skip((PageIndex - 1) * PageSize).Take(PageSize).ToList();
 
         Users = pagedUsers.Select(u =>
         {
@@ -242,9 +205,8 @@ public class UserModel : PageModel
                 DisplayName = u.DisplayName,
                 Email = u.Email ?? "",
                 Phone = u.Phone ?? "",
-                RoleNames = string.Join(", ",
-                    userRoleIds.Join(allRoles, rid => rid, r => r.Id, (_, r) => r.RoleName)),
-                RoleIds = string.Join(",", userRoleIds),  // v2.13.64 新增
+                RoleNames = string.Join(", ", userRoleIds.Join(allRoles, rid => rid, r => r.Id, (_, r) => r.RoleName)),
+                RoleIds = string.Join(",", userRoleIds),
                 IsActive = u.IsActive,
                 IsLocked = u.IsLocked,
                 LastLoginTime = u.LastLoginTime,

@@ -254,19 +254,14 @@ public class UserController : ControllerBase
         if (user.UserName == "admin")
             return ApiResponse.Fail("PROTECTED", "内置 admin 账号不允许删除");
 
-        // v2.13.64 修复：级联清理所有引用该用户的子表（FK 约束）
-        // 包括：SysUserRole、SysUserSecurityQuestion、SysOpLog（UserId 列）、SysUserFilterCache（UserId 列）
-        var urs = _db.SysUserRoles.Where(ur => ur.UserId == id);
-        _db.SysUserRoles.RemoveRange(urs);
-        var sqs = _db.SysUserSecurityQuestions.Where(sq => sq.UserId == id);
-        _db.SysUserSecurityQuestions.RemoveRange(sqs);
-        var logs = _db.SysOpLogs.Where(l => l.UserId == id);
-        _db.SysOpLogs.RemoveRange(logs);
-        var filters = _db.SysUserFilterCaches.Where(c => c.UserId == id);
-        _db.SysUserFilterCaches.RemoveRange(filters);
-
-        _db.SysUsers.Remove(user);
-        await _db.SaveChangesAsync();
+        // v2.13.65 修复：使用 ExecuteDeleteAsync 避免 DbUpdateConcurrencyException
+        // EF Core 在 Remove + SaveChangesAsync 时会带原值做 WHERE，并发/属性不一致时 0 rows 抛异常
+        // ExecuteDeleteAsync 是直发 SQL DELETE，无并发检查
+        await _db.SysUserRoles.Where(ur => ur.UserId == id).ExecuteDeleteAsync();
+        await _db.SysUserSecurityQuestions.Where(sq => sq.UserId == id).ExecuteDeleteAsync();
+        await _db.SysOpLogs.Where(l => l.UserId == id).ExecuteDeleteAsync();
+        await _db.SysUserFilterCaches.Where(c => c.UserId == id).ExecuteDeleteAsync();
+        await _db.SysUsers.Where(u => u.Id == id).ExecuteDeleteAsync();
         return ApiResponse.Ok("删除成功");
     }
 }

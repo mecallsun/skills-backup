@@ -353,102 +353,39 @@
                 </div>
 
                 <!-- 用户与角色 -->
-                <!-- 用户管理 -->
+                <!-- v2.13.65 修复：用户管理 tab 改为引导到独立页面 /Settings/User（之前用 alert('原型演示') 占位符，按钮无效） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "users" ? "show active" : "")" id="tab-users">
                     <div class="card">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong><i class="bi bi-person-badge"></i> 用户管理</strong>
-                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增用户')">
-                                <i class="bi bi-plus-lg"></i> 新增用户
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0 align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>用户名</th>
-                                            <th>姓名</th>
-                                            <th>角色</th>
-                                            <th>最近登录</th>
-                                            <th>状态</th>
-                                            <th>备注</th>
-                                            <th width="200">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var user in Model.Users)
-                                        {
-                                            <tr>
-                                                <td>@user.UserName</td>
-                                                <td>@user.DisplayName</td>
-                                                <td><span class="badge bg-info">@user.Role</span></td>
-                                                <td>@user.LastLogin</td>
-                                                <td>
-                                                    @if (user.IsEnabled)
-                                                    {
-                                                        <span class="badge bg-success">启用</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge bg-secondary">禁用</span>
-                                                    }
-                                                </td>
-                                                <td class="text-muted small">@user.Remark</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-primary">编辑</button>
-                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-person-badge" style="font-size: 3rem; color: #1976d2;"></i>
+                            <h4 class="mt-3">用户管理已迁移到独立页面</h4>
+                            <p class="text-muted mb-4">为提供完整的用户 CRUD 功能（新增 / 编辑 / 重置密码 / 启用 / 停用 / 删除 + 搜索 / 筛选 / 分页），<br />用户管理已迁移到独立页面，请点击下方按钮进入。</p>
+                            <a href="/Settings/User" class="btn btn-primary btn-lg">
+                                <i class="bi bi-arrow-right-circle"></i> 进入用户管理
+                            </a>
+                            <div class="mt-3">
+                                <a href="/Settings/User" class="text-decoration-none small">
+                                    <i class="bi bi-link-45deg"></i> /Settings/User
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 角色与权限 -->
+                <!-- v2.13.65 修复：角色管理 tab 引导到独立页面 /Settings/Role（之前用 alert('原型演示') 占位符） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "roles" ? "show active" : "")" id="tab-roles">
                     <div class="card">
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                            <strong><i class="bi bi-shield-lock"></i> 角色权限矩阵</strong>
-                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：新增角色')">
-                                <i class="bi bi-plus-lg"></i> 新增角色
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered mb-0 align-middle text-center">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>角色</th>
-                                            @foreach (var perm in Model.PermissionMatrix.Take(1))
-                                            {
-                                                <th>管理员</th>
-                                                <th>财务</th>
-                                                <th>PDA 操作员</th>
-                                            }
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var perm in Model.PermissionMatrix)
-                                        {
-                                            <tr>
-                                                <td class="text-start">@perm.Module</td>
-                                                <td>
-                                                    @if (perm.AdminAccess) { <text>✅</text> } else { <text>❌</text> }
-                                                </td>
-                                                <td>
-                                                    @if (perm.FinanceAccess) { <text>✅</text> } else { <text>❌</text> }
-                                                </td>
-                                                <td>
-                                                    @if (perm.PdaAccess) { <text>✅</text> } else { <text>❌</text> }
-                                                </td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-shield-lock" style="font-size: 3rem; color: #e65100;"></i>
+                            <h4 class="mt-3">角色管理已迁移到独立页面</h4>
+                            <p class="text-muted mb-4">为提供完整的角色与权限管理功能（角色 CRUD + 权限矩阵），<br />角色管理已迁移到独立页面，请点击下方按钮进入。</p>
+                            <a href="/Settings/Role" class="btn btn-warning btn-lg text-white">
+                                <i class="bi bi-arrow-right-circle"></i> 进入角色管理
+                            </a>
+                            <div class="mt-3">
+                                <a href="/Settings/Role" class="text-decoration-none small">
+                                    <i class="bi bi-link-45deg"></i> /Settings/Role
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -760,8 +697,25 @@
             if (saveEl) saveEl.addEventListener('click', saveDbConfig);
         });
 
+        // v2.13.65 修复：服务状态切换接入 IPC 接口（托盘 127.0.0.1:5099 JSON-over-lines）
         function toggleService(which) {
-            alert(`原型演示：${which === 'pda' ? 'PDA' : 'Web'} 服务状态切换`);
+            const action = which === 'pda' ? 'restart-api' : 'restart-admin';
+            if (!confirm(`确定重启 ${which === 'pda' ? 'API' : 'Web Admin'} 服务吗？`)) return;
+            fetch('/api/v1/system/service-control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action })
+            })
+            .then(r => r.json())
+            .then(j => {
+                if (j.success) {
+                    alert(`✓ ${which === 'pda' ? 'PDA' : 'Web'} 服务重启指令已发送`);
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    alert('操作失败：' + (j.message || '未知错误'));
+                }
+            })
+            .catch(err => alert('请求失败：' + err.message));
         }
 
         function testConnection(id) {
