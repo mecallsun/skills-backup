@@ -1,6 +1,6 @@
 # 方案文档索引
 
-> **版本**：v2.13.38（Booking 全部 100% 原型对齐）
+> **版本**：v2.13.53（Profile 导航过时描述深度清理）
 > **日期**：2026-07-21
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
 > **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型） + Dashboard 首页 100% 原型对齐 + Booking 全部 4 页面 100% 原型对齐
@@ -208,3 +208,21 @@
 | 2026-07-20 | **v2.13.33 办理入住 BUG + 工号姓名关联修复** | **BUG #1**：selectCiEmp 卡死（新增 ciSearchResults/coSearchResults 缓存 + 重写完整填充逻辑）+ **BUG #2**：EmployeeName 双管齐下（GetListAsync 实时覆盖 + Repair API 写回）+ PageHeader「修复姓名关联」按钮 + 文档 86 + CLAUDE.md / INDEX.md 全面同步 |
 | 2026-07-20 | **v2.13.34 办理入住弹窗 100% 原型对齐** | checkInModal 11 项不一致修复（单列布局 + form-card 系列样式 + 操作类型 radio + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge + 校验 alert + "提交"按钮 + breadcrumb）+ PageHeader 移除冗余"办理退房"按钮（合并到入住弹窗 opType=2）+ 文档 87 |
 | 2026-07-20 | **v2.13.35 按钮与关闭交互设计细化** | `<form>` 包裹整个 form-card 让 type=submit 工作 + 提交按钮 type=submit（Enter 自动提交）+ 取消/X 按钮绑 confirmCloseCheckIn（已选员工时弹确认）+ ESC/backdrop 关闭走 hide.bs.modal 拦截 + modal 数据 backdrop=static/keyboard=false + form-actions 左侧快捷键提示 + 文档 88 |
+| 2026-07-20 | **v2.13.36 办理入住独立页面 1:1 克隆原型** | 架构升级：Modal → 独立 Razor Page `/Booking/CheckIn` + 1:1 复刻原型 `booking/check-in.html` 三层结构 + 4 区块 + 替换 mock-data.js 为真实后端 API + 保留 checkOutModal 快速退房 + 文档 89 |
+| 2026-07-21 | **v2.13.37 Dashboard 首页 100% 原型对齐** | Dashboard 综合对齐度 98% → 100%（KPI 3/4 静态显示 + 月份选择器硬编码 3 项 + 版本号硬编码 + 图表图例 2026年/2025年）+ 文档 90 |
+| 2026-07-21 | **v2.13.38 Booking 全部 100% 原型对齐** | 4 页面逐项修复：PageHeader actions OnClick 渲染 + Index 删除/导出 BUG + Edit Type=2 状态选项 + 后端 Status 字段 + CheckIn DTO FK 字段 + CheckOut 重大重构（form-card 架构 + 员工信息卡 + dateHint 校验）+ 文档 91 |
+| 2026-07-21 | **v2.13.39 Dorms 全部 100% 原型对齐** | Details 页面 3 列（员工类型/已入住/操作）+ 房间数字段 + checkoutResident JS + 文档 92 |
+| 2026-07-21 | **v2.13.40 Personnel 全部 100% 原型对齐** | Import 11 列模板 + FK 映射持久化 + MarkLeft BUG 修复 + 文案"员工→人员"统一 + 文档 93 |
+| 2026-07-21 | **v2.13.41 Meter 全部 100% 原型对齐** | Detail 6 字段补全 + 左右分栏 + 照片占位 + 3 操作按钮 + Entry 用量计算+红色校验+首次提示 + Index 覆盖率 alert+progress bar + 文档 94 |
+| 2026-07-21 | **v2.13.42 BillingStandard P0 BUG 修复 + 视觉对齐** | 3 个 BUG 修复（SaveChangesAsync 缺失/日期校验反转/去重"全部"）+ Edit.Id 修复 + 4 状态 Badge + 文档 95 |
+| 2026-07-21 | **v2.13.43 DormBilling 视觉对齐 + P1 修复** | Details 楼层字段（楼栋+楼层）+ Index 单位后缀（m³/度）+ 真实导出 + 孤立 location.reload 删除 + 序号 text-muted + 文档 96 |
+| 2026-07-21 | **v2.13.44 EmployeeBilling 全部 100% 原型对齐** | Index 在职状态筛选 + 4 列（冷/热/电/在住）+ 详情入口 + 真实导出 + Details 拆水分 + 分摊依据卡 + BillingService 扩展 8 参数 + 文档 97 |
+| 2026-07-21 | **v2.13.45 Basics P1/P2 微调对齐** | 班组列名"排序"→"排序号" + 页头 `.page-header` 规范 + 审计 90% A 级无 P0 + 文档 98 |
+| 2026-07-21 | **v2.13.46 Settings 全部 100% 原型对齐 + Profile 个人中心文档整合** | Settings/Index 5 个 mock 接真 API（备份/PDA 版本/系统集成/测试连接）+ Integration[id] 字段命名错误修复 + OnPostSaveIntegrationAsync 重实现 + Toast 组件 + Settings/User JS BUG 修复 + 启停按钮 + SysUserSelfService 6 敏感操作加 SysOpLog 审计 + Profile 个人中心 18 项功能 100% 已实现确认 + 文档 99 + Profile 文档 80 升级 |
+| 2026-07-21 | **v2.13.47 Booking 工号同步 BUG 修复（P0 数据一致性）** | `DormBooking.EmployeeCode` 同步扩展：`BookingService.GetListAsync` 匿名投影增加 `EmployeeCode` JOIN 实时覆盖 + 关键词筛选使用档案优先 + `RepairBookingEmployeeNamesAsync` 扩展同时回填 EmployeeCode + EmployeeName + 新增 `SysEmployeeLite` DTO + 文档 100 |
+| 2026-07-21 | **v2.13.48 Booking 数据关系文档定稿** | `60-菜单导航与数据关系全景图-v2.13.48.md`（§0.1 增量说明 + §2.1 实体关系图补全 SysEmployee → DormBooking + §2.3 5 字段同步策略表）+ `07-办理登记需求-v2.11.md §3.1` 强制数据关系声明（EmployeeId FK 关联 + JOIN 查询标准模板）|
+| 2026-07-21 | **v2.13.49 Profile 子菜单对齐 Basics 重构** | 个人中心从 v2.13.26 的 3 Tab（基本资料/账号安全/偏好设置）重构为 8 子菜单（账号总览/基本资料/修改密码/安全问题/微信绑定/偏好设置/筛选缓存/操作日志），与基础资料 1:1 风格 + 文档 102 |
+| 2026-07-21 | **v2.13.50 Profile 原型与需求同步** | 新建 `04-HTML原型/profile/index.html`（8 子菜单 + 8 pane + URL ?tab= 持久化 + 密码 4 级强度条）+ `profile-data.js`（Mock 数据 4 模块）+ 需求文档升级 v2.13.26 → v2.13.50 + `05-原型与代码基线对照.md` 25 → 26 个原型 + 文档 103 |
+| 2026-07-21 | **v2.13.51 原型 user-pill 跳转链接修复** | 26 个 HTML 原型顶部「管理员」胶囊由 `<span>` 改为 `<a>` 链接到 `../profile/index.html`（按层级自动计算路径），与 Razor `_Layout.cshtml` 一致 + `_shared/layout-tab.css` 补充 user-pill 链接样式 + 文档 104 |
+| 2026-07-21 | **v2.13.52 Profile 原型保留主菜单导航设计定稿** | 个人中心原型（`profile/index.html`）保留顶部品牌栏 + 10 主菜单 Tab 导航，与全站 26 个 Razor/HTML 原型保持一致；tab-bar.js 移除 `/profile/` 路径拦截 → 全站统一渲染 + 文档 105 |
+| 2026-07-21 | **v2.13.53 Profile 导航过时描述深度清理** | 用户最终明确"原型中点击登录账号进入个人中心时，仍保留页头+主菜单导航的**正常显示**"（与其他 25 个原型完全一致）；`profile/index.html` v2.13.50 → v2.13.53 标识升级 + `01-技术架构与系统开发方案.md §3.6.10` 补充 4 条个人中心迭代记录（v2.13.49/50/51/52/53）+ INDEX.md 补充 v2.13.36~v2.13.53 完整时间线 + 文档 106 |
