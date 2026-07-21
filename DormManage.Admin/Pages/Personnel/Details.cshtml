@@ -7,7 +7,8 @@
 
 @section Styles {
 <style>
-    /* v2.13.86 人员详情页布局：基本信息卡 + 当前住宿 + 历史记录 */
+    /* v2.13.87 人员详情页布局：左 300px 基本信息 + 右自适应 当前住宿 + 历史记录
+       100% 对齐原型 personnel/details.html：.details-left width: 300px */
     .details-row {
         display: flex;
         flex-wrap: nowrap;
@@ -15,7 +16,7 @@
         gap: 12px;
     }
     .details-left {
-        width: 320px;
+        width: 300px;
         flex-shrink: 0;
     }
     .details-right {
@@ -255,7 +256,7 @@
                                         @foreach (var record in Model.HistoryBookings)
                                         {
                                             <tr>
-                                                <td class="text-muted">@idx</td>
+                                                <td class="text-center text-muted">@idx</td>
                                                 <td>@record.BookingDate.ToString("yyyy-MM-dd")</td>
                                                 <td><strong>@record.DormCode</strong></td>
                                                 <td>
