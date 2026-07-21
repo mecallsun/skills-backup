@@ -67,7 +67,7 @@ public sealed class NotifyIconManager : IDisposable
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "金戈宿舍管理系统 v2.13.59",
+            Text = "金戈宿舍管理系统 v2.13.60",
             Visible = true
         };
 
@@ -226,7 +226,7 @@ public sealed class NotifyIconManager : IDisposable
             _miAdminStatus.Text = $"Admin：{StateText(state)}";
         }
 
-        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.59\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
+        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.60\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
 
         // v2.13.19：同步刷新图标颜色
         SetIconColor(EvaluateIconColor());
