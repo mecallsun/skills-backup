@@ -129,7 +129,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.46（2026-07-21 Settings + Profile 个人中心完成，10 阶段 30 Razor 页面 100% 原型对齐全收官）
+- **项目当前版本：** v2.13.48（2026-07-21 Booking 数据关系文档定稿 + v2.13.47 工号 FK 同步 BUG 修复）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -152,4 +152,6 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.44 EmployeeBilling 全部 100% 原型对齐：** Index 在职状态筛选 + 4 列（冷/热/电/在住）+ 详情入口 + 真实导出；Details 拆水分 + 分摊依据卡；BillingService 扩展 8 参数；commit f2de172。
 - **v2.13.45 Basics P1/P2 微调对齐：** 班组列名"排序"→"排序号" + 页头 .page-header 规范；审计 90% A 级无 P0；commit c1923ff。
 - **v2.13.46 Settings 全部 100% 原型对齐 + Profile 个人中心文档整合：** Settings/Index 5 个 mock 接真 API（备份/PDA 版本/系统集成/测试连接）+ Integration[id] 字段命名错误修复 + OnPostSaveIntegrationAsync 重实现 + Toast 组件；Settings/User JS BUG 修复 + 启停按钮；SysUserSelfService 6 敏感操作加 SysOpLog 审计（文档 80 §5.5）；Profile 个人中心 18 项功能 100% 已实现确认 + 6 区块专业布局建议（头像/工号/通知偏好/操作日志/Tab 缓存）+ 9 项待补充功能清单 + 数据模型 + API 端点建议；commit e7e160d。
+- **v2.13.47 Booking 工号同步 BUG 修复（P0 数据一致性）：** `DormBooking.EmployeeCode` 是冗余字段，原 `BookingService.GetListAsync` 只 JOIN `SysEmployee.RealName` 覆盖姓名，未处理工号，导致人员在「人员清单」改工号后 Booking 列表显示旧工号。修复：(1) GetListAsync 匿名投影增加 `EmployeeCode`（按 `EmployeeId` FK JOIN），物化阶段覆盖 `DormBooking.EmployeeCode`（仅 RAM）；(2) 关键词筛选使用 `x.EmployeeCode`（档案）优先 + 回退 `x.Booking.EmployeeCode`（冗余）；(3) `RepairBookingEmployeeNamesAsync` 扩展为同时回填 EmployeeCode + EmployeeName；(4) 新增 `SysEmployeeLite` 内部 DTO。**核心原则**：住宿登记的员工信息以 `SysEmployee.Id`（人员清单的记录 ID）为 FK 存入 `DormBooking.EmployeeId`，列表展示必须通过 JOIN 实时取最新档案。commit d3a4c57。详见 `100-Booking工号同步BUG修复-v2.13.47.md`。
+- **v2.13.48 Booking 数据关系文档定稿：** 正式在 `60-菜单导航与数据关系全景图`（升级到 v2.13.48）和 `07-办理登记需求-v2.11.md §3.1` 中固化"人员清单为唯一真源 + DormBooking.EmployeeId FK 关联"原则，强制后续任何 DormBooking 列表查询必须 JOIN SysEmployee。同步策略汇总表（EmployeeCode/Name/Department/Phone/AttendanceTypeId 5 个字段）：运行时实时覆盖 + Repair API 一次性写回。
 - **10 阶段 30 Razor 页面 100% 原型对齐全收官：** v2.13.37~v2.13.46 共 10 个版本递进完成，10 份对齐文档（90~99）齐备。
