@@ -102,6 +102,8 @@ public class SysUserSelfService : ISysUserSelfService
         u.Email = string.IsNullOrEmpty(req.Email) ? null : req.Email.Trim();
 
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：操作日志（文档 80 §5.5 要求）
+        await WriteOpLogAsync(userId, "UpdateProfile", "更新基本资料");
         return ApiResponse.Ok("资料已更新");
     }
 
@@ -131,6 +133,8 @@ public class SysUserSelfService : ISysUserSelfService
         u.PasswordHash = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
         u.FailedLoginCount = 0;
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：密码修改写入 SysOpLog
+        await WriteOpLogAsync(userId, "ChangePassword", "修改密码");
 
         return ApiResponse.Ok("密码已修改，下次登录请使用新密码");
     }
@@ -190,6 +194,8 @@ public class SysUserSelfService : ISysUserSelfService
             });
         }
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：安全问题变更写入日志
+        await WriteOpLogAsync(userId, "SetSecurityQuestions", "设置安全问题");
         return ApiResponse.Ok($"已设置 {req.Questions.Count} 个安全问题");
     }
 
@@ -323,6 +329,8 @@ public class SysUserSelfService : ISysUserSelfService
         u.FailedLoginCount = 0;
         u.IsLocked = false;
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：密码重置（忘记密码流程）写入日志
+        await WriteOpLogAsync(u.Id, "ResetPasswordByToken", "通过安全问题重置密码");
 
         return ApiResponse.Ok("密码重置成功，请使用新密码登录");
     }
@@ -355,6 +363,8 @@ public class SysUserSelfService : ISysUserSelfService
         u.WeChatOpenId = req.OpenId.Trim();
         u.WeChatBindAt = DateTime.Now;
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：微信绑定写入日志
+        await WriteOpLogAsync(userId, "BindWeChat", "绑定微信 OpenID");
 
         return ApiResponse.Ok("微信绑定成功");
     }
@@ -373,6 +383,8 @@ public class SysUserSelfService : ISysUserSelfService
         u.WeChatOpenId = null;
         u.WeChatBindAt = null;
         await _db.SaveChangesAsync();
+        // v2.13.46 P1 审计补全：微信解绑写入日志
+        await WriteOpLogAsync(userId, "UnbindWeChat", "解绑微信 OpenID");
 
         return ApiResponse.Ok("微信解绑成功");
     }
@@ -407,6 +419,31 @@ public class SysUserSelfService : ISysUserSelfService
     {
         var u = await _db.SysUsers.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
         return u?.PasswordResetFailedCount ?? 0;
+    }
+
+    /// <summary>
+    /// v2.13.46 P1 审计补全：写入操作日志（满足文档 80 §5.5 要求 — 5 个敏感操作均需入 SysOpLog）
+    /// </summary>
+    private async Task WriteOpLogAsync(int userId, string action, string description)
+    {
+        try
+        {
+            var user = await _db.SysUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            _db.SysOpLogs.Add(new SysOpLog
+            {
+                UserId = userId,
+                Username = user?.UserName ?? $"#{userId}",
+                Action = action,
+                Target = description,
+                Ip = "",
+                CreatedAt = DateTime.Now
+            });
+            await _db.SaveChangesAsync();
+        }
+        catch
+        {
+            // 写日志失败不影响主业务流
+        }
     }
 
     // ============================================================

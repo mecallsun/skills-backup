@@ -295,7 +295,7 @@
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <strong><i class="bi bi-phone"></i> PDA App 版本管理</strong>
-                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：上传 APK 并发布新版本')">
+                            <button class="btn btn-sm btn-success" onclick="publishNewAppVersion()">
                                 <i class="bi bi-cloud-upload"></i> 发布新版本
                             </button>
                         </div>
@@ -459,7 +459,7 @@
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <strong><i class="bi bi-hdd-stack"></i> 备份与恢复</strong>
-                            <button class="btn btn-sm btn-success" onclick="alert('原型演示：立即执行数据库备份')">
+                            <button class="btn btn-sm btn-success" onclick="executeBackup()">
                                 <i class="bi bi-download"></i> 立即备份
                             </button>
                         </div>
@@ -539,13 +539,13 @@
                                                 <tr>
                                                     <td><strong>@integration.SystemCode</strong></td>
                                                     <td>@integration.SystemName</td>
-                                                    <td><input type="text" name="Integration_@integration.Id)_ServerAddress" value="@integration.ServerAddress" class="form-control form-control-sm"></td>
-                                                    <td><input type="text" name="Integration_@integration.Id)_Account" value="@integration.Account" class="form-control form-control-sm"></td>
-                                                    <td><input type="password" name="Integration_@integration.Id)_Password" value="@integration.Password" class="form-control form-control-sm"></td>
+                                                    <td><input type="text" name="Integration[@integration.Id].ServerAddress" value="@integration.ServerAddress" class="form-control form-control-sm"></td>
+                                                    <td><input type="text" name="Integration[@integration.Id].Account" value="@integration.Account" class="form-control form-control-sm"></td>
+                                                    <td><input type="password" name="Integration[@integration.Id].Password" value="@integration.Password" class="form-control form-control-sm"></td>
                                                     <td class="text-center">
                                                         <div class="form-check form-switch d-inline-block">
-                                                            <input type="checkbox" name="Integration_@integration.Id)_Enabled" value="true" class="form-check-input" @(integration.IsEnabled ? "checked" : "")>
-                                                            <input type="hidden" name="Integration_@integration.Id)_Enabled" value="false">
+                                                            <input type="checkbox" name="Integration[@integration.Id].IsEnabled" value="true" class="form-check-input" @(integration.IsEnabled ? "checked" : "")>
+                                                            <input type="hidden" name="Integration[@integration.Id].IsEnabled" value="false">
                                                         </div>
                                                     </td>
                                                     <td>
@@ -765,7 +765,74 @@
         }
 
         function testConnection(id) {
-            alert(`测试与系统 ID=${id} 的连接...\n（实际将发送 HTTP 请求并返回结果）`);
+            // v2.13.46 P0 修复：接通 IntegrationController API
+            fetch(`/api/v1/system/integration/${id}/test`, { method: 'POST' })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '连接测试成功');
+                    } else {
+                        showToast('danger', j.message || '连接测试失败');
+                    }
+                })
+                .catch(err => showToast('danger', '连接测试请求失败：' + err.message));
+        }
+
+        // v2.13.46 P0 修复：接通 BackupController 真实 API
+        function executeBackup() {
+            if (!confirm('确定要立即执行数据库备份吗？')) return;
+            showToast('info', '正在执行备份，请稍候...');
+            fetch('/api/v1/system/backup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trigger: 'manual' })
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '备份成功');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('danger', j.message || '备份失败');
+                    }
+                })
+                .catch(err => showToast('danger', '备份请求失败：' + err.message));
+        }
+
+        // v2.13.46 P0 修复：接通 AppVersionController 真实 API
+        function publishNewAppVersion() {
+            var version = prompt('请输入新版本号（如 v2.14.0）：');
+            if (!version) return;
+            var notes = prompt('更新说明：');
+            if (notes === null) return;
+            fetch('/api/v1/appversion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ version: version, releaseNotes: notes, isCurrent: true })
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '发布成功');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('danger', j.message || '发布失败');
+                    }
+                })
+                .catch(err => showToast('danger', '发布请求失败：' + err.message));
+        }
+
+        // v2.13.46 P1 增强：Toast 提示组件（替换 alert 占位）
+        function showToast(type, message) {
+            var bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[type] || 'bg-info';
+            var html = '<div class="toast align-items-center text-white ' + bg + ' border-0 show" role="alert" style="position:fixed;top:80px;right:24px;z-index:9999;min-width:280px;">' +
+                '<div class="d-flex"><div class="toast-body">' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>' +
+                '</div></div>';
+            var wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            document.body.appendChild(wrapper.firstChild);
+            setTimeout(function (el) { if (el && el.parentElement) el.remove(); }, 4000, document.querySelector('.toast:last-of-type'));
         }
     </script>
 }

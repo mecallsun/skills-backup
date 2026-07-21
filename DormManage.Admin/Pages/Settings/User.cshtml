@@ -87,9 +87,21 @@
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary"
-                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleNames')">
+                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleNames', '@u.UserName')">
                                     <i class="bi bi-pencil"></i> 编辑
                                 </button>
+                                @if (u.IsActive)
+                                {
+                                    <button class="btn btn-sm btn-outline-warning" onclick="toggleUserStatus(@u.Id, false)" title="停用账号">
+                                        <i class="bi bi-pause-circle"></i> 停用
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-outline-success" onclick="toggleUserStatus(@u.Id, true)" title="启用账号">
+                                        <i class="bi bi-play-circle"></i> 启用
+                                    </button>
+                                }
                                 <button class="btn btn-sm btn-outline-warning"
                                         onclick="openPwdModal(@u.Id, '@u.UserName')">
                                     <i class="bi bi-key"></i> 重置密码
@@ -256,10 +268,10 @@
 
 @section Scripts {
     <script>
-        function openEditModal(id, displayName, email, phone, isActive, roleNames) {
+        function openEditModal(id, displayName, email, phone, isActive, roleNames, userName) {
             document.getElementById('editId').value = id;
-            document.getElementById('editUserName').value = id;
-            // 需通过 ajax 拿用户名，这里先用 id 显示
+            // v2.13.46 P0-15 BUG 修复：editUserName 接收 userName 参数，不再误填 id
+            document.getElementById('editUserName').value = userName || ('user_' + id);
             document.getElementById('editDisplayName').value = displayName;
             document.getElementById('editEmail').value = email;
             document.getElementById('editPhone').value = phone;
@@ -278,6 +290,22 @@
                 });
             });
             new bootstrap.Modal(document.getElementById('editUserModal')).show();
+        }
+
+        // v2.13.46 P0-16 启用/停用切换
+        function toggleUserStatus(id, enable) {
+            if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
+            fetch('/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable'), { method: 'POST' })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        alert(enable ? '已启用' : '已停用');
+                        location.reload();
+                    } else {
+                        alert('操作失败：' + (j.message || '未知错误'));
+                    }
+                })
+                .catch(err => alert('请求失败：' + err.message));
         }
 
         function openPwdModal(id, userName) {

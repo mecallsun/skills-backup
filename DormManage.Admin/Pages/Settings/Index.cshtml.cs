@@ -234,8 +234,48 @@ public class IndexModel : PageModel
     }
 
     // 注意：数据库连接配置保存已迁移到 /api/v1/system/dbconfig/save (v2.13.19)
-// 注意：系统集成配置保存由对应 API 端点处理（v2.13.x 各模块独立）
-// 此处不再保留 Post-handler stub，避免误导前端调用
+
+    /// <summary>
+    /// v2.13.46 P0-5 修复：系统集成配置保存（接收 Razor 数组 Integration[id] 语法）
+    /// </summary>
+    public async Task<IActionResult> OnPostSaveIntegrationAsync([FromForm] List<IntegrationFormItem> Integration)
+    {
+        if (Integration == null || Integration.Count == 0)
+        {
+            TempData["ErrorMessage"] = "未接收到集成配置数据";
+            return RedirectToPage(new { tab = "integration" });
+        }
+
+        try
+        {
+            using var http = new HttpClient { BaseAddress = new Uri($"{Request.Scheme}://{Request.Host}") };
+            int updated = 0;
+            foreach (var item in Integration)
+            {
+                var resp = await http.PutAsJsonAsync($"/api/v1/system/integration/{item.Id}", item);
+                if (resp.IsSuccessStatusCode) updated++;
+            }
+            TempData["SuccessMessage"] = $"已更新 {updated} 条系统集成配置";
+        }
+        catch (Exception ex)
+        {
+            TempData["ErrorMessage"] = $"保存失败：{ex.Message}";
+        }
+
+        return RedirectToPage(new { tab = "integration" });
+    }
+}
+
+/// <summary>
+/// v2.13.46 P0-5：系统集成表单接收 DTO（对应 Razor Integration[id] 数组语法）
+/// </summary>
+public class IntegrationFormItem
+{
+    public int Id { get; set; }
+    public string? ServerAddress { get; set; }
+    public string? Account { get; set; }
+    public string? Password { get; set; }
+    public bool IsEnabled { get; set; }
 }
 
 /// <summary>
