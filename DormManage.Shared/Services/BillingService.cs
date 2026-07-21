@@ -152,13 +152,19 @@ public class BillingService : IBillingService
 
         if (standard.IsActive)
         {
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var existingActive = await _db.BillingStandards
-                .AnyAsync(s => s.Id != standard.Id && s.IsActive
-                    && s.EffectiveFrom <= today
-                    && (s.EffectiveTo == null || s.EffectiveTo >= today));
-            if (existingActive)
-                return (false, "该时段已存在启用中的费用标准");
+            var newStart = standard.EffectiveFrom;
+            // v2.13.63 修复：仅对【同员工类型 + 已生效】的记录做时段重叠检查；
+            // 之前实现不分类型，导致不同员工类型的标准被错误拒绝（用户报告"启用此标准勾选没有生效"）。
+            // 重叠定义：newStart <= existingEnd AND existingStart <= newEnd；
+            // 任一端为 null（永久有效）视为无穷大，比较时跳过对应约束。
+            var hasOverlap = await _db.BillingStandards
+                .AnyAsync(s => s.Id != standard.Id
+                    && s.IsActive
+                    && s.ApplicableTypeId == standard.ApplicableTypeId
+                    && (standard.EffectiveTo == null || s.EffectiveFrom <= standard.EffectiveTo)
+                    && (s.EffectiveTo == null || newStart <= s.EffectiveTo));
+            if (hasOverlap)
+                return (false, "该员工类型在此时段已存在启用中的费用标准");
         }
 
         if (standard.Id > 0)

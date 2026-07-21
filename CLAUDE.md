@@ -129,7 +129,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.62（2026-07-21 费用标准 Edit 启用勾选 manual hidden 移除彻底修复 — 移除 v2.13.61 错误保留的 manual hidden，让 asp-for 自动管理 hidden，ModelBinder 正确取第一个 checkbox 值）
+- **项目当前版本：** v2.13.63（2026-07-21 费用标准 时段重叠检查按员工类型筛选 P0 修复 — BillingService.SaveStandardAsync 添加 `s.ApplicableTypeId == standard.ApplicableTypeId` 过滤 + 改为真正的双时段重叠检查 + 错误消息精准化"该员工类型在此时段已存在启用中的费用标准"）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -163,3 +163,4 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.60 宿舍详情页 Error + 100% 原型对齐：** Details 页面 5 字段缺失 → ALTER TABLE 补列 + UPDATE Barcode=DormCode WHERE NULL + 移除序号/手机列 + 调整列顺序（部门→员工类型→考勤班次）+ 基本信息卡改 `table table-sm table-borderless`；详见 `112-宿舍详情页错误修复与原型对齐-v2.13.60.md`。
 - **v2.13.61 费用标准 启用勾选 + 适用员工类型 FK 关联 P0 修复（部分失败）：** `<input type="hidden" asp-for="Input.IsActive" value="false" />` 被 ModelState 覆盖 + `new bool IsActive` 与 BaseEntity 冲突 + ApplicableType 字符串 → ApplicableTypeId FK + `FK_BillingStandard_EmployeeType` 约束 + datalist → EmployeeType 真源 select；详见 `113-费用标准启用勾选与员工类型FK修复-v2.13.61.md`。
 - **v2.13.62 费用标准 启用勾选 manual hidden 移除彻底修复：** v2.13.61 错误保留 manual hidden + asp-for 自动生成 hidden → **3 个 Input.IsActive 字段**（2 hidden + 1 checkbox）→ ModelBinder 取第一个值（永远 false）→ 勾选不生效。**修复**：移除 manual hidden，只留 `<input asp-for="Input.IsActive" type="checkbox" />`，让 asp-for 自动管理 hidden（1 hidden + 1 checkbox）。**验证**：端到端 curl POST 测试，未勾选 → IsActive=False、已勾选 → IsActive=True 均能正确持久化。详见 `114-费用标准启用勾选二次修复-v2.13.62.md`。**核心教训**：`asp-for` 复选框会自动追加 hidden field；手动加 hidden 一定会让 ModelBinder 取错值。
+- **v2.13.63 费用标准 时段重叠检查按员工类型筛选 P0 修复：** 用户反馈"启用此标准勾选没有生效"——根因是 BillingService.SaveStandardAsync 时段重叠检查未按 `ApplicableTypeId` 过滤，导致不同员工类型的标准被错误互斥（用户启用 Id=3（TypeId=1）时被已激活的 Id=2（TypeId=2）拒绝）。修复：query 添加 `.Where(s => s.ApplicableTypeId == standard.ApplicableTypeId)` 过滤 + 改为真正的双时段重叠检查（`newStart <= existingEnd AND existingStart <= newEnd`，null 端视为无穷大）；错误消息精准化为「该员工类型在此时段已存在启用中的费用标准」。验证：跨类型启用（Id=2 + Id=3 均为 Active）✅、同类型冲突（Id=1 + Id=3 同 TypeId）拒绝 ✅。详见 `115-费用标准时段重叠类型筛选-v2.13.63.md`。**核心教训**：业务规则互斥检查必须按业务主键（员工类型/部门/楼栋等）分组；时段重叠做真正的双向检查，避免反向推断。
