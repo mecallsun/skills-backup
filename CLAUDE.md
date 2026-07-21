@@ -129,7 +129,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.38（2026-07-21 Booking 全部 4 页面 100% 原型对齐）
+- **项目当前版本：** v2.13.46（2026-07-21 Settings + Profile 个人中心完成，10 阶段 30 Razor 页面 100% 原型对齐全收官）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -144,3 +144,12 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.33 Repair API：** Booking 模块新增 `POST /api/v1/bookings/repair-employee-names`，用于批量回填历史 `DormBooking.EmployeeName`（按 `EmployeeId` 优先 / `EmployeeCode` 次之对齐 `SysEmployee.RealName`，返回 `updated/skipped/notFound` 计数）。**`/Booking` 页面 PageHeader 新增「修复姓名关联」按钮**。同时修复 BUG #1：`selectCiEmp` 卡死（增加 `ciSearchResults/coSearchResults` 缓存，按 empId 查员工并完整填充 `dataset.empId` + 员工信息展示区）。
 - **v2.13.34 checkInModal 100% 原型对齐：** 11 项 UI/交互不一致全部修复（单列布局 + form-card 系列样式 + 操作类型 radio 切换入住/退房 + 姓名模糊搜索 + emp-info-card 横排 + 考勤班次 Badge 渲染 + 校验 alert 3 种状态 + "提交"按钮 + breadcrumb）。**PageHeader 移除冗余"办理退房"按钮**（合并到 checkInModal 的 opType=2 分支）。
 - **v2.13.35 按钮与关闭交互设计：** 5 关闭 + 1 提交触发器统一化设计：`<form id="checkInForm">` 包裹整个 form-card → type=submit 工作 → Enter 自动触发 submitCheckIn；取消/X 按钮改 `id` 绑定 confirmCloseCheckIn（已选员工时弹"放弃当前录入"确认）；ESC/backdrop 关闭走 `hide.bs.modal` 拦截；modal 配 `data-bs-backdrop="static"` + `data-bs-keyboard="false"` 强制拦截；form-actions 左侧增加快捷键提示 `<kbd>Enter</kbd> 提交 · <kbd>Esc</kbd> 关闭`。
+- **v2.13.39 Dorms 全部 100% 原型对齐：** Details 页面 3 列（员工类型/已入住/操作）+ 房间数字段 + checkoutResident JS；commit 46bf28e。
+- **v2.13.40 Personnel 全部 100% 原型对齐：** Import 11 列模板 + FK 映射持久化 + MarkLeft BUG 修复 + 文案"员工→人员"统一；commit 88d11e3。
+- **v2.13.41 Meter 全部 100% 原型对齐：** Detail 6 字段补全 + 左右分栏 + 照片占位 + 3 操作按钮；Entry 用量计算+红色校验+首次提示；Index 覆盖率 alert+progress bar；commit cc09f95。
+- **v2.13.42 BillingStandard P0 BUG 修复 + 视觉对齐：** 3 个 BUG 修复（SaveChangesAsync 缺失/日期校验反转/去重"全部"）+ Edit.Id 修复 + 4 状态 Badge；commit 3de4e8e。
+- **v2.13.43 DormBilling 视觉对齐 + P1 修复：** Details 楼层字段（楼栋+楼层）+ Index 单位后缀（m³/度）+ 真实导出 + 孤立 location.reload 删除 + 序号 text-muted；commit a1c2aea。
+- **v2.13.44 EmployeeBilling 全部 100% 原型对齐：** Index 在职状态筛选 + 4 列（冷/热/电/在住）+ 详情入口 + 真实导出；Details 拆水分 + 分摊依据卡；BillingService 扩展 8 参数；commit f2de172。
+- **v2.13.45 Basics P1/P2 微调对齐：** 班组列名"排序"→"排序号" + 页头 .page-header 规范；审计 90% A 级无 P0；commit c1923ff。
+- **v2.13.46 Settings 全部 100% 原型对齐 + Profile 个人中心文档整合：** Settings/Index 5 个 mock 接真 API（备份/PDA 版本/系统集成/测试连接）+ Integration[id] 字段命名错误修复 + OnPostSaveIntegrationAsync 重实现 + Toast 组件；Settings/User JS BUG 修复 + 启停按钮；SysUserSelfService 6 敏感操作加 SysOpLog 审计（文档 80 §5.5）；Profile 个人中心 18 项功能 100% 已实现确认 + 6 区块专业布局建议（头像/工号/通知偏好/操作日志/Tab 缓存）+ 9 项待补充功能清单 + 数据模型 + API 端点建议；commit e7e160d。
+- **10 阶段 30 Razor 页面 100% 原型对齐全收官：** v2.13.37~v2.13.46 共 10 个版本递进完成，10 份对齐文档（90~99）齐备。
