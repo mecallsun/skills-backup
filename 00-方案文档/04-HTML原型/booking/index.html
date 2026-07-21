@@ -265,6 +265,7 @@
                             <th width="50">序号</th>
                             <th>工号</th>
                             <th>姓名</th>
+                            <th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
                             <th>部门</th>
                             <th>考勤班次</th>
                             <th>宿舍</th>
@@ -519,7 +520,7 @@
             renderRows: function(items, total, start) {
                 var tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" class="text-center text-muted py-4">暂无办理登记</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">暂无办理登记</td></tr>';
                     return;
                 }
                 tbody.innerHTML = items.map(function(b, idx) {
@@ -560,6 +561,7 @@
                         '<td class="text-center text-muted">' + serialNum + '</td>' +
                         '<td><strong>' + b.employeeCode + '</strong></td>' +
                         '<td>' + b.employeeName + '</td>' +
+                        '<td class="text-center">' + genderBadgeHtml(b.gender) + '</td>' +  // v2.13.86
                         '<td>' + (b.department || '-') + '</td>' +
                         '<td>' + attendanceBadgeHtml(b.attendanceTypeId) + '</td>' +
                         '<td>' + b.dormCode + '</td>' +
@@ -724,6 +726,13 @@
 
         function exportExcel() {
             alert("原型演示：导出 Excel");
+        }
+
+        // v2.13.86 性别 Badge（与代码 1:1：男=primary蓝 / 女=danger粉 / 未知=secondary灰）
+        function genderBadgeHtml(g) {
+            if (g === 1) return '<span class="badge bg-primary"><i class="bi bi-gender-male"></i></span>';
+            if (g === 2) return '<span class="badge bg-danger"><i class="bi bi-gender-female"></i></span>';
+            return '<span class="badge bg-secondary">-</span>';
         }
 
         // ========== v2.12.29 办理入住/退房 模态弹窗逻辑 ==========

@@ -115,6 +115,7 @@
                             <th width="50">序号</th>
                             <th>工号</th>
                             <th>姓名</th>
+                            <th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
                             <th>手机号</th>
                             <th>部门</th>
                             <th>员工类型</th>
@@ -192,6 +193,13 @@
         if (!t) return '<span class="text-muted">-</span>';
         var colors = { 1: 'bg-secondary', 2: 'bg-warning text-dark', 3: 'bg-info text-dark', 4: 'bg-success', 5: 'bg-dark' };
         return '<span class="badge ' + (colors[id] || 'bg-secondary') + '">' + t.name + '</span>';
+    }
+
+    // v2.13.86 新增：性别 Badge（与代码 1:1：男=primary蓝 / 女=danger粉 / 未知=secondary灰）
+    function genderBadgeHtml(g) {
+        if (g === 1) return '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+        if (g === 2) return '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+        return '<span class="badge bg-secondary">未知</span>';
     }
 
     // v2.12.2 新增：班组单元格（关联引用 TEAMS 字典，基础资料-员工班组表 Team）
@@ -315,6 +323,7 @@
             + '<td class="text-center text-muted">' + (start + idx + 1) + '</td>'
             + '<td><strong>' + code + '</strong></td>'
             + '<td>' + name + '</td>'
+            + '<td class="text-center">' + genderBadgeHtml(p.gender) + '</td>'  // v2.13.86 性别 Badge
             + '<td><small class="text-muted">' + (p.phone || '-') + '</small></td>'
             + '<td>' + deptName + '</td>'
             + '<td>' + typeBadgeHtml(p.employeeTypeId) + '</td>'
@@ -336,7 +345,7 @@
     function renderRowsFn(items, total, start) {
         var tbody = document.getElementById('tbody');
         if (total === 0) {
-            tbody.innerHTML = '<tr><td colspan="13" class="text-center text-muted py-4">暂无数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="14" class="text-center text-muted py-4">暂无数据</td></tr>';
             return;
         }
         var html = '';

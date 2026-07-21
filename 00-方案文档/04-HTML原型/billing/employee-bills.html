@@ -267,7 +267,8 @@
                     <thead class="table-light">
                         <tr>
                             <th width="60">序号</th>
-                            <th>工号</th><th>姓名</th><th>部门</th><th>员工类型</th>
+                            <th>工号</th><th>姓名</th><th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
+                            <th>部门</th><th>员工类型</th>
                             <th>在职状态</th>
                             <th>宿舍</th><th>入住天数</th>
                             <!-- v2.11.21 修订：原"住宿状态"列实际显示的是账单段类型，改为"账单段类型"，与基础资料 RESIDENCE_STATUS 字典区分 -->
@@ -487,7 +488,7 @@
             renderRows: (items, total, start) => {
                 const tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = `<tr><td colspan="16" class="text-center text-muted py-4">该月份暂无分摊数据。请先生成宿舍账单，再点击「生成」</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="17" class="text-center text-muted py-4">该月份暂无分摊数据。请先生成宿舍账单，再点击「生成」</td></tr>`;
                     return;
                 }
                 // v2.11.21 修订：账单段类型从 EMPLOYEE_BILL_SEGMENT_TYPE 字典读取（单一数据源）
@@ -517,7 +518,10 @@
                     <tr>
                         <td class="text-center text-muted">${seqNo}</td>
                         <td>${b.employeeCode}</td>
-                        <td><strong>${b.employeeName}</strong></td>
+                        <td>
+                            <strong>${b.employeeName}</strong>
+                            ${b.gender === 1 ? '<span class="badge bg-primary ms-1"><i class="bi bi-gender-male"></i> 男</span>' : b.gender === 2 ? '<span class="badge bg-danger ms-1"><i class="bi bi-gender-female"></i> 女</span>' : '<span class="badge bg-secondary ms-1">-</span>'}
+                        </td>
                         <td>${b.department}</td>
                         <td>${empTypeName}</td>
                         <!-- v2.11.27 新增：在职状态列（关联引用 PERSONNEL.employmentStatusId → EMPLOYMENT_STATUSES 字典）-->

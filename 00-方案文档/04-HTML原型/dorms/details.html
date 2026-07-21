@@ -81,7 +81,8 @@
                         <table class="table table-hover mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>工号</th><th>姓名</th><th>部门</th><th>员工类型</th><th>考勤班次</th>
+                                    <th>工号</th><th>姓名</th><th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
+                                    <th>部门</th><th>员工类型</th><th>考勤班次</th>
                                     <th>床号</th>
                                     <th>入住日期</th><th>已入住</th><th width="200">操作</th>
                                 </tr>
@@ -130,7 +131,7 @@
         document.getElementById('residentCount').textContent = active.length;
         const tbody = document.getElementById('tbody');
         if (active.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">暂无入住人员</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">暂无入住人员</td></tr>`;
         } else {
             // v2.11.6 强化：员工类型按 FK 关联引用（SysEmployee.EmployeeTypeId → EmployeeType.Name）
             // v2.11.7 BUG 修复：增加兼容逻辑 - 同时支持 FK (新格式) 和 string code (旧格式)
@@ -197,6 +198,7 @@
                 <tr>
                     <td>${emp.employeeCode}</td>
                     <td>${emp.realName}</td>
+                    <td class="text-center">${emp.gender === 1 ? '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>' : emp.gender === 2 ? '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>' : '<span class="badge bg-secondary">-</span>'}</td>  <!-- v2.13.86 -->
                     <td>${emp.department}</td>
                     <!-- v2.11.7：员工类型 - FK 关联引用 SysEmployee → EmployeeType (含 fallback) -->
                     <td><span class="badge ${empTypeBadge(emp)}" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">${empTypeNameByFk(emp)}</span></td>

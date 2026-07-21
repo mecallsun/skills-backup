@@ -89,6 +89,7 @@
                         <div class="emp-info-card" id="empInfo" style="display:none;">
                             <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
                             <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
+                            <span class="emp-info-item"><span class="label">性别:</span><span class="value" id="empGender"></span></span>  <!-- v2.13.86 新增 -->
                             <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
                             <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
@@ -201,6 +202,14 @@
             document.getElementById('empInfo').style.display = 'block';
             document.getElementById('empCode').textContent = emp.employeeCode;
             document.getElementById('empName').textContent = emp.realName;
+            // v2.13.86 性别 Badge
+            if (emp.gender === 1) {
+                document.getElementById('empGender').innerHTML = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+            } else if (emp.gender === 2) {
+                document.getElementById('empGender').innerHTML = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+            } else {
+                document.getElementById('empGender').innerHTML = '<span class="badge bg-secondary">未知</span>';
+            }
             document.getElementById('empPhone').textContent = emp.phone || '-';
             document.getElementById('empDept').textContent = emp.department || '-';
 

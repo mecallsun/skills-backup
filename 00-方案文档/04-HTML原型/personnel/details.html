@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人员详情 — 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: var(--bg-page, #f5f6f8); }
+        :root { --bg-page: #f5f6f8; --primary: #1976d2; }
+        .top-bar { height: 52px; background: #fff; border-bottom: 1px solid #e8eaed; padding: 0 1.5rem; }
+        .brand-icon { font-size: 1.3rem; color: var(--primary); margin-right: 0.5rem; }
+        .brand-text { font-weight: 600; font-size: 1.05rem; color: #212529; margin-right: .75rem; }
+        .brand-version { font-size: .75rem; color: #6c757d; padding: 2px 8px; background: #f0f0f0; border-radius: 4px; }
+        .user-pill { padding: 4px 12px; background: #f0f7ff; border-radius: 16px; font-size: .875rem; color: #1976d2; }
+        .btn-exit { color: #6c757d; text-decoration: none; font-size: .875rem; padding: 4px 10px; }
+        #tab-bar { background: #fff; border-bottom: 1px solid #e8eaed; padding: 0 1.5rem; height: 44px; display: flex; align-items: center; gap: .5rem; overflow-x: auto; }
+        .tab-item { padding: .5rem 1rem; color: #6c757d; text-decoration: none; font-size: .9rem; border-bottom: 2px solid transparent; }
+        .tab-item:hover { color: var(--primary); }
+        .tab-item.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 500; }
+        .page-content { padding: 1.5rem; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+        .page-title { font-size: 1.4rem; font-weight: 600; margin: 0; }
+        .page-title i { color: var(--primary); margin-right: .5rem; }
+        .breadcrumb { margin: 0; background: transparent; padding: 0; font-size: .85rem; }
+
+        /* v2.13.86 详情页左右两栏布局（参考 Dorms/Details.html） */
+        .details-row { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: 12px; }
+        .details-left { width: 320px; flex-shrink: 0; }
+        .details-right { flex: 1 1 0; min-width: 0; }
+    </style>
+</head>
+<body>
+    <!-- Tier 1: 顶部品牌栏 -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.13.86</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a class="user-pill" href="../profile/index.html"><i class="bi bi-person-circle"></i><span>管理员</span></a>
+                <a href="#" class="btn-exit" title="退出登录"><i class="bi bi-box-arrow-right"></i> 退出</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tier 2: Tab 页签栏 -->
+    <div id="tab-bar">
+        <a class="tab-item" href="../index.html"><i class="bi bi-speedometer2"></i> 首页</a>
+        <a class="tab-item" href="list.html"><i class="bi bi-people-fill"></i> 人员清单</a>
+        <a class="tab-item" href="../booking/index.html"><i class="bi bi-clipboard-check"></i> 办理登记</a>
+        <a class="tab-item" href="../dorms/list.html"><i class="bi bi-building"></i> 宿舍管理</a>
+        <a class="tab-item" href="../billing/standards.html"><i class="bi bi-cash-stack"></i> 费用标准</a>
+        <a class="tab-item" href="../billing/dorm-bills.html"><i class="bi bi-receipt"></i> 宿舍账单</a>
+        <a class="tab-item" href="../billing/employee-bills.html"><i class="bi bi-wallet2"></i> 员工账单</a>
+        <a class="tab-item" href="../meter/index.html"><i class="bi bi-clipboard-data"></i> 抄表记录</a>
+        <a class="tab-item" href="../basics/index.html"><i class="bi bi-database"></i> 基础资料</a>
+        <a class="tab-item" href="../settings/index.html"><i class="bi bi-gear"></i> 系统设置</a>
+    </div>
+
+    <!-- Tier 3: 页面内容区 -->
+    <div class="page-content">
+        <!-- 页头 -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="bi bi-person-vcard"></i>人员详情
+                <small class="text-muted ms-2 fs-6" id="empHeader"></small>
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="list.html">人员清单</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">人员详情</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- 左右两栏布局 -->
+        <div class="details-row">
+            <!-- 左栏：基本信息 -->
+            <div class="details-left">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr><th width="60" class="text-muted">工号</th><td><strong id="empCode">-</strong></td></tr>
+                            <tr><th class="text-muted">姓名</th><td><strong id="empName">-</strong></td></tr>
+                            <tr>
+                                <th class="text-muted">性别</th>
+                                <td id="empGender">-</td>  <!-- v2.13.86 新增 -->
+                            </tr>
+                            <tr><th class="text-muted">手机号</th><td id="empPhone">-</td></tr>
+                            <tr><th class="text-muted">部门</th><td id="empDept">-</td></tr>
+                            <tr><th class="text-muted">员工类型</th><td id="empType">-</td></tr>
+                            <tr><th class="text-muted">考勤班次</th><td id="empAtt">-</td></tr>
+                            <tr><th class="text-muted">班组</th><td id="empTeam">-</td></tr>
+                            <tr><th class="text-muted">入职日期</th><td id="empHireDate">-</td></tr>
+                            <tr><th class="text-muted">离职日期</th><td id="empLeaveDate">-</td></tr>
+                            <tr>
+                                <th class="text-muted">在职状态</th>
+                                <td id="empStatus">-</td>
+                            </tr>
+                            <tr><th class="text-muted">房号/床号</th><td id="empDorm">未分配</td></tr>
+                            <tr><th class="text-muted">备注</th><td id="empRemark">-</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="list.html" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+                    <a id="editLink" href="#" class="btn btn-primary"><i class="bi bi-pencil"></i> 编辑员工</a>
+                </div>
+            </div>
+
+            <!-- 右栏：当前住宿 + 历史记录 -->
+            <div class="details-right">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-house-door"></i> 当前住宿</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="currentBooking">
+                            <p class="text-muted">暂无当前住宿信息</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 历史住宿记录</h5>
+                        <small class="text-muted">最近 20 条</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-sm mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="50">序号</th>
+                                        <th>日期</th>
+                                        <th>房号</th>
+                                        <th>类型</th>
+                                        <th>状态</th>
+                                        <th>原因</th>
+                                        <th>登记人</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyTbody">
+                                    <tr><td colspan="7" class="text-center text-muted py-4">暂无历史住宿记录</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../mock-data.js"></script>
+    <script src="../_shared/storage-keys.js"></script>
+    <script src="../_shared/tab-bar.js"></script>
+    <script>
+        // v2.13.86 性别 Badge（与代码 1:1）
+        function genderBadgeHtml(g) {
+            if (g === 1) return '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+            if (g === 2) return '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+            return '<span class="badge bg-secondary">未知</span>';
+        }
+
+        // 解析 URL ?id=X
+        function getIdFromUrl() {
+            var url = new URL(window.location.href);
+            return parseInt(url.searchParams.get('id')) || 1;
+        }
+
+        // 从 PERSONNEL 模拟数据取员工
+        function loadEmployee() {
+            var id = getIdFromUrl();
+            var p = PERSONNEL.find(x => x.id === id);
+            if (!p) {
+                document.querySelector('.details-row').innerHTML = '<div class="alert alert-warning">员工不存在</div>';
+                return;
+            }
+            document.getElementById('empHeader').textContent = p.employeeCode + ' · ' + p.realName;
+            document.getElementById('empCode').textContent = p.employeeCode;
+            document.getElementById('empName').textContent = p.realName;
+            document.getElementById('empGender').innerHTML = genderBadgeHtml(p.gender);
+            document.getElementById('empPhone').textContent = p.phone || '-';
+            document.getElementById('empDept').textContent = p.department || '-';
+            document.getElementById('empType').textContent = getEmployeeTypeName(p.employeeTypeId) || '-';
+            document.getElementById('empAtt').innerHTML = attendanceBadgeHtml(p.attendanceTypeId);
+            document.getElementById('empTeam').textContent = getTeamName(p.teamId) || '-';
+            document.getElementById('empHireDate').textContent = p.hireDate || '-';
+            document.getElementById('empLeaveDate').textContent = p.leaveDate || '-';
+            document.getElementById('empStatus').innerHTML = employmentBadgeHtml(p.employmentStatusId);
+            document.getElementById('empDorm').innerHTML = p.dormCode
+                ? '<strong>' + p.dormCode + '</strong>' + (p.bedNo ? ' <small class="text-muted">' + p.bedNo + ' 号床</small>' : '')
+                : '<span class="text-muted">未分配</span>';
+            document.getElementById('empRemark').textContent = p.remark || '-';
+            document.getElementById('editLink').href = 'edit.html?id=' + id;
+
+            // 当前住宿（从 BOOKINGS 模拟数据找 Status=2 的最新记录）
+            var current = BOOKINGS.filter(b => b.employeeId === id && b.status === 2)
+                .sort((a, b) => b.bookingDate.localeCompare(a.bookingDate))[0];
+            if (current) {
+                document.getElementById('currentBooking').innerHTML =
+                    '<div class="alert alert-success py-2 mb-3"><i class="bi bi-check-circle"></i> ' +
+                    '当前在宿 <strong>' + current.dormCode + '</strong>，入住日期 <strong>' + current.bookingDate + '</strong>' +
+                    '</div><table class="table table-sm table-borderless mb-3">' +
+                    '<tr><th width="80" class="text-muted">登记人</th><td>' + (current.registrar || '-') + '</td></tr>' +
+                    '<tr><th class="text-muted">入住原因</th><td>' + (current.reason || '-') + '</td></tr>' +
+                    '</table>';
+            }
+
+            // 历史住宿记录（最近 20 条）
+            var history = BOOKINGS.filter(b => b.employeeId === id && b.status !== 2)
+                .sort((a, b) => b.bookingDate.localeCompare(a.bookingDate))
+                .slice(0, 20);
+            if (history.length > 0) {
+                var html = history.map((b, i) =>
+                    '<tr>' +
+                    '<td class="text-muted">' + (i + 1) + '</td>' +
+                    '<td>' + b.bookingDate + '</td>' +
+                    '<td><strong>' + b.dormCode + '</strong></td>' +
+                    '<td>' + (b.type === 1 ? '<span class="badge bg-success">入住</span>' : '<span class="badge bg-warning text-dark">退房</span>') + '</td>' +
+                    '<td>' + (b.status === 3 ? '<span class="badge bg-secondary">已退房</span>' : '<span class="badge bg-info text-dark">已取消</span>') + '</td>' +
+                    '<td>' + (b.reason || '-') + '</td>' +
+                    '<td><small>' + (b.registrar || '-') + '</small></td>' +
+                    '</tr>'
+                ).join('');
+                document.getElementById('historyTbody').innerHTML = html;
+            }
+        }
+
+        // 引用 prototype/personnel/list.html 已定义的辅助函数（简化版）
+        function attendanceBadgeHtml(id) {
+            var t = null;
+            for (var i = 0; i < ATTENDANCE_TYPES_FULL.length; i++) {
+                if (ATTENDANCE_TYPES_FULL[i].id === id) { t = ATTENDANCE_TYPES_FULL[i]; break; }
+            }
+            if (!t) return '<span class="text-muted">-</span>';
+            var badge = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
+            return '<span class="badge ' + (badge[t.code] || 'bg-secondary') + '">' + (t.name || t.code || '-') + '</span>';
+        }
+        function getEmployeeTypeName(id) {
+            for (var i = 0; i < EMPLOYEE_TYPES.length; i++) if (EMPLOYEE_TYPES[i].id === id) return EMPLOYEE_TYPES[i].name;
+            return null;
+        }
+        function getTeamName(id) {
+            if (typeof TEAMS === 'undefined') return null;
+            for (var i = 0; i < TEAMS.length; i++) if (TEAMS[i].id === id) return TEAMS[i].name;
+            return null;
+        }
+        function employmentBadgeHtml(id) {
+            if (id === 1) return '<span class="badge bg-success">在职</span>';
+            if (id === 2) return '<span class="badge bg-warning text-dark">试用期</span>';
+            if (id === 3) return '<span class="badge bg-secondary">已离职</span>';
+            return '<span class="badge bg-secondary">未知</span>';
+        }
+
+        document.addEventListener('DOMContentLoaded', loadEmployee);
+    </script>
+</body>
+</html>

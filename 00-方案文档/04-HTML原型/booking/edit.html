@@ -267,7 +267,9 @@
             const html = `
                 <div class="info-row">
                     <span class="info-label">员工</span>
-                    <span class="info-value">${b.employeeName} <small class="text-muted">（${b.employeeCode}）</small></span>
+                    <span class="info-value">${b.employeeName} <small class="text-muted">（${b.employeeCode}）</small>
+                    ${b.gender === 1 ? '<span class="badge bg-primary ms-1"><i class="bi bi-gender-male"></i> 男</span>' : b.gender === 2 ? '<span class="badge bg-danger ms-1"><i class="bi bi-gender-female"></i> 女</span>' : '<span class="badge bg-secondary ms-1">未知</span>'}
+                </span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">宿舍</span>
