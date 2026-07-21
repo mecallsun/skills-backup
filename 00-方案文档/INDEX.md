@@ -1,6 +1,6 @@
 # 方案文档索引
 
-> **版本**：v2.13.53（Profile 导航过时描述深度清理）
+> **版本**：v2.13.56（Profile 禁止作为第 11 主菜单原则）
 > **日期**：2026-07-21
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
 > **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型） + Dashboard 首页 100% 原型对齐 + Booking 全部 4 页面 100% 原型对齐
@@ -226,3 +226,6 @@
 | 2026-07-21 | **v2.13.51 原型 user-pill 跳转链接修复** | 26 个 HTML 原型顶部「管理员」胶囊由 `<span>` 改为 `<a>` 链接到 `../profile/index.html`（按层级自动计算路径），与 Razor `_Layout.cshtml` 一致 + `_shared/layout-tab.css` 补充 user-pill 链接样式 + 文档 104 |
 | 2026-07-21 | **v2.13.52 Profile 原型保留主菜单导航设计定稿** | 个人中心原型（`profile/index.html`）保留顶部品牌栏 + 10 主菜单 Tab 导航，与全站 26 个 Razor/HTML 原型保持一致；tab-bar.js 移除 `/profile/` 路径拦截 → 全站统一渲染 + 文档 105 |
 | 2026-07-21 | **v2.13.53 Profile 导航过时描述深度清理** | 用户最终明确"原型中点击登录账号进入个人中心时，仍保留页头+主菜单导航的**正常显示**"（与其他 25 个原型完全一致）；`profile/index.html` v2.13.50 → v2.13.53 标识升级 + `01-技术架构与系统开发方案.md §3.6.10` 补充 4 条个人中心迭代记录（v2.13.49/50/51/52/53）+ INDEX.md 补充 v2.13.36~v2.13.53 完整时间线 + 文档 106 |
+| 2026-07-21 | **v2.13.54 profile 补全 mountTabBar 调用** | profile/index.html v2.13.50 初次创建时遗漏 `mountTabBar({ basePath: '..', currentUrl: 'profile/index.html' })`，导致 `<div id="tab-bar"></div>` 占位元素保持为空；详见 106 §八 |
+| 2026-07-21 | **v2.13.55 profile 补全 storage-keys.js 依赖** | tab-bar.js 依赖 STORAGE_KEYS + getCurrentUserId()（来自 storage-keys.js），profile/index.html 是 26 个原型中唯一遗漏此依赖的页面，导致 TabManager.saveActiveId() 抛 ReferenceError → mountTabBar() 中断 → Tab 栏不显示；详见 107 |
+| 2026-07-21 | **v2.13.56 Profile 禁止作为第 11 主菜单原则（硬约束）** | 用户明确禁止将 Profile 添加为第 11 主菜单 Tab：❌ 禁止修改 tab-bar.js FIXED_TABS 数组；❌ 禁止在 Profile 页面隐藏其他 10 Tab；✅ Profile 仅通过顶部「用户胶囊」`<a class="user-pill">` 进入；详见 108 + CLAUDE.md「Important Notes」同步 |
