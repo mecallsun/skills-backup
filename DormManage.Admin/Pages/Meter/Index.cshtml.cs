@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
@@ -172,6 +173,49 @@ public class IndexModel : PageModel
             UnfinishedDorms = Math.Max(0, totalActiveDorms - readDormsInMonth),
             UncoveredDorms = Math.Max(0, totalActiveDorms - readDormsInMonth)
         };
+    }
+
+    /// <summary>
+    /// v2.13.81 新增：手动补录 Modal 的「加载上月读数 + 检测已存在记录」AJAX 端点
+    /// JS 在宿舍/月份变更时调用，返回 JSON 包含 prevCold/Hot/Electric、hasPrev、currentStatus 等
+    /// </summary>
+    public JsonResult OnGetLoadReadings([FromQuery] string? dormCode, [FromQuery] string? readMonth)
+    {
+        if (string.IsNullOrWhiteSpace(dormCode) || string.IsNullOrWhiteSpace(readMonth))
+        {
+            return new JsonResult(new { success = false, message = "参数不完整" });
+        }
+
+        var dormCodeTrim = dormCode.Trim();
+        var readMonthTrim = readMonth.Trim();
+
+        // 查询当前月已存在记录
+        var current = _db.MeterRecords
+            .Where(r => r.DormCode == dormCodeTrim && r.ReadMonth == readMonthTrim)
+            .OrderByDescending(r => r.ServerCreatedAt)
+            .FirstOrDefault();
+
+        // 查询上月读数（按字符串 yyyy-MM 字典序比较）
+        var prev = _db.MeterRecords
+            .Where(r => r.DormCode == dormCodeTrim && r.ReadMonth.CompareTo(readMonthTrim) < 0)
+            .OrderByDescending(r => r.ReadMonth)
+            .FirstOrDefault();
+
+        var hasPrev = prev != null;
+        var isEffective = current != null && (current.Status == 1 || current.Status == 2);
+
+        return new JsonResult(new
+        {
+            success = true,
+            prevCold = prev?.ColdMeter ?? 0m,
+            prevHot = prev?.HotMeter ?? 0m,
+            prevElectric = prev?.ElectricMeter ?? 0m,
+            prevReadMonth = prev?.ReadMonth ?? "",
+            hasPrev,
+            currentStatus = current?.Status ?? -1,
+            currentRecordId = current?.Id ?? 0L,
+            isEffective
+        });
     }
 }
 

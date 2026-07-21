@@ -11,6 +11,11 @@
     var startIndex = (currentPage - 1) * pageSize + 1;
 }
 
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+@{
+    var antiforgery = PageAntiforgery.GetAndStoreTokens(HttpContext);
+}
+
 <div class="container-fluid">
     <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
     @await Component.InvokeAsync("PageHeader", new {
@@ -18,11 +23,14 @@
         title = "抄表记录",
         count = Model.Total,
         countLabel = "条",
-        primaryAction = new PageAction { Label = "新增记录", OnClick = "showAddModal()", Icon = "bi-plus-lg", Style = "success", PermissionCode = "meter:entry" },
+        // v2.13.81 1:1 原型对齐：移除「新增记录」按钮（原型只有「手动补录」Modal + 「批量导入」链接 + 「导出Excel」函数）
+        // 手动补录 → 调起大弹窗（modal-xl 900px，弹窗独占模式）
+        // 批量导入 → 跳转到独立 /Meter/Import 页面
+        // 导出 Excel → 后端 API 端点
         actions = new List<PageAction> {
-            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "primary", PermissionCode = "meter:entry" },
-            new() { Label = "批量导入", OnClick = "showBatchImportModal()", Icon = "bi-upload", Style = "info", PermissionCode = "meter:import" },
-            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "success" }
+            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "success", PermissionCode = "meter:entry" },
+            new() { Label = "批量导入", Url = "/Meter/Import", Icon = "bi-upload", Style = "primary", PermissionCode = "meter:import" },
+            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "outline-secondary" }
         }
     })
 
@@ -212,127 +220,105 @@
     </div>
 </div>
 
-<!-- 新增/编辑 Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- v2.13.81 1:1 原型对齐：手动补录 Modal（弹窗独占模式 modal-xl 900px） -->
+<div class="modal fade" id="modalManualEntry" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modalManualEntryLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 900px;">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="editModalTitle">新增记录</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="modalManualEntryLabel">
+                    <i class="bi bi-pencil-square text-success"></i> 手动补录抄表
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="editId" />
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">宿舍号 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="editDormCode" placeholder="如 D-001" required>
+                <!-- 区块 1：基本信息（宿舍 + 月份 + 抄表员） -->
+                <div class="form-section">
+                    <div class="form-section-title">基本信息</div>
+                    <div class="row g-2">
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">宿舍<span class="required">*</span></label>
+                            <select id="me_dorm" class="form-select">
+                                <option value="">请选择宿舍</option>
+                                @foreach (var code in Model.DormCodes)
+                                {
+                                    <option value="@code">@code</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">抄表月份<span class="required">*</span></label>
+                            <input type="month" id="me_month" class="form-control" value="@DateTime.Now.ToString("yyyy-MM")">
+                        </div>
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">抄表员</label>
+                            <input type="text" id="me_operator" class="form-control" value="admin（后台补录）" disabled>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <label class="form-label">抄表月份 <span class="text-danger">*</span></label>
-                        <input type="month" class="form-control" id="editReadMonth" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">冷水(m³)</label>
-                        <input type="number" class="form-control" id="editColdMeter" step="0.01" min="0" placeholder="0.00">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">热水(m³)</label>
-                        <input type="number" class="form-control" id="editHotMeter" step="0.01" min="0" placeholder="0.00">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">电(度)</label>
-                        <input type="number" class="form-control" id="editElectricMeter" step="0.01" min="0" placeholder="0.00">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" id="editRemark" rows="2" placeholder="可选"></textarea>
-                    </div>
+                    <div id="me_dupWarn" class="alert alert-danger mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
+                    <div id="me_lastRef" class="alert alert-secondary mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveRecord()">保存</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- 手动补录 Modal -->
-<div class="modal fade" id="manualEntryModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-pencil-square"></i> 手动补录</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info py-2 mb-3">
-                    <i class="bi bi-info-circle"></i> 手动补录：填写单个宿舍的完整抄表数据。
+                <!-- 区块 2：三表读数（紧凑三列卡片） -->
+                <div class="form-section">
+                    <div class="form-section-title">三表读数</div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #1976d2 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-primary mb-1"><i class="bi bi-droplet"></i> 冷水</h6>
+                                    <input type="number" step="0.01" min="0" id="me_cold" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_cold">用量：—</small>
+                                    <input type="file" id="me_photo_cold" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('cold', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_cold" onclick="document.getElementById('me_photo_cold').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_cold">上传冷水照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #0dcaf0 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-info mb-1"><i class="bi bi-steam"></i> 热水</h6>
+                                    <input type="number" step="0.01" min="0" id="me_hot" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_hot">用量：—</small>
+                                    <input type="file" id="me_photo_hot" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('hot', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_hot" onclick="document.getElementById('me_photo_hot').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_hot">上传热水照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #ffc107 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-warning mb-1"><i class="bi bi-lightning"></i> 电</h6>
+                                    <input type="number" step="0.01" min="0" id="me_electric" class="form-control form-control-sm" placeholder="度数（度）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_electric">用量：—</small>
+                                    <input type="file" id="me_photo_electric" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('electric', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_electric" onclick="document.getElementById('me_photo_electric').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_electric">上传电表照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">宿舍号 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="meDormCode" placeholder="如 D-001" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">抄表月份 <span class="text-danger">*</span></label>
-                        <input type="month" class="form-control" id="meReadMonth" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">冷水(m³)</label>
-                        <input type="number" class="form-control" id="meColdMeter" step="0.01" min="0">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">热水(m³)</label>
-                        <input type="number" class="form-control" id="meHotMeter" step="0.01" min="0">
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">电(度)</label>
-                        <input type="number" class="form-control" id="meElectricMeter" step="0.01" min="0">
-                    </div>
-                    <div class="col-md-12">
-                        <label class="form-label">操作员</label>
-                        <input type="text" class="form-control" id="meOperator" placeholder="如 admin">
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label">备注</label>
-                        <textarea class="form-control" id="meRemark" rows="2" placeholder="可选"></textarea>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="submitManualEntry()">提交补录</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- 批量导入 Modal -->
-<div class="modal fade" id="batchImportModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-upload"></i> 批量导入</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <!-- 区块 3：备注 -->
+                <div class="form-section">
+                    <div class="form-section-title">备注</div>
+                    <textarea id="me_remark" class="form-control form-control-sm" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
+                </div>
+
+                <!-- 区块 4：用量预览（实时计算） -->
+                <div id="me_usagePreview" class="alert alert-light border mt-2 mb-0 py-2" style="font-size: 0.85rem;">
+                    <strong><i class="bi bi-calculator"></i> 本月用量预览</strong>
+                    <p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>
+                </div>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-warning py-2 mb-3">
-                    <i class="bi bi-exclamation-triangle"></i> 批量导入将按 宿舍号+月份 覆盖已有记录。请确保数据格式正确。
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">批量录入（每行一条，格式：宿舍号,月份,冷水,热水,电）</label>
-                    <textarea class="form-control font-monospace" id="batchData" rows="10" placeholder="D-001,2026-07,125.50,88.20,365.00&#10;D-002,2026-07,98.50,62.30,280.50&#10;..."></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">默认操作员（用于未指定操作员的记录）</label>
-                    <input type="text" class="form-control" id="batchOperator" placeholder="如 admin">
-                </div>
-                <div id="batchResult" class="mt-3" style="display:none;"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                <button type="button" class="btn btn-info text-white" onclick="submitBatchImport()">开始导入</button>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                <button type="button" class="btn btn-primary" id="meSubmitBtn" onclick="meSubmit()"><i class="bi bi-check-lg"></i> 提交</button>
             </div>
         </div>
     </div>
@@ -434,170 +420,275 @@
 @section Scripts {
 <script>
 const API_BASE = '/api/meter/records';
+const CSRF_TOKEN = '@antiforgery.RequestToken';
 
-$(document).ready(function() {
-    // 初始化月份默认值
-    if (!$('#editReadMonth').val()) {
-        const now = new Date();
-        $('#editReadMonth').val(now.toISOString().slice(0, 7));
-    }
-});
+// ========== v2.13.81 1:1 原型对齐：手动补录 Modal 逻辑 ==========
+var mePrevCold = null, mePrevHot = null, mePrevElectric = null;
+var meHasPrev = false;
+var meCurrentStatus = -1, meCurrentRecordId = 0;
+var meSelectColdFile = null, meSelectHotFile = null, meSelectElectricFile = null;
 
-// 显示新增 Modal
-function showAddModal() {
-    $('#editModalTitle').text('新增记录');
-    $('#editId').val('');
-    $('#editDormCode').val('');
-    $('#editReadMonth').val(new Date().toISOString().slice(0, 7));
-    $('#editColdMeter').val('');
-    $('#editHotMeter').val('');
-    $('#editElectricMeter').val('');
-    $('#editRemark').val('');
-    new bootstrap.Modal(document.getElementById('editModal')).show();
-}
-
-// 显示手动补录 Modal
+// 打开手动补录 Modal（弹窗独占模式）
 function showManualEntryModal() {
-    $('#meDormCode').val('');
-    $('#meReadMonth').val(new Date().toISOString().slice(0, 7));
-    $('#meColdMeter').val('');
-    $('#meHotMeter').val('');
-    $('#meElectricMeter').val('');
-    $('#meOperator').val('');
-    $('#meRemark').val('');
-    new bootstrap.Modal(document.getElementById('manualEntryModal')).show();
+    // 重置字段
+    document.getElementById('me_dorm').value = '';
+    document.getElementById('me_month').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('me_cold').value = '';
+    document.getElementById('me_hot').value = '';
+    document.getElementById('me_electric').value = '';
+    document.getElementById('me_remark').value = '';
+    document.getElementById('me_dupWarn').style.display = 'none';
+    document.getElementById('me_lastRef').style.display = 'none';
+    mePrevCold = mePrevHot = mePrevElectric = null;
+    meHasPrev = false;
+    meCurrentStatus = -1;
+    // 清空照片
+    clearMePhoto('cold'); clearMePhoto('hot'); clearMePhoto('electric');
+    // 显示 Modal（弹窗独占模式：modal-xl 900px + static backdrop + no keyboard ESC）
+    var modalEl = document.getElementById('modalManualEntry');
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    onMeterReading();
 }
 
-// 显示批量导入 Modal
-function showBatchImportModal() {
-    $('#batchData').val('');
-    $('#batchOperator').val('');
-    $('#batchResult').hide().html('');
-    new bootstrap.Modal(document.getElementById('batchImportModal')).show();
+// 当宿舍/月份变更时，加载上月读数 + 检测已存在记录
+function onMeDormMonthChange() {
+    var dormCode = document.getElementById('me_dorm').value;
+    var readMonth = document.getElementById('me_month').value;
+    if (!dormCode || !readMonth) return;
+
+    fetch('/Meter/Index?handler=LoadReadings&dormCode=' + encodeURIComponent(dormCode) + '&readMonth=' + encodeURIComponent(readMonth))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            mePrevCold = data.prevCold;
+            mePrevHot = data.prevHot;
+            mePrevElectric = data.prevElectric;
+            meHasPrev = data.hasPrev;
+            meCurrentStatus = data.currentStatus;
+            meCurrentRecordId = data.currentRecordId;
+
+            // 显示重复警告
+            var dupWarn = document.getElementById('me_dupWarn');
+            if (data.currentStatus >= 0) {
+                var statusNames = ['未完成', '正常', '已修正', '未完成(PDA)', '已作废'];
+                var statusName = statusNames[data.currentStatus] || '未知';
+                if (data.isEffective) {
+                    // status=1/2 已生效 → 红色警告
+                    dupWarn.className = 'alert alert-warning mt-2 mb-0 py-1';
+                    dupWarn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ⚠️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。';
+                } else {
+                    // status=0 占位 → 蓝色提示
+                    dupWarn.className = 'alert alert-info mt-2 mb-0 py-1';
+                    dupWarn.innerHTML = '<i class="bi bi-info-circle"></i> ℹ️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。';
+                }
+                dupWarn.style.display = 'block';
+            } else {
+                dupWarn.style.display = 'none';
+            }
+
+            // 显示上月读数参考
+            var lastRef = document.getElementById('me_lastRef');
+            if (data.hasPrev) {
+                lastRef.innerHTML = '<i class="bi bi-clock-history"></i> 📄 上月读数（' + data.prevReadMonth + '）：冷水 <strong>' + data.prevCold.toFixed(2) + '</strong> · 热水 <strong>' + data.prevHot.toFixed(2) + '</strong> · 电表 <strong>' + data.prevElectric.toFixed(2) + '</strong>';
+                lastRef.style.display = 'block';
+            } else {
+                lastRef.style.display = 'none';
+            }
+            onMeterReading();
+        })
+        .catch(function(err) { console.error('[v2.13.81] 加载读数失败：', err); });
+}
+
+// 实时用量预览 + 校验
+function onMeterReading() {
+    var cold = parseFloat(document.getElementById('me_cold').value);
+    var hot = parseFloat(document.getElementById('me_hot').value);
+    var electric = parseFloat(document.getElementById('me_electric').value);
+
+    var coldUsage = (!isNaN(cold) && meHasPrev && mePrevCold !== null) ? Math.max(0, cold - mePrevCold) : 0;
+    var hotUsage = (!isNaN(hot) && meHasPrev && mePrevHot !== null) ? Math.max(0, hot - mePrevHot) : 0;
+    var electricUsage = (!isNaN(electric) && meHasPrev && mePrevElectric !== null) ? Math.max(0, electric - mePrevElectric) : 0;
+
+    function renderHint(elId, current, prev, usage, unit) {
+        var el = document.getElementById(elId);
+        if (isNaN(current) || current === 0) {
+            el.className = 'text-muted d-block';
+            el.textContent = '用量：—';
+            return;
+        }
+        if (!meHasPrev || prev === null) {
+            el.className = 'text-info d-block';
+            el.innerHTML = '<i class="bi bi-info-circle"></i> 首次抄表（无上月）';
+            return;
+        }
+        if (current < prev) {
+            el.className = 'text-danger d-block';
+            el.innerHTML = '<i class="bi bi-x-circle-fill"></i> ✗ 必须大于上月 ' + prev.toFixed(2);
+            return;
+        }
+        el.className = 'text-success d-block';
+        el.innerHTML = '<i class="bi bi-check-circle"></i> 用量：+ ' + usage.toFixed(2) + ' ' + unit + '（上月 ' + prev.toFixed(2) + ' → 本月 ' + current.toFixed(2) + '）';
+    }
+
+    renderHint('me_hint_cold', cold, mePrevCold, coldUsage, 'm³');
+    renderHint('me_hint_hot', hot, mePrevHot, hotUsage, 'm³');
+    renderHint('me_hint_electric', electric, mePrevElectric, electricUsage, '度');
+
+    // 用量预览
+    var preview = document.getElementById('me_usagePreview');
+    var total = coldUsage + hotUsage + electricUsage;
+    if (coldUsage > 0 || hotUsage > 0 || electricUsage > 0) {
+        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><div class="row g-1 mt-1">' +
+            '<div class="col-4">冷水：<span class="fw-bold text-primary">' + coldUsage.toFixed(2) + ' m³</span></div>' +
+            '<div class="col-4">热水：<span class="fw-bold text-info">' + hotUsage.toFixed(2) + ' m³</span></div>' +
+            '<div class="col-4">电：<span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span></div></div>' +
+            '<hr class="my-1"><div class="d-flex justify-content-between"><span class="fw-bold">合计</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span></div>';
+    } else {
+        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>';
+    }
+
+    // 校验：禁用提交按钮如果任一表读数 < 上月
+    var submitBtn = document.getElementById('meSubmitBtn');
+    if (submitBtn) {
+        var hasError = (!isNaN(cold) && meHasPrev && mePrevCold !== null && cold < mePrevCold) ||
+                       (!isNaN(hot) && meHasPrev && mePrevHot !== null && hot < mePrevHot) ||
+                       (!isNaN(electric) && meHasPrev && mePrevElectric !== null && electric < mePrevElectric);
+        submitBtn.disabled = hasError;
+    }
+}
+
+// 照片选择
+function onMePhotoSelected(meterType, input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        if (meterType === 'cold') meSelectColdFile = file;
+        else if (meterType === 'hot') meSelectHotFile = file;
+        else meSelectElectricFile = file;
+
+        var ph = document.getElementById('me_upload_' + meterType);
+        var typeNames = { cold: '冷水', hot: '热水', electric: '电表' };
+        ph.classList.add('has-file');
+        ph.innerHTML = '<img class="upload-thumb" src="' + dataUrl + '"><span id="me_label_' + meterType + '" class="small">已选 ' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB）<i class="bi bi-x-circle ms-1" onclick="clearMePhoto(\'' + meterType + '\', event)"></i></span>';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearMePhoto(meterType, ev) {
+    if (ev) ev.stopPropagation();
+    document.getElementById('me_photo_' + meterType).value = '';
+    var ph = document.getElementById('me_upload_' + meterType);
+    ph.classList.remove('has-file');
+    var labels = { cold: '上传冷水照片', hot: '上传热水照片', electric: '上传电表照片' };
+    ph.innerHTML = '<i class="bi bi-camera"></i>&nbsp;<span id="me_label_' + meterType + '">' + labels[meterType] + '</span>';
+    if (meterType === 'cold') meSelectColdFile = null;
+    else if (meterType === 'hot') meSelectHotFile = null;
+    else meSelectElectricFile = null;
 }
 
 // 提交手动补录
-async function submitManualEntry() {
-    const dormCode = $('#meDormCode').val().trim();
-    const readMonth = $('#meReadMonth').val();
+async function meSubmit() {
+    var submitBtn = document.getElementById('meSubmitBtn');
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    var originalHtml = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> 保存中...';
 
-    if (!dormCode) { alert('请输入宿舍号'); return; }
-    if (!readMonth) { alert('请选择抄表月份'); return; }
+    var dormCode = document.getElementById('me_dorm').value;
+    var readMonth = document.getElementById('me_month').value;
+    var cold = document.getElementById('me_cold').value;
+    var hot = document.getElementById('me_hot').value;
+    var electric = document.getElementById('me_electric').value;
+    var remark = document.getElementById('me_remark').value;
 
-    const payload = {
-        dormCode: dormCode,
-        readMonth: readMonth,
-        coldMeter: parseFloat($('#meColdMeter').val()) || 0,
-        hotMeter: parseFloat($('#meHotMeter').val()) || 0,
-        electricMeter: parseFloat($('#meElectricMeter').val()) || 0,
-        operator: $('#meOperator').val().trim() || '管理员',
-        remark: $('#meRemark').val().trim()
-    };
+    if (!dormCode) { alert('请选择宿舍'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+    if (!readMonth) { alert('请选择抄表月份'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+    if (!cold || !hot || !electric) { alert('请录入三表读数'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+
+    // Step 1: 保存读数
+    var fd = new FormData();
+    fd.append('DormCode', dormCode);
+    fd.append('ReadMonth', readMonth);
+    fd.append('ColdMeter', cold);
+    fd.append('HotMeter', hot);
+    fd.append('ElectricMeter', electric);
+    fd.append('Operator', 'admin（后台补录）');
+    fd.append('Remark', remark || '');
 
     try {
-        const resp = await fetch('/api/meter/manual-entry', {
+        var resp = await fetch('/api/meter/manual-entry', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            headers: { 'RequestVerificationToken': CSRF_TOKEN },
+            body: fd
         });
-        const result = await resp.json();
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('manualEntryModal')).hide();
-            alert('补录成功');
-            location.reload();
-        } else {
-            alert(result.message || '补录失败');
-        }
-    } catch (err) {
-        alert('补录失败：' + err.message);
-    }
-}
-
-// 提交批量导入
-async function submitBatchImport() {
-    const data = $('#batchData').val().trim();
-    const operator = $('#batchOperator').val().trim() || '管理员';
-
-    if (!data) { alert('请输入导入数据'); return; }
-
-    const lines = data.split('\n').filter(l => l.trim());
-    const records = [];
-
-    for (const line of lines) {
-        const parts = line.split(',').map(p => p.trim());
-        if (parts.length < 5) {
-            alert(`格式错误：${line}\n正确格式：宿舍号,月份,冷水,热水,电`);
+        var data = await resp.json();
+        if (!data.success) {
+            alert('❌ ' + (data.message || '保存失败'));
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
             return;
         }
-        records.push({
-            dormCode: parts[0],
-            readMonth: parts[1],
-            coldMeter: parseFloat(parts[2]) || 0,
-            hotMeter: parseFloat(parts[3]) || 0,
-            electricMeter: parseFloat(parts[4]) || 0,
-            operator: operator,
-            remark: '批量导入'
-        });
-    }
 
-    try {
-        const resp = await fetch('/api/meter/batch-import', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(records)
-        });
-        const result = await resp.json();
-        if (result.success) {
-            const data = result.data;
-            let html = `<div class="alert alert-${data.failCount === 0 ? 'success' : 'warning'}">
-                <strong>导入完成</strong><br>
-                总数：${data.totalCount} | 成功：${data.successCount} | 失败：${data.failCount}
-            </div>`;
-            if (data.failedItems && data.failedItems.length > 0) {
-                html += '<ul class="small text-danger">';
-                data.failedItems.slice(0, 10).forEach(item => {
-                    html += `<li>${item}</li>`;
+        var recordId = data.data ? data.data.id : data.recordId;
+        var photoCount = 0, photoOk = 0;
+        var photos = [['cold', meSelectColdFile], ['hot', meSelectHotFile], ['electric', meSelectElectricFile]];
+
+        // Step 2: 依次上传每个照片
+        for (var i = 0; i < photos.length; i++) {
+            var mt = photos[i][0], file = photos[i][1];
+            if (!file) continue;
+            photoCount++;
+            var imgFd = new FormData();
+            imgFd.append('image', file);
+            try {
+                var r = await fetch('/api/v1/pda/image/upload?recordId=' + recordId + '&meterType=' + mt, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': CSRF_TOKEN },
+                    body: imgFd
                 });
-                if (data.failedItems.length > 10) {
-                    html += `<li>... 还有 ${data.failedItems.length - 10} 条</li>`;
-                }
-                html += '</ul>';
+                var j = await r.json();
+                if (j.success) photoOk++;
+                else console.warn('[v2.13.81] ' + mt + ' 上传失败：', j.message);
+            } catch (err) {
+                console.error('[v2.13.81] ' + mt + ' 上传错误：', err);
             }
-            $('#batchResult').html(html).show();
-
-            if (data.failCount === 0) {
-                setTimeout(() => location.reload(), 1500);
-            }
-        } else {
-            alert(result.message || '导入失败');
         }
+
+        var msg = (data.message || '操作成功') + (photoCount > 0 ? ('\n📷 上传照片：' + photoOk + '/' + photoCount + ' 成功') : '');
+        alert('✅ ' + msg);
+        bootstrap.Modal.getInstance(document.getElementById('modalManualEntry')).hide();
+        location.reload();
     } catch (err) {
-        alert('导入失败：' + err.message);
+        alert('❌ 网络错误：' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHtml;
     }
 }
 
-// 查看详情
+// 详情 Modal
 async function viewRecord(id) {
     try {
-        const resp = await fetch(`${API_BASE}/${id}`);
-        const result = await resp.json();
+        var resp = await fetch(API_BASE + '/' + id);
+        var result = await resp.json();
         if (result.success) {
-            const data = result.data;
-            $('#viewDormCode').text(data.dormCode);
-            $('#viewReadMonth').text(data.readMonth);
-            $('#viewColdMeter').text(data.coldMeter.toFixed(2) + ' m³');
-            $('#viewHotMeter').text(data.hotMeter.toFixed(2) + ' m³');
-            $('#viewElectricMeter').text(data.electricMeter.toFixed(2) + ' 度');
-
-            let statusHtml = '';
+            var data = result.data;
+            document.getElementById('viewDormCode').textContent = data.dormCode;
+            document.getElementById('viewReadMonth').textContent = data.readMonth;
+            document.getElementById('viewColdMeter').textContent = data.coldMeter.toFixed(2) + ' m³';
+            document.getElementById('viewHotMeter').textContent = data.hotMeter.toFixed(2) + ' m³';
+            document.getElementById('viewElectricMeter').textContent = data.electricMeter.toFixed(2) + ' 度';
+            var statusHtml = '';
             switch (data.status) {
                 case 0: statusHtml = '<span class="badge bg-secondary">未完成</span>'; break;
                 case 1: statusHtml = '<span class="badge bg-success">正常</span>'; break;
                 case 2: statusHtml = '<span class="badge bg-warning text-dark">已修正</span>'; break;
             }
-            $('#viewStatus').html(statusHtml);
-            $('#viewOperator').text(data.operator);
-            $('#viewRemark').text(data.remark || '-');
+            document.getElementById('viewStatus').innerHTML = statusHtml;
+            document.getElementById('viewOperator').textContent = data.operator;
+            document.getElementById('viewRemark').textContent = data.remark || '-';
             new bootstrap.Modal(document.getElementById('viewModal')).show();
         }
     } catch (err) {
@@ -605,89 +696,58 @@ async function viewRecord(id) {
     }
 }
 
-// 修正记录
+// 修正 Modal
 function correctRecord(id) {
-    $('#correctId').val(id);
-    $('#correctRemark').val('');
+    document.getElementById('correctId').value = id;
+    document.getElementById('correctRemark').value = '';
     new bootstrap.Modal(document.getElementById('correctModal')).show();
 }
 
 async function submitCorrect() {
-    const id = $('#correctId').val();
-    const remark = $('#correctRemark').val();
-
+    var id = document.getElementById('correctId').value;
+    var remark = document.getElementById('correctRemark').value;
     try {
-        const resp = await fetch(`${API_BASE}/${id}/correct`, {
+        var resp = await fetch(API_BASE + '/' + id + '/correct', {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json; charset=utf-8', 'RequestVerificationToken': CSRF_TOKEN },
             body: JSON.stringify({ remark: remark })
         });
-        const result = await resp.json();
+        var result = await resp.json();
         if (result.success) {
             bootstrap.Modal.getInstance(document.getElementById('correctModal')).hide();
-            alert('修正成功');
+            alert('✅ 修正成功');
             location.reload();
         } else {
-            alert(result.message || '修正失败');
+            alert('❌ ' + (result.message || '修正失败'));
         }
     } catch (err) {
         alert('修正失败');
     }
 }
 
-// 删除记录
 async function deleteRecord(id) {
-    if (!confirm('确定删除该记录吗？删除后将自动生成新的占位记录。')) return;
-
+    if (!confirm('确定删除该记录吗？')) return;
     try {
-        const resp = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
-        const result = await resp.json();
+        var resp = await fetch(API_BASE + '/' + id, { method: 'DELETE' });
+        var result = await resp.json();
         if (result.success) {
-            alert('删除成功');
+            alert('✅ 删除成功');
             location.reload();
         } else {
-            alert(result.message || '删除失败');
+            alert('❌ ' + (result.message || '删除失败'));
         }
     } catch (err) {
         alert('删除失败');
     }
 }
 
-// 保存记录
-async function saveRecord() {
-    const dormCode = $('#editDormCode').val().trim();
-    const readMonth = $('#editReadMonth').val();
-
-    if (!dormCode) { alert('请输入宿舍号'); return; }
-    if (!readMonth) { alert('请选择抄表月份'); return; }
-
-    const payload = {
-        dormCode: dormCode,
-        readMonth: readMonth,
-        coldMeter: parseFloat($('#editColdMeter').val()) || 0,
-        hotMeter: parseFloat($('#editHotMeter').val()) || 0,
-        electricMeter: parseFloat($('#editElectricMeter').val()) || 0,
-        remark: $('#editRemark').val().trim()
-    };
-
-    try {
-        const resp = await fetch(API_BASE, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-        const result = await resp.json();
-        if (result.success) {
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            alert('保存成功');
-            location.reload();
-        } else {
-            alert(result.message || '保存失败');
-        }
-    } catch (err) {
-        alert('保存失败');
-    }
-}
+// 绑定宿舍/月份变更事件
+document.addEventListener('DOMContentLoaded', function() {
+    var dormEl = document.getElementById('me_dorm');
+    var monthEl = document.getElementById('me_month');
+    if (dormEl) dormEl.addEventListener('change', onMeDormMonthChange);
+    if (monthEl) monthEl.addEventListener('change', onMeDormMonthChange);
+});
 </script>
 }
 
@@ -719,5 +779,27 @@ async function saveRecord() {
         background-color: rgba(255, 193, 7, 0.1) !important;
     }
 
-    /* v2.13.17: 已统一使用 Bootstrap badge bg-info text-dark 替代自定义 .meter-zero 类 */
+    /* v2.13.81 1:1 原型对齐：手动补录 Modal 紧凑样式 */
+    .modal-body .form-section { margin-bottom: 0.6rem; }
+    .modal-body .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+    .modal-body .form-field { margin-bottom: 0.5rem; }
+    .modal-body .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+    .modal-body .form-label .required { color: #dc3545; margin-left: 2px; }
+    .modal-body .form-control, .modal-body .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+    .meter-card { border-left: 3px solid #1976d2; }
+    .upload-ph {
+        height: 50px;
+        border: 2px dashed #cfd8dc;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #90a4ae;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+    .upload-ph:hover { border-color: #1976d2; color: #1976d2; }
+    .upload-ph.has-file { border-color: #198754; color: #198754; border-style: solid; }
+    .upload-ph img.upload-thumb { max-width: 36px; max-height: 36px; border-radius: 4px; object-fit: cover; margin-right: 6px; }
 </style>
