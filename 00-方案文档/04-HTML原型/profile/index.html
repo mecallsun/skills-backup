@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心 — v2.13.50 原型（与基础资料 1:1 风格对齐）</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    <style>
+        body { font-family: "Microsoft YaHei UI", sans-serif; background: #f5f7fa; }
+        .navbar-brand { font-weight: bold; color: #1976d2 !important; }
+
+        /* ===== v2.13.50：与基础资料 .basics-nav 1:1 对齐 ===== */
+        .profile-nav .nav-link {
+            border-radius: 6px;
+            padding: 0.6rem 0.85rem;
+            margin-bottom: 2px;
+            font-size: 0.88rem;
+            color: #495057;
+            background: transparent;
+        }
+        .profile-nav .nav-link i { margin-right: 0.5rem; font-size: 1rem; }
+        .profile-nav .nav-link:hover { background: #f0f4f8; }
+        .profile-nav .nav-link.active {
+            background: #1976d2;
+            color: #fff;
+            font-weight: 500;
+        }
+
+        /* ===== 页面页头 ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-header h2 .header-icon { font-size: 1.4rem; color: #1976d2; }
+        .page-header h2 .header-count { font-size: 0.85rem; color: #6c757d; font-weight: 400; }
+
+        /* ===== 卡片样式 ===== */
+        .table-container { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* ===== form-section（参考 Booking 模块原型） ===== */
+        .form-section { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e9ecef; }
+        .form-section:last-child { border-bottom: none; padding-bottom: 0; }
+        .form-section-title { font-size: 0.95rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.75rem; }
+
+        /* ===== 密码强度条 ===== */
+        .pwd-strength { height: 4px; border-radius: 2px; background: #e9ecef; margin-top: 0.25rem; overflow: hidden; }
+        .pwd-strength-bar { height: 100%; transition: width 0.3s; }
+        .pwd-strength-bar.weak { background: #e53935; width: 33%; }
+        .pwd-strength-bar.medium { background: #fb8c00; width: 66%; }
+        .pwd-strength-bar.strong { background: #43a047; width: 100%; }
+
+        /* ===== 列表条目 ===== */
+        .cache-item { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0.85rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem; }
+        .cache-item .module-name { font-weight: 500; }
+        .cache-item .updated-at { font-size: 0.8rem; color: #6c757d; margin-left: 0.5rem; }
+
+        /* ===== 日志表格 ===== */
+        .log-row code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; font-size: 0.78rem; }
+    </style>
+    <link rel="stylesheet" href="../_shared/layout-tab.css">
+</head>
+<body>
+    <!-- ========== Tier 1: 顶部品牌栏 (48px) ========== -->
+    <div class="top-bar">
+        <div class="d-flex justify-content-between align-items-center h-100">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-droplet-half brand-icon"></i>
+                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-version">v2.13.50</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-info" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                    <i class="bi bi-database"></i> 192.168.1.237/WaterMeterDB
+                </span>
+                <span class="user-pill">
+                    <i class="bi bi-person-circle"></i>
+                    <span>管理员</span>
+                </span>
+                <a href="#" class="btn-exit" title="退出登录" aria-label="退出登录">
+                    <i class="bi bi-box-arrow-right"></i> 退出
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Tier 3: Tab 页签栏 (40px) ========== -->
+    <div id="tab-bar"></div>
+
+    <!-- ========== Tier 4: 页面内容区 ========== -->
+    <div class="page-content">
+
+    <div class="container-fluid px-4 py-4">
+        <!-- ========== v2.13.50：与基础资料 1:1 的 page-header ========== -->
+        <div class="page-header">
+            <h2>
+                <i class="bi bi-person-circle header-icon"></i> 个人中心
+                <span class="header-count">8 类账号设置</span>
+            </h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">个人中心</li>
+                </ol>
+            </nav>
+        </div>
+
+        <!-- ========== v2.13.50：左侧 200px pills + 右侧 tab-content（与基础资料 1:1） ========== -->
+        <div style="display: flex; align-items: flex-start; gap: 12px;">
+            <!-- 左侧导航（200px） -->
+            <div style="flex-shrink: 0; width: 200px;">
+                <div class="card" style="margin-top: 0;">
+                    <div class="card-body p-2">
+                        <div class="nav flex-column nav-pills profile-nav" role="tablist">
+                            <button class="nav-link active text-start" data-bs-toggle="pill" data-bs-target="#pane-overview" onclick="setProfileTab('overview')">
+                                <i class="bi bi-person-vcard"></i> 账号总览
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-profile" onclick="setProfileTab('profile')">
+                                <i class="bi bi-person"></i> 基本资料
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-password" onclick="setProfileTab('password')">
+                                <i class="bi bi-key"></i> 修改密码
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-security" onclick="setProfileTab('security')">
+                                <i class="bi bi-shield-question"></i> 安全问题
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-wechat" onclick="setProfileTab('wechat')">
+                                <i class="bi bi-wechat"></i> 微信绑定
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-prefs" onclick="setProfileTab('prefs')">
+                                <i class="bi bi-sliders"></i> 偏好设置
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-filter" onclick="setProfileTab('filter')">
+                                <i class="bi bi-hdd"></i> 筛选缓存
+                            </button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-logs" onclick="setProfileTab('logs')">
+                                <i class="bi bi-clock-history"></i> 操作日志
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧内容 -->
+            <div style="flex: 1 1 0;">
+                <div class="tab-content">
+
+                    <!-- ========== 子菜单 1: 账号总览 ========== -->
+                    <div class="tab-pane fade show active" id="pane-overview" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="mb-3"><i class="bi bi-person-vcard"></i> 账号信息</h5>
+                                <dl class="row mb-3">
+                                    <dt class="col-sm-3 text-muted">用户名</dt>
+                                    <dd class="col-sm-9"><strong id="ovUserName">admin</strong></dd>
+
+                                    <dt class="col-sm-3 text-muted">显示名</dt>
+                                    <dd class="col-sm-9" id="ovDisplayName">系统管理员</dd>
+
+                                    <dt class="col-sm-3 text-muted">角色</dt>
+                                    <dd class="col-sm-9" id="ovRoles">
+                                        <span class="badge bg-primary me-1">系统管理员</span>
+                                    </dd>
+
+                                    <dt class="col-sm-3 text-muted">手机号</dt>
+                                    <dd class="col-sm-9" id="ovMobile">13800138000</dd>
+
+                                    <dt class="col-sm-3 text-muted">邮箱</dt>
+                                    <dd class="col-sm-9" id="ovEmail">admin@jinge.local</dd>
+
+                                    <dt class="col-sm-3 text-muted">最近登录</dt>
+                                    <dd class="col-sm-9">
+                                        <small class="text-muted" id="ovLastLoginAt">2026-07-21 09:18</small>
+                                        <small class="text-muted ms-2" id="ovLastLoginIp">192.168.1.50</small>
+                                    </dd>
+
+                                    <dt class="col-sm-3 text-muted">微信绑定</dt>
+                                    <dd class="col-sm-9" id="ovWeChat">
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i> 已绑定</span>
+                                        <small class="text-muted d-block mt-1">2026-05-12 14:30</small>
+                                    </dd>
+                                </dl>
+                                <div class="d-flex gap-2">
+                                    <a href="#" class="btn btn-outline-danger">
+                                        <i class="bi bi-box-arrow-right"></i> 退出登录
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 2: 基本资料 ========== -->
+                    <div class="tab-pane fade" id="pane-profile" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-person"></i> 基本资料</h5>
+                                </div>
+                                <form id="profileForm" onsubmit="return submitProfile(event)">
+                                    <div class="mb-3">
+                                        <label class="form-label">用户名</label>
+                                        <input type="text" class="form-control" value="admin" disabled readonly>
+                                        <small class="text-muted">用户名不可修改</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">显示名 <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="profileDisplayName" maxlength="64" value="系统管理员" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">手机号</label>
+                                        <input type="tel" class="form-control" id="profilePhone" maxlength="16" value="13800138000" pattern="^1[3-9]\d{9}$">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">邮箱</label>
+                                        <input type="email" class="form-control" id="profileEmail" maxlength="64" value="admin@jinge.local">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">当前密码 <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control" id="profileCurrentPassword" required>
+                                        <small class="text-muted">敏感操作需验证当前密码</small>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> 保存资料
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 3: 修改密码 ========== -->
+                    <div class="tab-pane fade" id="pane-password" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-key"></i> 修改密码</h5>
+                                </div>
+                                <form id="passwordForm" onsubmit="return submitPassword(event)">
+                                    <div class="mb-3">
+                                        <label class="form-label">原密码 <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control" id="pwdOld" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">新密码 <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control" id="pwdNew" minlength="8" required oninput="updatePwdStrength()">
+                                        <div class="pwd-strength"><div class="pwd-strength-bar" id="pwdStrengthBar"></div></div>
+                                        <small class="text-muted">≥8 位，含字母与数字（强度条：弱 / 中 / 强）</small>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">确认新密码 <span class="text-danger">*</span></label>
+                                        <input type="password" class="form-control" id="pwdConfirm" minlength="8" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-warning">
+                                        <i class="bi bi-key"></i> 修改密码
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 4: 安全问题 ========== -->
+                    <div class="tab-pane fade" id="pane-security" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-shield-question"></i> 安全问题</h5>
+                                    <button class="btn btn-outline-primary btn-sm" onclick="openSqModal()">
+                                        <i class="bi bi-pencil"></i> 修改安全问题
+                                    </button>
+                                </div>
+                                <p class="text-muted small">请设置 2 个安全问题，答案保存为密文。忘记密码时需要回答这 2 个问题。</p>
+                                <div id="sqListArea">
+                                    <div class="form-section">
+                                        <div class="form-section-title">问题 1</div>
+                                        <div>您母亲的名字是？</div>
+                                        <small class="text-muted">已设置（密文存储）</small>
+                                    </div>
+                                    <div class="form-section">
+                                        <div class="form-section-title">问题 2</div>
+                                        <div>您第一所小学的名称是？</div>
+                                        <small class="text-muted">已设置（密文存储）</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 5: 微信绑定 ========== -->
+                    <div class="tab-pane fade" id="pane-wechat" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-wechat"></i> 微信绑定</h5>
+                                    <button class="btn btn-outline-danger btn-sm" onclick="openUnbindWeChatModal()">
+                                        <i class="bi bi-x-circle"></i> 解绑微信
+                                    </button>
+                                </div>
+                                <div id="wechatStatus">
+                                    <div class="alert alert-success py-2">
+                                        <i class="bi bi-check-circle"></i> 已绑定微信 OpenID: <code>o6_bm1JZq_xxxx****xxxx</code>
+                                        <small class="d-block mt-1">绑定时间: 2026-05-12 14:30</small>
+                                    </div>
+                                    <p class="text-muted small">
+                                        <i class="bi bi-info-circle"></i>
+                                        微信绑定后，可使用企业微信扫码登录系统，无需输入密码。
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 6: 偏好设置 ========== -->
+                    <div class="tab-pane fade" id="pane-prefs" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-sliders"></i> 偏好设置</h5>
+                                </div>
+                                <div class="form-section">
+                                    <div class="form-section-title">界面偏好</div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="darkModePref">
+                                        <label class="form-check-label" for="darkModePref">深色模式</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="compactModePref">
+                                        <label class="form-check-label" for="compactModePref">紧凑布局</label>
+                                    </div>
+                                    <p class="text-muted small"><i class="bi bi-info-circle"></i> 深色/紧凑模式将在 v2.14 实施（预留接口）</p>
+                                </div>
+                                <div class="form-section">
+                                    <div class="form-section-title">键盘快捷键</div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="enterShortcutPref" checked>
+                                        <label class="form-check-label" for="enterShortcutPref">Enter 键提交表单</label>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="escShortcutPref" checked>
+                                        <label class="form-check-label" for="escShortcutPref">Esc 键关闭弹窗</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 7: 筛选缓存 ========== -->
+                    <div class="tab-pane fade" id="pane-filter" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-hdd"></i> 筛选条件缓存</h5>
+                                </div>
+                                <div class="form-section">
+                                    <div class="form-section-title">筛选条件持久化</div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="storeFilterPreference" checked>
+                                        <label class="form-check-label" for="storeFilterPreference">
+                                            <strong>存储筛选条件到云端</strong>
+                                        </label>
+                                    </div>
+                                    <p class="text-muted small mb-3">
+                                        <i class="bi bi-info-circle"></i>
+                                        勾选后，您在各列表模块（人员/宿舍/办理/抄表/账单）的筛选条件将保存到云端数据库。
+                                    </p>
+                                    <div id="cacheListArea">
+                                        <div class="cache-item">
+                                            <div>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                <span class="module-name">人员清单</span>
+                                                <small class="updated-at">2026-07-19 16:24</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="resetFilterCache('personnel')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="cache-item">
+                                            <div>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                <span class="module-name">办理登记</span>
+                                                <small class="updated-at">2026-07-20 09:15</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="resetFilterCache('booking')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="cache-item">
+                                            <div>
+                                                <i class="bi bi-check-circle-fill text-success me-2"></i>
+                                                <span class="module-name">抄表记录</span>
+                                                <small class="updated-at">2026-07-18 11:02</small>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="resetFilterCache('meter')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2 mt-3">
+                                        <button class="btn btn-outline-warning btn-sm" onclick="resetAllFilterCache()">
+                                            <i class="bi bi-trash"></i> 清除全部云端筛选缓存
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" onclick="clearLocalStorageCache()">
+                                            <i class="bi bi-hdd"></i> 清除本地缓存
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== 子菜单 8: 操作日志 ========== -->
+                    <div class="tab-pane fade" id="pane-logs" role="tabpanel">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> 我的操作日志</h5>
+                                    <span class="badge bg-secondary">最近 20 条</span>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="150">时间</th>
+                                                <th width="120">IP</th>
+                                                <th width="160">操作</th>
+                                                <th>详情</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="logsTableBody">
+                                            <tr><td colspan="4" class="text-center text-muted py-3">v2.14 实施 — 数据源 <code>SysOpLog WHERE UserId = [当前登录用户]</code></td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="text-muted small mt-2">
+                                    <i class="bi bi-info-circle"></i>
+                                    v2.13.49 起已在 <code>SysUserSelfService</code> 6 个敏感方法（资料更新/密码修改/安全问题/密码重置/微信绑定解绑）写入 SysOpLog。
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../_shared/tab-bar.js"></script>
+    <script src="profile-data.js"></script>
+    <script>
+        // ============ v2.13.50：URL ?tab= 持久化（与基础资料 1:1） ============
+        function setProfileTab(tab) {
+            var url = new URL(window.location.href);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var url = new URL(window.location.href);
+            var tab = url.searchParams.get('tab');
+            if (tab) {
+                var btn = document.querySelector('.profile-nav button[data-bs-target="#pane-' + tab + '"]');
+                if (btn) btn.click();
+            }
+        });
+
+        // ============ 密码强度条 ============
+        function updatePwdStrength() {
+            var pwd = document.getElementById('pwdNew').value;
+            var bar = document.getElementById('pwdStrengthBar');
+            var strength = 0;
+            if (pwd.length >= 8) strength++;
+            if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) strength++;
+            if (/\d/.test(pwd)) strength++;
+            if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+
+            bar.className = 'pwd-strength-bar';
+            if (strength <= 1) bar.classList.add('weak');
+            else if (strength <= 3) bar.classList.add('medium');
+            else bar.classList.add('strong');
+        }
+
+        // ============ 表单提交（原型演示） ============
+        function submitProfile(e) {
+            e.preventDefault();
+            alert('✓ 原型演示：资料已保存');
+            return false;
+        }
+        function submitPassword(e) {
+            e.preventDefault();
+            alert('✓ 原型演示：密码已修改');
+            return false;
+        }
+        function openSqModal() { alert('✓ 原型演示：打开安全问题编辑弹窗'); }
+        function openUnbindWeChatModal() { alert('✓ 原型演示：打开微信解绑弹窗'); }
+        function resetFilterCache(module) { alert('✓ 原型演示：清除 ' + module + ' 缓存'); }
+        function resetAllFilterCache() { alert('✓ 原型演示：清除全部云端缓存'); }
+        function clearLocalStorageCache() { alert('✓ 原型演示：清除本地缓存'); }
+    </script>
+</body>
+</html>
