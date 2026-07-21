@@ -129,7 +129,8 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.71（2026-07-21 列表分页 100% 原型对齐全局 — 新增共享分页组件 `_PaginationPartial` + 8 列表页全部接入（Personnel/Booking/Dorms/Meter/DormBilling/EmployeeBilling/BillingStandard/_UserPanel）；智能截断 « 1 2 3 … 65 » + 每页 [10/20/50/100] dropdown + 统计 "共 N 条 · 第 X-Y 条 · 共 Z 页"；localStorage pageSize 持久化）
+- **项目当前版本：** v2.13.72（2026-07-21 进程唯一性单实例保护 — Admin + Api 补全全局命名 Mutex 守卫；TrayApp 早已具备（v2.13.2 引入）；Mutex 名称分别为 `Global\DormManage.TrayApp.SingleInstance.v2` / `*.Admin.SingleInstance.v1` / `*.Api.SingleInstance.v1`；top-level statements 同步检查（早于 `WebApplication.CreateBuilder`）保证冲突时 host 不构建、其他 hosted service 不启动；端到端双实例测试：第二个实例 stderr 输出 3 行 `[SINGLE-INSTANCE]` 冲突提示 + 2s 后自动终止，进程列表只剩第一个实例。详见 `00-方案文档/123-进程唯一性单实例保护-v2.13.72.md`）
+- **v2.13.71**（2026-07-21 列表分页 100% 原型对齐全局 — 新增共享分页组件 `_PaginationPartial` + 8 列表页全部接入（Personnel/Booking/Dorms/Meter/DormBilling/EmployeeBilling/BillingStandard/_UserPanel）；智能截断 « 1 2 3 … 65 » + 每页 [10/20/50/100] dropdown + 统计 "共 N 条 · 第 X-Y 条 · 共 Z 页"；localStorage pageSize 持久化）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -139,6 +140,12 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **Only `FilterCacheController` has `[Authorize]`** — API endpoints rely on network trust; the Booking controller reads current user from `X-User-Name` header.
 - **Warning suppression:** Projects globally suppress `CS1998`, `CS8602`, `CS8629`, `CS0618`. These are known nullable/async warnings acknowledged by the team.
 - **Data cleanup:** `DataCleanupHostedService` runs at startup to normalize invalid FK references in employees.
+- **进程唯一性单实例保护（P0 架构约束）：** DormManage.TrayApp / Admin / Api 三个可执行文件均使用全局命名 Mutex 防止重复启动：TrayApp 早在 v2.13.2 已实现，**Admin + Api 在 v2.13.72 补全**。Mutex 名称：
+  - `Global\DormManage.TrayApp.SingleInstance.v2`
+  - `Global\DormManage.Admin.SingleInstance.v1`
+  - `Global\DormManage.Api.SingleInstance.v1`
+  
+  **强制规则**：使用 `using var _singleInstanceMutex = new Mutex(initiallyOwned: true, name: "...", out bool createdNew)` 在 top-level statements 顶部（早于 `WebApplication.CreateBuilder` / `ApplicationConfiguration.Initialize`）同步检查 — 失败时 `Console.Error.WriteLine` + `Thread.Sleep(2000)` + `return`（早于 IHostedService 守卫，避免其他 hosted service 已启动）。任何新增可执行文件必须遵循同样的命名规范与 `using var` 同步检查模式。详见 `00-方案文档/123-进程唯一性单实例保护-v2.13.72.md`。
 - **Git redact filter:** `filter.redactdb` replaces DB credentials with `__DB_USER__`/`__DB_PASSWORD__` on `git add`; working tree keeps real values.
 - **v2.13.32 数据源热加载：** 通过 `AppConfigRuntime` 单例 + `IDbContextFactory<DormDbContext>`，Web 端或托盘修改数据库配置并保存后，**无需重启服务**即可让 Api/Admin 下次请求自动切换到新连接；`DatabaseOperationInterceptor` 输出 `[DB-CONN]` / `[DB-EXEC]` / `[DB-EXEC-SLOW]` 运行时日志，提供连接可观测性（详见 `Settings → 数据库连接` 页面顶部"🗄️ Server/Database"徽章，30s 轮询）。**配套修复**：托盘 SettingsForm 加"测试连接"按钮 + AppConfigManager.SaveConfigurationAsync 写 SysParameter 不再使用密文（v2.13.32-hotfix）。
 - **v2.13.33 Repair API：** Booking 模块新增 `POST /api/v1/bookings/repair-employee-names`，用于批量回填历史 `DormBooking.EmployeeName`（按 `EmployeeId` 优先 / `EmployeeCode` 次之对齐 `SysEmployee.RealName`，返回 `updated/skipped/notFound` 计数）。**`/Booking` 页面 PageHeader 新增「修复姓名关联」按钮**。同时修复 BUG #1：`selectCiEmp` 卡死（增加 `ciSearchResults/coSearchResults` 缓存，按 empId 查员工并完整填充 `dataset.empId` + 员工信息展示区）。

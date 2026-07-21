@@ -4,6 +4,24 @@ using DormManage.Api.Middleware;
 using DormManage.Shared.Data;
 using DormManage.Shared.Services;
 
+// v2.13.72 进程唯一性守卫（必须在 WebApplication.CreateBuilder 之前执行）
+// 使用全局命名 Mutex 防止 DormManage.Api 重复启动：
+//   - 若已被占用 → 记录 WARN + 等待 2s 让用户看到控制台消息 + 自动终止（return 退出 Main）
+//   - 若获取成功 → using 变量在整个进程生命周期持有，主机停止时 Main 返回时 Dispose 释放
+using var _singleInstanceMutex = new System.Threading.Mutex(
+    initiallyOwned: true,
+    name: @"Global\DormManage.Api.SingleInstance.v1",
+    createdNew: out bool apiCreatedNew);
+if (!apiCreatedNew)
+{
+    Console.Error.WriteLine("[SINGLE-INSTANCE] DormManage.Api 已在运行中（Mutex: Global\\DormManage.Api.SingleInstance.v1）。");
+    Console.Error.WriteLine("[SINGLE-INSTANCE] 若确认无残留实例，请打开任务管理器结束 DormManage.Api 进程后再启动。");
+    Console.Error.WriteLine("[SINGLE-INSTANCE] 本次启动将在 2 秒后自动终止...");
+    Thread.Sleep(2000);
+    return;
+}
+Console.WriteLine("[SINGLE-INSTANCE] 进程唯一锁已获取: Global\\DormManage.Api.SingleInstance.v1");
+
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加服务
