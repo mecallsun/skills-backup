@@ -212,6 +212,7 @@ public class DormDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Code).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.SortOrder).HasDefaultValue(0);  // v2.13.61 补充 EF 映射
             entity.Property(e => e.Remark).HasMaxLength(200);
             entity.HasIndex(e => e.Code).IsUnique();
         });
@@ -410,7 +411,13 @@ public class DormDbContext : DbContext
             entity.ToTable("BillingStandard");
             entity.HasKey(e => e.Id);
             entity.Property(e => e.StandardName).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.ApplicableType).HasMaxLength(40).IsRequired();
+            // v2.13.61 修复：适用员工类型改为 FK 关联 EmployeeType.Id
+            entity.Property(e => e.ApplicableTypeId).IsRequired();
+            entity.HasOne(e => e.ApplicableTypeNav)
+                  .WithMany()
+                  .HasForeignKey(e => e.ApplicableTypeId)
+                  .OnDelete(DeleteBehavior.Restrict);  // 禁止删除已被引用的员工类型
+            entity.Property(e => e.ApplicableType).HasMaxLength(40).IsRequired();  // 冗余 Name 字段
             // v2.13.24 P0-3 修复：EF Property 名与 SQL 列名对齐（HasColumnName）
             entity.Property(e => e.HotWaterUnitPrice).HasColumnName("HotWaterPrice").HasColumnType("decimal(10,2)");
             entity.Property(e => e.ColdWaterUnitPrice).HasColumnName("ColdWaterPrice").HasColumnType("decimal(10,2)");

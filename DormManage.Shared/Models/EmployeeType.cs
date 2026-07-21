@@ -16,6 +16,12 @@ public class EmployeeType : BaseEntity
     public string Name { get; set; } = string.Empty;
 
     /// <summary>
+    /// v2.13.61 新增：排序号（SQL 列已存在，EF 模型未映射）
+    /// 用于基础资料字典排序展示
+    /// </summary>
+    public int SortOrder { get; set; } = 0;
+
+    /// <summary>
     /// 备注
     /// </summary>
     public string? Remark { get; set; }

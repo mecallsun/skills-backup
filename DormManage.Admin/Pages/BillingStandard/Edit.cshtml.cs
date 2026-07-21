@@ -24,6 +24,9 @@ public class EditModel : PageModel
     [BindProperty]
     public global::DormManage.Shared.Models.BillingStandard Input { get; set; } = new();
 
+    /// <summary>v2.13.61 新增：员工类型字典（基础资料真源）— 用于适用员工类型下拉</summary>
+    public List<EmployeeType> EmployeeTypes { get; set; } = new();
+
     public async Task<IActionResult> OnGetAsync()
     {
         var standard = await _db.BillingStandards.FindAsync(Id);
@@ -32,13 +35,24 @@ public class EditModel : PageModel
             TempData["ErrorMessage"] = "费用标准不存在";
             return RedirectToPage("/BillingStandard/Index");
         }
+        // v2.13.61 修复：优先使用 ApplicableTypeId，兼容历史 ApplicableType Name
+        if (standard.ApplicableTypeId <= 0 && !string.IsNullOrEmpty(standard.ApplicableType))
+        {
+            var matchedType = await _db.EmployeeTypes.FirstOrDefaultAsync(t => t.Name == standard.ApplicableType);
+            if (matchedType != null) standard.ApplicableTypeId = matchedType.Id;
+        }
         Input = standard;
+        EmployeeTypes = await _service.GetEmployeeTypesAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        if (!ModelState.IsValid) return Page();
+        EmployeeTypes = await _service.GetEmployeeTypesAsync();
+        if (!ModelState.IsValid)
+        {
+            return Page();
+        }
         var (ok, msg) = await _service.SaveStandardAsync(Input);
         if (!ok)
         {

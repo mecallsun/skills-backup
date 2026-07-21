@@ -5,6 +5,7 @@ namespace DormManage.Shared.Models;
 
 /// <summary>
 /// 费用标准（v2.13.24 P0-3 修复：与 init_schema.sql [BillingStandard] 表 1:1 对齐）
+/// v2.13.61 修复：适用员工类型改为 FK → EmployeeType.Id（基础资料真源关联）
 ///
 /// SQL 列名 → EF Property 名映射（HasColumnName）：
 /// - HotWaterPrice  → HotWaterUnitPrice
@@ -21,10 +22,27 @@ public class BillingStandard : BaseEntity
     [MaxLength(100)]
     public string StandardName { get; set; } = string.Empty;
 
-    /// <summary>适用类型（NVARCHAR(40) NOT NULL）— 合同工/临时工/外包/实习生/驻场</summary>
+    /// <summary>
+    /// 适用员工类型 ID（v2.13.61 新增 FK 关联）
+    /// FK → EmployeeType.Id（基础资料字典的真源）
+    /// </summary>
+    [Required]
+    public int ApplicableTypeId { get; set; }
+
+    /// <summary>
+    /// 适用员工类型名称（v2.13.61 冗余字段，便于查询）
+    /// 保存时由 ApplicableTypeId 关联 EmployeeType 表写入；不再由前端硬编码
+    /// </summary>
     [Required]
     [MaxLength(40)]
     public string ApplicableType { get; set; } = string.Empty;
+
+    /// <summary>
+    /// v2.13.61 新增：适用员工类型导航属性（[NotMapped]）
+    /// 用于 LINQ JOIN 查询 EmployeeType 表获取 Name/Code
+    /// </summary>
+    [ForeignKey(nameof(ApplicableTypeId))]
+    public EmployeeType? ApplicableTypeNav { get; set; }
 
     /// <summary>热水单价（元/吨）— 映射 SQL 列 HotWaterPrice</summary>
     [Column("HotWaterPrice")]
@@ -45,6 +63,10 @@ public class BillingStandard : BaseEntity
     /// <summary>生效结束日期（DATE NULL - 允许永久有效）</summary>
     public DateOnly? EffectiveTo { get; set; }
 
-    /// <summary>是否启用（BIT DEFAULT 1）</summary>
-    public new bool IsActive { get; set; } = true;
+    /// <summary>
+    /// 是否启用（BIT DEFAULT 1）
+    /// v2.13.61 BUG 修复：去掉 `new` 关键字，直接继承 BaseEntity.IsActive
+    /// 旧 `new bool IsActive` 在 EF Core 物化时与 BaseEntity.IsActive 冲突导致保存异常
+    /// </summary>
+    public bool IsActive { get; set; } = true;
 }

@@ -40,22 +40,22 @@
                         <label class="form-label">电价(元/kWh) <span class="text-danger">*</span></label>
                         <input asp-for="Input.ElectricUnitPrice" type="number" step="0.0001" min="0" class="form-control" required />
                     </div>
+                    @* v2.13.61 修复：适用员工类型改为 select 下拉，选项来自 EmployeeType 表（基础资料真源），FK 关联保存为 ApplicableTypeId *@
                     <div class="col-md-3">
-                        <label class="form-label">适用员工类型</label>
-                        @* v2.13.42 修复：用 datalist 给出 5 个常见类型建议（页面留空表示全部） *@
-                        <input asp-for="Input.ApplicableType" class="form-control" list="applicableTypeList" placeholder="留空=全部" />
-                        <datalist id="applicableTypeList">
-                            <option value="合同工"></option>
-                            <option value="临时工"></option>
-                            <option value="外包"></option>
-                            <option value="实习生"></option>
-                            <option value="驻场"></option>
-                        </datalist>
+                        <label class="form-label">适用员工类型 <span class="text-danger">*</span></label>
+                        <select asp-for="Input.ApplicableTypeId" class="form-select" required>
+                            <option value="">请选择员工类型</option>
+                            @foreach (var t in Model.EmployeeTypes)
+                            {
+                                <option value="@t.Id">@t.Name (@t.Code)</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">来自「基础资料 → 员工类型」字典（FK 关联）</small>
                     </div>
-                    @* v2.13.42 新增：IsActive 复选框（之前完全缺失） *@
+                    @* v2.13.42 新增：IsActive 复选框（之前完全缺失）；v2.13.61 修复 hidden field 使用 name 而不是 asp-for 避免覆盖 checkbox 状态 *@
                     <div class="col-md-3 form-field d-flex align-items-end">
                         <div class="form-check pb-2">
-                            <input type="hidden" asp-for="Input.IsActive" value="false" />
+                            <input name="Input.IsActive" type="hidden" value="false" />
                             <input asp-for="Input.IsActive" type="checkbox" class="form-check-input" checked />
                             <label class="form-check-label" asp-for="Input.IsActive">启用此标准</label>
                         </div>

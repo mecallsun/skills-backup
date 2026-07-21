@@ -12,6 +12,9 @@ public interface IBillingService
     /// <summary>获取当前有效费用标准</summary>
     Task<BillingStandard?> GetActiveStandardAsync();
 
+    /// <summary>v2.13.61 新增：获取所有启用的员工类型（基础资料真源）</summary>
+    Task<List<EmployeeType>> GetEmployeeTypesAsync();
+
     /// <summary>获取费用标准列表（分页）</summary>
     Task<PagedResult<BillingStandard>> GetStandardsAsync(int page, int pageSize);
     Task<PagedResult<BillingStandard>> GetStandardsAsync(string? keyword, string? isActive, int page, int pageSize);
@@ -97,6 +100,18 @@ public class BillingService : IBillingService
         return new PagedResult<BillingStandard> { Items = items, Total = total, PageIndex = page, PageSize = pageSize };
     }
 
+    /// <summary>
+    /// v2.13.61 修复：返回所有启用的员工类型字典（供费用标准 Edit/Create 页面下拉用）
+    /// 真源：EmployeeType 表（基础资料模块）
+    /// </summary>
+    public async Task<List<EmployeeType>> GetEmployeeTypesAsync()
+    {
+        return await _db.EmployeeTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .ToListAsync();
+    }
+
     public async Task<List<string>> GetStandardApplicableTypesAsync()
     {
         var fromDb = await _db.BillingStandards
@@ -106,9 +121,14 @@ public class BillingService : IBillingService
             .OrderBy(t => t)
             .ToListAsync();
 
-        // v2.13.42 BUG 修复：去除重复「全部」选项（页面手写空值="全部"，服务不再追加）
-        var defaults = new[] { "合同工", "临时工", "外包", "实习生", "驻场" };
-        var combined = defaults.Union(fromDb, StringComparer.OrdinalIgnoreCase).ToList();
+        // v2.13.61 修复：适用员工类型选项改为从 EmployeeType 真源表读取（FK 关联），不再硬编码
+        var fromDict = await _db.EmployeeTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => t.Name)
+            .ToListAsync();
+
+        var combined = fromDict.Union(fromDb, StringComparer.OrdinalIgnoreCase).ToList();
         return combined;
     }
 
@@ -122,6 +142,13 @@ public class BillingService : IBillingService
         // v2.13.42 BUG 修复：日期校验逻辑反转 — 应该是 EffectiveTo < EffectiveFrom 时拒绝
         if (standard.EffectiveTo.HasValue && standard.EffectiveTo.Value < standard.EffectiveFrom)
             return (false, "结束日期不能早于开始日期");
+
+        // v2.13.61 修复：适用员工类型 FK 校验 — 通过 ApplicableTypeId 查 EmployeeType 真源表
+        if (standard.ApplicableTypeId <= 0)
+            return (false, "适用员工类型必填");
+        var employeeType = await _db.EmployeeTypes.FindAsync(standard.ApplicableTypeId);
+        if (employeeType == null || !employeeType.IsActive)
+            return (false, "所选员工类型不存在或已停用");
 
         if (standard.IsActive)
         {
@@ -144,14 +171,19 @@ public class BillingService : IBillingService
             existing.HotWaterUnitPrice = standard.HotWaterUnitPrice;
             existing.ColdWaterUnitPrice = standard.ColdWaterUnitPrice;
             existing.ElectricUnitPrice = standard.ElectricUnitPrice;
-            existing.ApplicableType = standard.ApplicableType;
+            // v2.13.61 修复：适用员工类型改为 FK 关联 + 自动写入冗余 Name 字段
+            existing.ApplicableTypeId = standard.ApplicableTypeId;
+            existing.ApplicableType = employeeType.Name;
             existing.IsActive = standard.IsActive;
+            existing.UpdatedAt = DateTime.Now;  // v2.13.61 强制刷新更新时间
             // v2.13.42 BUG 修复：更新分支必须调用 SaveChangesAsync 才会真正持久化
             await _db.SaveChangesAsync();
             return (true, "更新成功");
         }
         else
         {
+            // v2.13.61 修复：新增时同样写入 FK + 冗余 Name
+            standard.ApplicableType = employeeType.Name;
             standard.CreatedAt = DateTime.Now;
             _db.BillingStandards.Add(standard);
             await _db.SaveChangesAsync();
