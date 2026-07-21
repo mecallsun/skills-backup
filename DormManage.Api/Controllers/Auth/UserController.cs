@@ -216,6 +216,36 @@ public class UserController : ControllerBase
         return ApiResponse.Ok(request.IsLocked ? "已锁定" : "已解锁");
     }
 
+    /// <summary>
+    /// 启用用户（v2.13.64 新增 — 用于用户管理"启停"按钮）
+    /// </summary>
+    [HttpPost("{id}/enable")]
+    public async Task<ApiResponse> EnableUser(int id)
+    {
+        var user = await _db.SysUsers.FindAsync(id);
+        if (user is null) return ApiResponse.Fail("NOT_FOUND", "用户不存在");
+        user.IsActive = true;
+        user.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+        return ApiResponse.Ok("已启用");
+    }
+
+    /// <summary>
+    /// 停用用户（v2.13.64 新增 — 用于用户管理"启停"按钮）
+    /// </summary>
+    [HttpPost("{id}/disable")]
+    public async Task<ApiResponse> DisableUser(int id)
+    {
+        var user = await _db.SysUsers.FindAsync(id);
+        if (user is null) return ApiResponse.Fail("NOT_FOUND", "用户不存在");
+        if (user.UserName == "admin")
+            return ApiResponse.Fail("PROTECTED", "内置 admin 账号不允许停用");
+        user.IsActive = false;
+        user.UpdatedAt = DateTime.Now;
+        await _db.SaveChangesAsync();
+        return ApiResponse.Ok("已停用");
+    }
+
     [HttpDelete("{id}")]
     public async Task<ApiResponse> DeleteUser(int id)
     {
@@ -224,8 +254,17 @@ public class UserController : ControllerBase
         if (user.UserName == "admin")
             return ApiResponse.Fail("PROTECTED", "内置 admin 账号不允许删除");
 
+        // v2.13.64 修复：级联清理所有引用该用户的子表（FK 约束）
+        // 包括：SysUserRole、SysUserSecurityQuestion、SysOpLog（UserId 列）、SysUserFilterCache（UserId 列）
         var urs = _db.SysUserRoles.Where(ur => ur.UserId == id);
         _db.SysUserRoles.RemoveRange(urs);
+        var sqs = _db.SysUserSecurityQuestions.Where(sq => sq.UserId == id);
+        _db.SysUserSecurityQuestions.RemoveRange(sqs);
+        var logs = _db.SysOpLogs.Where(l => l.UserId == id);
+        _db.SysOpLogs.RemoveRange(logs);
+        var filters = _db.SysUserFilterCaches.Where(c => c.UserId == id);
+        _db.SysUserFilterCaches.RemoveRange(filters);
+
         _db.SysUsers.Remove(user);
         await _db.SaveChangesAsync();
         return ApiResponse.Ok("删除成功");

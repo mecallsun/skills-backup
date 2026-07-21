@@ -10,7 +10,7 @@
     @await Component.InvokeAsync("PageHeader", new {
         icon = "bi-person-badge",
         title = "用户管理",
-        count = Model.Users?.Count ?? 0,
+        count = Model.TotalCount,
         countLabel = "人",
         primaryAction = new PageAction { Label = "新增用户", OnClick = "var m = new bootstrap.Modal(document.getElementById('createUserModal')); m.show();", Icon = "bi-plus-lg", Style = "primary" }
     })
@@ -24,10 +24,80 @@
         <div class="alert alert-danger py-2"><i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage</div>
     }
 
-    <div class="card">
+    <!-- 筛选区（v2.13.64 新增 — 与原型 settings/index.html 用户 Tab 一致：搜索 + 角色筛选 + 状态筛选） -->
+    <div class="filter-card">
+        <form method="get" class="filter-row">
+            <div class="filter-item">
+                <label class="form-label">搜索</label>
+                <input type="text" name="Search" value="@Model.Search" class="form-control" placeholder="用户名 / 姓名" />
+            </div>
+            <div class="filter-item">
+                <label class="form-label">角色</label>
+                <select name="RoleId" class="form-select">
+                    <option value="">全部</option>
+                    @foreach (var role in Model.AvailableRoles)
+                    {
+                        if (Model.RoleId == role.Id)
+                        {
+                            <option value="@role.Id" selected="selected">@role.RoleName</option>
+                        }
+                        else
+                        {
+                            <option value="@role.Id">@role.RoleName</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="filter-item">
+                <label class="form-label">状态</label>
+                <select name="Status" class="form-select">
+                    @if (string.IsNullOrEmpty(Model.Status))
+                    {
+                        <option value="" selected="selected">全部</option>
+                    }
+                    else
+                    {
+                        <option value="">全部</option>
+                    }
+                    @if (Model.Status == "active")
+                    {
+                        <option value="active" selected="selected">启用</option>
+                    }
+                    else
+                    {
+                        <option value="active">启用</option>
+                    }
+                    @if (Model.Status == "disabled")
+                    {
+                        <option value="disabled" selected="selected">禁用</option>
+                    }
+                    else
+                    {
+                        <option value="disabled">禁用</option>
+                    }
+                    @if (Model.Status == "locked")
+                    {
+                        <option value="locked" selected="selected">已锁定</option>
+                    }
+                    else
+                    {
+                        <option value="locked">已锁定</option>
+                    }
+                </select>
+            </div>
+            <div class="filter-item filter-item-btn">
+                <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+            </div>
+            <div class="filter-item filter-item-btn">
+                <a href="/Settings/User" class="btn btn-outline-secondary filter-btn"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card content-card">
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
+                <thead>
                     <tr>
                         <th width="60">序号</th>
                         <th>用户名</th>
@@ -40,12 +110,15 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @{ var idx = 0; }
+                    @{
+                        var startIdx = (Model.PageIndex - 1) * Model.PageSize + 1;
+                        var idx = 0;
+                    }
                     @foreach (var u in Model.Users)
                     {
                         idx++;
                         <tr>
-                            <td>@idx</td>
+                            <td class="text-muted">@(startIdx + idx - 1)</td>
                             <td><strong>@u.UserName</strong></td>
                             <td>@u.DisplayName</td>
                             <td>
@@ -87,7 +160,7 @@
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary"
-                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleNames', '@u.UserName')">
+                                        onclick="openEditModal(@u.Id, '@u.DisplayName', '@u.Email', '@u.Phone', @u.IsActive.ToString().ToLower(), '@u.RoleIds', '@u.UserName')">
                                     <i class="bi bi-pencil"></i> 编辑
                                 </button>
                                 @if (u.IsActive)
@@ -116,11 +189,54 @@
                             </td>
                         </tr>
                     }
+                    @if (Model.Users.Count == 0)
+                    {
+                        <tr><td colspan="8" class="text-center py-4 text-muted">暂无数据</td></tr>
+                    }
                 </tbody>
             </table>
         </div>
+        @* 分页页尾（v2.13.64 统一风格） *@
+        @if (Model.TotalCount > 0)
+        {
+            <div class="pagination-footer">
+                <span class="page-info">
+                    共 <strong>@Model.TotalCount</strong> 人 ·
+                    第 <strong>@Model.PageIndex</strong> / <strong>@Model.TotalPages</strong> 页
+                </span>
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="@BuildPageUrl(1, Model)">« 首页</a>
+                        </li>
+                        <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                            <a class="page-link" href="@BuildPageUrl(Model.PageIndex - 1, Model)">‹ 上一页</a>
+                        </li>
+                        <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="@BuildPageUrl(Model.PageIndex + 1, Model)">下一页 ›</a>
+                        </li>
+                        <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link" href="@BuildPageUrl(Model.TotalPages, Model)">末页 »</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
     </div>
 </div>
+
+@functions {
+    string BuildPageUrl(int pageIndex, UserModel model)
+    {
+        var query = new List<string>();
+        if (!string.IsNullOrEmpty(model.Search)) query.Add($"Search={Uri.EscapeDataString(model.Search)}");
+        if (model.RoleId.HasValue) query.Add($"RoleId={model.RoleId}");
+        if (!string.IsNullOrEmpty(model.Status)) query.Add($"Status={Uri.EscapeDataString(model.Status)}");
+        query.Add($"PageIndex={pageIndex}");
+        query.Add($"PageSize={model.PageSize}");
+        return "/Settings/User?" + string.Join("&", query);
+    }
+}
 
 <!-- 新增用户 Modal -->
 <div class="modal fade" id="createUserModal" tabindex="-1">
@@ -132,27 +248,28 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
                     <div class="mb-3">
                         <label class="form-label">用户名 <span class="text-danger">*</span></label>
-                        <input type="text" name="UserName" class="form-control" required maxlength="50">
+                        <input type="text" name="UserName" class="form-control" required maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="英文字母/数字/下划线" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">姓名 <span class="text-danger">*</span></label>
-                        <input type="text" name="DisplayName" class="form-control" required maxlength="50">
+                        <input type="text" name="DisplayName" class="form-control" required maxlength="50" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">初始密码 <span class="text-danger">*</span></label>
-                        <input type="password" name="Password" class="form-control" required minlength="6">
+                        <input type="password" name="Password" class="form-control" required minlength="6" />
                         <div class="form-text">至少 6 位，建议首次登录后修改</div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">邮箱</label>
-                            <input type="email" name="Email" class="form-control">
+                            <input type="email" name="Email" class="form-control" />
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">电话</label>
-                            <input type="text" name="Phone" class="form-control">
+                            <input type="text" name="Phone" class="form-control" />
                         </div>
                     </div>
                     <div class="mb-3">
@@ -189,6 +306,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
                     <div class="mb-3">
                         <label class="form-label">用户名</label>
                         <input type="text" id="editUserName" class="form-control" disabled>
@@ -207,10 +325,11 @@
                             <input type="text" name="Phone" id="editPhone" class="form-control">
                         </div>
                     </div>
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editIsActive">
-                        <input type="hidden" name="IsActive" value="false">
-                        <label class="form-check-label" for="editIsActive">启用账号</label>
+                    <div class="mb-3">
+                        <div class="form-check pb-2">
+                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editIsActive">
+                            <label class="form-check-label" for="editIsActive">启用账号</label>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">角色</label>
@@ -239,7 +358,7 @@
 
 <!-- 重置密码 Modal -->
 <div class="modal fade" id="resetPwdModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <form method="post" asp-page-handler="ResetPassword">
                 <input type="hidden" name="Id" id="pwdId">
@@ -268,31 +387,23 @@
 
 @section Scripts {
     <script>
-        function openEditModal(id, displayName, email, phone, isActive, roleNames, userName) {
+        function openEditModal(id, displayName, email, phone, isActive, roleIdsStr, userName) {
             document.getElementById('editId').value = id;
-            // v2.13.46 P0-15 BUG 修复：editUserName 接收 userName 参数，不再误填 id
-            document.getElementById('editUserName').value = userName || ('user_' + id);
+            document.getElementById('editUserName').value = userName;
             document.getElementById('editDisplayName').value = displayName;
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editPhone').value = phone;
+            document.getElementById('editEmail').value = email || '';
+            document.getElementById('editPhone').value = phone || '';
             document.getElementById('editIsActive').checked = isActive === 'true';
 
-            // 取消所有角色勾选
-            document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => cb.checked = false);
-            // 勾选该用户的角色
-            const roles = roleNames.split(', ');
-            roles.forEach(name => {
-                document.querySelectorAll('#editRolesContainer label').forEach(lbl => {
-                    if (lbl.textContent.trim().startsWith(name)) {
-                        const cb = document.getElementById(lbl.htmlFor);
-                        if (cb) cb.checked = true;
-                    }
-                });
+            // v2.13.64 重构：按 RoleIds（逗号分隔的 Id 字符串）勾选匹配角色，替代原"按名称前缀匹配"易误判
+            const roleIds = (roleIdsStr || '').split(',').map(s => s.trim()).filter(s => s);
+            document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => {
+                cb.checked = roleIds.includes(cb.value);
             });
             new bootstrap.Modal(document.getElementById('editUserModal')).show();
         }
 
-        // v2.13.46 P0-16 启用/停用切换
+        // v2.13.64 BUG 修复：调用正确的端点 /enable 或 /disable（之前调用 /enable 或 /disable 已正确）
         function toggleUserStatus(id, enable) {
             if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
             fetch('/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable'), { method: 'POST' })

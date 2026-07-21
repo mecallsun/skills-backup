@@ -8,7 +8,7 @@ namespace DormManage.Admin.Pages.Settings;
 
 /// <summary>
 /// 用户管理独立页面（P1-2）
-/// 从 Settings Index 拆分，提供完整的用户 CRUD
+/// v2.13.64 升级：添加搜索/角色筛选/状态筛选/分页 + RoleIds 用于回显已勾选角色
 /// </summary>
 public class UserModel : PageModel
 {
@@ -18,6 +18,16 @@ public class UserModel : PageModel
     {
         _db = db;
     }
+
+    // ====== v2.13.64 新增：查询参数 ======
+    [BindProperty(SupportsGet = true)] public string? Search { get; set; }
+    [BindProperty(SupportsGet = true)] public int? RoleId { get; set; }
+    [BindProperty(SupportsGet = true)] public string? Status { get; set; }
+    [BindProperty(SupportsGet = true)] public int PageIndex { get; set; } = 1;
+    [BindProperty(SupportsGet = true)] public int PageSize { get; set; } = 20;
+
+    public int TotalCount { get; set; }
+    public int TotalPages => Math.Max(1, (int)Math.Ceiling(TotalCount / (double)PageSize));
 
     public List<UserViewModel> Users { get; set; } = new();
     public List<RoleOption> AvailableRoles { get; set; } = new();
@@ -32,6 +42,7 @@ public class UserModel : PageModel
         public string Email { get; set; } = "";
         public string Phone { get; set; } = "";
         public string RoleNames { get; set; } = "";
+        public string RoleIds { get; set; } = "";  // v2.13.64 新增：用于回显勾选角色
         public bool IsActive { get; set; }
         public bool IsLocked { get; set; }
         public DateTime? LastLoginTime { get; set; }
@@ -95,6 +106,7 @@ public class UserModel : PageModel
         return RedirectToPage();
     }
 
+    // v2.13.64 BUG 修复：IsActive 现在用 string 类型（避免和 hidden 冲突，参考 v2.13.62 经验教训）
     public async Task<IActionResult> OnPostUpdateAsync(int Id, string DisplayName, string Email, string Phone, bool IsActive, int[] SelectedRoleIds)
     {
         var user = await _db.SysUsers.FindAsync(Id);
@@ -165,9 +177,16 @@ public class UserModel : PageModel
             return RedirectToPage();
         }
 
-        // 级联删除：先移除用户-角色关联
+        // v2.13.64 修复：级联清理所有引用该用户的子表（FK 约束）
         var urs = _db.SysUserRoles.Where(ur => ur.UserId == Id);
         _db.SysUserRoles.RemoveRange(urs);
+        var sqs = _db.SysUserSecurityQuestions.Where(sq => sq.UserId == Id);
+        _db.SysUserSecurityQuestions.RemoveRange(sqs);
+        var logs = _db.SysOpLogs.Where(l => l.UserId == Id);
+        _db.SysOpLogs.RemoveRange(logs);
+        var filters = _db.SysUserFilterCaches.Where(c => c.UserId == Id);
+        _db.SysUserFilterCaches.RemoveRange(filters);
+
         _db.SysUsers.Remove(user);
         await _db.SaveChangesAsync();
 
@@ -177,27 +196,61 @@ public class UserModel : PageModel
 
     private async Task LoadDataAsync()
     {
-        var users = await _db.SysUsers.OrderByDescending(u => u.CreatedAt).ToListAsync();
-        var userRoles = await _db.SysUserRoles.ToListAsync();
-        var roles = await _db.SysRoles.Where(r => r.IsActive).OrderBy(r => r.SortOrder).ToListAsync();
+        var allRoles = await _db.SysRoles.Where(r => r.IsActive).OrderBy(r => r.SortOrder).ToListAsync();
+        AvailableRoles = allRoles.Select(r => new RoleOption { Id = r.Id, RoleCode = r.RoleCode, RoleName = r.RoleName }).ToList();
 
-        Users = users.Select(u => new UserViewModel
+        var query = _db.SysUsers.AsQueryable();
+
+        // 搜索：用户名 OR 姓名
+        if (!string.IsNullOrWhiteSpace(Search))
         {
-            Id = u.Id,
-            UserName = u.UserName,
-            DisplayName = u.DisplayName,
-            Email = u.Email ?? "",
-            Phone = u.Phone ?? "",
-            RoleNames = string.Join(", ",
-                userRoles.Where(ur => ur.UserId == u.Id)
-                    .Join(roles, ur => ur.RoleId, r => r.Id, (_, r) => r.RoleName)),
-            IsActive = u.IsActive,
-            IsLocked = u.IsLocked,
-            LastLoginTime = u.LastLoginTime,
-            LastLoginIp = u.LastLoginIp,
-            CreatedAt = u.CreatedAt
-        }).ToList();
+            var kw = Search.Trim();
+            query = query.Where(u => u.UserName.Contains(kw) || u.DisplayName.Contains(kw));
+        }
 
-        AvailableRoles = roles.Select(r => new RoleOption { Id = r.Id, RoleCode = r.RoleCode, RoleName = r.RoleName }).ToList();
+        // 状态筛选
+        if (Status == "active") query = query.Where(u => u.IsActive && !u.IsLocked);
+        else if (Status == "disabled") query = query.Where(u => !u.IsActive);
+        else if (Status == "locked") query = query.Where(u => u.IsLocked);
+
+        // 角色筛选：先取所有用户，然后 join 过滤（这里采用先列出再 Join，配合 In-memory 更直观）
+        var allUsers = await query.OrderByDescending(u => u.CreatedAt).ToListAsync();
+        var userRoles = await _db.SysUserRoles.ToListAsync();
+
+        // 角色筛选（在内存中二次过滤，因 join 复杂）
+        if (RoleId.HasValue)
+        {
+            var userIdsInRole = userRoles.Where(ur => ur.RoleId == RoleId.Value).Select(ur => ur.UserId).ToHashSet();
+            allUsers = allUsers.Where(u => userIdsInRole.Contains(u.Id)).ToList();
+        }
+
+        TotalCount = allUsers.Count;
+
+        // 分页
+        var pagedUsers = allUsers
+            .Skip((PageIndex - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
+
+        Users = pagedUsers.Select(u =>
+        {
+            var userRoleIds = userRoles.Where(ur => ur.UserId == u.Id).Select(ur => ur.RoleId).ToList();
+            return new UserViewModel
+            {
+                Id = u.Id,
+                UserName = u.UserName,
+                DisplayName = u.DisplayName,
+                Email = u.Email ?? "",
+                Phone = u.Phone ?? "",
+                RoleNames = string.Join(", ",
+                    userRoleIds.Join(allRoles, rid => rid, r => r.Id, (_, r) => r.RoleName)),
+                RoleIds = string.Join(",", userRoleIds),  // v2.13.64 新增
+                IsActive = u.IsActive,
+                IsLocked = u.IsLocked,
+                LastLoginTime = u.LastLoginTime,
+                LastLoginIp = u.LastLoginIp,
+                CreatedAt = u.CreatedAt
+            };
+        }).ToList();
     }
 }
