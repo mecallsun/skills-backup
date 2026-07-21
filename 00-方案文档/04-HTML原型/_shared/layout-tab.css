@@ -79,7 +79,11 @@ body {
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    text-decoration: none;
+    color: #5f6368;
+    transition: background 0.15s;
 }
+.top-bar a.user-pill:hover { background: #e8eaed; color: #1976d2; }
 
 .top-bar .user-pill i {
     font-size: 1.15rem;
