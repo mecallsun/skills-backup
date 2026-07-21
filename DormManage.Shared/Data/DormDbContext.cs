@@ -359,7 +359,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("MeterRecord");
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.Id).HasColumnName("RecordId"); // 真实 SQL Server 主键列名（BIGINT，实体为 int，取值在 int 范围内安全）
+            entity.Property(e => e.Id).HasColumnName("RecordId").HasColumnType("int"); // v2.13.68 修复 EF int↔SQL BIGINT 读回类型转换异常（hasColumnType 强制 int 避免 SCOPE_IDENTITY→Int64→Int32 cast 失败）
             entity.Property(e => e.DormCode).HasMaxLength(32).IsRequired();
             // v2.13.24 P76：三表读数对齐 SQL DECIMAL(12,2)
             entity.Property(e => e.ColdMeter).HasColumnType("decimal(12,2)");

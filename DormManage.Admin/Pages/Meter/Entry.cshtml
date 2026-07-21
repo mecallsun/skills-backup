@@ -5,6 +5,11 @@
     Layout = "_Layout";
 }
 
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+@{
+    var antiforgery = PageAntiforgery.GetAndStoreTokens(HttpContext);
+}
+
 @section Styles {
     <style>
         /* v2.12.36 紧凑一屏布局：去掉规范信息，减小行间距 */
@@ -20,8 +25,11 @@
             cursor: pointer;
             transition: all 0.2s;
             font-size: 0.8rem;
+            position: relative;
         }
         .upload-ph:hover { border-color: #1976d2; color: #1976d2; }
+        .upload-ph.has-file { border-color: #198754; color: #198754; border-style: solid; }
+        .upload-ph img.upload-thumb { max-width: 36px; max-height: 36px; border-radius: 4px; object-fit: cover; margin-right: 6px; }
         .usage-preview { background: #f8f9fa; border-radius: 8px; padding: 8px 12px; font-size: 0.85rem; }
         .form-card-body .form-section { margin-bottom: 0.6rem; }
         .form-card-body .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
@@ -43,11 +51,12 @@
         </a>
     </div>
 
-    <form method="post" id="entryForm"
+    <form id="entryForm"
       data-prev-cold="@(Model.LastRecord?.ColdMeter.ToString("F2") ?? "")"
       data-prev-hot="@(Model.LastRecord?.HotMeter.ToString("F2") ?? "")"
       data-prev-electric="@(Model.LastRecord?.ElectricMeter.ToString("F2") ?? "")"
       data-has-prev="@(Model.LastRecord != null ? "1" : "0")">
+        <input type="hidden" id="antiforgeryToken" value="@antiforgery.RequestToken" />
         <div class="row">
             <!-- 左侧：表单 -->
             <div class="col-md-8">
@@ -101,11 +110,11 @@
                         <div class="card meter-card h-100 border-0 shadow-sm" style="border-left: 3px solid #1976d2 !important;">
                             <div class="card-body py-2">
                                 <h6 class="text-primary mb-1"><i class="bi bi-droplet"></i> 冷水</h6>
-                                <input type="number" step="0.01" min="0" asp-for="ColdMeter" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onReadingInput()">
-                                <span asp-validation-for="ColdMeter" class="text-danger"></span>
+                                <input type="number" step="0.01" min="0" name="ColdMeter" id="ColdMeter" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onReadingInput()">
                                 <small class="text-muted d-block" id="hint-cold">用量：—</small>
-                                <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
-                                    <i class="bi bi-camera"></i> 上传照片
+                                <input type="file" id="photo-cold" accept="image/*" capture="environment" class="d-none" onchange="onPhotoSelected('cold', this)">
+                                <div class="upload-ph mt-1" id="upload-ph-cold" onclick="document.getElementById('photo-cold').click()">
+                                    <i class="bi bi-camera"></i>&nbsp;<span id="label-cold">上传冷水照片</span>
                                 </div>
                             </div>
                         </div>
@@ -114,11 +123,11 @@
                         <div class="card meter-card h-100 border-0 shadow-sm" style="border-left: 3px solid #0dcaf0 !important;">
                             <div class="card-body py-2">
                                 <h6 class="text-info mb-1"><i class="bi bi-steam"></i> 热水</h6>
-                                <input type="number" step="0.01" min="0" asp-for="HotMeter" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onReadingInput()">
-                                <span asp-validation-for="HotMeter" class="text-danger"></span>
+                                <input type="number" step="0.01" min="0" name="HotMeter" id="HotMeter" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onReadingInput()">
                                 <small class="text-muted d-block" id="hint-hot">用量：—</small>
-                                <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
-                                    <i class="bi bi-camera"></i> 上传照片
+                                <input type="file" id="photo-hot" accept="image/*" capture="environment" class="d-none" onchange="onPhotoSelected('hot', this)">
+                                <div class="upload-ph mt-1" id="upload-ph-hot" onclick="document.getElementById('photo-hot').click()">
+                                    <i class="bi bi-camera"></i>&nbsp;<span id="label-hot">上传热水照片</span>
                                 </div>
                             </div>
                         </div>
@@ -127,11 +136,11 @@
                         <div class="card meter-card h-100 border-0 shadow-sm" style="border-left: 3px solid #ffc107 !important;">
                             <div class="card-body py-2">
                                 <h6 class="text-warning mb-1"><i class="bi bi-lightning"></i> 电</h6>
-                                <input type="number" step="0.01" min="0" asp-for="ElectricMeter" class="form-control form-control-sm" placeholder="读数（度）" oninput="onReadingInput()">
-                                <span asp-validation-for="ElectricMeter" class="text-danger"></span>
+                                <input type="number" step="0.01" min="0" name="ElectricMeter" id="ElectricMeter" class="form-control form-control-sm" placeholder="读数（度）" oninput="onReadingInput()">
                                 <small class="text-muted d-block" id="hint-electric">用量：—</small>
-                                <div class="upload-ph mt-1" onclick="alert('原型演示：实际弹出拍照/选图上传（自动加水印）')">
-                                    <i class="bi bi-camera"></i> 上传照片
+                                <input type="file" id="photo-electric" accept="image/*" capture="environment" class="d-none" onchange="onPhotoSelected('electric', this)">
+                                <div class="upload-ph mt-1" id="upload-ph-electric" onclick="document.getElementById('photo-electric').click()">
+                                    <i class="bi bi-camera"></i>&nbsp;<span id="label-electric">上传电表照片</span>
                                 </div>
                             </div>
                         </div>
@@ -142,15 +151,14 @@
                 <div class="card meter-card mb-2">
                     <div class="card-body py-2">
                         <label class="form-label">备注</label>
-                        <textarea asp-for="Remark" class="form-control form-control-sm" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
-                        <span asp-validation-for="Remark" class="text-danger"></span>
+                        <textarea name="Remark" id="Remark" class="form-control form-control-sm" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
                     </div>
                 </div>
 
                 <!-- 操作按钮 -->
                 <div class="d-flex gap-2">
                     <a href="/Meter" class="btn btn-outline-secondary">取消</a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="button" class="btn btn-primary" id="submitBtn" onclick="submitForm()">
                         <i class="bi bi-check"></i> 提交
                     </button>
                 </div>
@@ -203,14 +211,54 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
-        // v2.13.41 100% 原型对齐：onDormMonthChange 提示用户需提交后刷新（实际项目中应 AJAX 加载上月读数）
+        // ========== v2.13.68 原型功能完整性 100%：照片 + AJAX + 上月读数实时加载 ==========
+
+        var csrfToken = document.getElementById('antiforgeryToken').value;
+        var selectColdDataURL = null;
+        var selectHotDataURL = null;
+        var selectElectricDataURL = null;
+        var selectColdFile = null, selectHotFile = null, selectElectricFile = null;
+
+        // v2.13.68 AJAX 加载上月读数（宿舍/月份变更时触发）
         function onDormMonthChange() {
-            console.log('[v2.13.41] 宿舍/月份变更提示：请重新提交以加载上月读数');
+            var dormId = document.querySelector('select[name="DormId"]').value;
+            var readMonth = document.querySelector('input[name="ReadMonth"]').value;
+            if (!dormId || !readMonth) return;
+
+            fetch('/Meter/Entry?handler=LoadReadings&dormId=' + dormId + '&readMonth=' + encodeURIComponent(readMonth))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (!data.success) return;
+                    var form = document.getElementById('entryForm');
+                    form.setAttribute('data-prev-cold', data.prevCold.toFixed(2));
+                    form.setAttribute('data-prev-hot', data.prevHot.toFixed(2));
+                    form.setAttribute('data-prev-electric', data.prevElectric.toFixed(2));
+                    form.setAttribute('data-has-prev', data.hasPrev ? '1' : '0');
+
+                    var warn = document.getElementById('existWarning');
+                    if (warn) warn.remove();
+                    if (data.currentStatus >= 0) {
+                        var statusNames = ['', '未完成', '正常', '已修正', '未完成(PDA)', '已作废'];
+                        var statusName = statusNames[data.currentStatus] || '未知';
+                        var alertClass = data.isEffective ? 'alert-warning' : 'alert-info';
+                        var icon = data.isEffective ? 'bi-exclamation-triangle' : 'bi-info-circle';
+                        var html = '<div id="existWarning" class="alert ' + alertClass + ' mt-2 mb-0 py-1" style="font-size:0.85rem;">'
+                            + '<i class="bi ' + icon + '"></i> '
+                            + (data.isEffective
+                                ? '⚠️ 该宿舍 ' + readMonth + ' 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。'
+                                : 'ℹ️ 该宿舍 ' + readMonth + ' 已有【' + statusName + '】占位记录（ID: ' + data.currentRecordId + '），提交后将覆盖此记录，旧数据保存到备注历史。')
+                            + '</div>';
+                        var basicCard = document.querySelector('.card.meter-card.mb-2 .card-body');
+                        if (basicCard) basicCard.insertAdjacentHTML('beforeend', html);
+                    }
+
+                    onReadingInput();
+                })
+                .catch(function(err) { console.error('[v2.13.68] 加载读数失败：', err); });
         }
 
-        // v2.13.41 100% 原型对齐：onReadingInput 实现真正的用量计算 + 红色校验
+        // v2.13.41 用量计算 + 校验
         function onReadingInput() {
             var form = document.getElementById('entryForm');
             var hasPrev = form.getAttribute('data-has-prev') === '1';
@@ -218,16 +266,14 @@
             var prevHot = parseFloat(form.getAttribute('data-prev-hot')) || 0;
             var prevElectric = parseFloat(form.getAttribute('data-prev-electric')) || 0;
 
-            var cold = parseFloat(document.querySelector('input[name="ColdMeter"]').value);
-            var hot = parseFloat(document.querySelector('input[name="HotMeter"]').value);
-            var electric = parseFloat(document.querySelector('input[name="ElectricMeter"]').value);
+            var cold = parseFloat(document.getElementById('ColdMeter').value);
+            var hot = parseFloat(document.getElementById('HotMeter').value);
+            var electric = parseFloat(document.getElementById('ElectricMeter').value);
 
-            // v2.13.41：用量 = 当前读数 - 上月读数（无上月时 = 0）
             var coldUsage = (isNaN(cold) || !hasPrev) ? 0 : Math.max(0, cold - prevCold);
             var hotUsage = (isNaN(hot) || !hasPrev) ? 0 : Math.max(0, hot - prevHot);
             var electricUsage = (isNaN(electric) || !hasPrev) ? 0 : Math.max(0, electric - prevElectric);
 
-            // v2.13.41：读数 < 上月 红色错误校验（v2.11.4 业务硬规则：本月读数必须 ≥ 上月读数）
             var hintCold = document.getElementById('hint-cold');
             var hintHot = document.getElementById('hint-hot');
             var hintElectric = document.getElementById('hint-electric');
@@ -239,14 +285,13 @@
                     return;
                 }
                 if (!hasPrev) {
-                    // 首次抄表
                     el.className = 'text-info d-block';
-                    el.innerHTML = '<i class="bi bi-info-circle"></i> ' + noPrevLabel + '（无上月）' + ' | 当前读数 ' + current.toFixed(2) + ' ' + unit;
+                    el.innerHTML = '<i class="bi bi-info-circle"></i> ' + noPrevLabel + '（无上月） | 当前读数 ' + current.toFixed(2) + ' ' + unit;
                     return;
                 }
                 if (current < prev) {
                     el.className = 'text-danger d-block';
-                    el.innerHTML = '<i class="bi bi-x-circle-fill"></i> ✗ 错误：当前读数 ' + current.toFixed(2) + ' < 上月 ' + prev.toFixed(2) + ' ' + unit;
+                    el.innerHTML = '<i class="bi bi-x-circle-fill"></i> ✗ 当前读数 ' + current.toFixed(2) + ' < 上月 ' + prev.toFixed(2) + ' ' + unit;
                     return;
                 }
                 el.className = 'text-success d-block';
@@ -257,37 +302,139 @@
             renderHint(hintHot, hot, prevHot, hotUsage, 'm³', '首次抄表');
             renderHint(hintElectric, electric, prevElectric, electricUsage, '度', '首次抄表');
 
-            // 用量预览
             var preview = document.getElementById('usagePreview');
             var total = coldUsage + hotUsage + electricUsage;
             if (coldUsage > 0 || hotUsage > 0 || electricUsage > 0) {
                 preview.innerHTML =
-                    '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>冷水用量</span><span class="fw-bold text-primary">' + coldUsage.toFixed(2) + ' m³</span>' +
-                    '</div>' +
-                    '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>热水用量</span><span class="fw-bold text-info">' + hotUsage.toFixed(2) + ' m³</span>' +
-                    '</div>' +
-                    '<div class="d-flex justify-content-between mb-1">' +
-                    '<span>电用量</span><span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span>' +
-                    '</div>' +
-                    '<hr class="my-1">' +
-                    '<div class="d-flex justify-content-between">' +
-                    '<span class="fw-bold">合计用量</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span>' +
-                    '</div>';
+                    '<div class="d-flex justify-content-between mb-1"><span>冷水用量</span><span class="fw-bold text-primary">' + coldUsage.toFixed(2) + ' m³</span></div>' +
+                    '<div class="d-flex justify-content-between mb-1"><span>热水用量</span><span class="fw-bold text-info">' + hotUsage.toFixed(2) + ' m³</span></div>' +
+                    '<div class="d-flex justify-content-between mb-1"><span>电用量</span><span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span></div>' +
+                    '<hr class="my-1"><div class="d-flex justify-content-between"><span class="fw-bold">合计用量</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span></div>';
             } else {
                 preview.innerHTML = '<p class="text-muted small mb-0">请录入读数</p>';
             }
 
-            // v2.13.41：读数 < 上月 时禁用提交按钮
-            var submitBtn = document.querySelector('#entryForm button[type="submit"]');
+            // v2.13.41：读数 < 上月时禁用提交按钮
+            var submitBtn = document.getElementById('submitBtn');
             if (submitBtn) {
-                var hasError = (cold < prevCold) || (hot < prevHot) || (electric < prevElectric);
+                var hasError = (!isNaN(cold) && hasPrev && cold < prevCold) ||
+                               (!isNaN(hot) && hasPrev && hot < prevHot) ||
+                               (!isNaN(electric) && hasPrev && electric < prevElectric);
                 submitBtn.disabled = hasError;
             }
         }
 
-        // 页面加载时初始化用量预览
-        document.addEventListener('DOMContentLoaded', function() { onReadingInput(); });
+        // v2.13.68 照片预览
+        function onPhotoSelected(meterType, input) {
+            var file = input.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var ph = document.getElementById('upload-ph-' + meterType);
+                var label = document.getElementById('label-' + meterType);
+                var dataUrl = e.target.result;
+                if (meterType === 'cold') selectColdDataURL = dataUrl, selectColdFile = file;
+                else if (meterType === 'hot') selectHotDataURL = dataUrl, selectHotFile = file;
+                else selectElectricDataURL = dataUrl, selectElectricFile = file;
+
+                var typeNames = { cold: '冷水', hot: '热水', electric: '电' };
+                ph.classList.add('has-file');
+                ph.innerHTML = '<img class="upload-thumb" src="' + dataUrl + '"><span id="label-' + meterType + '" class="small">已选 ' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB）<i class="bi bi-x-circle ms-1" onclick="clearPhoto(\'' + meterType + '\', event)"></i></span>';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearPhoto(meterType, ev) {
+            if (ev) ev.stopPropagation();
+            var input = document.getElementById('photo-' + meterType);
+            input.value = '';
+            var ph = document.getElementById('upload-ph-' + meterType);
+            ph.classList.remove('has-file');
+            var labels = { cold: '上传冷水照片', hot: '上传热水照片', electric: '上传电表照片' };
+            ph.innerHTML = '<i class="bi bi-camera"></i>&nbsp;<span id="label-' + meterType + '">' + labels[meterType] + '</span>';
+            if (meterType === 'cold') selectColdDataURL = null, selectColdFile = null;
+            else if (meterType === 'hot') selectHotDataURL = null, selectHotFile = null;
+            else selectElectricDataURL = null, selectElectricFile = null;
+        }
+
+        // v2.13.68 AJAX 提交：先保存读数，再依次上传照片，最后跳转
+        async function submitForm() {
+            var submitBtn = document.getElementById('submitBtn');
+            if (submitBtn.disabled) return;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> 保存中...';
+
+            var dormId = document.querySelector('select[name="DormId"]').value;
+            var readMonth = document.querySelector('input[name="ReadMonth"]').value;
+            var cold = document.getElementById('ColdMeter').value;
+            var hot = document.getElementById('HotMeter').value;
+            var electric = document.getElementById('ElectricMeter').value;
+            var remark = document.querySelector('textarea[name="Remark"]').value;
+
+            if (!dormId) { alert('请选择宿舍'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
+            if (!readMonth) { alert('请选择抄表月份'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
+            if (!cold || !hot || !electric) { alert('请录入三表读数'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
+
+            // Step 1: 保存读数
+            var fd = new FormData();
+            fd.append('DormId', dormId);
+            fd.append('ReadMonth', readMonth);
+            fd.append('ColdMeter', cold);
+            fd.append('HotMeter', hot);
+            fd.append('ElectricMeter', electric);
+            fd.append('Remark', remark || '');
+
+            try {
+                var resp = await fetch('/Meter/Entry?handler=SaveReadings', {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': csrfToken },
+                    body: fd
+                });
+                var data = await resp.json();
+                if (!data.success) {
+                    alert('❌ ' + (data.message || '保存失败'));
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交';
+                    return;
+                }
+
+                var recordId = data.recordId;
+                var photoCount = 0, photoOk = 0;
+                var photos = [['cold', selectColdFile], ['hot', selectHotFile], ['electric', selectElectricFile]];
+
+                // Step 2: 依次上传每个照片
+                for (var i = 0; i < photos.length; i++) {
+                    var mt = photos[i][0], file = photos[i][1];
+                    if (!file) continue;
+                    photoCount++;
+                    var imgFd = new FormData();
+                    imgFd.append('image', file);
+                    try {
+                        var r = await fetch('/Meter/Entry?handler=UploadImage&recordId=' + recordId + '&meterType=' + mt, {
+                            method: 'POST',
+                            headers: { 'RequestVerificationToken': csrfToken },
+                            body: imgFd
+                        });
+                        var j = await r.json();
+                        if (j.success) photoOk++;
+                        else console.warn('[v2.13.68] ' + mt + ' 上传失败：', j.message);
+                    } catch (err) {
+                        console.error('[v2.13.68] ' + mt + ' 上传错误：', err);
+                    }
+                }
+
+                var msg = data.message + (photoCount > 0 ? ('\n📷 上传照片：' + photoOk + '/' + photoCount + ' 成功') : '');
+                alert('✅ ' + msg);
+                window.location.href = '/Meter';
+            } catch (err) {
+                alert('❌ 网络错误：' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            onReadingInput();
+        });
     </script>
 }

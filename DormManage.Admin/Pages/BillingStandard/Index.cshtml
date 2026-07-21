@@ -164,43 +164,14 @@
         </div>
     </div>
 
-    <!-- 分页（v2.13.21 统一为标准 3 按钮：上一页 / 当前前后 2 页 / 下一页，保留筛选参数） -->
-    @if (Model.Result != null)
+    <!-- 页尾分页（v2.13.71 100% 原型对齐） -->
+    @if (Model.Result != null && Model.Result.TotalCount > 0)
     {
-        <div class="card-footer d-flex justify-content-between align-items-center pagination-footer mt-3">
-            <div class="text-muted">
-                共 <strong>@Model.Result.TotalCount</strong> 条记录，第 <strong>@Model.Result.PageIndex</strong> / <strong>@Model.Result.TotalPages</strong> 页
-            </div>
-            <nav>
-                <ul class="pagination pagination-sm mb-0">
-                    @if (Model.Result.PageIndex > 1)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@(Model.Result.PageIndex - 1)" aria-label="上一页">
-                                <span aria-hidden="true">&laquo;</span>
-                            </a>
-                        </li>
-                    }
-                    @{
-                        var start = Math.Max(1, Model.Result.PageIndex - 2);
-                        var end = Math.Min(Model.Result.TotalPages, Model.Result.PageIndex + 2);
-                        for (var p = start; p <= end; p++)
-                        {
-                            <li class="page-item @(p == Model.Result.PageIndex ? "active" : "")">
-                                <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@p">@p</a>
-                            </li>
-                        }
-                    }
-                    @if (Model.Result.PageIndex < Model.Result.TotalPages)
-                    {
-                        <li class="page-item">
-                            <a class="page-link" href="?keyword=@Model.Keyword&applicableType=@Model.ApplicableType&isActive=@Model.IsActive&page=@(Model.Result.PageIndex + 1)" aria-label="下一页">
-                                <span aria-hidden="true">&raquo;</span>
-                            </a>
-                        </li>
-                    }
-                </ul>
-            </nav>
-        </div>
+        @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+        {
+            PageIndex = Model.Result.PageIndex,
+            PageSize = Model.Result.PageSize,
+            TotalCount = Model.Result.TotalCount
+        })
     }
 </div>

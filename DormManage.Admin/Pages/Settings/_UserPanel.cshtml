@@ -211,30 +211,15 @@
                 </tbody>
             </table>
         </div>
+        @* v2.13.71 100% 原型对齐：统一分页组件（含每页选择 + 智能截断） *@
         @if (Model.UserTotalCount > 0)
         {
-            <div class="pagination-footer">
-                <span class="page-info">
-                    共 <strong>@Model.UserTotalCount</strong> 人 ·
-                    第 <strong>@Model.UserPageIndex</strong> / <strong>@Model.UserTotalPages</strong> 页
-                </span>
-                <nav>
-                    <ul class="pagination pagination-sm mb-0">
-                        <li class="page-item @(Model.UserPageIndex <= 1 ? "disabled" : "")">
-                            <a class="page-link" href="@Model.BuildUserPageUrl(1)">« 首页</a>
-                        </li>
-                        <li class="page-item @(Model.UserPageIndex <= 1 ? "disabled" : "")">
-                            <a class="page-link" href="@Model.BuildUserPageUrl(Model.UserPageIndex - 1)">‹ 上一页</a>
-                        </li>
-                        <li class="page-item @(Model.UserPageIndex >= Model.UserTotalPages ? "disabled" : "")">
-                            <a class="page-link" href="@Model.BuildUserPageUrl(Model.UserPageIndex + 1)">下一页 ›</a>
-                        </li>
-                        <li class="page-item @(Model.UserPageIndex >= Model.UserTotalPages ? "disabled" : "")">
-                            <a class="page-link" href="@Model.BuildUserPageUrl(Model.UserTotalPages)">末页 »</a>
-                        </li>
-                    </ul>
-                </nav>
-            </div>
+            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+            {
+                PageIndex = Model.UserPageIndex,
+                PageSize = Model.UserPageSize,
+                TotalCount = Model.UserTotalCount
+            })
         }
     </div>
 </div>
