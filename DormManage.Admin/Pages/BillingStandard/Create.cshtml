@@ -52,10 +52,10 @@
                         </select>
                         <small class="form-text text-muted">来自「基础资料 → 员工类型」字典（FK 关联）</small>
                     </div>
-                    @* v2.13.42 新增：IsActive 复选框（之前完全缺失）；v2.13.61 修复 hidden field 使用 name 而不是 asp-for 避免覆盖 checkbox 状态 *@
+                    @* v2.13.62 BUG 修复：移除手动 hidden field，避免与 asp-for 自动生成的 hidden 重复
+                       asp-for 自动生成的 hidden 会确保未勾选时提交 false，无需手动添加 *@
                     <div class="col-md-3 form-field d-flex align-items-end">
                         <div class="form-check pb-2">
-                            <input name="Input.IsActive" type="hidden" value="false" />
                             <input asp-for="Input.IsActive" type="checkbox" class="form-check-input" checked />
                             <label class="form-check-label" asp-for="Input.IsActive">启用此标准</label>
                         </div>

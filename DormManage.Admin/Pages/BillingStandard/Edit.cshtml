@@ -56,10 +56,11 @@
                         </select>
                         <small class="form-text text-muted">来自「基础资料 → 员工类型」字典（FK 关联）</small>
                     </div>
-                    @* v2.13.61 BUG 修复：启用勾选 - 修复 Razor 渲染逻辑（之前 `asp-for` hidden field 会覆盖 checkbox 状态） *@
+                    @* v2.13.62 BUG 修复：移除手动 hidden field，避免与 asp-for 自动生成的 hidden 重复
+                       旧代码有 2 个 hidden + 1 个 checkbox 共 3 个同名 Input.IsActive，ASP.NET ModelBinder 取值不可靠
+                       现仅保留 asp-for 自动生成的 hidden（确保未勾选时也提交 false）+ checkbox（勾选时提交 true） *@
                     <div class="col-md-3 form-field d-flex align-items-end">
                         <div class="form-check pb-2">
-                            <input name="Input.IsActive" type="hidden" value="false" />
                             <input asp-for="Input.IsActive" type="checkbox" class="form-check-input" />
                             <label class="form-check-label" asp-for="Input.IsActive">启用此标准</label>
                         </div>

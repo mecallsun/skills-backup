@@ -129,7 +129,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.61（2026-07-21 费用标准 启用勾选 + 适用员工类型 FK 关联 P0 修复 — Hidden field `asp-for` 覆盖 BUG + `new` 关键字 EF 冲突 + ApplicableTypeId FK 约束）
+- **项目当前版本：** v2.13.62（2026-07-21 费用标准 Edit 启用勾选 manual hidden 移除彻底修复 — 移除 v2.13.61 错误保留的 manual hidden，让 asp-for 自动管理 hidden，ModelBinder 正确取第一个 checkbox 值）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.
@@ -160,3 +160,6 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.56 Profile 禁止作为第 11 主菜单原则（硬约束）：** ❌ **禁止修改 `tab-bar.js` 的 `FIXED_TABS` 数组增加 `tab-profile`**，❌ **禁止在 Profile 页面隐藏其他 10 个 Tab**，✅ **Profile 仅通过顶部「用户胶囊」`<a class="user-pill" href="../profile/index.html">` 进入**。Profile 是「Tier 4 二级子页面（账号设置）」，不是「Tier 3 主菜单 Tab（业务模块）」。任何 PR 修改 FIXED_TABS 数组必须经 ADR 评审；Code Review 必驳回。详见 `108-Profile禁止作为第11主菜单原则-v2.13.56.md`。
 - **v2.13.57 住宿登记表 + 人员清单表 DDL 缺失 P0 修复：** `01_DDL_Schema.sql`（253 行）原只有 9 张表，缺失 `DormBooking` + `SysEmployee` → SQL Server 运维执行 DDL 后 EF Core 查询 → Invalid object name → 页面 Error。新增 2 张表 DDL + FK_DormBooking_Employee + FK_DormBooking_Dorm + 20 条种子数据。详见 `109-住宿登记表缺失SQL修复-v2.13.57.md`。
 - **v2.13.58 Seed 数据 DormCode 不匹配 FK 约束修复：** v2.13.57 Seed 用 D-001~D-005，但 Dorm 表种子是 D-301~D-402 → FK 约束让脚本崩溃。**修正所有 DormCode 为 D-301~D-402**。**教训**：添加 FK 约束后必须自检所有引用表种子数据一致性。详见 `110-SeedDormCodeFK不匹配修复-v2.13.58.md`。
+- **v2.13.60 宿舍详情页 Error + 100% 原型对齐：** Details 页面 5 字段缺失 → ALTER TABLE 补列 + UPDATE Barcode=DormCode WHERE NULL + 移除序号/手机列 + 调整列顺序（部门→员工类型→考勤班次）+ 基本信息卡改 `table table-sm table-borderless`；详见 `112-宿舍详情页错误修复与原型对齐-v2.13.60.md`。
+- **v2.13.61 费用标准 启用勾选 + 适用员工类型 FK 关联 P0 修复（部分失败）：** `<input type="hidden" asp-for="Input.IsActive" value="false" />` 被 ModelState 覆盖 + `new bool IsActive` 与 BaseEntity 冲突 + ApplicableType 字符串 → ApplicableTypeId FK + `FK_BillingStandard_EmployeeType` 约束 + datalist → EmployeeType 真源 select；详见 `113-费用标准启用勾选与员工类型FK修复-v2.13.61.md`。
+- **v2.13.62 费用标准 启用勾选 manual hidden 移除彻底修复：** v2.13.61 错误保留 manual hidden + asp-for 自动生成 hidden → **3 个 Input.IsActive 字段**（2 hidden + 1 checkbox）→ ModelBinder 取第一个值（永远 false）→ 勾选不生效。**修复**：移除 manual hidden，只留 `<input asp-for="Input.IsActive" type="checkbox" />`，让 asp-for 自动管理 hidden（1 hidden + 1 checkbox）。**验证**：端到端 curl POST 测试，未勾选 → IsActive=False、已勾选 → IsActive=True 均能正确持久化。详见 `114-费用标准启用勾选二次修复-v2.13.62.md`。**核心教训**：`asp-for` 复选框会自动追加 hidden field；手动加 hidden 一定会让 ModelBinder 取错值。
