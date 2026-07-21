@@ -160,7 +160,7 @@ git revert HEAD  # 撤销 v2.13.53 文档清理（仅文档，无代码逻辑影
 
 ---
 
-## 七、附录：完整版本演进时间线（v2.13.49 ~ v2.13.53）
+## 七、附录：完整版本演进时间线（v2.13.49 ~ v2.13.54）
 
 | 版本 | 日期 | 关键变更 | 文档 |
 |------|------|---------|------|
@@ -168,4 +168,52 @@ git revert HEAD  # 撤销 v2.13.53 文档清理（仅文档，无代码逻辑影
 | v2.13.50 | 2026-07-21 | 新建 profile/index.html 原型 + Mock 数据 + 需求文档升级 | 103 |
 | v2.13.51 | 2026-07-21 | 26 个原型 user-pill `<span>` → `<a>` 修复 | 104 |
 | v2.13.52 | 2026-07-21 | tab-bar.js 移除 /profile/ 拦截 → 全站统一渲染 10 Tab | 105 |
-| **v2.13.53** | **2026-07-21** | **文档深度清理：profile/index.html 版本标识升级 + 01 §3.6.10 增量补充 + INDEX.md 时间线完整化** | **106** |
+| v2.13.53 | 2026-07-21 | 文档深度清理：profile/index.html 版本标识升级 + 01 §3.6.10 增量补充 + INDEX.md 时间线完整化 | 106 |
+| **v2.13.54** | **2026-07-21** | **profile/index.html 补全 `mountTabBar({ basePath: '..', currentUrl: 'profile/index.html' })` 调用**（之前遗漏 → 主菜单导航不显示） | **本节补丁** |
+
+---
+
+## 八、v2.13.54 紧急修复补充
+
+### 8.1 根因
+
+**用户报告**：v2.13.53 清理后，profile 原型打开仍不显示主菜单导航。
+
+**根因**：profile/index.html 只引用 `<script src="../_shared/tab-bar.js">`，但**未调用 `mountTabBar()` 函数**。`<div id="tab-bar"></div>` 占位元素没有被替换为 10 个 Tab 的实际 HTML，导致主菜单导航栏位置为空。
+
+**对比其他 25 个原型的标准模式**：
+```html
+<script src="../_shared/tab-bar.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        mountTabBar({ basePath: '..', currentUrl: 'XXX/YYY.html' });
+    });
+</script>
+```
+
+profile/index.html 在 v2.13.50 初次创建时遗漏了此调用。
+
+### 8.2 修复
+
+```javascript
+// v2.13.54：在 DOMContentLoaded 内调用 mountTabBar
+document.addEventListener('DOMContentLoaded', function() {
+    mountTabBar({ basePath: '..', currentUrl: 'profile/index.html' });
+
+    // 保留原有的 URL ?tab= 持久化逻辑
+    var url = new URL(window.location.href);
+    var tab = url.searchParams.get('tab');
+    if (tab) {
+        var btn = document.querySelector('.profile-nav button[data-bs-target="#pane-' + tab + '"]');
+        if (btn) btn.click();
+    }
+});
+```
+
+### 8.3 验证清单
+
+- [x] `profile/index.html` 已调用 `mountTabBar({ basePath: '..', currentUrl: 'profile/index.html' })`
+- [x] `setProfileTab()` 函数声明保留（8 个子菜单按钮 onclick 调用）
+- [x] `<div id="tab-bar"></div>` 占位元素保留（line 94）
+- [x] `<script src="../_shared/tab-bar.js">` 引用保留（line 453）
+- [x] 打开 `profile/index.html` 时 10 个 Tab 正常渲染

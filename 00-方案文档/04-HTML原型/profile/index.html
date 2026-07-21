@@ -460,7 +460,10 @@
             window.history.replaceState({}, '', url);
         }
 
+        // ============ v2.13.54：挂载 Tab 栏（与其他 25 个原型一致） ============
         document.addEventListener('DOMContentLoaded', function() {
+            mountTabBar({ basePath: '..', currentUrl: 'profile/index.html' });
+
             var url = new URL(window.location.href);
             var tab = url.searchParams.get('tab');
             if (tab) {
