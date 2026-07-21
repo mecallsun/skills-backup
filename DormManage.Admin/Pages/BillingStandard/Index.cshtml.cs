@@ -17,6 +17,10 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 
+    /// <summary>v2.13.74 BUG 修复：必须 BindProperty 才能从 ?pageSize=N URL 绑定</summary>
+    [BindProperty(SupportsGet = true)]
+    public int PageSize { get; set; } = 20;
+
     [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
 
@@ -35,6 +39,6 @@ public class IndexModel : PageModel
     {
         ActiveStandard = await _service.GetActiveStandardAsync();
         ApplicableTypes = await _service.GetStandardApplicableTypesAsync();
-        Result = await _service.GetStandardsAsync(Keyword, ApplicableType, IsActive, PageIndex, 20);
+        Result = await _service.GetStandardsAsync(Keyword, ApplicableType, IsActive, PageIndex, PageSize);
     }
 }

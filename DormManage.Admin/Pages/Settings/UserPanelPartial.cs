@@ -33,11 +33,26 @@ public partial class IndexModel
     [BindProperty(SupportsGet = true, Name = "uStatus")]
     public string? UserStatus { get; set; }
 
+    /// <summary>v2.13.74 BUG 修复：使用标准 pageIndex / pageSize（与 _PaginationPartial 一致）</summary>
     [BindProperty(SupportsGet = true, Name = "uPage")]
     public int UserPageIndex { get; set; } = 1;
 
+    [BindProperty(SupportsGet = true, Name = "pageIndex")]
+    public int? PageIndexAlias
+    {
+        get => UserPageIndex;
+        set { if (value.HasValue) UserPageIndex = value.Value; }
+    }
+
     [BindProperty(SupportsGet = true, Name = "uSize")]
     public int UserPageSize { get; set; } = 20;
+
+    [BindProperty(SupportsGet = true, Name = "pageSize")]
+    public int? PageSizeAlias
+    {
+        get => UserPageSize;
+        set { if (value.HasValue && value.Value > 0) UserPageSize = value.Value; }
+    }
 
     public int UserTotalCount { get; set; }
     public int UserTotalPages => Math.Max(1, (int)Math.Ceiling(UserTotalCount / (double)UserPageSize));

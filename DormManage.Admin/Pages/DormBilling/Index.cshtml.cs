@@ -56,7 +56,9 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int PageIndex { get; set; } = 1;
 
-    public int PageSize { get; } = 20;
+    /// <summary>v2.13.74 BUG 修复：必须可写 + BindProperty 才能从 ?pageSize=N URL 绑定</summary>
+    [BindProperty(SupportsGet = true)]
+    public int PageSize { get; set; } = 20;
 
     // 分页摘要（视图使用）
     public int TotalCount => Result?.TotalCount ?? 0;

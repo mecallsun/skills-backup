@@ -169,8 +169,8 @@
     {
         @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
         {
-            PageIndex = Model.Result.PageIndex,
-            PageSize = Model.Result.PageSize,
+            PageIndex = Model.PageIndex,
+            PageSize = Model.PageSize,
             TotalCount = Model.Result.TotalCount
         })
     }
