@@ -129,7 +129,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
-- **项目当前版本：** v2.13.59（2026-07-21 办理登记 SqlNullValueException 修复 + 覆盖循环恢复）
+- **项目当前版本：** v2.13.60（2026-07-21 宿舍详情页 Error 修复 + 100% 原型对齐 — Dorm 表 5 列补齐 + Barcode 140 行填充 + 删除序号/手机列 + 表格顺序调整）
 - **v2.13.24 数据库：** 31 EF 实体 100% 对齐 SQL 真理源 init_schema.sql，3 张表 DDL 补充完整（31→33 张），业务深度 25 字段全补，双向联动 12 条规则全部实现；**v2.13.33 起 14 条联动（含 EmployeeName 双管齐下同步：实时覆盖 + Repair 写回）**
 - **数据库默认值：** `192.168.1.237` / `WaterMeterDB` / `__DB_USER__` / `__DB_PASSWORD__`（v2.13.22 统一到生产环境；AppConfigManager + AesEncryptor 加密存储；v2.13.32 起通过 `AppConfigRuntime` 支持运行时热加载，无需重启服务）
 - **Swagger enabled in all environments** — not gated behind `IsDevelopment()`.

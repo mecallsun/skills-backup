@@ -38,32 +38,6 @@
             flex: 1 1 0;
             min-width: 0;
         }
-
-        /* v2.13.21 基本信息项强制同一行：标签左、数据右 */
-        .info-list .info-item {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-            padding: 6px 0;
-            border-bottom: 1px dashed #e9ecef;
-        }
-        .info-list .info-item:last-child { border-bottom: none; }
-        .info-list .info-label {
-            color: #6c757d;
-            font-size: 0.85rem;
-            width: 80px;
-            flex-shrink: 0;
-            margin-bottom: 0;
-            white-space: nowrap;
-        }
-        .info-list .info-value {
-            flex: 1 1 auto;
-            margin-bottom: 0;
-            text-align: right;
-            font-weight: 600;
-            word-break: break-all;
-        }
-        .info-list .info-value.fs-5 { font-size: 1.25rem; }
     </style>
 }
 
@@ -89,76 +63,75 @@
         <div class="details-row">
             <!-- 左栏：基本信息 + 操作（各300px固定宽度，上下堆叠，左边框对齐） -->
             <div class="details-left">
-                <!-- 基本信息卡片 -->
+                <!-- 基本信息卡片（v2.13.60 1:1 对齐原型 dorms/details.html 用 table table-sm table-borderless） -->
                 <div class="card mb-3">
-                    <div class="card-header">
+                    <div class="card-header bg-light">
                         <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
                     </div>
-                    <div class="card-body info-list">
-                        <div class="info-item">
-                            <span class="info-label">宿舍号</span>
-                            <span class="info-value fs-5">@Model.Dorm.DormCode</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">楼栋</span>
-                            <span class="info-value">@Model.Dorm.BuildingName</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">楼层</span>
-                            <span class="info-value">@Model.Dorm.FloorId 楼</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">地址</span>
-                            <span class="info-value">@Model.Dorm.AddressText</span>
-                        </div>
-                        @* v2.13.39 房间数（原 dorms/details.html basicInfo 第 5 行） *@
-                        <div class="info-item">
-                            <span class="info-label">房间数</span>
-                            <span class="info-value">@Model.Dorm.RoomCount 间</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">容量</span>
-                            <span class="info-value">@Model.Dorm.Capacity 人</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">当前入住</span>
-                            <span class="info-value @(Model.Dorm.CurrentCount >= Model.Dorm.Capacity ? "text-danger" : "text-success")">
-                                @Model.Dorm.CurrentCount / @Model.Dorm.Capacity 人
-                            </span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">性别</span>
-                            <span class="info-value">
-                                @if (Model.Dorm.Gender == 1)
-                                {
-                                    <span class="badge bg-primary">男</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-danger">女</span>
-                                }
-                            </span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">状态</span>
-                            <span class="info-value">
-                                @if (Model.Dorm.IsActive)
-                                {
-                                    <span class="badge bg-success">启用</span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">停用</span>
-                                }
-                            </span>
-                        </div>
-                        @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
-                        {
-                            <div class="info-item">
-                                <span class="info-label">备注</span>
-                                <span class="info-value">@Model.Dorm.Remark</span>
-                            </div>
-                        }
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <th width="60" class="text-muted">房号</th>
+                                <td><strong>@Model.Dorm.DormCode</strong></td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">楼栋</th>
+                                <td>@(Model.Dorm.BuildingName ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">楼层</th>
+                                <td>@Model.Dorm.FloorId 楼</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">地址</th>
+                                <td>@(Model.Dorm.AddressText ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">房间数</th>
+                                <td>@Model.Dorm.RoomCount 间</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">容量</th>
+                                <td>@Model.Dorm.Capacity 人</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">性别</th>
+                                <td>
+                                    @if (Model.Dorm.Gender == 1)
+                                    {
+                                        <span class="badge bg-primary">男</span>
+                                    }
+                                    else if (Model.Dorm.Gender == 2)
+                                    {
+                                        <span class="badge bg-danger">女</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">不限</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">状态</th>
+                                <td>
+                                    @if (Model.Dorm.IsActive)
+                                    {
+                                        <span class="badge bg-success">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">停用</span>
+                                    }
+                                </td>
+                            </tr>
+                            @if (!string.IsNullOrEmpty(Model.Dorm.Remark))
+                            {
+                                <tr>
+                                    <th width="60" class="text-muted">备注</th>
+                                    <td>@Model.Dorm.Remark</td>
+                                </tr>
+                            }
+                        </table>
                     </div>
                 </div>
 
@@ -193,25 +166,22 @@
                             <div class="table-responsive">
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
+                                        @* v2.13.60 1:1 对齐原型 dorms/details.html：9 列（工号|姓名|部门|员工类型|考勤班次|床号|入住日期|已入住|操作），删除原 Razor 额外的「序号」+「手机」列 *@
                                         <tr>
-                                            <th width="60" class="text-center">序号</th>
                                             <th>工号</th>
                                             <th>姓名</th>
                                             <th>部门</th>
-                                            <th>手机</th>
+                                            <th>员工类型</th>
                                             <th>考勤班次</th>
                                             <th>床号</th>
                                             <th>入住日期</th>
-                                            @* v2.13.39 新增 3 列：员工类型 / 已入住 / 操作（与原型 dorms/details.html 1:1 对齐） *@
-                                            <th>员工类型</th>
                                             <th>已入住</th>
-                                            <th width="180">操作</th>
+                                            <th width="200">操作</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @for (int i = 0; i < Model.CurrentResidents.Count; i++)
+                                        @foreach (var resident in Model.CurrentResidents)
                                         {
-                                            var resident = Model.CurrentResidents[i];
                                             // v2.12.40 考勤班次从 SysEmployee.AttendanceTypeId → AttendanceType.Name 关联引用
                                             var attendance = Model.EmployeeAttendanceMap.ContainsKey(resident.EmployeeId)
                                                 ? Model.EmployeeAttendanceMap[resident.EmployeeId]
@@ -228,11 +198,19 @@
                                                 ? (DateOnly.FromDateTime(DateTime.Now).DayNumber - resident.CheckInDate.Value.DayNumber)
                                                 : 0;
                                             <tr>
-                                                <td class="text-center text-muted">@(i + 1)</td>
                                                 <td><strong>@resident.EmployeeCode</strong></td>
                                                 <td>@resident.EmployeeName</td>
                                                 <td>@(resident.Department ?? "-")</td>
-                                                <td>@(resident.Phone ?? "-")</td>
+                                                <td>
+                                                    @if (empType != null)
+                                                    {
+                                                        <span class="badge @empType.BadgeClass" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">@empType.Name</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
                                                 <td>
                                                     @if (attendance != null)
                                                     {
@@ -255,18 +233,6 @@
                                                     }
                                                 </td>
                                                 <td>@resident.CheckInDate?.ToString("yyyy-MM-dd")</td>
-                                                @* v2.13.39 员工类型 Badge（FK 关联引用 EmployeeType） *@
-                                                <td>
-                                                    @if (empType != null)
-                                                    {
-                                                        <span class="badge @empType.BadgeClass" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">@empType.Name</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="text-muted">-</span>
-                                                    }
-                                                </td>
-                                                @* v2.13.39 已入住天数 Badge *@
                                                 <td>
                                                     @if (stayDays >= 0)
                                                     {
@@ -277,7 +243,6 @@
                                                         <span class="text-muted">-</span>
                                                     }
                                                 </td>
-                                                @* v2.13.39 操作列：调宿 + 退宿（与原型 1:1 对齐） *@
                                                 <td>
                                                     <a href="/Booking/Edit?id=@resident.Id" class="btn btn-sm btn-outline-warning">
                                                         <i class="bi bi-arrow-left-right"></i> 调宿
@@ -294,7 +259,7 @@
                         }
                         else
                         {
-                            <p class="text-muted mb-0">暂无入住人员</p>
+                            <p class="text-muted text-center py-4 mb-0">暂无入住人员</p>
                         }
                     </div>
                 </div>
