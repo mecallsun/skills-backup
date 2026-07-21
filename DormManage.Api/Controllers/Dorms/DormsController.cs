@@ -170,9 +170,18 @@ public class DormsController : ControllerBase
         if (await _db.Dorms.AnyAsync(d => d.DormCode == request.DormCode && d.Id != id))
             return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该宿舍号已存在");
 
-        // v2.13.12: 容量变更约束 — 减少容量时不能超过当前入住人数
+        // v2.13.82 业务约束：在宿人数 > 0 时禁止停用宿舍（优先于容量校验）
+        // 锁定条件：当前 dorm.IsActive=true 且 请求 IsActive=false 且 CurrentCount > 0
         var currentStaying = await _db.DormBookings
             .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == 2);
+        if (dorm.IsActive && !request.IsActive && currentStaying > 0)
+        {
+            return ApiResponse<DormDto>.Fail(
+                "DORM_HAS_RESIDENTS",
+                $"该宿舍当前在宿 {currentStaying} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
+        }
+
+        // v2.13.12: 容量变更约束 — 减少容量时不能超过当前入住人数
         if (request.Capacity < currentStaying)
             return ApiResponse<DormDto>.Fail("CAPACITY_EXCEEDED", $"当前入住 {currentStaying} 人，容量不能少于入住人数");
 

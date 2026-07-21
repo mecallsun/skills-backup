@@ -120,8 +120,17 @@
                     </div>
                     <div class="col-md-6 form-field d-flex align-items-end">
                         <div class="form-check pb-2">
-                            <input type="checkbox" class="form-check-input" asp-for="Dorm.IsActive">
-                            <label class="form-check-label" for="Dorm_IsActive">启用该宿舍</label>
+                            <input type="checkbox" class="form-check-input"
+                                   asp-for="Dorm.IsActive"
+                                   disabled="@Model.IsActiveLocked"
+                                   aria-describedby="dormLockedHelp">
+                            <label class="form-check-label" for="Dorm_IsActive">
+                                启用该宿舍
+                                @if (Model.IsActiveLocked)
+                                {
+                                    <i class="bi bi-lock-fill text-warning ms-1" title="有在宿人员时不可停用"></i>
+                                }
+                            </label>
                         </div>
                     </div>
                     <div class="col-md-12 form-field">
@@ -130,6 +139,17 @@
                         <span class="text-danger small" asp-validation-for="Dorm.Remark"></span>
                     </div>
                 </div>
+                @* v2.13.82 业务约束：在宿人数 > 0 时锁定「启用宿舍」勾选状态 *@
+                @if (Model.IsActiveLocked)
+                {
+                    <div class="alert alert-warning py-2 mb-0 mt-2" id="dormLockedHelp" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>该宿舍当前在宿 <span class="badge bg-danger">@Model.CurrentCount</span> 人</strong>，
+                        <strong>禁止停用</strong>。请先办理所有人员的退宿手续后，方可取消「启用该宿舍」勾选。
+                        <div class="mt-1 small text-muted">业务约束（v2.13.82）：CurrentCount &gt; 0 时锁定 IsActive，避免在宿员工失去宿舍关联。</div>
+                    </div>
+                }
+                <span class="text-danger small d-block mt-1" asp-validation-for="Dorm.IsActive"></span>
             </div>
         </div>
 

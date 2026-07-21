@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Dorms;
 
@@ -38,6 +39,21 @@ public class EditModel : PageModel
     /// </summary>
     public List<Address> Addresses { get; set; } = new();
 
+    /// <summary>
+    /// v2.13.82 业务约束：当前在宿人数（动态计算：Status=Staying 的 DormBookings 数）
+    /// </summary>
+    public int CurrentCount { get; set; }
+
+    /// <summary>
+    /// v2.13.82 业务约束：CurrentCount > 0 时锁定 IsActive 复选框
+    /// </summary>
+    public bool IsActiveLocked => CurrentCount > 0;
+
+    /// <summary>
+    /// v2.13.82 业务约束：原始 IsActive 值（用于 OnPost 校验失败的回显）
+    /// </summary>
+    public bool IsActiveOriginal { get; set; }
+
     public async Task<IActionResult> OnGetAsync(int id)
     {
         var dorm = await _db.Dorms.FindAsync(id);
@@ -45,6 +61,10 @@ public class EditModel : PageModel
         {
             return NotFound();
         }
+
+        // v2.13.82 业务约束：当前在宿人数 > 0 时锁定 IsActive
+        CurrentCount = await _db.DormBookings
+            .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == BookingStatus.Staying);
 
         Dorm = new DormEditDto
         {
@@ -59,6 +79,7 @@ public class EditModel : PageModel
             Remark = dorm.Remark,
             IsActive = dorm.IsActive
         };
+        IsActiveOriginal = dorm.IsActive;
 
         await LoadBasicsAsync();
         return Page();
@@ -66,6 +87,13 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // v2.13.82 即便 ModelState 失效也要重新计算 CurrentCount 以便锁定提示继续显示
+        if (await _db.Dorms.FindAsync(Dorm.Id) is { } dormForCount)
+        {
+            CurrentCount = await _db.DormBookings
+                .CountAsync(b => b.DormCode == dormForCount.DormCode && b.Status == BookingStatus.Staying);
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadBasicsAsync();
@@ -76,6 +104,17 @@ public class EditModel : PageModel
         if (dorm == null)
         {
             return NotFound();
+        }
+
+        // v2.13.82 业务约束：在宿人数 > 0 时禁止取消启用
+        // 锁定条件：当前 dorm.IsActive=true 且 表单提交 Dorm.IsActive=false 且 CurrentCount > 0
+        if (dorm.IsActive && !Dorm.IsActive && CurrentCount > 0)
+        {
+            IsActiveOriginal = dorm.IsActive;
+            ModelState.AddModelError("Dorm.IsActive",
+                $"该宿舍当前在宿 {CurrentCount} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
+            await LoadBasicsAsync();
+            return Page();
         }
 
         // 获取楼栋名称
