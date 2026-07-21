@@ -3,21 +3,28 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using DormManage.Shared.Data;
 using DormManage.Shared.Services;
+using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Personnel;
 
-/// <summary>员工编辑页面模型（项1，纯 @@page + ?id= 路由）</summary>
+/// <summary>员工编辑页面模型（项1，纯 @@page + ?id= 路由）
+/// v2.13.88 RBAC：编辑页只读模式（无 personnel:edit 权限时 OnPost 拒绝 + UI 全字段 readonly）</summary>
 public class EditModel : PageModel
 {
     private readonly IPersonnelService _svc;
     private readonly DormDbContext _db;
+    private readonly IPermissionService _perm;
 
-    public EditModel(IPersonnelService svc, DormDbContext db)
+    public EditModel(IPersonnelService svc, DormDbContext db, IPermissionService perm)
     {
         _svc = svc;
         _db = db;
+        _perm = perm;
     }
+
+    /// <summary>v2.13.88 只读模式：当前用户无 personnel:edit 权限时为 true</summary>
+    public bool IsReadOnly { get; set; }
 
     [BindProperty(SupportsGet = true)]
     public int Id { get; set; }
@@ -64,12 +71,21 @@ public class EditModel : PageModel
             BedNo = emp.BedNo,
             Remark = emp.Remark
         };
+        // v2.13.88 RBAC：检测 personnel:edit 权限，无权限进入只读模式
+        IsReadOnly = !await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "personnel:edit");
         await LoadDropdownsAsync();
         return Page();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // v2.13.88 RBAC 第二层防御：无 personnel:edit 权限时直接拒绝提交
+        if (!await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "personnel:edit"))
+        {
+            TempData["ErrorMessage"] = "您没有「编辑员工」权限，无法保存修改";
+            return RedirectToPage("/Personnel/Details", new { id = Id });
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();

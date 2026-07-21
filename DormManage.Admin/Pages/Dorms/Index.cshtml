@@ -140,15 +140,30 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <a href="/Dorms/Details?id=@item.Id" class="btn btn-sm btn-outline-info">详情</a>
-                                        <a href="/Dorms/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">修改</a>
-                                        <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(@item.Id)" title="在弹窗中编辑">
-                                            <i class="bi bi-pencil"></i>
-                                        </button>
-                                        @* v2.12.41 删除按钮：仅当无在宿人员 且 无办理登记历史时才显示（否则隐藏）*@
-                                        @if (item.CanDelete)
+                                        @* v2.13.88 RBAC 细化：详情 → dorm:view(默认) / dorm:detail / 修改 → dorm:edit / 删除 → dorm:delete *@
+                                        @if (await Html.HasPermissionAsync("dorm:view"))
                                         {
-                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDorm(@item.Id, '@item.DormCode')">删除</button>
+                                            <a href="/Dorms/Details?id=@item.Id" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                        }
+                                        @if (await Html.HasPermissionAsync("dorm:edit"))
+                                        {
+                                            <a href="/Dorms/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(@item.Id)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        }
+                                        @if (await Html.HasPermissionAsync("dorm:delete"))
+                                        {
+                                            @* v2.12.41 删除按钮：仅当无在宿人员 且 无办理登记历史时才显示（否则隐藏）*@
+                                            @if (item.CanDelete)
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDorm(@item.Id, '@item.DormCode')">删除</button>
+                                            }
+                                        }
+                                        @* 完全无权限时显示提示 *@
+                                        @if (!await Html.HasPermissionAsync("dorm:view") && !await Html.HasPermissionAsync("dorm:edit") && !await Html.HasPermissionAsync("dorm:delete"))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
                                         }
                                     </td>
                                 </tr>

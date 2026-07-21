@@ -22,7 +22,8 @@
         primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "personnel:import" },
         actions = new List<PageAction> {
             new() { Label = "导入", Url = "/Personnel/Import", Icon = "bi-upload", Style = "info", PermissionCode = "personnel:import" },
-            new() { Label = "导出", OnClick = "location.href='/api/v1/personnel/export'", Icon = "bi-file-earmark-excel", Style = "success" }
+            // v2.13.88 第四轮：导出按钮加 personnel:export 权限管控
+            new() { Label = "导出", OnClick = "location.href='/api/v1/personnel/export'", Icon = "bi-file-earmark-excel", Style = "success", PermissionCode = "personnel:export" }
         }
     })
 
@@ -224,12 +225,27 @@
                                     <td>@item.DormCode</td>
                                     <td>@(item.BedNo > 0 ? item.BedNo.ToString() : "-")</td>
                                     <td class="text-center">
-                                        <a href="/Personnel/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
-                                        @if (item.Status == 1)
+                                        @* v2.13.88 RBAC 细化：编辑 → personnel:edit / 离职 → personnel:markleft / 删除 → personnel:delete *@
+                                        @if (await Html.HasPermissionAsync("personnel:edit"))
                                         {
-                                            <button class="btn btn-sm btn-outline-warning" onclick="markLeft(@item.Id, '@item.RealName')">离职</button>
+                                            <a href="/Personnel/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary" data-return-list>编辑</a>
                                         }
-                                        <button class="btn btn-sm btn-outline-danger" onclick="del(@item.Id, '@item.RealName')">删除</button>
+                                        @if (await Html.HasPermissionAsync("personnel:markleft"))
+                                        {
+                                            @if (item.Status == 1)
+                                            {
+                                                <button class="btn btn-sm btn-outline-warning" onclick="markLeft(@item.Id, '@item.RealName')">离职</button>
+                                            }
+                                        }
+                                        @if (await Html.HasPermissionAsync("personnel:delete"))
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="del(@item.Id, '@item.RealName')">删除</button>
+                                        }
+                                        @* 完全无权限时显示提示 *@
+                                        @if (!await Html.HasPermissionAsync("personnel:edit") && !await Html.HasPermissionAsync("personnel:markleft") && !await Html.HasPermissionAsync("personnel:delete"))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
+                                        }
                                     </td>
                                 </tr>
                                 index++;

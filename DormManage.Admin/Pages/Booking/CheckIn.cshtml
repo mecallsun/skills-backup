@@ -152,7 +152,7 @@
                         </div>
                         <div class="emp-info-card" id="empInfo" style="display:none;">
                             <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
-                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
+                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span> <span id="empGender"></span></span>
                             <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
                             <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
@@ -204,6 +204,8 @@
                             <option value="">请先选择员工和入住日期</option>
                         </select>
                         <small class="text-muted mt-1 d-block" id="dormHint">系统自动过滤：余量 > 0、与已入住人员性别相同（同性别或空房间）— v2.13.84</small>
+                        @* v2.13.88 显示分配的床位号（用户需求：分配房间同时显示分配的床位号） *@
+                        <small id="dormBedHint"></small>
                     </div>
 
                     <!-- 区块 4b：选择在宿记录（仅退房时显示）（v2.13.36 新增对齐原型需求） -->
@@ -306,8 +308,20 @@
             // 员工类型：原型取 EMPLOYEE_TYPES 字典；这里 fallback 到 employeeType 字段（API 暂未返回 name）
             document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
 
-            // 考勤班次：原型渲染为彩色 Badge
-            document.getElementById('empAtt').innerHTML = attendanceBadge(emp.attendanceType || 'DEFAULT');
+            // 考勤班次：v2.13.88 BUG 修复 — 用 AttendanceType.Code（DEFAULT/MORNING/MIDDLE/EVENING/NIGHT/OTHER）映射 Badge 颜色 + AttendanceTypeName 显示
+            // 之前用 emp.attendanceType（FK id 字符串 "1"/"2"/...）传给 attendanceBadge() 全部映射失败 → 默认 secondary badge
+            const attCode = emp.attendanceTypeCode || 'DEFAULT';
+            const attName = emp.attendanceTypeName || '默认';
+            document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode] || 'bg-secondary'}">${attName}</span>`;
+
+            // v2.13.88 BUG 修复：在姓名后追加性别显示（与 CheckOut 页面保持一致）
+            const genderVal = (emp.gender === 1 || emp.gender === 2 || emp.gender === 0) ? emp.gender : null;
+            const genderText = genderVal === 1 ? '男' : genderVal === 2 ? '女' : (genderVal === 0 ? '未知' : '-');
+            const genderBadge = genderVal === 1 ? 'bg-primary' : genderVal === 2 ? 'bg-danger' : 'bg-secondary';
+            const genderSpan = document.getElementById('empGender');
+            if (genderSpan) {
+                genderSpan.innerHTML = `<span class="badge ${genderBadge} ms-1">${genderText}</span>`;
+            }
 
             // 校验员工 + 刷新列表
             validateEmp();
@@ -363,8 +377,22 @@
         // ===== 6. 日期变化（v2.13.36 对齐原型 L251） =====
         function onDateChange() { refreshDorms(); }
 
-        // ===== 7. 宿舍选择（v2.13.36 对齐原型占位） =====
-        function onDormSelect() { /* TODO: 显示宿舍详情 */ }
+        // ===== 7. 宿舍选择（v2.13.88 改造：显示分配的床位号） =====
+        function onDormSelect() {
+            const sel = document.getElementById('dormSelect');
+            const opt = sel.options[sel.selectedIndex];
+            const bedNo = opt ? opt.getAttribute('data-bedno') : null;
+            const hintEl = document.getElementById('dormBedHint');
+            if (hintEl) {
+                if (bedNo && bedNo !== '0') {
+                    hintEl.innerHTML = `<i class="bi bi-house-check"></i> 已选择 <strong>${sel.value}</strong>，将分配 <span class="badge bg-warning text-dark">${bedNo} 号床位</span>`;
+                    hintEl.className = 'text-success small mt-1 d-block';
+                } else {
+                    hintEl.innerHTML = '<i class="bi bi-info-circle"></i> 该房间未配置床位号，将自动分配下一个序号';
+                    hintEl.className = 'text-muted small mt-1 d-block';
+                }
+            }
+        }
 
         // ===== 8. 刷新可用房间（v2.13.36 对齐原型 L253-262，v2.13.84 性别约束） =====
         async function refreshDorms() {
@@ -388,7 +416,11 @@
                                 if (d.femaleCount > 0) genderSummary += `<span class="badge bg-danger">女 ${d.femaleCount}</span> `;
                                 genderSummary = genderSummary.trim();
                             }
-                            return `<option value="${d.dormCode}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary}）</option>`;
+                            // v2.13.88 床位号提示（用户需求：分配房间同时显示分配的床位号）
+                            const bedNoHint = d.nextAssignedBedNo
+                                ? `<span class="badge bg-warning text-dark ms-1">床位 ${d.nextAssignedBedNo}号</span>`
+                                : '';
+                            return `<option value="${d.dormCode}" data-bedno="${d.nextAssignedBedNo || 0}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary} ${bedNoHint}）</option>`;
                         }).join('');
                     document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（性别相符或空房间）`;
                 }

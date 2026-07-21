@@ -48,7 +48,7 @@
             <i class="bi bi-building"></i> 宿舍详情
         </h2>
         <div>
-            <a href="/Dorms" class="btn btn-outline-secondary">
+            <a href="/Dorms" class="btn btn-outline-secondary" data-back-to-list="/Dorms" onclick="ReturnUrl.handleBack(event)">
                 <i class="bi bi-arrow-left"></i> 返回列表
             </a>
             <a href="/Dorms/Edit?id=@(Model.Dorm?.Id)" class="btn btn-primary">

@@ -8,7 +8,7 @@
 @if (Model.Booking == null)
 {
     <div class="alert alert-danger">记录不存在</div>
-    <a href="/Booking" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
+    <a href="/Booking" class="btn btn-secondary" data-back-to-list="/Booking" onclick="ReturnUrl.handleBack(event)"><i class="bi bi-arrow-left"></i> 返回列表</a>
 }
 else
 {

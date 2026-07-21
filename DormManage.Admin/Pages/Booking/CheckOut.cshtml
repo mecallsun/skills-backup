@@ -199,7 +199,10 @@ async function selectEmp(emp) {
     document.getElementById('empPhone').textContent = emp.phone || '-';
     document.getElementById('empDept').textContent = emp.department || '-';
     document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
-    document.getElementById('empAtt').innerHTML = attendanceBadge(emp.attendanceType || 'DEFAULT');
+    // v2.13.88 BUG 修复：与 CheckIn 页面一致 — 用 AttendanceType.Code（枚举关键字）映射 Badge 颜色
+    const attCode2 = emp.attendanceTypeCode || 'DEFAULT';
+    const attName2 = emp.attendanceTypeName || '默认';
+    document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode2] || 'bg-secondary'}">${attName2}</span>`;
 
     // 加载在宿记录（v2.13.38 与原型一致：自动绑定第一条 active 记录）
     try {

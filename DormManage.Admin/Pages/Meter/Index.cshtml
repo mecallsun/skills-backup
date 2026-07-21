@@ -30,7 +30,7 @@
         actions = new List<PageAction> {
             new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "success", PermissionCode = "meter:entry" },
             new() { Label = "批量导入", Url = "/Meter/Import", Icon = "bi-upload", Style = "primary", PermissionCode = "meter:import" },
-            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "outline-secondary" }
+            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "outline-secondary", PermissionCode = "meter:export" }
         }
     })
 
@@ -185,14 +185,22 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <a href="/Meter/Detail?id=@item.Id" class="btn btn-sm btn-outline-info">详情</a>
-                                        @if (item.Status == 1)
+                                        @* v2.13.88 RBAC：详情 → meter:view / 修正 → meter:edit / 删除 → meter:delete *@
+                                        @if (await Html.HasPermissionAsync("meter:view"))
+                                        {
+                                            <a href="/Meter/Detail?id=@item.Id" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                        }
+                                        @if (item.Status == 1 && await Html.HasPermissionAsync("meter:edit"))
                                         {
                                             <button class="btn btn-sm btn-outline-primary" onclick="correctRecord(@item.Id)">修正</button>
                                         }
-                                        @if (item.Status == 0)
+                                        @if (item.Status == 0 && await Html.HasPermissionAsync("meter:delete"))
                                         {
                                             <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord(@item.Id)">删除</button>
+                                        }
+                                        @if (!await Html.HasPermissionAsync("meter:view") && (item.Status != 1 || !await Html.HasPermissionAsync("meter:edit")) && (item.Status != 0 || !await Html.HasPermissionAsync("meter:delete")))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
                                         }
                                     </td>
                                 </tr>

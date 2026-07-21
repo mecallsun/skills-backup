@@ -26,10 +26,11 @@
         title = "宿舍账单",
         count = Model.TotalCount,
         countLabel = "条",
-        primaryAction = new PageAction { Label = "生成", OnClick = "generate(false)", Icon = "bi-bar-chart", Style = "success" },
+        @* v2.13.88 RBAC：生成/重生成 → dormbilling:generate；导出 → dormbilling:export *@
+        primaryAction = new PageAction { Label = "生成", OnClick = "generate(false)", Icon = "bi-bar-chart", Style = "success", PermissionCode = "dormbilling:generate" },
         actions = new List<PageAction> {
-            new() { Label = "重生成", OnClick = "generate(true)", Icon = "bi-arrow-repeat", Style = "info" },
-            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success" }
+            new() { Label = "重生成", OnClick = "generate(true)", Icon = "bi-arrow-repeat", Style = "info", PermissionCode = "dormbilling:generate" },
+            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success", PermissionCode = "dormbilling:export" }
         }
     })
 
@@ -149,9 +150,17 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-primary" onclick="showDetail(@item.DormId, '@item.ReadMonth')">
-                                            <i class="bi bi-eye"></i> 详情
-                                        </button>
+                                        @* v2.13.88 RBAC：行内详情按钮 → 默认拥有（dormbilling:view 路由级守卫已保证） *@
+                                        @if (await Html.HasPermissionAsync("dormbilling:view"))
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" onclick="showDetail(@item.DormId, '@item.ReadMonth')">
+                                                <i class="bi bi-eye"></i> 详情
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
+                                        }
                                     </td>
                                 </tr>
                             }

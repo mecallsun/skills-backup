@@ -23,14 +23,28 @@
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="mb-0">
             <i class="bi bi-building text-primary"></i> 编辑宿舍
+            @* v2.13.88 RBAC 只读模式：顶角显示「只读」徽章 *@
+            @if (Model.IsReadOnly)
+            {
+                <span class="badge bg-warning text-dark ms-2"><i class="bi bi-lock-fill"></i> 只读模式</span>
+            }
         </h2>
-        <a href="/Dorms" class="btn btn-outline-secondary">
+        <a href="/Dorms" class="btn btn-outline-secondary" data-back-to-list="/Dorms" onclick="ReturnUrl.handleBack(event)">
             <i class="bi bi-arrow-left"></i> 返回列表
         </a>
     </div>
 
+    @* v2.13.88 RBAC 只读模式提示 alert *@
+    @if (Model.IsReadOnly)
+    {
+        <div class="alert alert-warning py-2 mb-2">
+            <i class="bi bi-shield-lock"></i> 您没有 <strong>编辑宿舍</strong> 权限，当前页面以<strong>只读</strong>模式展示。如需修改，请联系系统管理员分配「dorm:edit」权限。
+        </div>
+    }
+
     <!-- v2.12.38 编辑表单（紧凑一屏布局） -->
-    <form method="post">
+    @* v2.13.88 只读模式时禁用所有表单输入控件 *@
+    <form method="post" id="dormEditForm">
         <input type="hidden" asp-for="Dorm.Id" />
 
         <!-- 区块 1：基本信息（房号锁定 readonly，禁止修改） -->
@@ -164,10 +178,14 @@
 
         <!-- 操作按钮 -->
         <div class="d-flex justify-content-end gap-2">
-            <a href="/Dorms" class="btn btn-outline-secondary">取消</a>
-            <button type="submit" class="btn btn-primary">
-                <i class="bi bi-check-lg"></i> 保存
-            </button>
+            <a href="/Dorms" class="btn btn-outline-secondary" data-back-to-list="/Dorms" onclick="ReturnUrl.handleBack(event)">取消</a>
+            @* v2.13.88 RBAC 只读模式：无编辑权限时隐藏「保存」按钮 *@
+            @if (!Model.IsReadOnly)
+            {
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-lg"></i> 保存
+                </button>
+            }
         </div>
     </form>
 </div>
@@ -179,6 +197,22 @@
         function syncBedCount() {
             var cap = parseInt(document.getElementById('inputCapacity').value) || 0;
             document.getElementById('inputBedCount').value = cap;
+        }
+        // v2.13.88 RBAC 只读模式：拦截 form 提交防止意外保存
+        @if (Model.IsReadOnly)
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', function() {
+                var form = document.getElementById('dormEditForm');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        alert('您没有编辑宿舍权限，无法保存修改');
+                        return false;
+                    });
+                }
+            });
+            </text>
         }
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {

@@ -2,20 +2,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
+using DormManage.Shared.Services;
+using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Meter;
 
 /// <summary>
 /// 修正抄表读数页面模型
+/// v2.13.88 RBAC：无 meter:edit 权限时 OnPost 拒绝（业务硬约束三层防御第二层）
 /// </summary>
 public class EditModel : PageModel
 {
     private readonly DormDbContext _db;
+    private readonly IPermissionService _perm;
 
-    public EditModel(DormDbContext db)
+    public EditModel(DormDbContext db, IPermissionService perm)
     {
         _db = db;
+        _perm = perm;
     }
 
     [BindProperty(SupportsGet = true)]
@@ -37,8 +42,14 @@ public class EditModel : PageModel
     /// </summary>
     public string? LastReadingRef { get; set; }
 
+    /// <summary>v2.13.88 只读模式：当前用户无 meter:edit 权限时为 true</summary>
+    public bool IsReadOnly { get; set; }
+
     public async Task<IActionResult> OnGetAsync()
     {
+        // v2.13.88 RBAC：检测 meter:edit 权限，无权限进入只读模式
+        IsReadOnly = !await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "meter:edit");
+
         Record = await _db.MeterRecords
             .FirstOrDefaultAsync(r => r.Id == Id);
 
@@ -72,6 +83,13 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(decimal ColdMeter, decimal HotMeter, decimal ElectricMeter)
     {
+        // v2.13.88 RBAC 第二层防御：无 meter:edit 权限时直接拒绝提交
+        if (!await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "meter:edit"))
+        {
+            TempData["ErrorMessage"] = "您没有「修正抄表」权限，无法保存修改";
+            return RedirectToPage("/Meter/Detail", new { id = Id });
+        }
+
         if (Record == null)
         {
             return NotFound();

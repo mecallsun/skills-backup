@@ -29,7 +29,7 @@
             <i class="bi bi-pencil"></i> 修正抄表读数
             <small class="text-muted fs-6">（ID: @Model.Record?.Id）</small>
         </h2>
-        <a href="/Meter" class="btn btn-secondary">
+        <a href="/Meter" class="btn btn-secondary" data-back-to-list="/Meter" onclick="ReturnUrl.handleBack(event)">
             <i class="bi bi-arrow-left"></i> 返回抄表记录
         </a>
     </div>
@@ -127,7 +127,7 @@
 
                 <!-- 操作按钮 -->
                 <div class="d-flex gap-2 mt-3">
-                    <a href="/Meter" class="btn btn-secondary">取消</a>
+                    <a href="/Meter" class="btn btn-secondary" data-back-to-list="/Meter" onclick="ReturnUrl.handleBack(event)">取消</a>
                     <button type="submit" class="btn btn-warning text-white">
                         <i class="bi bi-check"></i> 保存修正
                     </button>

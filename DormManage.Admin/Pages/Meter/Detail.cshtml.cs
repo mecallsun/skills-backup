@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
+using DormManage.Shared.Services;
+using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Meter;
@@ -13,12 +15,19 @@ namespace DormManage.Admin.Pages.Meter;
 /// 1. 补 CreatedAt（ServerCreatedAt）/ DeviceSn / ReadDate 字段
 /// 2. 补 CorrectionReason / CorrectedBy 字段（用于 Remark 历史格式化）
 /// 3. 提供按状态的操作按钮上下文（StatusAction 可用性）
+///
+/// v2.13.88 RBAC：详情页只读模式（无 meter:edit 权限时隐藏「修正/补录/删除」按钮，仅显示「返回列表」）
 /// </summary>
 public class DetailModel : PageModel
 {
     private readonly DormDbContext _db;
+    private readonly IPermissionService _perm;
 
-    public DetailModel(DormDbContext db) => _db = db;
+    public DetailModel(DormDbContext db, IPermissionService perm)
+    {
+        _db = db;
+        _perm = perm;
+    }
 
     [BindProperty(SupportsGet = true)]
     public long Id { get; set; }
@@ -31,6 +40,11 @@ public class DetailModel : PageModel
     /// v2.13.41 新增：详情页操作上下文（按状态决定可用按钮）
     /// </summary>
     public DetailActions Actions { get; set; } = new();
+
+    /// <summary>v2.13.88 RBAC：当前用户是否可编辑/修正抄表</summary>
+    public bool CanEdit { get; set; }
+    /// <summary>v2.13.88 RBAC：当前用户是否可删除抄表</summary>
+    public bool CanDeletePerm { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -87,14 +101,23 @@ public class DetailModel : PageModel
             };
         }
 
-        // v2.13.41 新增：按状态决定操作按钮可用性
+        // v2.13.88 RBAC：检测 meter:edit / meter:delete 权限（用于详情页按钮可见性）
+        var userId = HttpContext.GetCurrentUserId();
+        CanEdit = await _perm.HasPermissionCodeAsync(userId, "meter:edit");
+        CanDeletePerm = await _perm.HasPermissionCodeAsync(userId, "meter:delete");
+
+        // v2.13.41 按状态决定操作按钮可用性 + v2.13.88 RBAC 二次校验
         // Status: 0=草稿/占位, 1=正常, 2=已修正, 3=已取消
         Actions = new DetailActions
         {
-            CanDelete = record.Status == 0 || record.Status == 3,  // 草稿/取消可删
-            CanEdit = record.Status == 1,  // 仅正常记录可修正
-            CanReEntry = record.Status == 0 || record.Status == 3,  // 占位/取消可补录
-            CanCorrect = record.Status == 1 || record.Status == 2  // 正常/已修正可二次修正
+            // 删除需 meter:delete 权限 + 状态允许（草稿/取消）
+            CanDelete = CanDeletePerm && (record.Status == 0 || record.Status == 3),
+            // 修正需 meter:edit 权限 + 仅正常记录
+            CanEdit = CanEdit && record.Status == 1,
+            // 补录需 meter:entry 权限 + 占位/取消
+            CanReEntry = await _perm.HasPermissionCodeAsync(userId, "meter:entry") && (record.Status == 0 || record.Status == 3),
+            // 二次修正需 meter:edit 权限 + 正常/已修正
+            CanCorrect = CanEdit && (record.Status == 1 || record.Status == 2)
         };
 
         return Page();

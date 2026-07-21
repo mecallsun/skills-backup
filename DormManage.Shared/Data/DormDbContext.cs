@@ -728,7 +728,29 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 15, PermissionCode = "meter:entry", PermissionName = "手动录入", PermissionType = 2, ParentId = 14, Route = "/Meter/Entry", Icon = "bi-pencil", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 16, PermissionCode = "meter:import", PermissionName = "批量导入", PermissionType = 2, ParentId = 14, Route = "/Meter/Import", Icon = "bi-upload", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 17, PermissionCode = "basics:view", PermissionName = "基础资料", PermissionType = 1, ParentId = 0, Route = "/Basics", Icon = "bi-database", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 18, PermissionCode = "settings:view", PermissionName = "系统设置", PermissionType = 1, ParentId = 0, Route = "/Settings", Icon = "bi-gear", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
+            new SysPermission { Id = 18, PermissionCode = "settings:view", PermissionName = "系统设置", PermissionType = 1, ParentId = 0, Route = "/Settings", Icon = "bi-gear", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            // ========== v2.13.88 按钮权限细化（用户反馈：列表内按钮权限独立） ==========
+            new SysPermission { Id = 19, PermissionCode = "booking:edit", PermissionName = "修改办理登记", PermissionType = 2, ParentId = 2, Route = "/Booking/Edit", Icon = "", SortOrder = 10, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 20, PermissionCode = "booking:cancel", PermissionName = "撤销办理登记", PermissionType = 2, ParentId = 2, Route = "", Icon = "", SortOrder = 11, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 21, PermissionCode = "dorm:detail", PermissionName = "查看宿舍详情", PermissionType = 2, ParentId = 5, Route = "/Dorms/Details", Icon = "", SortOrder = 12, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 22, PermissionCode = "personnel:edit", PermissionName = "编辑员工", PermissionType = 2, ParentId = 9, Route = "/Personnel/Edit", Icon = "", SortOrder = 13, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 23, PermissionCode = "personnel:markleft", PermissionName = "标记离职", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 14, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 24, PermissionCode = "personnel:delete", PermissionName = "删除员工", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 15, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 25, PermissionCode = "billing:edit", PermissionName = "编辑费用标准", PermissionType = 2, ParentId = 11, Route = "/BillingStandard/Edit", Icon = "", SortOrder = 16, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 26, PermissionCode = "billing:delete", PermissionName = "删除费用标准", PermissionType = 2, ParentId = 11, Route = "", Icon = "", SortOrder = 17, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 宿舍账单/员工账单 按钮权限（用户第二轮追加需求） ==========
+            new SysPermission { Id = 27, PermissionCode = "dormbilling:generate", PermissionName = "生成宿舍账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 18, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 28, PermissionCode = "dormbilling:export", PermissionName = "导出宿舍账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 19, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 29, PermissionCode = "employeebilling:generate", PermissionName = "生成分摊账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 20, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 30, PermissionCode = "employeebilling:publish", PermissionName = "发布员工账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 21, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 31, PermissionCode = "employeebilling:export", PermissionName = "导出员工账单", PermissionType = 2, ParentId = 13, Route = "", SortOrder = 22, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 抄表记录 详情/修正/导出 权限（用户第三轮追加需求） ==========
+            new SysPermission { Id = 32, PermissionCode = "meter:edit", PermissionName = "修正抄表记录", PermissionType = 2, ParentId = 14, Route = "/Meter/Edit", Icon = "", SortOrder = 23, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 33, PermissionCode = "meter:delete", PermissionName = "删除抄表记录", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 24, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 34, PermissionCode = "meter:export", PermissionName = "导出抄表记录", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 25, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 第四轮追加：所有列表页导出按钮统一权限管控 ==========
+            new SysPermission { Id = 35, PermissionCode = "booking:export", PermissionName = "导出租住登记", PermissionType = 2, ParentId = 2, Route = "", Icon = "", SortOrder = 26, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 36, PermissionCode = "personnel:export", PermissionName = "导出人员清单", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 27, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") }
         );
 
         // 角色-权限关联（管理员：全部权限）
@@ -751,6 +773,32 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 16, RoleId = 1, PermissionId = 16, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 17, RoleId = 1, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 18, RoleId = 1, PermissionId = 18, CreatedAt = DateTime.Parse("2026-07-14") },
+            // ========== v2.13.88 admin 新增 8 个按钮权限（Id 19~26） ==========
+            new SysRolePermission { Id = 30, RoleId = 1, PermissionId = 19, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 31, RoleId = 1, PermissionId = 20, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 32, RoleId = 1, PermissionId = 21, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 33, RoleId = 1, PermissionId = 22, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 34, RoleId = 1, PermissionId = 23, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 35, RoleId = 1, PermissionId = 24, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 36, RoleId = 1, PermissionId = 25, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 37, RoleId = 1, PermissionId = 26, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 admin 第二轮新增 5 个：账单生成/发布/导出 ==========
+            new SysRolePermission { Id = 45, RoleId = 1, PermissionId = 27, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 46, RoleId = 1, PermissionId = 28, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 47, RoleId = 1, PermissionId = 29, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 48, RoleId = 1, PermissionId = 30, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 49, RoleId = 1, PermissionId = 31, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 admin 第三轮新增 3 个：meter:edit / meter:delete / meter:export ==========
+            new SysRolePermission { Id = 50, RoleId = 1, PermissionId = 32, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 51, RoleId = 1, PermissionId = 33, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 52, RoleId = 1, PermissionId = 34, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 pda 新增 3 个：PDA 操作员可修正/删除/导出 ==========
+            new SysRolePermission { Id = 53, RoleId = 3, PermissionId = 32, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 54, RoleId = 3, PermissionId = 33, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 55, RoleId = 3, PermissionId = 34, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 第四轮：admin 导出权限 booking:export + personnel:export ==========
+            new SysRolePermission { Id = 56, RoleId = 1, PermissionId = 35, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 57, RoleId = 1, PermissionId = 36, CreatedAt = DateTime.Parse("2026-07-21") },
             // 财务角色
             new SysRolePermission { Id = 19, RoleId = 2, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 20, RoleId = 2, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
@@ -758,6 +806,15 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 22, RoleId = 2, PermissionId = 13, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 23, RoleId = 2, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 24, RoleId = 2, PermissionId = 18, CreatedAt = DateTime.Parse("2026-07-14") },
+            // ========== v2.13.88 finance 新增 2 个：billing:edit + billing:delete ==========
+            new SysRolePermission { Id = 38, RoleId = 2, PermissionId = 25, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 39, RoleId = 2, PermissionId = 26, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 finance 第二轮新增 5 个：账单生成/发布/导出 ==========
+            new SysRolePermission { Id = 40, RoleId = 2, PermissionId = 27, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 41, RoleId = 2, PermissionId = 28, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 42, RoleId = 2, PermissionId = 29, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 43, RoleId = 2, PermissionId = 30, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysRolePermission { Id = 44, RoleId = 2, PermissionId = 31, CreatedAt = DateTime.Parse("2026-07-21") },
             // PDA 操作员
             new SysRolePermission { Id = 25, RoleId = 3, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 26, RoleId = 3, PermissionId = 14, CreatedAt = DateTime.Parse("2026-07-14") },

@@ -57,10 +57,16 @@
         <h2 class="mb-0">
             <i class="bi bi-clipboard-data"></i> 抄表记录详情
             <small class="text-muted">@Model.Record.DormCode / @Model.Record.ReadMonth</small>
+            @* v2.13.88 RBAC 只读模式：顶角显示「只读」徽章（无 meter:edit 权限） *@
+            @if (!Model.CanEdit)
+            {
+                <span class="badge bg-warning text-dark ms-2"><i class="bi bi-lock-fill"></i> 只读模式</span>
+            }
         </h2>
         <div class="d-flex gap-2">
-            <a href="/Meter" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回列表</a>
-            @* v2.13.41 新增：按状态动态显示 3 个操作按钮（与原型 1:1 对齐） *@
+            <a href="/Meter" class="btn btn-outline-secondary" data-back-to-list="/Meter" onclick="ReturnUrl.handleBack(event)"><i class="bi bi-arrow-left"></i> 返回列表</a>
+            @* v2.13.41 新增：按状态动态显示 3 个操作按钮（与原型 1:1 对齐）
+               v2.13.88 RBAC：补录/修正读数 需 meter:edit 权限；删除需 meter:delete 权限 *@
             @if (Model.Actions.CanReEntry)
             {
                 <a href="/Meter/Entry?dormCode=@Model.Record.DormCode&month=@Model.Record.ReadMonth" class="btn btn-outline-primary">
@@ -81,6 +87,14 @@
             }
         </div>
     </div>
+
+    @* v2.13.88 RBAC 只读模式提示 alert *@
+    @if (!Model.CanEdit)
+    {
+        <div class="alert alert-warning py-2 mb-3">
+            <i class="bi bi-shield-lock"></i> 您没有 <strong>修正抄表</strong> 权限，当前详情页以<strong>只读</strong>模式展示，修正/补录/删除按钮均不可见。如需修改，请联系系统管理员分配「meter:edit」/「meter:delete」权限。
+        </div>
+    }
 
     @* v2.13.41 左右分栏布局：左侧主信息+用量对比；右侧照片+操作说明 *@
     <div class="details-row">

@@ -3,23 +3,30 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
+using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
 /// 宿舍编辑页面模型
+/// v2.13.88 RBAC：编辑页只读模式（无 dorm:edit 权限时 OnPost 拒绝 + UI 全字段 readonly）
 /// </summary>
 public class EditModel : PageModel
 {
     private readonly DormDbContext _db;
     private readonly IBasicsService _basicsService;
+    private readonly IPermissionService _perm;
 
-    public EditModel(DormDbContext db, IBasicsService basicsService)
+    public EditModel(DormDbContext db, IBasicsService basicsService, IPermissionService perm)
     {
         _db = db;
         _basicsService = basicsService;
+        _perm = perm;
     }
+
+    /// <summary>v2.13.88 只读模式：当前用户无 dorm:edit 权限时为 true，UI 全字段 readonly</summary>
+    public bool IsReadOnly { get; set; }
 
     [BindProperty]
     public DormEditDto Dorm { get; set; } = new();
@@ -70,6 +77,9 @@ public class EditModel : PageModel
             return NotFound();
         }
 
+        // v2.13.88 RBAC：检测 dorm:edit 权限，无权限进入只读模式
+        IsReadOnly = !await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit");
+
         // v2.13.82 业务约束：当前在宿人数 > 0 时锁定 IsActive
         CurrentCount = await _db.DormBookings
             .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == BookingStatus.Staying);
@@ -114,6 +124,13 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // v2.13.88 RBAC 第二层防御：无 dorm:edit 权限时直接拒绝提交
+        if (!await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit"))
+        {
+            TempData["ErrorMessage"] = "您没有「编辑宿舍」权限，无法保存修改";
+            return RedirectToPage("/Dorms/Details", new { id = Dorm.Id });
+        }
+
         // v2.13.82 即便 ModelState 失效也要重新计算 CurrentCount 以便锁定提示继续显示
         if (await _db.Dorms.FindAsync(Dorm.Id) is { } dormForCount)
         {

@@ -141,7 +141,15 @@
                                     }
                                 </td>
                                 <td>
-                                    <a href="/BillingStandard/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary">编辑</a>
+                                    @* v2.13.88 RBAC 细化：编辑 → billing:edit（v2.13.61 起新增独立权限，不再借用 booking:checkin） *@
+                                    @if (await Html.HasPermissionAsync("billing:edit"))
+                                    {
+                                        <a href="/BillingStandard/Edit?id=@item.Id" class="btn btn-sm btn-outline-primary" data-return-list>编辑</a>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
+                                    }
                                 </td>
                             </tr>
                         }

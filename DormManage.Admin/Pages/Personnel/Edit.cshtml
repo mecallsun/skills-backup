@@ -12,6 +12,11 @@
         <h2 class="mb-0">
             <i class="bi bi-person-gear"></i> 编辑人员
             <small class="text-muted ms-2 fs-6">@Model.EmployeeCode · @Model.RealName</small>
+            @* v2.13.88 RBAC 只读模式：顶角显示「只读」徽章 *@
+            @if (Model.IsReadOnly)
+            {
+                <span class="badge bg-warning text-dark ms-2"><i class="bi bi-lock-fill"></i> 只读模式</span>
+            }
         </h2>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
@@ -20,6 +25,14 @@
             </ol>
         </nav>
     </div>
+
+    @* v2.13.88 RBAC 只读模式提示 alert *@
+    @if (Model.IsReadOnly)
+    {
+        <div class="alert alert-warning py-2 mb-3">
+            <i class="bi bi-shield-lock"></i> 您没有 <strong>编辑员工</strong> 权限，当前页面以<strong>只读</strong>模式展示。如需修改，请联系系统管理员分配「personnel:edit」权限。
+        </div>
+    }
 
     <!-- 表单卡片（v2.12.27 与新增人员布局一致） -->
     <div class="form-card">
@@ -130,12 +143,15 @@
 
             <!-- 操作按钮区 -->
             <div class="form-actions">
-                <a href="/Personnel" class="btn btn-outline-secondary"><i class="bi bi-x"></i> 取消</a>
-                @if (Model.EmploymentStatusId != 3)
+                <a href="/Personnel" class="btn btn-outline-secondary" data-back-to-list="/Personnel" onclick="ReturnUrl.handleBack(event)"><i class="bi bi-x"></i> 取消</a>
+                @if (!Model.IsReadOnly)
                 {
-                    <button type="button" class="btn btn-outline-warning" onclick="markLeft()"><i class="bi bi-person-dash"></i> 标记离职</button>
+                    @if (Model.EmploymentStatusId != 3)
+                    {
+                        <button type="button" class="btn btn-outline-warning" onclick="markLeft()"><i class="bi bi-person-dash"></i> 标记离职</button>
+                    }
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存修改</button>
                 }
-                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> 保存修改</button>
             </div>
         </form>
     </div>

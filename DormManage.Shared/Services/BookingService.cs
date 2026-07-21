@@ -139,6 +139,10 @@ public class EmployeeSearchResult
     public string? EmployeeTypeName { get; set; }
     public string? AttendanceType { get; set; }
     public string? AttendanceTypeName { get; set; }
+    // v2.13.88: 补充考勤班次编码（DEFAULT/MORNING/MIDDLE/EVENING/NIGHT/OTHER）用于 Badge 颜色映射
+    public string? AttendanceTypeCode { get; set; }
+    // v2.13.88: 性别（1=男 2=女 0=未知），用于 CheckIn 提示信息显示
+    public int? Gender { get; set; }
 }
 
 /// <summary>
@@ -162,6 +166,16 @@ public class DormOption
     public bool IsFull => CurrentCount >= Capacity;
     /// <summary>不可选原因（"已住满" / "与现有男/女员工冲突" / ""=可分配）</summary>
     public string BlockReason { get; set; } = "";
+
+    // ========== v2.13.88 床位号字段（用户需求：分配房间同时显示分配的床位号） ==========
+    /// <summary>该宿舍的全部床位号列表（从 Dorm.BedNumbers CSV 解析）</summary>
+    public List<int> AllBedNos { get; set; } = new();
+    /// <summary>当前可用的床位号（AllBedNos 排除 Status=2 在宿员工的 BedNo）</summary>
+    public List<int> AvailableBedNos { get; set; } = new();
+    /// <summary>预览：下一个将分配的床位号（AvailableBedNos 最小值，0=无）</summary>
+    public int NextAssignedBedNo { get; set; }
+    /// <summary>床位号摘要（如 "3 / 4"，即 4 个床位已用 3 个）</summary>
+    public string BedNoSummary { get; set; } = "";
 }
 
 /// <summary>
@@ -549,8 +563,61 @@ public class BookingService : IBookingService
         // 空房间或同性别 → 放行
 
         // 6. 创建办理记录
-        // v2.13.24 P75：同步填充 BedNo = activeCount+1, ActualCheckInDate, CheckInOperator
-        var activeCount = currentStaying + reserved + 1;  // 含本次
+        // v2.13.24 P75：同步填充 BedNo, ActualCheckInDate, CheckInOperator
+        // v2.13.88 BUG 修复：基于 Dorm.BedNumbers（CSV 床位号字符串）分配最小未占用床位号
+        // 旧逻辑：BedNo = activeCount+1 → 仅是占位序号，与真实床位号不符
+        var targetDorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == request.DormCode);
+        int assignedBedNo = 0;
+        if (targetDorm != null && !string.IsNullOrWhiteSpace(targetDorm.BedNumbers))
+        {
+            // 解析 CSV 床位号（如 "1,2,3,4"）
+            var allBedNos = targetDorm.BedNumbers
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s.Trim(), out var n) ? (int?)n : null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList();
+
+            if (allBedNos.Count > 0)
+            {
+                // 取出当前已占用的床位号（双重 fallback：历史脏数据 DormBooking.BedNo=NULL 时用 SysEmployee.BedNo）
+                var occupiedBedNos2 = new List<int>();
+                var bookingBedNos2 = await _db.DormBookings
+                    .Where(b => b.DormCode == request.DormCode && b.Status == BookingStatus.Staying && b.BedNo.HasValue)
+                    .Select(b => b.BedNo!.Value)
+                    .ToListAsync();
+                occupiedBedNos2.AddRange(bookingBedNos2);
+                var empBedNos2 = await _db.Employees
+                    .Where(e => e.DormCode == request.DormCode && e.BedNo.HasValue)
+                    .Select(e => e.BedNo!.Value)
+                    .ToListAsync();
+                occupiedBedNos2.AddRange(empBedNos2);
+                var occupiedBedNos = occupiedBedNos2.Distinct().ToList();
+
+                // 从 allBedNos 中排除已占用，取最小值
+                var availableBedNos = allBedNos.Except(occupiedBedNos).OrderBy(n => n).ToList();
+                if (availableBedNos.Count > 0)
+                {
+                    assignedBedNo = availableBedNos.First();
+                }
+                else
+                {
+                    // 床位号全部被占用 → 回退到 activeCount+1 模式（兜底）
+                    assignedBedNo = currentStaying + reserved + 1;
+                }
+            }
+            else
+            {
+                // 床位号未配置 → 回退到 activeCount+1
+                assignedBedNo = currentStaying + reserved + 1;
+            }
+        }
+        else
+        {
+            // Dorm 表无 BedNumbers → 回退到 activeCount+1
+            assignedBedNo = currentStaying + reserved + 1;
+        }
+
         var booking = new DormBooking
         {
             EmployeeId = request.EmployeeId,
@@ -564,8 +631,8 @@ public class BookingService : IBookingService
             Status = BookingStatus.Staying,
             Reason = request.Reason,
             Remark = request.Remark,
-            // v2.13.24 P75 新增字段
-            BedNo = activeCount,
+            // v2.13.24 P75 新增字段 + v2.13.88 床位号分配（基于 Dorm.BedNumbers 真实床位）
+            BedNo = assignedBedNo,
             ActualCheckInDate = request.BookingDate,
             CheckInOperator = registrar,
             AttendanceTypeId = employee.AttendanceTypeId,
@@ -947,7 +1014,10 @@ public class BookingService : IBookingService
                 EmployeeType = x.EmployeeTypeId > 0 ? x.EmployeeTypeId.ToString() : null,
                 EmployeeTypeName = x.EmployeeType != null ? x.EmployeeType.Name : null,
                 AttendanceType = x.AttendanceTypeId.HasValue ? x.AttendanceTypeId.Value.ToString() : null,
-                AttendanceTypeName = x.AttendanceType != null ? x.AttendanceType.Name : null
+                AttendanceTypeName = x.AttendanceType != null ? x.AttendanceType.Name : null,
+                // v2.13.88: 补充考勤班次编码 + 性别（FK Name/Code 替代 id 字符串）
+                AttendanceTypeCode = x.AttendanceType != null ? x.AttendanceType.Code : null,
+                Gender = x.Gender
             })
             .ToListAsync();
     }
@@ -1027,6 +1097,35 @@ public class BookingService : IBookingService
                 continue;  // 女员工禁止进入有男员工的房间
             }
 
+            // v2.13.88 计算床位号：解析 Dorm.BedNumbers → 排除 Status=2 已占用 → 取最小可用
+            // 已占用床位号 = DormBooking.BedNo（v2.13.24+）+ SysEmployee.BedNo（fallback 历史脏数据 NULL）
+            var allBedNos = string.IsNullOrWhiteSpace(d.BedNumbers)
+                ? new List<int>()
+                : d.BedNumbers.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out var n) ? (int?)n : null)
+                    .Where(n => n.HasValue).Select(n => n!.Value).ToList();
+
+            var occupiedBedNos = new List<int>();
+            // 来源 1：DormBooking.BedNo（v2.13.24+ 才有值）
+            var bookingBedNos = await _db.DormBookings
+                .Where(b => b.DormCode == d.DormCode && b.Status == BookingStatus.Staying && b.BedNo.HasValue)
+                .Select(b => b.BedNo!.Value)
+                .ToListAsync();
+            occupiedBedNos.AddRange(bookingBedNos);
+            // 来源 2：SysEmployee.BedNo（fallback 历史脏数据；该字段始终维护中）
+            var empBedNos = await _db.Employees
+                .Where(e => e.DormCode == d.DormCode && e.BedNo.HasValue)
+                .Select(e => e.BedNo!.Value)
+                .ToListAsync();
+            occupiedBedNos.AddRange(empBedNos);
+            occupiedBedNos = occupiedBedNos.Distinct().ToList();
+
+            var availableBedNos = allBedNos.Except(occupiedBedNos).OrderBy(n => n).ToList();
+            var nextBedNo = availableBedNos.FirstOrDefault();
+            var bedNoSummary = allBedNos.Count > 0
+                ? $"床位 {occupiedBedNos.Count}/{allBedNos.Count} · 下一个分配 {nextBedNo}号"
+                : "未配置床位";
+
             result.Add(new DormOption
             {
                 DormCode = d.DormCode,
@@ -1035,7 +1134,12 @@ public class BookingService : IBookingService
                 Capacity = d.Capacity,
                 CurrentCount = totalCount,
                 MaleCount = maleCount,
-                FemaleCount = femaleCount
+                FemaleCount = femaleCount,
+                // v2.13.88 床位号信息（用户需求：分配房间同时显示分配的床位号）
+                AllBedNos = allBedNos,
+                AvailableBedNos = availableBedNos,
+                NextAssignedBedNo = nextBedNo,
+                BedNoSummary = bedNoSummary
             });
         }
 

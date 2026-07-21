@@ -18,11 +18,12 @@
         title = "员工账单",
         count = Model.Total,
         countLabel = "条",
-        primaryAction = new PageAction { Label = "生成分摊", OnClick = "generateBilling()", Icon = "bi-plus-circle", Style = "success" },
+        @* v2.13.88 RBAC：生成分摊/重新生成 → employeebilling:generate；全部发布 → employeebilling:publish；导出 → employeebilling:export *@
+        primaryAction = new PageAction { Label = "生成分摊", OnClick = "generateBilling()", Icon = "bi-plus-circle", Style = "success", PermissionCode = "employeebilling:generate" },
         actions = new List<PageAction> {
-            new() { Label = "重新生成", OnClick = "regenerateBilling()", Icon = "bi-arrow-clockwise", Style = "warning" },
-            new() { Label = "全部发布", OnClick = "publishAll()", Icon = "bi-check2-all", Style = "primary" },
-            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success" }
+            new() { Label = "重新生成", OnClick = "regenerateBilling()", Icon = "bi-arrow-clockwise", Style = "warning", PermissionCode = "employeebilling:generate" },
+            new() { Label = "全部发布", OnClick = "publishAll()", Icon = "bi-check2-all", Style = "primary", PermissionCode = "employeebilling:publish" },
+            new() { Label = "导出Excel", OnClick = "exportBilling(event)", Icon = "bi-file-earmark-excel", Style = "success", PermissionCode = "employeebilling:export" }
         }
     })
 
@@ -172,12 +173,20 @@
                                         }
                                     </td>
                                     <td class="text-center">
-                                        <button class="btn btn-sm btn-outline-info" onclick="viewDetail(@item.Id, @item.EmployeeId, '@item.BillingMonth')" title="查看详情">
-                                            <i class="bi bi-eye"></i> 查看
-                                        </button>
-                                        @if (!item.IsPublished)
+                                        @* v2.13.88 RBAC：查看 → employeebilling:view（路由级守卫） / 发布 → employeebilling:publish *@
+                                        @if (await Html.HasPermissionAsync("employeebilling:view"))
+                                        {
+                                            <button class="btn btn-sm btn-outline-info" onclick="viewDetail(@item.Id, @item.EmployeeId, '@item.BillingMonth')" title="查看详情">
+                                                <i class="bi bi-eye"></i> 查看
+                                            </button>
+                                        }
+                                        @if (!item.IsPublished && await Html.HasPermissionAsync("employeebilling:publish"))
                                         {
                                             <button class="btn btn-sm btn-outline-primary" onclick="publishOne(@item.Id)">发布</button>
+                                        }
+                                        @if (!await Html.HasPermissionAsync("employeebilling:view") && (!item.IsPublished || !await Html.HasPermissionAsync("employeebilling:publish")))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
                                         }
                                     </td>
                                 </tr>
@@ -303,7 +312,9 @@ function exportBilling(event) {
 
 function viewDetail(id, empId, month) {
     // v2.13.44 新增：跳转详情页（默认跳员工当月首条，可扩展为月列表）
-    window.location.href = '/EmployeeBilling/Details?id=' + id;
+    // v2.13.88：携带 returnUrl 让详情页能返回原列表原状态
+    var returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+    window.location.href = '/EmployeeBilling/Details?id=' + id + '&returnUrl=' + returnUrl;
 }
 </script>
 }
