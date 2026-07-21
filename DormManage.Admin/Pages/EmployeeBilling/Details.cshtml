@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = $"员工账单 - {Model.Employee?.RealName} - {Model.Month}";
     Layout = "_Layout";
+    var shareRatioPercent = (Model.Summary.ShareRatio * 100m).ToString("F1");
 }
 
 <div class="container-fluid">
@@ -43,7 +44,7 @@
             </div>
         </div>
 
-        <!-- 账单汇总 -->
+        <!-- v2.13.44 新增：分摊依据（ShareRatio + ResidentCount） -->
         <div class="row g-3 mb-3">
             <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #1976d2;">
@@ -57,8 +58,16 @@
             <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0097a7;">
                     <div class="card-body">
-                        <div class="text-muted small">水费分摊</div>
-                        <div class="fs-3 fw-bold">¥@Model.Summary.WaterAmount.ToString("F2")</div>
+                        <div class="text-muted small">冷水分摊</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.ColdAmount.ToString("F2")</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ff7043;">
+                    <div class="card-body">
+                        <div class="text-muted small">热水分摊</div>
+                        <div class="fs-3 fw-bold">¥@Model.Summary.HotAmount.ToString("F2")</div>
                     </div>
                 </div>
             </div>
@@ -70,12 +79,34 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- v2.13.44 新增：分摊依据 + 合计卡片 -->
+        <div class="row g-3 mb-3">
             <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #7b1fa2;">
+                    <div class="card-body">
+                        <div class="text-muted small">分摊比例</div>
+                        <div class="fs-3 fw-bold text-primary">@shareRatioPercent%</div>
+                        <small class="text-muted">1 / @Model.Summary.ResidentCount 人</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #5e35b1;">
+                    <div class="card-body">
+                        <div class="text-muted small">同住人数</div>
+                        <div class="fs-3 fw-bold">@Model.Summary.ResidentCount 人</div>
+                        <small class="text-muted">本宿舍本月</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #388e3c;">
                     <div class="card-body">
                         <div class="text-muted small">合计</div>
                         <div class="fs-3 fw-bold text-success">¥@Model.Summary.TotalAmount.ToString("F2")</div>
-                        <small class="text-muted">本月应缴</small>
+                        <small class="text-muted">本月应缴（住宿 + 冷水 + 热水 + 电）</small>
                     </div>
                 </div>
             </div>

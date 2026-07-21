@@ -42,6 +42,11 @@ public class IndexModel : PageModel
     public List<ResidenceStatusDropdownItem> ResidenceStatuses { get; set; } = new();
 
     /// <summary>
+    /// v2.13.44 新增：在职状态列表（用于筛选）
+    /// </summary>
+    public List<EmploymentStatusDropdownItem> EmploymentStatuses { get; set; } = new();
+
+    /// <summary>
     /// 宿舍房号候选（datalist 自动完成用）
     /// </summary>
     public List<string> DormCodes { get; set; } = new();
@@ -71,6 +76,10 @@ public class IndexModel : PageModel
     /// <summary>v2.13.20 新增：住宿状态筛选</summary>
     [BindProperty(SupportsGet = true)]
     public int? ResidenceStatusId { get; set; }
+
+    /// <summary>v2.13.44 新增：在职状态筛选</summary>
+    [BindProperty(SupportsGet = true)]
+    public int? EmploymentStatusId { get; set; }
 
     /// <summary>
     /// 分摊合计金额
@@ -112,25 +121,39 @@ public class IndexModel : PageModel
             .Select(r => new ResidenceStatusDropdownItem { Id = r.Id, Name = r.Name })
             .ToListAsync();
 
+        // v2.13.44 新增：在职状态下拉数据
+        EmploymentStatuses = await _db.EmploymentStatuses
+            .Where(e => e.IsActive)
+            .OrderBy(e => e.Id)
+            .Select(e => new EmploymentStatusDropdownItem { Id = e.Id, Name = e.Name })
+            .ToListAsync();
+
         DormCodes = await _db.Dorms
             .Where(d => d.IsActive)
             .OrderBy(d => d.DormCode)
             .Select(d => d.DormCode)
             .ToListAsync();
 
-        // 使用真实服务查询（v2.13.20 新增部门/员工类型/住宿状态筛选）
-        var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, DepartmentId, EmployeeTypeId, ResidenceStatusId, PageIndex, PageSize);
+        // 使用真实服务查询（v2.13.44 扩展：新增在职状态筛选）
+        var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, DepartmentId, EmployeeTypeId, ResidenceStatusId, EmploymentStatusId, PageIndex, PageSize);
         Result = new PagedResult<EmployeeBillingDto>
         {
             Items = entities.Items.Select(e => new EmployeeBillingDto
             {
                 Id = e.Id,
+                EmployeeId = e.EmployeeId,
                 EmployeeCode = e.EmployeeCode,
                 EmployeeName = e.EmployeeName,
                 Department = "",
                 DormCode = e.DormCode ?? "",
                 BillingMonth = e.BillingMonth,
                 ShareAmount = e.TotalShareAmount,
+                // v2.13.44 新增：4 个分摊明细字段
+                ColdShareAmount = e.ColdShareAmount,
+                HotShareAmount = e.HotShareAmount,
+                ElectricityShareAmount = e.ElectricityShareAmount,
+                ResidentCount = e.ResidentCount,
+                ShareRatio = e.ShareRatio,
                 IsPublished = e.IsPublished
             }).ToList(),
             TotalCount = entities.Total,
@@ -146,12 +169,20 @@ public class IndexModel : PageModel
 public class EmployeeBillingDto
 {
     public int Id { get; set; }
+    /// <summary>v2.13.44 新增：员工 ID（用于详情跳转）</summary>
+    public int EmployeeId { get; set; }
     public string EmployeeCode { get; set; } = "";
     public string EmployeeName { get; set; } = "";
     public string Department { get; set; } = "";
     public string DormCode { get; set; } = "";
     public string BillingMonth { get; set; } = "";
     public decimal ShareAmount { get; set; }
+    /// <summary>v2.13.44 新增：4 个分摊明细字段</summary>
+    public decimal ColdShareAmount { get; set; }
+    public decimal HotShareAmount { get; set; }
+    public decimal ElectricityShareAmount { get; set; }
+    public int ResidentCount { get; set; }
+    public decimal ShareRatio { get; set; }
     public bool IsPublished { get; set; }
 }
 
@@ -177,6 +208,15 @@ public class EmployeeTypeDropdownItem
 /// 住宿状态下拉项
 /// </summary>
 public class ResidenceStatusDropdownItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+}
+
+/// <summary>
+/// v2.13.44 新增：在职状态下拉项
+/// </summary>
+public class EmploymentStatusDropdownItem
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";

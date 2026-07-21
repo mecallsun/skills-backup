@@ -36,6 +36,8 @@ public interface IBillingService
     Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int page, int pageSize);
     /// <summary>v2.13.20 查询员工账单列表（新增部门/员工类型/住宿状态筛选）</summary>
     Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int page, int pageSize);
+    /// <summary>v2.13.44 查询员工账单列表（新增在职状态筛选）</summary>
+    Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int? employmentStatusId, int page, int pageSize);
 
     /// <summary>发布宿舍账单</summary>
     Task<(bool ok, string message)> PublishDormBillsAsync(string billingMonth);
@@ -364,9 +366,12 @@ public class BillingService : IBillingService
     }
 
     public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int page, int pageSize)
-        => await GetEmployeeBillsAsync(billingMonth, dormCode, empKeyword, null, null, null, page, pageSize);
+        => await GetEmployeeBillsAsync(billingMonth, dormCode, empKeyword, null, null, null, null, page, pageSize);
 
     public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int page, int pageSize)
+        => await GetEmployeeBillsAsync(billingMonth, dormCode, empKeyword, departmentId, employeeTypeId, residenceStatusId, null, page, pageSize);
+
+    public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int? employmentStatusId, int page, int pageSize)
     {
         var query = _db.EmployeeBillings.AsQueryable();
         if (!string.IsNullOrWhiteSpace(billingMonth))
@@ -374,13 +379,15 @@ public class BillingService : IBillingService
         if (!string.IsNullOrWhiteSpace(dormCode))
             query = query.Where(e => e.DormCode != null && e.DormCode.Contains(dormCode));
 
-        if (departmentId.HasValue || employeeTypeId.HasValue || residenceStatusId.HasValue || !string.IsNullOrWhiteSpace(empKeyword))
+        if (departmentId.HasValue || employeeTypeId.HasValue || residenceStatusId.HasValue || employmentStatusId.HasValue || !string.IsNullOrWhiteSpace(empKeyword))
         {
             var employeeIds = await _db.Employees
                 .Where(e =>
                     (!departmentId.HasValue || e.DepartmentId == departmentId.Value) &&
                     (!employeeTypeId.HasValue || e.EmployeeTypeId == employeeTypeId.Value) &&
                     (!residenceStatusId.HasValue || e.ResidenceStatusId == residenceStatusId.Value) &&
+                    // v2.13.44: 在职状态筛选（EmploymentStatusId）
+                    (!employmentStatusId.HasValue || e.EmploymentStatusId == employmentStatusId.Value) &&
                     (string.IsNullOrWhiteSpace(empKeyword) ||
                      e.EmployeeCode.Contains(empKeyword) ||
                      e.RealName.Contains(empKeyword) ||

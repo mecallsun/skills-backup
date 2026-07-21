@@ -69,6 +69,16 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
+                    <label class="form-label mb-1">在职状态</label>
+                    <select name="EmploymentStatusId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var item in Model.EmploymentStatuses)
+                        {
+                            <option value="@item.Id" selected="@(Model.EmploymentStatusId == item.Id)">@item.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
                     <label class="form-label mb-1">宿舍房号</label>
                     <input list="dormListEmployeeBilling" type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="选择或输入房号">
                     <datalist id="dormListEmployeeBilling">
@@ -109,9 +119,13 @@
                             <th>部门</th>
                             <th>宿舍</th>
                             <th class="text-center">计费月份</th>
+                            <th class="text-center">冷水分摊</th>
+                            <th class="text-center">热水分摊</th>
+                            <th class="text-center">电分摊</th>
+                            <th class="text-center">在住人数</th>
                             <th class="text-center">分摊金额</th>
                             <th class="text-center">发布状态</th>
-                            <th width="120" class="text-center">操作</th>
+                            <th width="140" class="text-center">操作</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -127,6 +141,10 @@
                                     <td>@item.Department</td>
                                     <td>@item.DormCode</td>
                                     <td class="text-center">@item.BillingMonth</td>
+                                    <td class="text-center">¥@item.ColdShareAmount.ToString("N2")</td>
+                                    <td class="text-center">¥@item.HotShareAmount.ToString("N2")</td>
+                                    <td class="text-center">¥@item.ElectricityShareAmount.ToString("N2")</td>
+                                    <td class="text-center">@item.ResidentCount 人</td>
                                     <td class="text-center text-success fw-bold">¥@item.ShareAmount.ToString("N2")</td>
                                     <td class="text-center">
                                         @if (item.IsPublished)
@@ -139,6 +157,9 @@
                                         }
                                     </td>
                                     <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-info" onclick="viewDetail(@item.Id, @item.EmployeeId, '@item.BillingMonth')" title="查看详情">
+                                            <i class="bi bi-eye"></i> 查看
+                                        </button>
                                         @if (!item.IsPublished)
                                         {
                                             <button class="btn btn-sm btn-outline-primary" onclick="publishOne(@item.Id)">发布</button>
@@ -151,7 +172,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">暂无员工账单</td>
+                                <td colspan="13" class="text-center text-muted py-4">暂无员工账单</td>
                             </tr>
                         }
                     </tbody>
@@ -170,7 +191,7 @@
                             @if (currentPage > 1)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&PageIndex=@(currentPage - 1)" aria-label="上一页">
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&EmploymentStatusId=@Model.EmploymentStatusId&PageIndex=@(currentPage - 1)" aria-label="上一页">
                                         <span aria-hidden="true">&laquo;</span>
                                     </a>
                                 </li>
@@ -178,13 +199,13 @@
                             @for (var p = Math.Max(1, currentPage - 2); p <= Math.Min(totalPages, currentPage + 2); p++)
                             {
                                 <li class="page-item @(p == currentPage ? "active" : "")">
-                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&PageIndex=@p">@p</a>
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&EmploymentStatusId=@Model.EmploymentStatusId&PageIndex=@p">@p</a>
                                 </li>
                             }
                             @if (currentPage < totalPages)
                             {
                                 <li class="page-item">
-                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&PageIndex=@(currentPage + 1)" aria-label="下一页">
+                                    <a class="page-link" href="?BillingMonth=@Model.BillingMonth&DormCode=@Model.DormCode&EmpKeyword=@Model.EmpKeyword&DepartmentId=@Model.DepartmentId&EmployeeTypeId=@Model.EmployeeTypeId&ResidenceStatusId=@Model.ResidenceStatusId&EmploymentStatusId=@Model.EmploymentStatusId&PageIndex=@(currentPage + 1)" aria-label="下一页">
                                         <span aria-hidden="true">&raquo;</span>
                                     </a>
                                 </li>
@@ -283,7 +304,19 @@ function publishOne(id) {
 
 function exportBilling(event) {
     event.preventDefault();
-    alert('✓ 原型演示：将下载 员工分摊费用_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+    var month = '@Model.BillingMonth';
+    var url = '/api/v1/billing/employee-bills/export?billingMonth=' + encodeURIComponent(month);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = '员工分摊账单_' + month + '.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function viewDetail(id, empId, month) {
+    // v2.13.44 新增：跳转详情页（默认跳员工当月首条，可扩展为月列表）
+    window.location.href = '/EmployeeBilling/Details?id=' + id;
 }
 </script>
 }

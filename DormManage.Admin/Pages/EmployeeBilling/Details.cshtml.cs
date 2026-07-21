@@ -7,8 +7,8 @@ using DormManage.Shared.Models;
 namespace DormManage.Admin.Pages.EmployeeBilling;
 
 /// <summary>
-/// 员工账单详情（P1-15）
-/// URL：/EmployeeBilling/Details?employeeId=xxx&month=yyyy-MM
+/// 员工账单详情（v2.13.44：拆冷水/热水 + 加分摊比例 + 同住人数）
+/// URL：/EmployeeBilling/Details?id=账单ID 或 ?employeeId=xxx&amp;month=yyyy-MM
 /// </summary>
 public class DetailsModel : PageModel
 {
@@ -18,6 +18,7 @@ public class DetailsModel : PageModel
 
     public SysEmployee? Employee { get; set; }
     public string? Month { get; set; }
+    public DormManage.Shared.Models.EmployeeBilling? Bill { get; set; }
     public List<DormBooking> Bookings { get; set; } = new();
     public List<MeterConsumption> MonthlyConsumption { get; set; } = new();
     public BillingSummary Summary { get; set; } = new();
@@ -27,9 +28,14 @@ public class DetailsModel : PageModel
     {
         public decimal TotalAmount { get; set; }
         public int StayDays { get; set; }
-        public decimal WaterAmount { get; set; }
+        public decimal ColdAmount { get; set; }
+        public decimal HotAmount { get; set; }
         public decimal ElectricAmount { get; set; }
         public decimal RentAmount { get; set; }
+        /// <summary>v2.13.44 新增：分摊比例（如 0.5 表示 50%）</summary>
+        public decimal ShareRatio { get; set; }
+        /// <summary>v2.13.44 新增：同住人数</summary>
+        public int ResidentCount { get; set; }
     }
 
     public class MeterConsumption
@@ -47,8 +53,19 @@ public class DetailsModel : PageModel
         public decimal Amount { get; set; }
     }
 
-    public async Task<IActionResult> OnGetAsync(int? employeeId, string? month)
+    public async Task<IActionResult> OnGetAsync(int? id, int? employeeId, string? month)
     {
+        // v2.13.44：优先按账单 ID 加载真实 EmployeeBilling
+        if (id.HasValue)
+        {
+            Bill = await _db.EmployeeBillings.FirstOrDefaultAsync(b => b.Id == id.Value);
+            if (Bill != null)
+            {
+                employeeId = Bill.EmployeeId;
+                month = Bill.BillingMonth;
+            }
+        }
+
         if (employeeId is null)
         {
             TempData["ErrorMessage"] = "缺少员工 ID 参数";
@@ -64,7 +81,6 @@ public class DetailsModel : PageModel
 
         Month = string.IsNullOrWhiteSpace(month) ? DateTime.Now.ToString("yyyy-MM") : month;
 
-        // 当月所有相关记录
         var monthStart = DateTime.Parse(Month + "-01");
         var monthEnd = monthStart.AddMonths(1);
 
@@ -77,7 +93,6 @@ public class DetailsModel : PageModel
             .Where(b => b.BookingDate.ToDateTime(new TimeOnly(0, 0)) >= monthStart && b.BookingDate.ToDateTime(new TimeOnly(0, 0)) < monthEnd)
             .ToList();
 
-        // 住宿天数（简化：按 CheckIn 到 CheckOut 区间计算）
         foreach (var b in monthBookings.Where(b => b.Type == BookingType.CheckIn))
         {
             var end = monthBookings.FirstOrDefault(x => x.Type == BookingType.CheckOut && x.BookingDate >= b.BookingDate);
@@ -86,10 +101,19 @@ public class DetailsModel : PageModel
             Summary.StayDays += Math.Max(1, days);
         }
 
-        Summary.RentAmount = Summary.StayDays * 10m; // 10 元/天
+        Summary.RentAmount = Summary.StayDays * 10m;
 
-        // 用量（按当前宿舍）
-        if (!string.IsNullOrEmpty(Employee.DormCode))
+        // v2.13.44 优先用真实 EmployeeBilling 拆水分（冷水/热水）
+        if (Bill != null)
+        {
+            Summary.ColdAmount = Bill.ColdShareAmount;
+            Summary.HotAmount = Bill.HotShareAmount;
+            Summary.ElectricAmount = Bill.ElectricityShareAmount;
+            Summary.ShareRatio = Bill.ShareRatio;
+            Summary.ResidentCount = Bill.ResidentCount;
+            Summary.TotalAmount = Bill.TotalShareAmount;
+        }
+        else if (!string.IsNullOrEmpty(Employee.DormCode))
         {
             var currentMeter = await _db.MeterRecords
                 .FirstOrDefaultAsync(r => r.DormCode == Employee.DormCode && r.ReadMonth == Month);
@@ -99,15 +123,16 @@ public class DetailsModel : PageModel
 
             if (currentMeter is not null && prevMeter is not null)
             {
-                // 平摊到当月在宿人数
                 var stayCount = Math.Max(1, await _db.DormBookings
                     .CountAsync(b => b.DormCode == Employee.DormCode && b.Status == BookingStatus.Staying));
-                Summary.WaterAmount = ((currentMeter.ColdMeter - prevMeter.ColdMeter) +
-                                       (currentMeter.HotMeter - prevMeter.HotMeter)) / stayCount * 4m;
+                Summary.ShareRatio = 1m / stayCount;
+                Summary.ResidentCount = stayCount;
+                // v2.13.44 拆分冷水/热水
+                Summary.ColdAmount = (currentMeter.ColdMeter - prevMeter.ColdMeter) / stayCount * 4m;
+                Summary.HotAmount = (currentMeter.HotMeter - prevMeter.HotMeter) / stayCount * 4m;
                 Summary.ElectricAmount = (currentMeter.ElectricMeter - prevMeter.ElectricMeter) / stayCount * 0.6m;
             }
 
-            // 最近 6 个月用量
             var sixMonthsAgo = monthStart.AddMonths(-5);
             for (var i = 0; i < 6; i++)
             {
@@ -127,13 +152,14 @@ public class DetailsModel : PageModel
             }
         }
 
-        Summary.TotalAmount = Summary.RentAmount + Summary.WaterAmount + Summary.ElectricAmount;
+        if (Bill == null)
+            Summary.TotalAmount = Summary.RentAmount + Summary.ColdAmount + Summary.HotAmount + Summary.ElectricAmount;
 
-        // 账单明细
         BillingItems = new List<EmployeeBillingItem>
         {
             new() { Date = Month, Description = $"住宿费（{Summary.StayDays} 天 × 10 元/天）", Amount = Summary.RentAmount },
-            new() { Date = Month, Description = "水费分摊", Amount = Summary.WaterAmount },
+            new() { Date = Month, Description = "冷水费分摊", Amount = Summary.ColdAmount },
+            new() { Date = Month, Description = "热水费分摊", Amount = Summary.HotAmount },
             new() { Date = Month, Description = "电费分摊", Amount = Summary.ElectricAmount }
         };
 
