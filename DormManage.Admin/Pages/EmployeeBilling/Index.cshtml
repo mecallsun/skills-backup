@@ -137,7 +137,22 @@
                                 <tr>
                                     <td class="text-center text-muted">@index</td>
                                     <td><strong>@item.EmployeeCode</strong></td>
-                                    <td>@item.EmployeeName</td>
+                                    <td>
+                                        @item.EmployeeName
+                                        @* v2.13.86 性别 Badge *@
+                                        @if (item.Gender == 1)
+                                        {
+                                            <span class="badge bg-primary ms-1"><i class="bi bi-gender-male"></i></span>
+                                        }
+                                        else if (item.Gender == 2)
+                                        {
+                                            <span class="badge bg-danger ms-1"><i class="bi bi-gender-female"></i></span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary ms-1">-</span>
+                                        }
+                                    </td>
                                     <td>@item.Department</td>
                                     <td>@item.DormCode</td>
                                     <td class="text-center">@item.BillingMonth</td>

@@ -204,7 +204,9 @@ public class BookingService : IBookingService
                 // v2.13.47 BUG：实时取最新工号（人员清单为唯一真源；档案缺失时回退登记时写入的工号）
                 EmployeeCode = emp != null && !string.IsNullOrEmpty(emp.EmployeeCode) ? emp.EmployeeCode : (b.EmployeeCode ?? ""),
                 // v2.13.66 BUG：实时取最新部门（人员清单为唯一真源；档案缺失/为空时回退冗余字段；都不存在则 NULL）
-                Department = emp != null && !string.IsNullOrEmpty(emp.Department) ? emp.Department : b.Department
+                Department = emp != null && !string.IsNullOrEmpty(emp.Department) ? emp.Department : b.Department,
+                // v2.13.86 性别：实时取档案 Gender（人员清单为唯一真源；档案缺失时回退 0=未知）
+                Gender = (int?)(emp != null ? emp.Gender : 0) ?? 0
             };
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -261,6 +263,7 @@ public class BookingService : IBookingService
             EmployeeId = x.Booking.EmployeeId,
             EmployeeCode = x.EmployeeCode ?? "",
             EmployeeName = x.RealName ?? "",
+            Gender = x.Gender,
             Phone = x.Booking.Phone,
             Department = x.Department ?? x.Booking.Department,
             AttendanceTypeId = x.AttendanceTypeId ?? x.Booking.AttendanceTypeId,
@@ -330,6 +333,9 @@ public class BookingService : IBookingService
         public int EmployeeId { get; set; }
         public string EmployeeCode { get; set; } = "";
         public string EmployeeName { get; set; } = "";
+        // v2.13.86 性别字段（JOIN SysEmployee 取实时 Gender，人员清单为唯一真源）
+        public int Gender { get; set; }
+        public string GenderName => Gender == 1 ? "男" : Gender == 2 ? "女" : "未知";
         public string? Phone { get; set; }
         public string? Department { get; set; }
         public int? AttendanceTypeId { get; set; }

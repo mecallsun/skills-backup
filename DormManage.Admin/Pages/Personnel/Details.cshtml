@@ -1,0 +1,318 @@
+@page
+@model DormManage.Admin.Pages.Personnel.DetailsModel
+@{
+    ViewData["Title"] = "人员详情";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    /* v2.13.86 人员详情页布局：基本信息卡 + 当前住宿 + 历史记录 */
+    .details-row {
+        display: flex;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    .details-left {
+        width: 320px;
+        flex-shrink: 0;
+    }
+    .details-right {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+    .gender-male { background-color: #0d6efd !important; }
+    .gender-female { background-color: #dc3545 !important; }
+    .gender-unknown { background-color: #6c757d !important; }
+</style>
+}
+
+<div class="container-fluid px-4 py-3">
+    <!-- 页头（v2.13.86 与 personnel/edit.html 风格一致） -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-person-vcard"></i> 人员详情
+            <small class="text-muted ms-2 fs-6">@Model.Employee?.EmployeeCode · @Model.Employee?.RealName</small>
+        </h2>
+        <div class="d-flex gap-2">
+            <a href="/Personnel" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+            <a href="/Personnel/Edit?id=@(Model.Employee?.Id)" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 编辑员工
+            </a>
+        </div>
+    </div>
+
+    @if (Model.Employee != null)
+    {
+        <!-- v2.13.86 左右两栏布局：左 320px 基本信息，右自适应 住宿历史 -->
+        <div class="details-row">
+            <!-- 左栏：基本信息卡片 -->
+            <div class="details-left">
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <th width="60" class="text-muted">工号</th>
+                                <td><strong>@Model.Employee.EmployeeCode</strong></td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">姓名</th>
+                                <td><strong>@Model.Employee.RealName</strong></td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">性别</th>
+                                <td>
+                                    @* v2.13.83 + v2.13.86 性别 Badge：男=primary蓝 / 女=danger粉 / 未知=secondary灰 *@
+                                    @if (Model.Employee.Gender == 1)
+                                    {
+                                        <span class="badge gender-male"><i class="bi bi-gender-male"></i> 男</span>
+                                    }
+                                    else if (Model.Employee.Gender == 2)
+                                    {
+                                        <span class="badge gender-female"><i class="bi bi-gender-female"></i> 女</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge gender-unknown">未知</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">手机号</th>
+                                <td>@(Model.Employee.Phone ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">部门</th>
+                                <td>@(string.IsNullOrEmpty(Model.Employee.Department) ? "-" : Model.Employee.Department)</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">员工类型</th>
+                                <td>
+                                    @if (Model.EmployeeTypeBadge != null)
+                                    {
+                                        <span class="badge @Model.EmployeeTypeBadge.BadgeClass">@Model.EmployeeTypeBadge.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">考勤班次</th>
+                                <td>
+                                    @if (Model.AttendanceBadge != null)
+                                    {
+                                        <span class="badge @Model.AttendanceBadge.BadgeClass">@Model.AttendanceBadge.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span>-</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">班组</th>
+                                <td>@(string.IsNullOrEmpty(Model.Employee.TeamName) ? "-" : Model.Employee.TeamName)</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">入职日期</th>
+                                <td>@(Model.Employee.HireDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">离职日期</th>
+                                <td>@(Model.Employee.LeaveDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">在职状态</th>
+                                <td>
+                                    @if (Model.Employee.EmploymentStatusId == 1)
+                                    {
+                                        <span class="badge bg-success">@Model.Employee.EmploymentStatusName</span>
+                                    }
+                                    else if (Model.Employee.EmploymentStatusId == 2)
+                                    {
+                                        <span class="badge bg-warning text-dark">@Model.Employee.EmploymentStatusName</span>
+                                    }
+                                    else if (Model.Employee.EmploymentStatusId == 3)
+                                    {
+                                        <span class="badge bg-secondary">@Model.Employee.EmploymentStatusName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">@Model.Employee.EmploymentStatusName</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">房号/床号</th>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(Model.Employee.DormCode))
+                                    {
+                                        <strong>@Model.Employee.DormCode</strong>
+                                        @if (Model.Employee.BedNo.HasValue && Model.Employee.BedNo > 0)
+                                        {
+                                            <span class="text-muted ms-2">@Model.Employee.BedNo 号床</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">未分配</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">备注</th>
+                                <td>@(string.IsNullOrEmpty(Model.Employee.Remark) ? "-" : Model.Employee.Remark)</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右栏：当前住宿 + 历史记录 -->
+            <div class="details-right">
+                <!-- 当前住宿记录 -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-house-door"></i> 当前住宿</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.CurrentBooking != null)
+                        {
+                            <div class="alert alert-success py-2 mb-3">
+                                <i class="bi bi-check-circle"></i>
+                                当前在宿 <strong>@Model.CurrentBooking.DormCode</strong>，
+                                入住日期 <strong>@Model.CurrentBooking.BookingDate.ToString("yyyy-MM-dd")</strong>，
+                                @if (Model.CurrentBooking.ActualCheckInDate.HasValue)
+                                {
+                                    <text>实际入住 @Model.CurrentBooking.ActualCheckInDate.Value.ToString("yyyy-MM-dd")</text>
+                                }
+                            </div>
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr>
+                                    <th width="80" class="text-muted">登记人</th>
+                                    <td>@(Model.CurrentBooking.Registrar ?? "-")</td>
+                                </tr>
+                                <tr>
+                                    <th width="80" class="text-muted">登记时间</th>
+                                    <td>@(Model.CurrentBooking.RegistrationDate?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                </tr>
+                                <tr>
+                                    <th width="80" class="text-muted">入住原因</th>
+                                    <td>@(string.IsNullOrEmpty(Model.CurrentBooking.Reason) ? "-" : Model.CurrentBooking.Reason)</td>
+                                </tr>
+                            </table>
+                            <div class="mt-3">
+                                <a href="/Booking/CheckOut?id=@(Model.CurrentBooking.Id)" class="btn btn-outline-warning btn-sm">
+                                    <i class="bi bi-box-arrow-right"></i> 办理退房
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-secondary py-2 mb-0">
+                                <i class="bi bi-info-circle"></i>
+                                当前未在宿。如需分配宿舍，请前往
+                                <a href="/Booking/CheckIn?employeeId=@Model.Employee.Id" class="alert-link">办理入住</a>。
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- 历史住宿记录 -->
+                <div class="card">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 历史住宿记录</h5>
+                        <small class="text-muted">最近 20 条</small>
+                    </div>
+                    <div class="card-body p-0">
+                        @if (Model.HistoryBookings.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="50">序号</th>
+                                            <th>日期</th>
+                                            <th>房号</th>
+                                            <th>类型</th>
+                                            <th>状态</th>
+                                            <th>原因</th>
+                                            <th>登记人</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            int idx = 1;
+                                        }
+                                        @foreach (var record in Model.HistoryBookings)
+                                        {
+                                            <tr>
+                                                <td class="text-muted">@idx</td>
+                                                <td>@record.BookingDate.ToString("yyyy-MM-dd")</td>
+                                                <td><strong>@record.DormCode</strong></td>
+                                                <td>
+                                                    @if (record.Type == BookingType.CheckIn)
+                                                    {
+                                                        <span class="badge bg-success">@record.TypeName</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning text-dark">@record.TypeName</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (record.Status == BookingStatus.CheckedOut)
+                                                    {
+                                                        <span class="badge bg-secondary">@record.StatusName</span>
+                                                    }
+                                                    else if (record.Status == BookingStatus.Cancelled)
+                                                    {
+                                                        <span class="badge bg-danger">@record.StatusName</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-info text-dark">@record.StatusName</span>
+                                                    }
+                                                </td>
+                                                <td>@(string.IsNullOrEmpty(record.Reason) ? "-" : record.Reason)</td>
+                                                <td><small>@(record.Registrar ?? "-")</small></td>
+                                            </tr>
+                                            idx++;
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inbox"></i>
+                                <p class="mb-0 mt-2">暂无历史住宿记录</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle"></i> 员工不存在或已删除。
+        </div>
+    }
+</div>
+
+@functions {
+    // 引用 Dorms/Details.cshtml.cs 中的 Badge Helper（跨命名空间静态方法）
+    string GetAttendanceBadgeClass(string? code) => DormManage.Admin.Pages.Dorms.AttendanceBadgeHelper.GetAttendanceBadgeClass(code);
+    string GetEmployeeTypeBadgeClass(string? code) => DormManage.Admin.Pages.Dorms.EmployeeTypeBadgeHelper.GetEmployeeTypeBadgeClass(code);
+}

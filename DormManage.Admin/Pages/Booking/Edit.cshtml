@@ -28,7 +28,22 @@ else
             <div class="row g-3 align-items-center">
                 <div class="col-md-3">
                     <span class="text-muted small"><i class="bi bi-person-badge"></i> 员工</span>
-                    <div class="fw-bold">@Model.EmployeeName <small class="text-muted">（@Model.EmployeeCode）</small></div>
+                    <div class="fw-bold">
+                        @Model.EmployeeName <small class="text-muted">（@Model.EmployeeCode）</small>
+                        @* v2.13.86 性别 Badge *@
+                        @if (Model.EmployeeGender == 1)
+                        {
+                            <span class="badge bg-primary ms-1"><i class="bi bi-gender-male"></i> 男</span>
+                        }
+                        else if (Model.EmployeeGender == 2)
+                        {
+                            <span class="badge bg-danger ms-1"><i class="bi bi-gender-female"></i> 女</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary ms-1">未知</span>
+                        }
+                    </div>
                 </div>
                 <div class="col-md-2">
                     <span class="text-muted small"><i class="bi bi-building"></i> 宿舍</span>

@@ -1,20 +1,27 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Booking;
 
 public class IndexModel : PageModel
 {
     private readonly IBookingService _service;
+    private readonly DormDbContext _db;
 
-    public IndexModel(IBookingService service)
+    public IndexModel(IBookingService service, DormDbContext db)
     {
         _service = service;
+        _db = db;
     }
 
     public PagedResult<DormBooking>? Result { get; set; }
+
+    /// <summary>v2.13.86 性别映射：EmployeeId → Gender（批量 JOIN SysEmployee 取实时）</summary>
+    public Dictionary<int, int> GenderMap { get; set; } = new();
 
     /// <summary>总数（供 PageHeader 组件使用）</summary>
     public int Total => Result?.TotalCount ?? 0;
@@ -55,5 +62,15 @@ public class IndexModel : PageModel
         DormCodes = await _service.GetAllDormCodesAsync();
 
         Result = await _service.GetListAsync(Keyword, Department, DormCode, Type, Status, DateFrom, DateTo, PageIndex, PageSize);
+
+        // v2.13.86 批量 JOIN SysEmployee 拿 Gender（避免 N+1）
+        if (Result?.Items != null && Result.Items.Any())
+        {
+            var empIds = Result.Items.Select(b => b.EmployeeId).Distinct().Where(id => id > 0).ToList();
+            GenderMap = await _db.Employees
+                .Where(emp => empIds.Contains(emp.Id))
+                .Select(emp => new { emp.Id, emp.Gender })
+                .ToDictionaryAsync(x => x.Id, x => x.Gender);
+        }
     }
 }

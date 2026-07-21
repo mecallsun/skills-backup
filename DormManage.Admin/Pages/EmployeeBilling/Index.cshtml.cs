@@ -138,6 +138,14 @@ public class IndexModel : PageModel
 
         // 使用真实服务查询（v2.13.44 扩展：新增在职状态筛选）
         var entities = await _billing.GetEmployeeBillsAsync(BillingMonth, DormCode, EmpKeyword, DepartmentId, EmployeeTypeId, ResidenceStatusId, EmploymentStatusId, PageIndex, PageSize);
+
+        // v2.13.86 批量 JOIN SysEmployee 拿 Gender（避免 N+1）
+        var empIds = entities.Items.Select(e => e.EmployeeId).Distinct().ToList();
+        var genderMap = await _db.Employees
+            .Where(emp => empIds.Contains(emp.Id))
+            .Select(emp => new { emp.Id, emp.Gender })
+            .ToDictionaryAsync(x => x.Id, x => x.Gender);
+
         Result = new PagedResult<EmployeeBillingDto>
         {
             Items = entities.Items.Select(e => new EmployeeBillingDto
@@ -146,6 +154,7 @@ public class IndexModel : PageModel
                 EmployeeId = e.EmployeeId,
                 EmployeeCode = e.EmployeeCode,
                 EmployeeName = e.EmployeeName,
+                Gender = genderMap.GetValueOrDefault(e.EmployeeId, 0),  // v2.13.86 JOIN SysEmployee 取实时性别
                 Department = "",
                 DormCode = e.DormCode ?? "",
                 BillingMonth = e.BillingMonth,
@@ -175,6 +184,8 @@ public class EmployeeBillingDto
     public int EmployeeId { get; set; }
     public string EmployeeCode { get; set; } = "";
     public string EmployeeName { get; set; } = "";
+    /// <summary>v2.13.86 性别（JOIN SysEmployee 取实时 Gender）</summary>
+    public int Gender { get; set; }
     public string Department { get; set; } = "";
     public string DormCode { get; set; } = "";
     public string BillingMonth { get; set; } = "";

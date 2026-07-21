@@ -42,6 +42,8 @@ public class EditModel : PageModel
     public DateOnly? LeaveDate { get; set; }
     /// <summary>住宿状态名称</summary>
     public string? ResidenceStatusName { get; set; }
+    /// <summary>v2.13.86 员工性别（实时从 SysEmployee 读取）</summary>
+    public int EmployeeGender { get; set; }
 
     public async Task OnGetAsync(int id)
     {
@@ -69,6 +71,7 @@ public class EditModel : PageModel
             // v2.13.78 BUG 修复：班组名称走 FK 关联（之前 employee.Team 字符串字段被 DbContext.Ignore，永远为 null）
             Team = employee.Team?.Name;
             ResidenceStatusName = employee.ResidenceStatus?.Name;
+            EmployeeGender = employee.Gender;
 
             // v2.13.11 在职状态名称映射（改用 EmploymentStatusId 关联引用基础资料-在职状态表，避免废弃 Status 属性）
 #pragma warning disable CS0618 // 兼容旧数据回退路径

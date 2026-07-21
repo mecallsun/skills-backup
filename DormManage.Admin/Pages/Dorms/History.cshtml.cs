@@ -67,6 +67,13 @@ public class HistoryModel : PageModel
 
         TotalHistoryCount = bookings.Count;
 
+        // v2.13.86 批量 JOIN SysEmployee 拿 Gender（避免 N+1）
+        var empIds = bookings.Select(b => b.EmployeeId).Distinct().Where(id => id > 0).ToList();
+        var genderMap = await _db.Employees
+            .Where(emp => empIds.Contains(emp.Id))
+            .Select(emp => new { emp.Id, emp.Gender })
+            .ToDictionaryAsync(x => x.Id, x => x.Gender);
+
         var now = DateOnly.FromDateTime(DateTime.Now);
         HistoryRecords = bookings.Select(b =>
         {
@@ -87,6 +94,7 @@ public class HistoryModel : PageModel
                 EmployeeId = b.EmployeeId,
                 EmployeeCode = b.EmployeeCode,
                 EmployeeName = b.EmployeeName,
+                Gender = genderMap.GetValueOrDefault(b.EmployeeId, 0),  // v2.13.86
                 Department = b.Department ?? "-",
                 CheckInDate = b.BookingDate,
                 LeaveDate = b.Type == 2 ? b.BookingDate : (DateOnly?)null,
@@ -123,6 +131,8 @@ public class HistoryRecordDto
     public int EmployeeId { get; set; }
     public string EmployeeCode { get; set; } = "";
     public string EmployeeName { get; set; } = "";
+    /// <summary>v2.13.86 性别（JOIN SysEmployee 取实时）</summary>
+    public int Gender { get; set; }
     public string Department { get; set; } = "";
     public DateOnly CheckInDate { get; set; }
     public DateOnly? LeaveDate { get; set; }
