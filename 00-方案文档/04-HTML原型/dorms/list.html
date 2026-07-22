@@ -410,15 +410,13 @@
                         ? '<small class="text-muted">-</small>'
                         : attendanceTypes.map(name => `<span class="badge bg-info text-dark me-1">${name}</span>`).join('');
                     // v2.13.107 班组列派生（去重 + 按 SortOrder 升序）
+                    // v2.13.111 程序 1:1 对齐：无人入住时该列完全空白（不渲染 - 或任何字符，用户追加要求）
                     const teams = currentTeams(d.dormCode);
                     const teamHtml = teams.length === 0
-                        ? '<small class="text-muted">-</small>'
+                        ? ''  // v2.13.111：完全空白（原型原版用 '-' 占位已废弃）
                         : teams.map(t => {
-                            // 按 Team.Code 首字母派生 Badge 颜色（与 v2.13.91 TeamBadgeHelper 一致）
-                            const firstChar = (t.code || '').charAt(5); // TEAM_X → X
-                            const colorMap = { 'A': 'bg-primary', 'B': 'bg-info text-dark', 'C': 'bg-warning text-dark', 'D': 'bg-success', 'E': 'bg-danger' };
-                            const cls = colorMap[firstChar] || 'bg-secondary';
-                            return `<span class="badge ${cls} me-1">${t.name}</span>`;
+                            // v2.13.111：Badge 单色 bg-primary（与 v2.13.97 Booking 列表对齐，原 v2.13.107 按 TEAM_X 首字母派生 6 色已简化）
+                            return `<span class="badge bg-primary me-1">${t.name}</span>`;
                         }).join('');
                     const usage = Math.round(residents / d.capacity * 100);
                     const usageColor = usage >= 100 ? 'bg-danger' : usage >= 75 ? 'bg-warning text-dark' : 'bg-success';

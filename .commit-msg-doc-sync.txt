@@ -1,0 +1,50 @@
+docs(sync): v2.13.111 宿舍档案班组列文档冲突检查与同步
+
+按 CLAUDE.md「软件开发项目文档冲突检查与同步规则」强制要求，对宿舍档案「班组」列派生（v2.13.111）变更同步更新 5 份核心文档：
+
+## 同步范围（5 文件）
+
+### 1. 00-方案文档/01-技术架构与系统开发方案.md
+- 追加 v2.13.111 备注章节
+- 数据源链路表（Dorm → DormBooking → SysEmployee → Team 4 实体）
+- 派生 SQL 模式（IN 列表 + GroupBy + Dictionary 避免 N+1）
+- 前端渲染规则（Badge 单色 + 无人入住完全空白）
+
+### 2. 00-方案文档/06-宿舍与住宿记录需求-v2.10.md
+- 追加 v2.13.111 备注章节
+- 用户原话引用 + 数据关系图
+- 显示规则表（4 场景：3 人 A/B/B / 4 人 A/A/B/C / 单人 / 无人）
+- 实现要点（批量 JOIN / Badge 单色 / 删除 null 占位）
+- 与历史版本对齐（v2.13.78/91/95/97）
+
+### 3. 00-方案文档/60-菜单导航与数据关系全景图-v2.13.3.md
+- 追加 v2.13.111 数据关系章节
+- 派生起点：DormBooking Status=2（无 schema 迁移）
+- 派生链路图（Dorm.DormCode → DormBooking → SysEmployee.TeamId → Team.Name + SortOrder）
+- 5 条业务规则（Status=2 限定 / SortOrder 排序 / 去重 / 空白渲染 / 孤儿过滤）
+- 同步模式对照表（v2.13.91 详情 / v2.13.97 Booking / v2.13.111 列表）
+
+### 4. 00-方案文档/35-列表页面统一UI设计规范-v2.13.21.md
+- 变更记录表追加 v2.13.111 行
+- 班组列规范（Badge bg-primary + 无人入住完全空白 + 与 v2.13.95 班次列同模式）
+
+### 5. 00-方案文档/04-HTML原型/dorms/list.html
+- 原型 JS 行 412-422 更新
+- 无人入住：'<small>-</small>' → ''（完全空白，对齐程序）
+- Badge 颜色：按 TEAM_X 首字母 6 色 → bg-primary 单色（对齐 v2.13.97 Booking）
+
+## 数据一致性保证
+
+- DormDto.TeamNames 字段定义在 Api + Admin 双端一致
+- 派生 SQL 模式在 DormsController + Dorms/Index.cshtml.cs 完全对称
+- 渲染规则（空白 vs Badge）在原型 + 程序完全一致
+- 排序规则（SortOrder + TeamId 二级）在 3 处实现统一
+
+## 文档冲突检查结果
+
+✅ 无冲突（与 v2.13.78 Team FK 修复 / v2.13.91 详情班组 / v2.13.95 班次 / v2.13.97 Booking 班组完全兼容）
+✅ 字段定义一致（TeamNames 名称 + List<string> 类型 + SortOrder 排序）
+✅ 计算方法一致（IN 列表 + GroupBy + Dictionary 派生）
+✅ 显示规则一致（无人入住完全空白 + Badge bg-primary）
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
