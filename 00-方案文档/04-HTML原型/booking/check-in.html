@@ -260,11 +260,21 @@
             const opType = document.querySelector('input[name="opType"]:checked').value;
             if (opType !== '1' || !selectedEmp) return;
             const date = document.getElementById('bookingDate').value;
-            const list = availableDorms(date);
+            const rawList = availableDorms(date);
+            // v2.13.112 智能排序：同员工班组 > 空房 > 同班次 > 字典序
+            const list = sortAvailableDormsByPriority(
+                rawList, selectedEmp.teamId, selectedEmp.attendanceTypeId
+            );
             const sel = document.getElementById('dormSelect');
             sel.innerHTML = '<option value="">请选择房间</option>' +
-                list.map(d => `<option value="${d.dormCode}">${d.dormCode} | ${d.building} | ${d.address}（余量 ${d.available} / ${d.capacity} 人）</option>`).join('');
-            document.getElementById('dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间（含余量且日期不冲突）`;
+                list.map(d => {
+                    // v2.13.112 班组列（去重 + 按 SortOrder 升序的已入住员工班组集合）
+                    const teamText = (d.teamNames && d.teamNames.length > 0)
+                        ? d.teamNames.join('/')
+                        : '-';
+                    return `<option value="${d.dormCode}">${d.dormCode} | ${d.building} | ${d.address} | 班组 ${teamText}（余量 ${d.available} / ${d.capacity} 人）</option>`;
+                }).join('');
+            document.getElementById('dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间（含余量且日期不冲突，按智能排序：同班组 → 空房 → 同班次）`;
         }
 
         function submitForm() {

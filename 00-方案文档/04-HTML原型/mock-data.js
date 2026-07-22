@@ -46020,8 +46020,58 @@ function availableDorms(bookingDate, excludeBookingId = null) {
         const 预订退房 = BOOKINGS.filter(b => b.dormCode === d.dormCode && b.type === 2 && b.status === 1
             && b.bookingDate <= bookingDate && b.id !== excludeBookingId).length;
         const available = d.capacity - in宿 - 预订入住 + 预订退房;
-        return { ...d, in宿, available };
+        // v2.13.112 新增：派生该房号已入住员工的班组集合（按 SortOrder 升序 + 去重）
+        const teams = currentTeams(d.dormCode);
+        const teamNames = teams.map(t => t.name);
+        return { ...d, in宿, available, teamNames };
     }).filter(d => d.available > 0);
+}
+
+// v2.13.112 新增：智能排序（仅适用于 check-in.html 可分配房号下拉框）
+// 排序优先级：1. 同员工班组 > 2. 空房号 > 3. 同班次 > 4. 房号字典序
+// @param {number|null} empTeamId - 员工 TeamId（用于 1st 优先级）
+// @param {number|null} empAttId - 员工 AttendanceTypeId（用于 3rd 优先级）
+// @returns {Array} 已排序的可分配房号列表
+function sortAvailableDormsByPriority(list, empTeamId, empAttId) {
+    return list.slice().sort((a, b) => {
+        // 1st: 同员工班组优先（布尔排序：true=0, false=1）
+        const aHasTeam = empTeamId && a.teamNames && a.teamNames.length > 0
+            ? TEAMS.some(t => t.id === empTeamId && a.teamNames.includes(t.name)) : false;
+        const bHasTeam = empTeamId && b.teamNames && b.teamNames.length > 0
+            ? TEAMS.some(t => t.id === empTeamId && b.teamNames.includes(t.name)) : false;
+        if (aHasTeam !== bHasTeam) return aHasTeam ? -1 : 1;
+
+        // 2nd: 空房号优先（in宿==0 排前）
+        if ((a.in宿 === 0) !== (b.in宿 === 0)) return a.in宿 === 0 ? -1 : 1;
+
+        // 3rd: 同班次优先（从在宿员工的 AttendanceTypeId 推断房号主要班次）
+        const aMainAtt = getMainAttendanceType(a.dormCode);
+        const bMainAtt = getMainAttendanceType(b.dormCode);
+        const aSameAtt = empAttId && aMainAtt === empAttId ? 0 : 1;
+        const bSameAtt = empAttId && bMainAtt === empAttId ? 0 : 1;
+        if (aSameAtt !== bSameAtt) return aSameAtt - bSameAtt;
+
+        // 4th: 房号字典序（稳定排序兜底）
+        return a.dormCode.localeCompare(b.dormCode);
+    });
+}
+
+// v2.13.112 辅助：获取房号的主要考勤班次（按人数最多）
+function getMainAttendanceType(dormCode) {
+    const staying = BOOKINGS.filter(b => b.dormCode === dormCode && b.status === 2);
+    if (staying.length === 0) return null;
+    const attCounts = {};
+    staying.forEach(b => {
+        const emp = PERSONNEL.find(e => e.id === b.employeeId);
+        if (emp && emp.attendanceTypeId) {
+            attCounts[emp.attendanceTypeId] = (attCounts[emp.attendanceTypeId] || 0) + 1;
+        }
+    });
+    let maxId = null, maxCount = 0;
+    Object.entries(attCounts).forEach(([id, count]) => {
+        if (count > maxCount) { maxId = parseInt(id); maxCount = count; }
+    });
+    return maxId;
 }
 // =====================================================================
 // 抄表记录 Mock 数据（MeterRecord，方案第 4.3.2 核心表）

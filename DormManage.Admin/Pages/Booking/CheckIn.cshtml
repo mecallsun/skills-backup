@@ -424,9 +424,17 @@
                             const bedNoHint = d.nextAssignedBedNo
                                 ? `<span class="badge bg-warning text-dark ms-1">床位 ${d.nextAssignedBedNo}号</span>`
                                 : '';
-                            return `<option value="${d.dormCode}" data-bedno="${d.nextAssignedBedNo || 0}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary} ${bedNoHint}）</option>`;
+                            // v2.13.112 班组列（已入住员工的班组集合，按 SortOrder 升序 + 去重；仅显示不参与筛选）
+                            // 同员工班组优先标记：HasSameTeam=1 时附加优先级 Badge
+                            const teamText = (d.teamNames && d.teamNames.length > 0)
+                                ? d.teamNames.join('/')
+                                : '-';
+                            const sameTeamHint = d.hasSameTeam === 1
+                                ? '<span class="badge bg-warning text-dark ms-1"><i class="bi bi-star-fill"></i> 同班组</span>'
+                                : '';
+                            return `<option value="${d.dormCode}" data-bedno="${d.nextAssignedBedNo || 0}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''} | 班组 ${teamText}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary} ${sameTeamHint} ${bedNoHint}）</option>`;
                         }).join('');
-                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（性别相符或空房间）`;
+                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（按 v2.13.112 智能排序：同班组 → 空房 → 同班次 → 字典序）`;
                 }
             } catch (err) {
                 console.error('加载可用房间失败', err);

@@ -176,6 +176,18 @@ public class DormOption
     public int NextAssignedBedNo { get; set; }
     /// <summary>床位号摘要（如 "3 / 4"，即 4 个床位已用 3 个）</summary>
     public string BedNoSummary { get; set; } = "";
+
+    // ========== v2.13.112 班组列 + 智能排序字段 ==========
+    /// <summary>该房号已入住员工的班组名称集合（按 Team.SortOrder 升序 + 去重）。
+    /// 数据关系：DormBooking Status=2 → SysEmployee.TeamId → Team.Name。
+    /// 仅显示不参与筛选。</summary>
+    public List<string> TeamNames { get; set; } = new();
+    /// <summary>渲染为「一班/三班」格式字符串</summary>
+    public string TeamNamesText => string.Join("/", TeamNames);
+    /// <summary>该房号的主要考勤班次（在宿员工中人数最多的 AttendanceTypeId，用于排序权重 3rd）</summary>
+    public int? MainAttendanceTypeId { get; set; }
+    /// <summary>智能排序得分（1=同员工班组，0=否；前端可直接基于此排序）</summary>
+    public int HasSameTeam { get; set; }
 }
 
 /// <summary>
@@ -1150,30 +1162,67 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<List<DormOption>> GetAvailableDormsAsync(int employeeId, DateOnly bookingDate)
     {
-        // v2.13.84 性别约束：先获取员工性别（Gender=0/1/2）
+        // v2.13.84 性别约束 + v2.13.112 排序权重：查询员工 Gender/TeamId/AttendanceTypeId
         var employee = await _db.Employees.AsNoTracking()
             .Where(e => e.Id == employeeId)
-            .Select(e => new { e.Gender })
+            .Select(e => new { e.Gender, e.TeamId, e.AttendanceTypeId })
             .FirstOrDefaultAsync();
         if (employee == null) return new List<DormOption>();
         int empGender = employee.Gender;
+        int empTeamId = employee.TeamId;
+        int? empAttId = employee.AttendanceTypeId;
 
         // v2.13.84 性别分布：JOIN DormBookings(Status=2) → SysEmployee 拿在宿人员 Gender 分布
         var stayingDetails = await _db.DormBookings
             .Where(x => x.Status == BookingStatus.Staying)
             .Join(_db.Employees.AsNoTracking(),
                   b => b.EmployeeId, e => e.Id,
-                  (b, e) => new { b.DormCode, e.Gender })
+                  (b, e) => new { b.DormCode, e.Gender, e.TeamId, e.AttendanceTypeId })
             .GroupBy(x => x.DormCode)
             .Select(g => new
             {
                 DormCode = g.Key,
                 TotalCount = g.Count(),
                 MaleCount = g.Count(x => x.Gender == 1),
-                FemaleCount = g.Count(x => x.Gender == 2)
+                FemaleCount = g.Count(x => x.Gender == 2),
+                // v2.13.112 主要考勤班次（按人数最多）
+                MainAttendanceTypeId = g.Where(x => x.AttendanceTypeId.HasValue)
+                                          .GroupBy(x => x.AttendanceTypeId!.Value)
+                                          .OrderByDescending(gg => gg.Count())
+                                          .Select(gg => (int?)gg.Key).FirstOrDefault()
             })
             .ToListAsync();
         var stayingMap = stayingDetails.ToDictionary(x => x.DormCode);
+
+        // v2.13.112 派生班组（与 v2.13.111 同 EmployeeTeamMap 模式：仅显示不参与筛选）
+        var dormCodesForTeam = stayingDetails.Select(x => x.DormCode).ToList();
+        var teamMap = await _db.DormBookings
+            .Where(b => dormCodesForTeam.Contains(b.DormCode) && b.Status == BookingStatus.Staying)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.TeamId })
+            .Join(_db.Teams.AsNoTracking(),
+                  x => x.TeamId, t => t.Id,
+                  (x, t) => new { x.DormCode, TeamId = t.Id, TeamName = t.Name, SortOrder = t.SortOrder })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                // 按 Team.SortOrder 升序 + 去重（同 TeamId 仅保留第一个）
+                TeamNames = g.OrderBy(x => x.SortOrder).ThenBy(x => x.TeamId)
+                             .Select(x => x.TeamName).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.DormCode, x => x.TeamNames);
+
+        // v2.13.112 一次性查询员工的 TeamName（避免嵌套查询）
+        string? empTeamName = null;
+        if (empTeamId > 0)
+        {
+            empTeamName = await _db.Teams.AsNoTracking()
+                .Where(t => t.Id == empTeamId)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync();
+        }
 
         // 预约入住人数（保留原逻辑）
         var reservedCounts = await _db.DormBookings
@@ -1264,11 +1313,25 @@ public class BookingService : IBookingService
                 AllBedNos = allBedNos,
                 AvailableBedNos = availableBedNos,
                 NextAssignedBedNo = nextBedNo,
-                BedNoSummary = bedNoSummary
+                BedNoSummary = bedNoSummary,
+                // v2.13.112 班组列 + 智能排序字段
+                TeamNames = teamMap.GetValueOrDefault(d.DormCode) ?? new List<string>(),
+                MainAttendanceTypeId = staying?.MainAttendanceTypeId,
+                HasSameTeam = (!string.IsNullOrEmpty(empTeamName)
+                               && teamMap.GetValueOrDefault(d.DormCode)?.Contains(empTeamName) == true)
+                            ? 1 : 0
             });
         }
 
-        return result;
+        // v2.13.112 4 级智能排序：同员工班组 > 空房 > 同班次 > 字典序
+        var sortedResult = result
+            .OrderByDescending(d => d.HasSameTeam)       // 1st: 同员工班组（高优先）
+            .ThenByDescending(d => d.CurrentCount == 0)  // 2nd: 空房号优先
+            .ThenBy(d => d.MainAttendanceTypeId == empAttId ? 0 : 1)  // 3rd: 同班次优先
+            .ThenBy(d => d.DormCode)                     // 4th: 字典序（稳定排序）
+            .ToList();
+
+        return sortedResult;
     }
 
     /// <inheritdoc/>
