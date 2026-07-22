@@ -76,6 +76,7 @@
                     <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                     <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
                     <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
+                    <span class="emp-info-item"><span class="label">班组:</span><span class="value" id="empTeam"></span></span>
                 </div>
                 <input type="hidden" id="activeRecordId" />
             </div>
@@ -201,12 +202,21 @@ async function selectEmp(emp) {
         document.getElementById('empGender').innerHTML = '<span class="badge bg-secondary">未知</span>';
     }
     document.getElementById('empPhone').textContent = emp.phone || '-';
-    document.getElementById('empDept').textContent = emp.department || '-';
+    // v2.13.113 BUG 修复：部门走 FK 关联（API 返回 DepartmentName）
+    document.getElementById('empDept').textContent = emp.departmentName || emp.department || '-';
     document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
     // v2.13.88 BUG 修复：与 CheckIn 页面一致 — 用 AttendanceType.Code（枚举关键字）映射 Badge 颜色
     const attCode2 = emp.attendanceTypeCode || 'DEFAULT';
     const attName2 = emp.attendanceTypeName || '默认';
     document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode2] || 'bg-secondary'}">${attName2}</span>`;
+    // v2.13.113 BUG 修复：班组 FK 关联（API 返回 TeamName），Badge 渲染
+    const teamName2 = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
+    const teamEl2 = document.getElementById('empTeam');
+    if (teamEl2) {
+        teamEl2.innerHTML = teamName2
+            ? `<span class="badge bg-primary">${teamName2}</span>`
+            : '<span class="text-muted">-</span>';
+    }
 
     // 加载在宿记录（v2.13.38 与原型一致：自动绑定第一条 active 记录）
     try {

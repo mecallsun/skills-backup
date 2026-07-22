@@ -93,6 +93,7 @@
                             <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
                             <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
+                            <span class="emp-info-item"><span class="label">班组:</span><span class="value" id="empTeam"></span></span>
                         </div>
                     </div>
 
@@ -197,17 +198,31 @@
                 document.getElementById('empGender').innerHTML = '<span class="badge bg-secondary">未知</span>';
             }
             document.getElementById('empPhone').textContent = emp.phone || '-';
-            document.getElementById('empDept').textContent = emp.department || '-';
+
+            // v2.13.113 BUG 修复：部门/类型/班次/班组全部用 FK ID 查基础资料字典回填名称
+            var deptName = (emp.departmentId != null)
+                ? ((DEPARTMENTS.find(function(d){return d.id === emp.departmentId;}) || {}).name || '-')
+                : (emp.departmentName || emp.department || '-');
+            document.getElementById('empDept').textContent = deptName;
 
             var empTypeName = (emp.employeeTypeId != null)
                 ? (EMPLOYEE_TYPES.find(function(t){return t.id === emp.employeeTypeId;}) || {}).name
-                : (emp.employeeType || '-');
-            document.getElementById('empType').textContent = empTypeName;
+                : (emp.employeeTypeName || emp.employeeType || '-');
+            document.getElementById('empType').textContent = empTypeName || '-';
 
             var attCode = (emp.attendanceTypeId != null)
                 ? (ATTENDANCE_TYPES.find(function(t){return t.id === emp.attendanceTypeId;}) || {}).code
                 : (emp.attendanceType || 'DEFAULT');
             document.getElementById('empAtt').innerHTML = attendanceBadge(attCode);
+
+            // v2.13.113 BUG 修复：班组 FK 关联渲染 Badge
+            var teamName = (emp.teamId != null)
+                ? ((TEAMS.find(function(t){return t.id === emp.teamId;}) || {}).name || '-')
+                : (emp.teamName || '-');
+            var teamBadge = teamName && teamName !== '-'
+                ? '<span class="badge bg-primary">' + teamName + '</span>'
+                : '<span class="text-muted">-</span>';
+            document.getElementById('empTeam').innerHTML = teamBadge;
 
             // 当前在宿记录（用于校验）
             const actives = (typeof BOOKINGS !== 'undefined')

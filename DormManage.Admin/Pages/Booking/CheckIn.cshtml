@@ -161,6 +161,7 @@
                             <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
                             <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
+                            <span class="emp-info-item"><span class="label">班组:</span><span class="value" id="empTeam"></span></span>
                         </div>
                         <div id="empWarn" class="emp-warn"></div>
                     </div>
@@ -307,9 +308,11 @@
             document.getElementById('empCode').textContent = emp.employeeCode;
             document.getElementById('empName').textContent = emp.realName;
             document.getElementById('empPhone').textContent = emp.phone || '-';
-            document.getElementById('empDept').textContent = emp.department || '-';
 
-            // 员工类型：原型取 EMPLOYEE_TYPES 字典；这里 fallback 到 employeeType 字段（API 暂未返回 name）
+            // v2.13.113 BUG 修复：部门走 FK 关联（API 返回 DepartmentName），fallback 冗余 Department 字段
+            document.getElementById('empDept').textContent = emp.departmentName || emp.department || '-';
+
+            // 员工类型：API 返回 EmployeeTypeName（FK 关联 EmployeeType.Name）
             document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
 
             // 考勤班次：v2.13.88 BUG 修复 — 用 AttendanceType.Code（DEFAULT/MORNING/MIDDLE/EVENING/NIGHT/OTHER）映射 Badge 颜色 + AttendanceTypeName 显示
@@ -317,6 +320,15 @@
             const attCode = emp.attendanceTypeCode || 'DEFAULT';
             const attName = emp.attendanceTypeName || '默认';
             document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode] || 'bg-secondary'}">${attName}</span>`;
+
+            // v2.13.113 BUG 修复：班组 FK 关联（API 返回 TeamName），Badge 渲染
+            const teamName = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
+            const teamEl = document.getElementById('empTeam');
+            if (teamEl) {
+                teamEl.innerHTML = teamName
+                    ? `<span class="badge bg-primary">${teamName}</span>`
+                    : '<span class="text-muted">-</span>';
+            }
 
             // v2.13.88 BUG 修复：在姓名后追加性别显示（与 CheckOut 页面保持一致）
             const genderVal = (emp.gender === 1 || emp.gender === 2 || emp.gender === 0) ? emp.gender : null;

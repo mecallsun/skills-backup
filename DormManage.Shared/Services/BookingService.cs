@@ -132,6 +132,9 @@ public class EmployeeSearchResult
     public string RealName { get; set; } = string.Empty;
     public string? Phone { get; set; }
     public string? Department { get; set; }
+    // v2.13.113: DepartmentName 走 FK 关联（SysEmployee.DepartmentId → Department.Name），单一真源
+    public int? DepartmentId { get; set; }
+    public string? DepartmentName { get; set; }
     public DateOnly? HireDate { get; set; }
     public string? DormCode { get; set; }
     // v2.13.38: 补充员工类型 + 考勤班次字段（供 CheckIn 页面 Badge 渲染）
@@ -143,6 +146,9 @@ public class EmployeeSearchResult
     public string? AttendanceTypeCode { get; set; }
     // v2.13.88: 性别（1=男 2=女 0=未知），用于 CheckIn 提示信息显示
     public int? Gender { get; set; }
+    // v2.13.113: 班组 FK 关联（SysEmployee.TeamId → Team.Name），单一真源
+    public int TeamId { get; set; }
+    public string? TeamName { get; set; }
 }
 
 /// <summary>
@@ -1145,6 +1151,9 @@ public class BookingService : IBookingService
                 RealName = x.RealName,
                 Phone = x.Phone,
                 Department = x.Department,
+                // v2.13.113: 部门 FK 关联（SysEmployee.DepartmentId → Department.Name）
+                DepartmentId = x.DepartmentId,
+                DepartmentName = _db.Departments.Where(d => d.Id == x.DepartmentId).Select(d => d.Name).FirstOrDefault(),
                 HireDate = x.HireDate,
                 DormCode = x.DormCode,
                 // v2.13.38: 映射员工类型 + 考勤班次（FK Name 用于 Badge 渲染）
@@ -1154,7 +1163,10 @@ public class BookingService : IBookingService
                 AttendanceTypeName = x.AttendanceType != null ? x.AttendanceType.Name : null,
                 // v2.13.88: 补充考勤班次编码 + 性别（FK Name/Code 替代 id 字符串）
                 AttendanceTypeCode = x.AttendanceType != null ? x.AttendanceType.Code : null,
-                Gender = x.Gender
+                Gender = x.Gender,
+                // v2.13.113: 班组 FK 关联（SysEmployee.TeamId → Team.Name）
+                TeamId = x.TeamId,
+                TeamName = x.Team != null ? x.Team.Name : null
             })
             .ToListAsync();
     }
