@@ -547,10 +547,16 @@ public static class DatabaseInitializer
                   IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
                   INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
                   VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                // v2.13.110 P0 BUG 修复：billingstandard:add（费用标准「新增标准」按钮权限独立）
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 41)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (41, N'billingstandard:add', N'新增费用标准', 2, 11, N'/BillingStandard/Create', N'bi-plus-lg', 5, 1, 0, '2026-07-22');
                   SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
             };
 
-            var permTargetIds = new[] { 37, 38, 39, 40 };
+            var permTargetIds = new[] { 37, 38, 39, 40, 41 };
             for (int i = 0; i < permInserts.Length; i++)
             {
                 try
@@ -593,10 +599,16 @@ public static class DatabaseInitializer
                   IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
                   INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
                   VALUES (61, 1, 40, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
+                // v2.13.110 P0 BUG 修复：admin → billingstandard:add
+                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 62)
+                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                  VALUES (62, 1, 41, '2026-07-22');
                   SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;"
             };
 
-            var rpTargetIds = new[] { 58, 59, 60, 61 };
+            var rpTargetIds = new[] { 58, 59, 60, 61, 62 };
             for (int i = 0; i < rpInserts.Length; i++)
             {
                 try
@@ -618,14 +630,14 @@ public static class DatabaseInitializer
             // 改进：迁移完成后主动 SELECT 关键 Id，缺失项输出 WARNING + 列表，便于运维诊断。
             try
             {
-                var requiredPermIds = new[] { 37, 38, 39, 40 };
-                var requiredRpIds = new[] { 58, 59, 60, 61 };
+                var requiredPermIds = new[] { 37, 38, 39, 40, 41 };
+                var requiredRpIds = new[] { 58, 59, 60, 61, 62 };
 
                 var presentPerms = await db.Database.SqlQueryRaw<int>(
-                    "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40)")
+                    "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40,41)")
                     .ToListAsync(ct);
                 var presentRps = await db.Database.SqlQueryRaw<int>(
-                    "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61)")
+                    "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61,62)")
                     .ToListAsync(ct);
                 var fieldPermCount = await db.SysFieldPermissions.CountAsync(ct);
 
@@ -634,14 +646,14 @@ public static class DatabaseInitializer
 
                 if (missingPerms.Count == 0 && missingRps.Count == 0 && fieldPermCount >= 5)
                 {
-                    logger.LogInformation("[v2.13.101 Verify] 隐私字段权限迁移完整性检查通过：SysPermission 4/4、SysRolePermission 4/4、SysFieldPermission {N}/5", fieldPermCount);
+                    logger.LogInformation("[v2.13.101 Verify] 隐私字段权限迁移完整性检查通过：SysPermission 5/5、SysRolePermission 5/5、SysFieldPermission {N}/5", fieldPermCount);
                 }
                 else
                 {
                     if (missingPerms.Count > 0)
-                        logger.LogWarning("[v2.13.101 Verify] SysPermission 缺失 {Ids}（personnel:add=40 / privacy:field:enable=39 等）", string.Join(",", missingPerms));
+                        logger.LogWarning("[v2.13.101 Verify] SysPermission 缺失 {Ids}（personnel:add=40 / billingstandard:add=41 / privacy:field:enable=39 等）", string.Join(",", missingPerms));
                     if (missingRps.Count > 0)
-                        logger.LogWarning("[v2.13.101 Verify] SysRolePermission 缺失 {Ids}（admin→personnel:add=61 等）", string.Join(",", missingRps));
+                        logger.LogWarning("[v2.13.101 Verify] SysRolePermission 缺失 {Ids}（admin→personnel:add=61 / admin→billingstandard:add=62 等）", string.Join(",", missingRps));
                     if (fieldPermCount < 5)
                         logger.LogWarning("[v2.13.101 Verify] SysFieldPermission 仅 {N}/5 行，字段权限清单不完整", fieldPermCount);
                     logger.LogWarning("[v2.13.101 Verify] ⚠ 迁移不完整！请检查：(1) Admin 是否已重启触发 DatabaseInitializer.InitializeAsync；(2) 数据库连接字符串是否指向预期文件；(3) 启动日志是否有错误");
@@ -652,7 +664,7 @@ public static class DatabaseInitializer
                 logger.LogWarning(ex, "[v2.13.101 Verify] 完整性验证异常（不影响迁移主流程）");
             }
 
-            logger.LogInformation("[v2.13.100 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 4 权限码 + 4 角色关联，含 v2.13.97 personnel:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
+            logger.LogInformation("[v2.13.110 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 5 权限码 + 5 角色关联，含 v2.13.97 personnel:add / v2.13.110 billingstandard:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
             return result;
         }
         catch (Exception ex)
@@ -684,8 +696,8 @@ public static class DatabaseInitializer
     public static async Task<SeedIntegrityReport> CheckSeedIntegrityAsync(
         DormDbContext db, CancellationToken ct = default)
     {
-        var requiredPermIds = new[] { 37, 38, 39, 40 };
-        var requiredRpIds   = new[] { 58, 59, 60, 61 };
+        var requiredPermIds = new[] { 37, 38, 39, 40, 41 };
+        var requiredRpIds   = new[] { 58, 59, 60, 61, 62 };
         const int expectedFieldPermCount = 5;
 
         var presentPerms = new List<int>();
@@ -695,14 +707,14 @@ public static class DatabaseInitializer
         try
         {
             presentPerms = await db.Database.SqlQueryRaw<int>(
-                "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40)").ToListAsync(ct);
+                "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40,41)").ToListAsync(ct);
         }
         catch { /* 表/视图不存在时返回空集合 */ }
 
         try
         {
             presentRps = await db.Database.SqlQueryRaw<int>(
-                "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61)").ToListAsync(ct);
+                "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61,62)").ToListAsync(ct);
         }
         catch { /* 同上 */ }
 
@@ -726,7 +738,7 @@ public static class DatabaseInitializer
             FieldPermissionCount = fieldPermCount,
             ExpectedFieldPermissionCount = expectedFieldPermCount,
             CheckedAt = DateTime.Now,
-            Version = "v2.13.102"
+            Version = "v2.13.110"
         };
     }
 }

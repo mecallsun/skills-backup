@@ -783,7 +783,9 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 38, PermissionCode = "fieldpermission:edit", PermissionName = "编辑字段权限", PermissionType = 2, ParentId = 37, Route = "", Icon = "", SortOrder = 29, IsActive = true, IsSystem = true, Description = "勾选/取消勾选敏感字段", CreatedAt = DateTime.Parse("2026-07-22") },
             new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "启用隐私字段保护", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段", CreatedAt = DateTime.Parse("2026-07-22") },
             // ========== v2.13.97 P0 BUG：personnel 子权限补全（用户反馈：缺少「新增」按钮权限） ==========
-            new SysPermission { Id = 40, PermissionCode = "personnel:add", PermissionName = "新增人员", PermissionType = 2, ParentId = 9, Route = "/Personnel/Create", Icon = "bi-plus-lg", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") }
+            new SysPermission { Id = 40, PermissionCode = "personnel:add", PermissionName = "新增人员", PermissionType = 2, ParentId = 9, Route = "/Personnel/Create", Icon = "bi-plus-lg", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") },
+            // ========== v2.13.110 P0 BUG：billing 子权限补全（用户反馈：缺少「新增标准」按钮权限） ==========
+            new SysPermission { Id = 41, PermissionCode = "billingstandard:add", PermissionName = "新增费用标准", PermissionType = 2, ParentId = 11, Route = "/BillingStandard/Create", Icon = "bi-plus-lg", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") }
         );
 
         // 角色-权限关联（管理员：全部权限）
@@ -838,6 +840,8 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 60, RoleId = 1, PermissionId = 39, CreatedAt = DateTime.Parse("2026-07-22") },
             // ========== v2.13.97 admin 新增 personnel:add（用户反馈 P0：缺少「新增人员」按钮权限） ==========
             new SysRolePermission { Id = 61, RoleId = 1, PermissionId = 40, CreatedAt = DateTime.Parse("2026-07-22") },
+            // ========== v2.13.110 admin 新增 billingstandard:add（用户反馈 P0：缺少「新增标准」按钮权限） ==========
+            new SysRolePermission { Id = 62, RoleId = 1, PermissionId = 41, CreatedAt = DateTime.Parse("2026-07-22") },
             // 财务角色
             new SysRolePermission { Id = 19, RoleId = 2, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 20, RoleId = 2, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
