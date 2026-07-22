@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $baseDir = $PSScriptRoot
 $srcDir = Join-Path $baseDir 'publish-final'
 $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-$zipPath = Join-Path $baseDir ("DormManage_v2.13.106_" + $ts + ".zip")
+$zipPath = Join-Path $baseDir ("DormManage_v2.13.108_" + $ts + ".zip")
 
 if (-not (Test-Path $srcDir)) {
     Write-Error ("Source directory not found: " + $srcDir)
