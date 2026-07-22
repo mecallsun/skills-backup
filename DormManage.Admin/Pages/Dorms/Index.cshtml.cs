@@ -120,6 +120,26 @@ public class IndexModel : PaginatedPageModel
             })
             .ToDictionaryAsync(x => x.DormCode, x => x.TypeNames);
 
+        // v2.13.111 派生班组（基于当前在宿员工的 TeamId FK → Team.Name，去重 + 按 SortOrder 升序）
+        // JOIN DormBookings(Status=2) → SysEmployee(TeamId) → Team(Name + SortOrder)
+        var teamStats = await _db.DormBookings
+            .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.TeamId })
+            .Join(_db.Teams.AsNoTracking(),
+                  x => x.TeamId, t => t.Id,
+                  (x, t) => new { x.DormCode, TeamId = t.Id, TeamName = t.Name, SortOrder = t.SortOrder })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                // 按 Team.SortOrder 升序 + 去重（同 TeamId 仅保留第一个）
+                TeamNames = g.OrderBy(x => x.SortOrder).ThenBy(x => x.TeamId)
+                             .Select(x => x.TeamName).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.DormCode, x => x.TeamNames);
+
         var items = dormList.Select(d => new DormDto
         {
             Id = d.Id,
@@ -137,7 +157,9 @@ public class IndexModel : PaginatedPageModel
             MaleCount = genderStats.GetValueOrDefault(d.DormCode)?.MaleCount ?? 0,
             FemaleCount = genderStats.GetValueOrDefault(d.DormCode)?.FemaleCount ?? 0,
             // v2.13.95 派生班次字段（按 AttendanceType.SortOrder 升序排列）
-            AttendanceTypeNames = attendanceStats.GetValueOrDefault(d.DormCode) ?? new List<string>()
+            AttendanceTypeNames = attendanceStats.GetValueOrDefault(d.DormCode) ?? new List<string>(),
+            // v2.13.111 派生班组字段（按 Team.SortOrder 升序 + 去重）
+            TeamNames = teamStats.GetValueOrDefault(d.DormCode) ?? new List<string>()
         }).ToList();
 
         // v2.13.85 计算 EffectiveGender 派生：男>0=1 / 女>0=2 / 空房间=0
@@ -218,6 +240,13 @@ public class DormDto
     public List<string> AttendanceTypeNames { get; set; } = new();
     /// <summary>渲染为「早班/中班」格式字符串（前端直接展示）</summary>
     public string AttendanceTypeNamesText => string.Join("/", AttendanceTypeNames);
+
+    // ========== v2.13.111 派生班组字段 ==========
+    /// <summary>当前在宿员工的班组名称集合（按 Team.SortOrder 升序 + 去重）。
+    /// 数据关系：DormBooking (Status=2 在宿) → SysEmployee (TeamId FK) → Team (Name + SortOrder)。</summary>
+    public List<string> TeamNames { get; set; } = new();
+    /// <summary>渲染为「一班/三班」格式字符串（前端直接展示）</summary>
+    public string TeamNamesText => string.Join("/", TeamNames);
 
     // ========== v2.13.85 派生性别字段 ==========
     /// <summary>当前在宿男员工数（实时派生）</summary>

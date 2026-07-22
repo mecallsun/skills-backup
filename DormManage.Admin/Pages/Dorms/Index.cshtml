@@ -83,6 +83,7 @@
                             <th class="text-center">容量</th>
                             <th class="text-center">在住人数</th>
                             <th class="text-center" style="min-width:140px">班次</th>
+                            <th class="text-center" style="min-width:120px">班组</th>
                             <th class="text-center" style="min-width:120px">使用率</th>
                             <th class="text-center">状态</th>
                             <th width="220" class="text-center">操作</th>
@@ -133,6 +134,18 @@
                                         else
                                         {
                                             <small class="text-muted">-</small>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @* v2.13.111 派生班组列（按 Team.SortOrder 升序 + 去重；
+                                           数据关系：DormBooking Status=2 → SysEmployee.TeamId → Team.Name；
+                                           无人入住时该列显示完全空白，不渲染任何字符）*@
+                                        @if (item.TeamNames != null && item.TeamNames.Count > 0)
+                                        {
+                                            foreach (var name in item.TeamNames)
+                                            {
+                                                <span class="badge bg-primary me-1">@name</span>
+                                            }
                                         }
                                     </td>
                                     <td class="text-center">

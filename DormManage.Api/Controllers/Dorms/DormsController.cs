@@ -96,6 +96,33 @@ public class DormsController : ControllerBase
                 d.AttendanceTypeNames = names;
         }
 
+        // v2.13.111 派生班组（避免 N+1：批量一次 JOIN 全部页内宿舍）
+        // 数据链路：DormBooking(Status=2 在宿) → SysEmployee(TeamId FK) → Team(Name + SortOrder)
+        // 与 v2.13.91 宿舍详情班组列 / v2.13.97 Booking 列表班组列采用同 EmployeeTeamMap 模式
+        var teamMap = await _db.DormBookings
+            .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.TeamId })
+            .Join(_db.Teams.AsNoTracking(),
+                  x => x.TeamId, t => t.Id,
+                  (x, t) => new { x.DormCode, TeamId = t.Id, TeamName = t.Name, SortOrder = t.SortOrder })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                // 按 Team.SortOrder 升序 + 去重（同 TeamId 仅保留第一个）
+                TeamNames = g.OrderBy(x => x.SortOrder).ThenBy(x => x.TeamId)
+                             .Select(x => x.TeamName).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.DormCode, x => x.TeamNames);
+
+        foreach (var d in items)
+        {
+            if (teamMap.TryGetValue(d.DormCode, out var tnames))
+                d.TeamNames = tnames;
+        }
+
         return ApiResponse<PagedResult<DormDto>>.Ok(new PagedResult<DormDto>
         {
             Items = items,
@@ -294,6 +321,9 @@ public class DormDto
     public int CurrentCount { get; set; }
     /// <summary>v2.13.95 派生班次名称集合（按 AttendanceType.SortOrder 升序 + 去重）</summary>
     public List<string> AttendanceTypeNames { get; set; } = new();
+    /// <summary>v2.13.111 派生班组名称集合（按 Team.SortOrder 升序 + 去重）。
+    /// 数据关系：DormBooking (Status=2 在宿) → SysEmployee (TeamId FK) → Team (Name)。</summary>
+    public List<string> TeamNames { get; set; } = new();
 }
 
 /// <summary>
