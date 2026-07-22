@@ -86,6 +86,7 @@
                             <th>房间数</th><th>容量</th>
                             <th>在住人数</th>
                             <th>班次</th>
+                            <th>班组</th>
                             <th>使用率</th>
                             <th>状态</th><th width="220">操作</th>
                         </tr>
@@ -399,7 +400,7 @@
             renderRows: (items, total, start) => {
                 const tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = `<tr><td colspan="13" class="text-center text-muted py-4">暂无宿舍</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">暂无宿舍</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = items.map((d, idx) => {
@@ -408,6 +409,17 @@
                     const attendanceHtml = attendanceTypes.length === 0
                         ? '<small class="text-muted">-</small>'
                         : attendanceTypes.map(name => `<span class="badge bg-info text-dark me-1">${name}</span>`).join('');
+                    // v2.13.107 班组列派生（去重 + 按 SortOrder 升序）
+                    const teams = currentTeams(d.dormCode);
+                    const teamHtml = teams.length === 0
+                        ? '<small class="text-muted">-</small>'
+                        : teams.map(t => {
+                            // 按 Team.Code 首字母派生 Badge 颜色（与 v2.13.91 TeamBadgeHelper 一致）
+                            const firstChar = (t.code || '').charAt(5); // TEAM_X → X
+                            const colorMap = { 'A': 'bg-primary', 'B': 'bg-info text-dark', 'C': 'bg-warning text-dark', 'D': 'bg-success', 'E': 'bg-danger' };
+                            const cls = colorMap[firstChar] || 'bg-secondary';
+                            return `<span class="badge ${cls} me-1">${t.name}</span>`;
+                        }).join('');
                     const usage = Math.round(residents / d.capacity * 100);
                     const usageColor = usage >= 100 ? 'bg-danger' : usage >= 75 ? 'bg-warning text-dark' : 'bg-success';
                     const serialNum = start + idx + 1;
@@ -432,6 +444,7 @@
                             / ${d.capacity}
                         </td>
                         <td>${attendanceHtml}</td>
+                        <td>${teamHtml}</td>
                         <td>
                             <div class="progress" style="height: 18px; min-width: 80px;">
                                 <div class="progress-bar ${usageColor}" style="width: ${usage}%">${usage}%</div>

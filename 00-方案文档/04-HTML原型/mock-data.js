@@ -33922,6 +33922,25 @@ function currentAttendanceTypes(dormCode) {
         .filter(t => t)
         .map(t => t.name);
 }
+// 辅助：v2.13.107 宿舍档案列表「班组」列派生
+// 返回该宿舍房号当前在宿员工（Status=1）的所属班组去重集合（按 Team.SortOrder 升序）
+// 数据关系：RESIDENCIES → PERSONNEL (EmployeeId=PERSONNEL.Id) → TEAMS (PERSONNEL.teamId=TEAMS.id)
+// 示例：A101 入住 3 人（A班/B班/B班）→ 返回 [{name:'一班', code:'TEAM_A1'}, {name:'三班', code:'TEAM_B1'}]（去重 + 按 SortOrder 排序）
+function currentTeams(dormCode) {
+    const staying = RESIDENCIES.filter(r => r.dormCode === dormCode && r.status === 1);
+    const teams = staying
+        .map(r => PERSONNEL.find(e => e.id === r.employeeId))
+        .filter(e => e && e.teamId)
+        .map(e => TEAMS.find(t => t.id === e.teamId))
+        .filter(t => t); // 过滤掉 TEAMS 中不存在的孤儿 teamId
+    if (teams.length === 0) return [];
+    // 按 SortOrder 升序 + 去重（同 teamId 仅保留第一个）
+    const seen = new Set();
+    return teams
+        .slice()
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+        .filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
+}
 // 辅助：获取宿舍的所有住宿记录（按入住日期倒序）
 function dormHistory(dormCode) {
     return RESIDENCIES.filter(r => r.dormCode === dormCode)
