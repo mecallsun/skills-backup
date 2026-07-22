@@ -7,16 +7,27 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Admin.Pages.Personnel;
 
-/// <summary>员工新增页面模型（项1）</summary>
+/// <summary>
+/// 员工新增页面模型（项1）
+/// v2.13.106 三层防御：PageModel 校验 personnel:add 按钮权限
+/// （UI 层 PageHeader PermissionCode + PageModel 层 + API 层）
+/// </summary>
 public class CreateModel : PageModel
 {
     private readonly IPersonnelService _svc;
     private readonly DormDbContext _db;
+    private readonly IPermissionService _perm;
+    private readonly IHttpContextAccessor _http;
 
-    public CreateModel(IPersonnelService svc, DormDbContext db)
+    /// <summary>v2.13.106 新增人员所需权限码（与 PageHeader primaryAction.PermissionCode 一致）</summary>
+    public const string RequiredPermissionCode = "personnel:add";
+
+    public CreateModel(IPersonnelService svc, DormDbContext db, IPermissionService perm, IHttpContextAccessor http)
     {
         _svc = svc;
         _db = db;
+        _perm = perm;
+        _http = http;
     }
 
     [BindProperty]
@@ -28,10 +39,27 @@ public class CreateModel : PageModel
     public List<SelectListItem> AttendanceTypes { get; set; } = new();
     public List<SelectListItem> EmploymentStatuses { get; set; } = new();
 
-    public async Task OnGetAsync() => await LoadDropdownsAsync();
+    public async Task<IActionResult> OnGetAsync()
+    {
+        // v2.13.106 三层防御（PageModel 层）：无 personnel:add 权限 → 重定向到列表 + 拒绝提示
+        if (!_perm.CurrentUserHasCode(_http, RequiredPermissionCode))
+        {
+            TempData["Error"] = $"您没有「新增人员」权限（{RequiredPermissionCode}），无法访问该页面";
+            return RedirectToPage("/Personnel/Index");
+        }
+        await LoadDropdownsAsync();
+        return Page();
+    }
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // v2.13.106 三层防御（PageModel 层）：POST 也必须校验
+        if (!_perm.CurrentUserHasCode(_http, RequiredPermissionCode))
+        {
+            TempData["Error"] = $"您没有「新增人员」权限（{RequiredPermissionCode}），无法提交数据";
+            return RedirectToPage("/Personnel/Index");
+        }
+
         if (!ModelState.IsValid)
         {
             await LoadDropdownsAsync();

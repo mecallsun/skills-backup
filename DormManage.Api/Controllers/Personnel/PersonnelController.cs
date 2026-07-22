@@ -1,19 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
 using DormManage.Shared.Services;
 using DormManage.Shared.Models;
+using DormManage.Shared.Extensions;
 using SysEmployeeModel = DormManage.Shared.Models.SysEmployee;
 
 namespace DormManage.Api.Controllers.Personnel;
 
 /// <summary>
 /// 人员清单 API 控制器（P1-14）
+/// v2.13.106 三层防御：API 层校验 personnel:add 权限（POST 创建/批量导入）
 /// </summary>
 [ApiController]
 [Route("api/v1/personnel")]
 public class PersonnelController : ControllerBase
 {
     private readonly IPersonnelService _service;
-    public PersonnelController(IPersonnelService service) { _service = service; }
+    private readonly IPermissionService _perm;
+    private readonly ILogger<PersonnelController> _logger;
+
+    /// <summary>v2.13.106 新增人员所需权限码（与 PageHeader primaryAction.PermissionCode 一致）</summary>
+    public const string RequiredPermissionCode = "personnel:add";
+
+    public PersonnelController(IPersonnelService service, IPermissionService perm, ILogger<PersonnelController> logger)
+    {
+        _service = service;
+        _perm = perm;
+        _logger = logger;
+    }
 
     [HttpGet]
     public async Task<ApiResponse<PagedResult<SysEmployeeModel>>> GetList(
@@ -40,6 +53,14 @@ public class PersonnelController : ControllerBase
     [RequestSizeLimit(20_000_000)]
     public async Task<ApiResponse<PersonnelImportResult>> Import(IFormFile file)
     {
+        // v2.13.106：导入批量新增同样需要 personnel:add 权限（防御：API 直接调用绕过 UI）
+        if (!HasPermission(RequiredPermissionCode))
+        {
+            _logger.LogWarning("[v2.13.106 RBAC] 用户 {User} 尝试 POST /api/v1/personnel/import 但缺少 {Code} 权限",
+                HttpContext.GetCurrentUserName(), RequiredPermissionCode);
+            return ApiResponse<PersonnelImportResult>.Fail("PERMISSION_DENIED", $"无 {RequiredPermissionCode} 权限，无法导入人员");
+        }
+
         if (file == null || file.Length == 0)
             return ApiResponse<PersonnelImportResult>.Fail("FILE_REQUIRED", "请选择 CSV 文件");
 
@@ -48,10 +69,18 @@ public class PersonnelController : ControllerBase
         return ApiResponse<PersonnelImportResult>.Ok(result, $"导入完成：新增 {result.SuccessCount} 条，更新 {result.UpdateCount} 条，失败 {result.FailCount} 条");
     }
 
-    /// <summary>新增员工（项1）</summary>
+    /// <summary>新增员工（项1）— v2.13.106 三层防御 API 层</summary>
     [HttpPost]
     public async Task<ApiResponse<int>> Create([FromBody] PersonnelEditDto dto)
     {
+        // v2.13.106 三层防御（API 层）：无 personnel:add 权限 → 403 拒绝
+        if (!HasPermission(RequiredPermissionCode))
+        {
+            _logger.LogWarning("[v2.13.106 RBAC] 用户 {User} 尝试 POST /api/v1/personnel 但缺少 {Code} 权限",
+                HttpContext.GetCurrentUserName(), RequiredPermissionCode);
+            return ApiResponse<int>.Fail("PERMISSION_DENIED", $"无 {RequiredPermissionCode} 权限，无法新增人员");
+        }
+
         var (ok, msg, id) = await _service.CreateAsync(dto);
         return ok ? ApiResponse<int>.Ok(id, msg) : ApiResponse<int>.Fail("CREATE_FAILED", msg);
     }
@@ -70,5 +99,24 @@ public class PersonnelController : ControllerBase
     {
         var (ok, msg) = await _service.MarkLeftAsync(id, leaveDate ?? DateOnly.FromDateTime(DateTime.Today));
         return ok ? ApiResponse.Ok(msg) : ApiResponse.Fail("LEAVE_FAILED", msg);
+    }
+
+    /// <summary>
+    /// v2.13.106：API 层权限辅助方法
+    /// 优先从 HttpContext.User（Cookie 认证）取 userId，否则从 X-User-Id header 取。
+    /// 然后用 IPermissionService 同步检查权限码（每请求 Items 缓存避免重复查询）。
+    /// </summary>
+    private bool HasPermission(string code)
+    {
+        if (string.IsNullOrEmpty(code)) return true; // 兜底：未配置权限码时放行
+        var userId = HttpContext.GetCurrentUserId();
+        if (userId <= 0) return false; // 未识别用户 → 拒绝
+        var accessor = HttpContext.RequestServices.GetService<IHttpContextAccessor>();
+        if (accessor == null)
+        {
+            // 兜底：构造一个临时 accessor（生产环境 IHttpContextAccessor 一定存在）
+            accessor = new HttpContextAccessor { HttpContext = HttpContext };
+        }
+        return _perm.CurrentUserHasCode(accessor, code);
     }
 }
