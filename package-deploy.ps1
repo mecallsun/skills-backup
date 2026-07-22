@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $baseDir = $PSScriptRoot
 $srcDir = Join-Path $baseDir 'publish-final'
 $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-$zipPath = Join-Path $baseDir ("DormManage_v2.13.111_" + $ts + ".zip")
+$zipPath = Join-Path $baseDir ("DormManage_v2.13.112_" + $ts + ".zip")
 
 if (-not (Test-Path $srcDir)) {
     Write-Error ("Source directory not found: " + $srcDir)
@@ -29,7 +29,8 @@ $extra = @(
     (Join-Path $baseDir 'CLAUDE.md'),
     (Join-Path $baseDir '00-方案文档\161-SQLite彻底移除专项-v2.13.109.md'),
     (Join-Path $baseDir '00-方案文档\162-费用标准新增按钮三层权限-v2.13.110.md'),
-    (Join-Path $baseDir '00-方案文档\163-宿舍档案列表班组列-v2.13.111.md')
+    (Join-Path $baseDir '00-方案文档\163-宿舍档案列表班组列-v2.13.111.md'),
+    (Join-Path $baseDir '00-方案文档\164-可分配房号智能排序与班组列-v2.13.112.md')
 )
 foreach ($f in $extra) {
     if (Test-Path $f) {
@@ -55,4 +56,5 @@ Write-Host "  CLAUDE.md   ~14 KB    project notes"
 Write-Host "  161-SQLite彻底移除专项-v2.13.109.md          交付报告"
 Write-Host "  162-费用标准新增按钮三层权限-v2.13.110.md  交付报告"
 Write-Host "  163-宿舍档案列表班组列-v2.13.111.md         交付报告"
+Write-Host "  164-可分配房号智能排序与班组列-v2.13.112.md 交付报告"
 
