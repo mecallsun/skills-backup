@@ -224,3 +224,7 @@ dotnet publish DormManage.TrayApp/DormManage.TrayApp.csproj -c Release -r win-x6
 | v2.12.43 | 2026-07-11 | 页面 500 错误全面修复 |
 | v2.12.42 | 2026-07-10 | 数据库 Provider 切换、部署环境规范 |
 | v1.0 | 2026-07-01 | 初始版本 |
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。生产数据库初始化以 init_schema.sql 和 SQL Server 运维脚本为准，不使用 EnsureCreated()。

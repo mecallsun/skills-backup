@@ -9,7 +9,7 @@ namespace DormManage.TrayApp.Services;
 /// 环境变量注入（与 Admin/Api Program.cs 对齐）：
 /// - DormManage_KESTREL_PORT（Api/Admin 端口）
 /// - DormManage_DB_CONN（SQL Server 连接串，Provider=SqlServer）
-/// - DormManage_DB_PATH（SQLite 绝对路径，Provider=Sqlite）
+/// - DormManage_DB_CONN（SQL Server 连接串；v2.13.109 起仅 SqlServer 单 provider，DormManage_DB_PATH 已下线）
 /// </summary>
 public class ProcessManager
 {
@@ -301,17 +301,14 @@ public class ProcessManager
         psi.EnvironmentVariables["DormManage_KESTREL_PORT"] = port.ToString();
 
         // v2.13.28: 数据库连接环境变量注入（优先级最高，覆盖 appsettings.json）
+        // v2.13.109: SQLite 已移除，仅注入 DormManage_DB_CONN
         if (string.Equals(cfg.Database.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
         {
             if (!string.IsNullOrWhiteSpace(cfg.Database.ConnectionString))
                 psi.EnvironmentVariables["DormManage_DB_CONN"] = cfg.Database.ConnectionString;
             // 注意：此方法是 static，日志由调用方记录
         }
-        else if (string.Equals(cfg.Database.Provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
-        {
-            if (!string.IsNullOrWhiteSpace(cfg.Database.SqlitePath))
-                psi.EnvironmentVariables["DormManage_DB_PATH"] = cfg.Database.SqlitePath;
-        }
+        // v2.13.109: 移除 DormManage_DB_PATH 分支（SQLite 已下线）
 
         if (!string.IsNullOrWhiteSpace(cfg.Storage.ImageRoot))
         {

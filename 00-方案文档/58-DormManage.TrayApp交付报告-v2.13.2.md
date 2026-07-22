@@ -238,3 +238,9 @@ TrayAppContext.cs:23 → 创建 HealthChecker + ProcessManager + NotifyIconManag
 | `DormManage_DB_CONN` | ProcessManager.cs:BuildStartInfo | Api/Admin Program.cs:21-23 |
 | `DormManage_DB_PATH` | ProcessManager.cs:BuildStartInfo | Admin Program.cs:57-59 |
 | `DormManage_IMAGE_ROOT` | ProcessManager.cs:BuildStartInfo | 预留（v2.13.3 启用） |
+
+---
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。

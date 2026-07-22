@@ -82,21 +82,7 @@ public static class DatabaseInitializer
                 logger.LogWarning("[Startup] ⚠ 关键表缺失 {N} 张: {Tables}",
                     missingTables.Count, string.Join(", ", missingTables));
                 logger.LogWarning("[Startup]    提示：请执行 01-Database/01_DDL_Schema.sql 与 02_Seed_Data.sql");
-
-                // SQLite 路径：自动 EnsureCreated（仅当数据库文件不存在）
-                if (report.Provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
-                {
-                    try
-                    {
-                        await db.Database.EnsureCreatedAsync(ct);
-                        report.TablesAutoCreated = true;
-                        logger.LogInformation("[Startup] ✓ SQLite 自动建库完成（EnsureCreatedAsync）");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "[Startup] ✗ SQLite EnsureCreated 失败");
-                    }
-                }
+                // v2.13.109: SQLite 已移除，不再调用 EnsureCreatedAsync；SQL Server Schema 由 init_schema.sql 管理
             }
             else
             {
@@ -133,7 +119,7 @@ public static class DatabaseInitializer
     }
 
     /// <summary>
-    /// 检测关键表是否存在
+    /// 检测关键表是否存在（v2.13.109 起仅 SQL Server）
     /// </summary>
     private static async Task<List<string>> DetectMissingTablesAsync(
         DormDbContext db, ILogger logger, CancellationToken ct)
@@ -142,26 +128,13 @@ public static class DatabaseInitializer
 
         try
         {
-            if (db.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true)
+            var sql = $@"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+                         WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME IN ({string.Join(",", CriticalTables.Select(t => $"'{t}'"))})";
+            var tables = await db.Database.SqlQueryRaw<string>(sql).ToListAsync(ct);
+            foreach (var t in CriticalTables)
             {
-                var tables = await db.Database.SqlQueryRaw<string>(
-                    "SELECT name FROM sqlite_master WHERE type='table'").ToListAsync(ct);
-                foreach (var t in CriticalTables)
-                {
-                    if (!tables.Any(x => x.Equals(t, StringComparison.OrdinalIgnoreCase)))
-                        missing.Add(t);
-                }
-            }
-            else  // SQL Server
-            {
-                var sql = $@"SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
-                             WHERE TABLE_TYPE='BASE TABLE' AND TABLE_NAME IN ({string.Join(",", CriticalTables.Select(t => $"'{t}'"))})";
-                var tables = await db.Database.SqlQueryRaw<string>(sql).ToListAsync(ct);
-                foreach (var t in CriticalTables)
-                {
-                    if (!tables.Any(x => x.Equals(t, StringComparison.OrdinalIgnoreCase)))
-                        missing.Add(t);
-                }
+                if (!tables.Any(x => x.Equals(t, StringComparison.OrdinalIgnoreCase)))
+                    missing.Add(t);
             }
         }
         catch (Exception ex)
@@ -479,27 +452,16 @@ public static class DatabaseInitializer
         var result = new SeedMigrationResult();
         try
         {
-            var provider = db.Database.ProviderName ?? "";
-            var isSqlite = provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase);
+            // v2.13.109 起 SQLite 已移除；统一使用 SQL Server 语法
 
             // 1. 检测 SysFieldPermission 表是否存在
             bool tableExists;
             try
             {
-                if (isSqlite)
-                {
-                    var rows = await db.Database.SqlQueryRaw<string>(
-                        "SELECT name FROM sqlite_master WHERE type='table' AND name='SysFieldPermission'")
-                        .ToListAsync(ct);
-                    tableExists = rows.Count > 0;
-                }
-                else
-                {
-                    var rows = await db.Database.SqlQueryRaw<string>(
-                        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SysFieldPermission'")
-                        .ToListAsync(ct);
-                    tableExists = rows.Count > 0;
-                }
+                var rows = await db.Database.SqlQueryRaw<string>(
+                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SysFieldPermission'")
+                    .ToListAsync(ct);
+                tableExists = rows.Count > 0;
             }
             catch (Exception ex)
             {
@@ -512,23 +474,7 @@ public static class DatabaseInitializer
                 logger.LogWarning("[v2.13.99 Migrate] SysFieldPermission 表缺失，开始补建...");
                 result.CreatedFieldPermissionTable = true;
 
-                var createSql = isSqlite
-                    ? @"CREATE TABLE SysFieldPermission (
-                          Id INTEGER PRIMARY KEY AUTOINCREMENT,
-                          FieldKey TEXT(64) NOT NULL,
-                          Module TEXT(32) NOT NULL,
-                          FieldName TEXT(64) NOT NULL,
-                          FieldType TEXT(16) NULL,
-                          SensitivityLevel INTEGER NOT NULL DEFAULT 1,
-                          SortOrder INTEGER NOT NULL DEFAULT 0,
-                          IsActive INTEGER NOT NULL DEFAULT 0,
-                          Description TEXT(200) NULL,
-                          CreatedAt TEXT NOT NULL,
-                          UpdatedAt TEXT NULL,
-                          UpdatedBy TEXT(64) NULL
-                        );
-                        CREATE UNIQUE INDEX IX_SysFieldPermission_FieldKey ON SysFieldPermission(FieldKey);"
-                    : @"IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SysFieldPermission]') AND type in (N'U'))
+                var createSql = @"IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SysFieldPermission]') AND type in (N'U'))
                         BEGIN
                             CREATE TABLE [dbo].[SysFieldPermission] (
                                 [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
@@ -551,24 +497,8 @@ public static class DatabaseInitializer
                 logger.LogInformation("[v2.13.99 Migrate] SysFieldPermission 表已创建");
             }
 
-            // 2. 插入 5 字段种子（idempotent via WHERE NOT EXISTS）
-            var fieldsSql = isSqlite
-                ? @"INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-                    SELECT 1, 'employee.realname', 'Personnel', '姓名', 'string', 1, 1, 1, '员工真实姓名（高 PII）', '2026-07-22 00:00:00'
-                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=1);
-                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-                    SELECT 2, 'employee.phone', 'Personnel', '手机号', 'string', 1, 2, 1, '联系电话（高 PII）', '2026-07-22 00:00:00'
-                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=2);
-                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-                    SELECT 3, 'employee.employeecode', 'Personnel', '工号', 'string', 2, 3, 1, '公司内唯一标识', '2026-07-22 00:00:00'
-                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=3);
-                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-                    SELECT 4, 'employee.dormcode', 'Personnel', '宿舍房号', 'string', 2, 4, 1, '当前入住房号（隐私住址）', '2026-07-22 00:00:00'
-                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=4);
-                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-                    SELECT 5, 'employee.remark', 'Personnel', '备注', 'string', 2, 5, 1, '自由文本备注（可能含敏感信息）', '2026-07-22 00:00:00'
-                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=5);"
-                : @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 1)
+            // 2. 插入 5 字段种子（idempotent via IF NOT EXISTS）
+            var fieldsSql = @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 1)
                     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
                     VALUES (1, N'employee.realname', N'Personnel', N'姓名', N'string', 1, 1, 1, N'员工真实姓名（高 PII）', '2026-07-22');
                     IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 2)
@@ -593,48 +523,32 @@ public static class DatabaseInitializer
             //    v2.13.108 P0 终极修复：SQL Server IDENTITY_INSERT — SysPermission.Id 是 IDENTITY(1,1) 列，
             //      必须先 SET IDENTITY_INSERT ON 才能显式 INSERT 指定 Id，否则报"Cannot insert explicit value
             //      for identity column"错误，所有 Id=37/38/39/40 一直未落地！按钮永久不显示。
-            var permInserts = isSqlite
-                ? new[]
-                {
-                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
-                      SELECT 37, 'settings:fields', '字段权限', 1, 18, '/Settings?tab=fields', 'bi-shield-check', 28, 1, 1, '管理敏感字段清单', '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=37)",
-                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
-                      SELECT 38, 'fieldpermission:edit', '编辑字段权限', 2, 37, '', '', 29, 1, 1, '勾选/取消勾选敏感字段', '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=38)",
-                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
-                      SELECT 39, 'privacy:field:enable', '启用隐私字段保护', 3, 0, '', '', 30, 1, 1, '勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=39)",
-                    // v2.13.97 P0 BUG 修复：personnel:add 权限码（用户反馈：缺少「新增」按钮权限）
-                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, CreatedAt)
-                      SELECT 40, 'personnel:add', '新增人员', 2, 9, '/Personnel/Create', 'bi-plus-lg', 7, 1, 0, '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=40)"
-                }
-                : new[]
-                {
-                    // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
-                    @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 37)
-                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                      VALUES (37, N'settings:fields', N'字段权限', 1, 18, N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                    @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 38)
-                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                      VALUES (38, N'fieldpermission:edit', N'编辑字段权限', 2, 37, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                    @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 39)
-                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                      VALUES (39, N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                    // v2.13.97 P0 BUG 修复：personnel:add
-                    @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
-                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                      VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
-                };
+            //    v2.13.109 起移除 SQLite 分支；保留 SQL Server 语法不变
+            var permInserts = new[]
+            {
+                // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 37)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  VALUES (37, N'settings:fields', N'字段权限', 1, 18, N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 38)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  VALUES (38, N'fieldpermission:edit', N'编辑字段权限', 2, 37, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 39)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  VALUES (39, N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                // v2.13.97 P0 BUG 修复：personnel:add
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
+            };
 
             var permTargetIds = new[] { 37, 38, 39, 40 };
             for (int i = 0; i < permInserts.Length; i++)
@@ -655,48 +569,32 @@ public static class DatabaseInitializer
             // 4. 插入 admin 的 SysRolePermission 关联（v2.13.92 Id 58/59/60 + v2.13.97 Id 61）
             //    v2.13.103 终极修复：拆分为单条 INSERT + 独立 try/catch
             //    v2.13.108 P0 终极修复：SQL Server IDENTITY_INSERT — SysRolePermission.Id 也是 IDENTITY(1,1) 列
-            var rpInserts = isSqlite
-                ? new[]
-                {
-                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
-                      SELECT 58, 1, 37, '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=58)",
-                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
-                      SELECT 59, 1, 38, '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=59)",
-                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
-                      SELECT 60, 1, 39, '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=60)",
-                    // v2.13.97 P0 BUG 修复：admin → personnel:add
-                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
-                      SELECT 61, 1, 40, '2026-07-22 00:00:00'
-                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=61)"
-                }
-                : new[]
-                {
-                    // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
-                    @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 58)
-                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                      VALUES (58, 1, 37, '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                    @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 59)
-                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                      VALUES (59, 1, 38, '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                    @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 60)
-                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                      VALUES (60, 1, 39, '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                    // v2.13.97 P0 BUG 修复：admin → personnel:add
-                    @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                      IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
-                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                      VALUES (61, 1, 40, '2026-07-22');
-                      SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;"
-                };
+            //    v2.13.109 起移除 SQLite 分支；保留 SQL Server 语法不变
+            var rpInserts = new[]
+            {
+                // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
+                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 58)
+                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                  VALUES (58, 1, 37, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 59)
+                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                  VALUES (59, 1, 38, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 60)
+                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                  VALUES (60, 1, 39, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
+                // v2.13.97 P0 BUG 修复：admin → personnel:add
+                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
+                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                  VALUES (61, 1, 40, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;"
+            };
 
             var rpTargetIds = new[] { 58, 59, 60, 61 };
             for (int i = 0; i < rpInserts.Length; i++)

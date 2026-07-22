@@ -20,7 +20,7 @@ DormManage.sln (4 projects)
 - Single source of truth: `DormManage.Shared` contains ALL entities, DbContext, services, DTOs, enums
 - No Areas; flat controller directories with explicit `[Route]` attributes
 - Mixed routing: some controllers use `api/v1/...`, others use `api/...` (no global template)
-- Database dual-provider: SQL Server (production) / SQLite (dev), switched via `Database:Provider` config
+- Single database provider: SQL Server (production + dev), since v2.13.109 SQLite removed
 - Tray injects config via environment variables: `DormManage_KESTREL_PORT`, `DormManage_DB_CONN`, `DormManage_DB_PATH`
 - IPC: TCP `127.0.0.1:5099` JSON-over-lines protocol between Web Admin and TrayApp
 - No JWT; Cookie-based auth for Admin UI; API has no inbound auth (trusted local network)
@@ -106,7 +106,6 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 | `appsettings.json` (TrayApp) | `Database.Provider` / `ConnectionString` | DB provider selection |
 | Env var | `DormManage_KESTREL_PORT` | Override Kestrel bind port |
 | Env var | `DormManage_DB_CONN` | SQL Server connection string (plaintext) |
-| Env var | `DormManage_DB_PATH` | SQLite database absolute path |
 | Env var | `DormManage_IMAGE_ROOT` | PDA image storage root |
 
 ### Documentation
@@ -196,3 +195,7 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.66 住宿登记列表「部门」未与员工档案同步 P0 修复：** 用户报告"住宿登记的列表中，已有员工记录及员工的档案 id,但部门没有关联显示"。**根因**：BookingService.GetListAsync LINQ 投影只 JOIN SysEmployee 取考勤班次/姓名/工号（v2.13.32-hotfix / v2.13.47），**没有 JOIN 取部门**；DTO 的 Department 直接用 `x.Booking.Department`（冗余字段，未覆盖）。**修复 5 处**：(1) LINQ 投影新增 `Department = emp?.Department ?? b.Department`；(2) 部门筛选条件使用 JOIN 优先 + 回退冗余；(3) BookingListDto 改用 `x.Department ?? x.Booking.Department`；(4) 物化覆盖循环新增 `if (!IsNullOrEmpty(item.Department)) item.Booking.Department = item.Department`；(5) RepairBookingEmployeeNamesAsync + SysEmployeeLite 同步扩展 Department。**端到端验证**：337 条记录全部正确显示部门；筛选 `department=生产部` 返回 234 条匹配；Web /Booking 表格行部门显示"其他/生产部"等与 SysEmployee 档案完全一致。详见 `118-住宿登记部门同步BUG修复-v2.13.66.md`。**核心教训**：❌「人员维度冗余字段」必须 JOIN 覆盖 + 物化覆盖 + 筛选 + Repair API 同步扩展 4 件套齐备；❌ v2.13.32-hotfix / v2.13.47 / v2.13.66 三次同主题 BUG 揭示出**同模式 BUG 必须全字段审计** —— RealName/EmployeeCode/Department 是同一模式（冗余字段同步），未来新增冗余字段必须一次性把 JOIN + 覆盖 + 筛选 + Repair 都加上。
 - **v2.13.67 系统设置子 Tab 嵌入重组：** 用户报告"系统设置子菜单的用户管理及角色与权限菜单项必须与数据库连接/备份/PDA 版本等子 Tab 并列显示，删除独立相关进入界面"。**根因**：v2.13.65 修复"原型演示"alert 占位符时采用引导卡跳独立页面（/Settings/User + /Settings/Role）的过渡方案，体验割裂。**实施方案**：partial class IndexModel + partial view 嵌入。(1) 新增 `UserPanelPartial.cs` + `RolePanelPartial.cs`（partial class 合并到 IndexModel）；(2) 新增 `_UserPanel.cshtml` + `_RolePanel.cshtml`（去掉 @page + Layout 的 partial view）；(3) IndexModel 改为 partial class + 加 _db 字段 + LoadUserPanelAsync/LoadRolePanelAsync；(4) Settings/Index.cshtml 顶部加 antiforgery token + tab-users/tab-roles 替换为 `<partial>` + Scripts section 加 User/Role 的 JS；(5) Handler URL 改为 `/Settings?handler=UserCreate/RoleCreate` 等前缀避免冲突；(6) 删除 User.cshtml / User.cshtml.cs / Role.cshtml / Role.cshtml.cs 4 个独立文件。**端到端验证**：Role + User 6 个 CRUD 操作全部 success:true；旧路由 /Settings/User / /Settings/Role 返回 404；"进入用户管理"等引导文案全局 grep = 0 命中。详见 `119-用户管理角色权限子Tab嵌入-v2.13.67.md`。**核心教训**：❌「引导卡跳独立页面」是技术债的过渡方案，体验割裂，必须**嵌入而不是引导**；❌ partial class 共享一个 PageModel 时，handler 命名必须带前缀避免冲突；❌ Antiforgery token 由父页面一次性注入；❌ partial view 不能定义 @section Scripts，JS 由父页面统一管理。
 - **v2.13.68 原型功能完整性强制规则（CLAUDE.md 全局升级）：** 用户在多次迭代中反复反馈"按钮无响应""自动导出失败""批量导入点了只弹演示提示"等占位符遗留问题。在全局 CLAUDE.md「软件开发项目文档冲突检查与同步规则」内**新增 P0 级规则**：「原型功能完整性强制规则」7 项检查：(1) 功能 1:1 实现，禁 alert/placeholder/演示版；(2) 全局 grep `alert('原型演示\|原型演示` 必须 = 0；(3) 每个按钮/链接都有可执行入口；(4) 业务硬约束在 Service 层真实实现（不只前端 JS alert）；(5) 操作真实落库（不 TempData 跳走）；(6) 变更前先对比 HTML 原型；(7) 无法 1:1 时**主动显式告知**，禁止隐藏。同步创建项目级 SOP 文档 `00-方案文档/120-原型功能完整性开发规范-v2.13.68.md`，含 4 类典型反例修复案例（占位符 / 导入跳走 / 导出无反应 / handler 404）+ 3 个自动化检测脚本（scan_placeholders / check_buttons / check_handlers）。**生效范围**：所有未来软件开发任务 + 当前已发现 3 个 P0 占位符必修（v2.13.65 alert 已修；v2.13.68 手动实录占位符修复中；v2.13.69 批量抄表占位符修复中）。**核心教训**：占位符是技术债，首次"演示"就会被遗忘，**禁止"先演示再补"模式**——一次性真实实现或显式告知用户降级范围。
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。生产数据库初始化以 init_schema.sql 和 SQL Server 运维脚本为准，不使用 EnsureCreated()。

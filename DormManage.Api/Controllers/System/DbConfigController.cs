@@ -29,8 +29,7 @@ public class DbConfigController : ControllerBase
                 DbName = "WaterMeterDB",
                 DbUser = "__DB_USER__",
                 DbPassword = "__DB_PASSWORD__",
-                Provider = "SqlServer",
-                SqlitePath = ""
+                Provider = "SqlServer"
             };
         });
 
@@ -50,6 +49,10 @@ public class DbConfigController : ControllerBase
     [HttpPost("test")]
     public async Task<ApiResponse> TestConnection([FromBody] DatabaseConfigDto config)
     {
+        // v2.13.109: SQLite Provider 已移除，硬拒绝
+        if (!string.Equals(config.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
+            return ApiResponse.Fail("UNSUPPORTED_PROVIDER", "当前版本仅支持 SQL Server（SQLite 已于 v2.13.109 移除）");
+
         var (ok, msg) = await AppConfigManager.Instance.TestDbConnectionAsync(config);
         return ok
             ? ApiResponse.Ok(msg)
@@ -62,6 +65,10 @@ public class DbConfigController : ControllerBase
     [HttpPost("save")]
     public async Task<ApiResponse> SaveConfig([FromBody] DatabaseConfigDto config)
     {
+        // v2.13.109: SQLite Provider 已移除，硬拒绝
+        if (!string.Equals(config.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
+            return ApiResponse.Fail("UNSUPPORTED_PROVIDER", "当前版本仅支持 SQL Server，请设置 provider=SqlServer");
+
         // v2.13.19：前端可能发送 "unchanged" 密码哨兵，已由 AppConfigManager 处理
 
         // 安全卡口：必须先测试连接（防止保存无效参数）
@@ -85,13 +92,13 @@ public class DbConfigController : ControllerBase
                     Command = "dbconfig.updated",
                     Payload = new Dictionary<string, object?>
                     {
-                        ["provider"] = config.Provider,
+                        ["provider"] = "SqlServer",  // v2.13.109: 强制单 provider
                         ["dbServer"] = config.DbServer,
                         ["dbPort"] = config.DbPort,
                         ["dbName"] = config.DbName,
                         ["dbUser"] = config.DbUser,
-                        ["dbPassword"] = config.DbPassword ?? "",
-                        ["sqlitePath"] = config.SqlitePath ?? ""
+                        ["dbPassword"] = config.DbPassword ?? ""
+                        // v2.13.109: 移除 sqlitePath IPC 字段
                     }
                 }, 5000);
                 // 仅记录，不阻塞 HTTP 响应

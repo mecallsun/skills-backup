@@ -66,7 +66,7 @@ public class ConfigService
                 _log.Info($"配置已加载：ApiPort={_current.Tray.ApiPort}, AdminPort={_current.Tray.AdminPort}, DbProvider={_current.Database.Provider}");
                 _log.Info($"  ApiExecutable='{_current.Tray.ApiExecutable}'");
                 _log.Info($"  AdminExecutable='{_current.Tray.AdminExecutable}'");
-                _log.Info($"  DbConnStrLen={_current.Database.ConnectionString?.Length ?? 0}, SqlitePath='{_current.Database.SqlitePath}'");
+                _log.Info($"  DbConnStrLen={_current.Database.ConnectionString?.Length ?? 0}");  // v2.13.109: SqlitePath 已移除
                 return Clone(_current);
             }
             catch (Exception ex)
@@ -129,20 +129,23 @@ public class ConfigService
     /// <summary>
     /// v2.13.19：根据 DatabaseConfigDto 更新 appsettings.json 中的 Database 段，
     /// 并生成对应的 ConnectionString，保证子进程环境变量来源一致。
+    /// v2.13.109：仅支持 SqlServer；硬拒绝其他 Provider。
     /// </summary>
     public void UpdateDatabaseSection(DatabaseConfigDto dto)
     {
+        // v2.13.109: 硬拒绝非 SqlServer Provider
+        if (!string.Equals(dto.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
+        {
+            _log.Error($"UpdateDatabaseSection 拒绝：Provider={dto.Provider}（v2.13.109 起仅支持 SqlServer）");
+            throw new InvalidOperationException("当前版本仅支持 SQL Server（SQLite 已于 v2.13.109 移除）");
+        }
+
         lock (_lock)
         {
-            _current.Database.Provider = dto.Provider;
-            _current.Database.SqlitePath = dto.SqlitePath ?? "";
-            _current.Database.ConnectionString = dto.Provider == "Sqlite"
-                ? (string.IsNullOrWhiteSpace(dto.SqlitePath)
-                    ? ""
-                    : $"Data Source={dto.SqlitePath}")
-                : (string.IsNullOrWhiteSpace(dto.DbServer)
-                    ? ""
-                    : dto.BuildConnectionString());
+            _current.Database.Provider = "SqlServer";
+            _current.Database.ConnectionString = string.IsNullOrWhiteSpace(dto.DbServer)
+                ? ""
+                : dto.BuildConnectionString();
             SaveUnlocked(_current);
         }
     }

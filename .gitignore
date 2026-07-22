@@ -18,7 +18,7 @@ tests/**/obj/
 .agents/
 .claude/settings.local.json
 
-# SQLite 开发数据库
+# SQLite 历史规则保留（v2.13.109 起项目已不使用 SQLite 数据库；保留以防误提交本地测试 .db 文件）
 *.db
 *.db-shm
 *.db-wal

@@ -13,7 +13,7 @@ namespace DormManage.Admin.Pages.Personnel;
 /// 员工类型数据来源于基础资料-员工类型表（EmployeeType），仅 5 种类型
 ///
 /// v2.11.24 修订（2026-07-13）：
-/// - 页面后台数据天然无脏 ID（生产 SQLite 数据库由 EF Core EnsureCreated + DataCleanupHostedService 启动清洗保证）
+/// - 页面后台数据天然无脏 ID（生产 SQL Server 数据库由 DataCleanupHostedService 启动清洗保证，v2.13.109 起 SQLite 已移除）
 /// - 仅 5 种员工类型（ID 1-5：合同工/临时工/外包/实习生/驻场）
 /// - 若发现 employeeTypeId > 5 的历史脏数据，说明数据清洗未执行，应手动调用
 ///   <c>DormManage.Shared.Services.DictionaryFallbackService.BatchNormalizeEmployeesAsync</c>

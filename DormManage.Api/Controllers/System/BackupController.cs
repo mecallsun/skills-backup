@@ -2,11 +2,15 @@ using Microsoft.AspNetCore.Mvc;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using System.IO.Compression;
+// v2.13.109: 明确引用，避免 File/ZipFile/Directory 命名冲突
+using IOPath = System.IO.Path;
+using IODirectory = System.IO.Directory;
+using IOFile = System.IO.File;
 
 namespace DormManage.Api.Controllers.System;
 
 /// <summary>
-/// 数据库备份与恢复 API（P1-12）
+/// 数据库备份与恢复 API（P1-12，v2.13.109 起仅支持 SQL Server）
 ///
 /// 端点：
 /// - GET    /api/v1/system/backup/list          备份文件列表
@@ -16,8 +20,8 @@ namespace DormManage.Api.Controllers.System;
 /// - GET    /api/v1/system/backup/download/{fn} 下载备份
 ///
 /// 备份目录：{BaseDirectory}/backups/
-/// 文件命名：dorm_backup_{yyyyMMdd_HHmmss}.zip
-/// 备份内容：SQLite db 文件（生产环境为 SQL Server，建议走 DBA 工具）
+/// 文件命名：dorm_backup_{yyyyMMdd_HHmmss}.zip（内含 .bak）
+/// 备份内容：SQL Server BACKUP DATABASE WITH COMPRESSION（v2.13.109 移除 SQLite 路径）
 /// </summary>
 [ApiController]
 [Route("api/v1/system/backup")]
@@ -31,14 +35,14 @@ public class BackupController : ControllerBase
     {
         _db = db;
         _config = config;
-        _backupDir = Path.Combine(AppContext.BaseDirectory, "backups");
+        _backupDir = IOPath.Combine(AppContext.BaseDirectory, "backups");
         Directory.CreateDirectory(_backupDir);
     }
 
     [HttpGet("list")]
     public async Task<ApiResponse<List<BackupFileDto>>> List()
     {
-        var files = Directory.GetFiles(_backupDir, "*.zip")
+        var files = IODirectory.GetFiles(_backupDir, "*.zip")
             .Select(f => new FileInfo(f))
             .OrderByDescending(f => f.CreationTime)
             .Select(f => new BackupFileDto
@@ -59,77 +63,56 @@ public class BackupController : ControllerBase
         var isAuto = request?.IsAuto ?? false;
         var prefix = isAuto ? "dorm_backup_auto_" : "dorm_backup_";
         var fileName = $"{prefix}{DateTime.Now:yyyyMMdd_HHmmss}.zip";
-        var filePath = Path.Combine(_backupDir, fileName);
+        var filePath = IOPath.Combine(_backupDir, fileName);
 
+        var tempBakPath = string.Empty;
         try
         {
-            var dbProvider = (_config["Database:Provider"] ?? "SqlServer").ToLowerInvariant();
-            if (dbProvider == "sqlite")
+            // v2.13.109: SQLite 已移除，仅 SQL Server BACKUP DATABASE
+            var connStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN")
+                ?? _config.GetConnectionString("Default")
+                ?? "";
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr);
+            var dbName = builder.InitialCatalog;
+            if (string.IsNullOrWhiteSpace(dbName))
+                return ApiResponse<BackupFileDto>.Fail("INVALID_CONFIG", "无法从连接串中解析数据库名");
+
+            var backupFileName = IOPath.GetFileNameWithoutExtension(fileName) + ".bak";
+            tempBakPath = IOPath.Combine(_backupDir, backupFileName);
+
+            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr))
             {
-                var dbPathEnv = Environment.GetEnvironmentVariable("DormManage_DB_PATH");
-                var dbPath = !string.IsNullOrEmpty(dbPathEnv)
-                    ? dbPathEnv
-                    : (_config.GetConnectionString("Default")?.Replace("Data Source=", "") ?? "dorm.db");
-                if (!Path.IsPathRooted(dbPath))
-                    dbPath = Path.Combine(AppContext.BaseDirectory, dbPath);
-
-                if (!global::System.IO.File.Exists(dbPath))
-                    return ApiResponse<BackupFileDto>.Fail("DB_NOT_FOUND", $"SQLite 数据库文件不存在：{dbPath}");
-
-                using (var zip = global::System.IO.Compression.ZipFile.Open(filePath, global::System.IO.Compression.ZipArchiveMode.Create))
-                {
-                    zip.CreateEntryFromFile(dbPath, Path.GetFileName(dbPath));
-                }
-
-                var fi = new FileInfo(filePath);
-                return ApiResponse<BackupFileDto>.Ok(new BackupFileDto
-                {
-                    FileName = fileName,
-                    FileSize = fi.Length,
-                    FileSizeDisplay = FormatSize(fi.Length),
-                    CreatedAt = fi.CreationTime,
-                    IsAuto = isAuto
-                }, "备份创建成功");
-            }
-            else
-            {
-                var connStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN")
-                    ?? _config.GetConnectionString("Default")
-                    ?? "";
-                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr);
-                var dbName = builder.InitialCatalog;
-                var backupFileName = Path.GetFileNameWithoutExtension(fileName) + ".bak";
-                var sqlBackupPath = Path.Combine(_backupDir, backupFileName);
-
-                using var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
                 await conn.OpenAsync();
-                var sql = $"BACKUP DATABASE [{dbName}] TO DISK = @path WITH FORMAT, COMPRESSION";
+                var sql = $"BACKUP DATABASE [{EscapeSqlIdentifier(dbName)}] TO DISK = @path WITH FORMAT, COMPRESSION";
                 using var cmd = new Microsoft.Data.SqlClient.SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@path", sqlBackupPath);
+                cmd.Parameters.AddWithValue("@path", tempBakPath);
                 cmd.CommandTimeout = 300;
                 await cmd.ExecuteNonQueryAsync();
-
-                var fi = new FileInfo(sqlBackupPath);
-                global::System.IO.Compression.ZipFile.CreateFromDirectory(
-                    Path.GetDirectoryName(sqlBackupPath)!,
-                    filePath,
-                    global::System.IO.Compression.CompressionLevel.Optimal,
-                    includeBaseDirectory: false,
-                    entryNameEncoding: global::System.Text.Encoding.UTF8);
-
-                return ApiResponse<BackupFileDto>.Ok(new BackupFileDto
-                {
-                    FileName = fileName,
-                    FileSize = fi.Length,
-                    FileSizeDisplay = FormatSize(fi.Length),
-                    CreatedAt = fi.CreationTime,
-                    IsAuto = isAuto
-                }, "备份创建成功（SQL Server）");
             }
+
+            // zip 仅含当前 .bak（v2.13.109 修复：避免 CreateFromDirectory 把历史备份一并打包）
+            using (var zip = ZipFile.Open(filePath, ZipArchiveMode.Create))
+            {
+                zip.CreateEntryFromFile(tempBakPath, IOPath.GetFileName(tempBakPath), CompressionLevel.Optimal);
+            }
+
+            // 清理临时 .bak（保留 zip 作为最终交付物）
+            try { IOFile.Delete(tempBakPath); tempBakPath = string.Empty; } catch { }
+
+            var fi = new FileInfo(filePath);
+            return ApiResponse<BackupFileDto>.Ok(new BackupFileDto
+            {
+                FileName = fileName,
+                FileSize = fi.Length,
+                FileSizeDisplay = FormatSize(fi.Length),
+                CreatedAt = fi.CreationTime,
+                IsAuto = isAuto
+            }, "备份创建成功（SQL Server）");
         }
         catch (Exception ex)
         {
-            try { if (global::System.IO.File.Exists(filePath)) global::System.IO.File.Delete(filePath); } catch { }
+            try { if (IOFile.Exists(filePath)) IOFile.Delete(filePath); } catch { }
+            try { if (!string.IsNullOrEmpty(tempBakPath) && IOFile.Exists(tempBakPath)) IOFile.Delete(tempBakPath); } catch { }
             return ApiResponse<BackupFileDto>.Fail("BACKUP_FAILED", $"备份失败：{ex.Message}");
         }
     }
@@ -139,78 +122,66 @@ public class BackupController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.FileName))
             return ApiResponse.Fail("FILENAME_REQUIRED", "文件名必填");
-        var filePath = Path.Combine(_backupDir, request.FileName);
-        if (!global::System.IO.File.Exists(filePath))
+        var filePath = IOPath.Combine(_backupDir, request.FileName);
+        if (!IOFile.Exists(filePath))
             return ApiResponse.Fail("FILE_NOT_FOUND", "备份文件不存在");
 
+        var tempDir = string.Empty;
         try
         {
-            var dbProvider = (_config["Database:Provider"] ?? "SqlServer").ToLowerInvariant();
-            if (dbProvider == "sqlite")
+            // v2.13.109: SQLite 已移除，仅 SQL Server RESTORE DATABASE
+            var connStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN")
+                ?? _config.GetConnectionString("Default")
+                ?? "";
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr);
+            var dbName = builder.InitialCatalog;
+            if (string.IsNullOrWhiteSpace(dbName))
+                return ApiResponse.Fail("INVALID_CONFIG", "无法从连接串中解析数据库名");
+
+            tempDir = IOPath.Combine(IOPath.GetTempPath(), $"restore_{Guid.NewGuid():N}");
+            ZipFile.ExtractToDirectory(filePath, tempDir);
+            var bakFiles = IODirectory.GetFiles(tempDir, "*.bak");
+            if (bakFiles.Length == 0) return ApiResponse.Fail("INVALID_ZIP", "备份 zip 中无 .bak 文件");
+            var bakFile = bakFiles.First();
+
+            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr))
             {
-                var dbPathEnv = Environment.GetEnvironmentVariable("DormManage_DB_PATH");
-                var dbPath = !string.IsNullOrEmpty(dbPathEnv)
-                    ? dbPathEnv
-                    : (_config.GetConnectionString("Default")?.Replace("Data Source=", "") ?? "dorm.db");
-                if (!Path.IsPathRooted(dbPath))
-                    dbPath = Path.Combine(AppContext.BaseDirectory, dbPath);
-
-                using var zip = global::System.IO.Compression.ZipFile.OpenRead(filePath);
-                var entry = zip.Entries.FirstOrDefault(e => e.FullName.EndsWith(".db", StringComparison.OrdinalIgnoreCase));
-                if (entry is null) return ApiResponse.Fail("INVALID_ZIP", "备份 zip 中无 .db 文件");
-
-                if (global::System.IO.File.Exists(dbPath))
-                {
-                    var preRestoreBackup = Path.Combine(_backupDir, $"pre_restore_{DateTime.Now:HHmmss}.db");
-                    global::System.IO.File.Copy(dbPath, preRestoreBackup, overwrite: true);
-                }
-
-                entry.ExtractToFile(dbPath, overwrite: true);
-                return ApiResponse.Ok("恢复成功（SQLite），请重启服务以生效");
-            }
-            else
-            {
-                var connStr = Environment.GetEnvironmentVariable("DormManage_DB_CONN")
-                    ?? _config.GetConnectionString("Default")
-                    ?? "";
-                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr);
-                var dbName = builder.InitialCatalog;
-
-                var tempDir = Path.Combine(Path.GetTempPath(), $"restore_{Guid.NewGuid():N}");
-                global::System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempDir);
-                var bakFile = Directory.GetFiles(tempDir, "*.bak").FirstOrDefault();
-                if (bakFile is null) return ApiResponse.Fail("INVALID_ZIP", "备份 zip 中无 .bak 文件");
-
-                using var conn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
                 await conn.OpenAsync();
-                var sql = $@"ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
-                             RESTORE DATABASE [{dbName}] FROM DISK = @path WITH REPLACE;
-                             ALTER DATABASE [{dbName}] SET MULTI_USER;";
+                var sql = $@"ALTER DATABASE [{EscapeSqlIdentifier(dbName)}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+                             RESTORE DATABASE [{EscapeSqlIdentifier(dbName)}] FROM DISK = @path WITH REPLACE;
+                             ALTER DATABASE [{EscapeSqlIdentifier(dbName)}] SET MULTI_USER;";
                 using var cmd = new Microsoft.Data.SqlClient.SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@path", bakFile);
                 cmd.CommandTimeout = 600;
                 await cmd.ExecuteNonQueryAsync();
-                Directory.Delete(tempDir, recursive: true);
-
-                return ApiResponse.Ok("恢复成功（SQL Server）");
             }
+
+            return ApiResponse.Ok("恢复成功（SQL Server）");
         }
         catch (Exception ex)
         {
             return ApiResponse.Fail("RESTORE_FAILED", $"恢复失败：{ex.Message}");
+        }
+        finally
+        {
+            // v2.13.109 修复：临时目录 finally 清理
+            if (!string.IsNullOrEmpty(tempDir))
+            {
+                try { if (IODirectory.Exists(tempDir)) IODirectory.Delete(tempDir, recursive: true); } catch { }
+            }
         }
     }
 
     [HttpDelete("{fileName}")]
     public ApiResponse Delete(string fileName)
     {
-        var filePath = Path.Combine(_backupDir, fileName);
-        if (!global::System.IO.File.Exists(filePath))
+        var filePath = IOPath.Combine(_backupDir, fileName);
+        if (!IOFile.Exists(filePath))
             return ApiResponse.Fail("FILE_NOT_FOUND", "备份文件不存在");
 
         try
         {
-            global::System.IO.File.Delete(filePath);
+            IOFile.Delete(filePath);
             return ApiResponse.Ok("删除成功");
         }
         catch (Exception ex)
@@ -222,12 +193,20 @@ public class BackupController : ControllerBase
     [HttpGet("download/{fileName}")]
     public IActionResult Download(string fileName)
     {
-        var filePath = Path.Combine(_backupDir, fileName);
-        if (!global::System.IO.File.Exists(filePath))
+        var filePath = IOPath.Combine(_backupDir, fileName);
+        if (!IOFile.Exists(filePath))
             return NotFound();
 
-        var bytes = global::System.IO.File.ReadAllBytes(filePath);
+        var bytes = IOFile.ReadAllBytes(filePath);
         return File(bytes, "application/zip", fileName);
+    }
+
+    /// <summary>
+    /// SQL Server 标识符转义（防 dbName 包含特殊字符如 ]）
+    /// </summary>
+    private static string EscapeSqlIdentifier(string identifier)
+    {
+        return identifier.Replace("]", "]]");
     }
 
     private static string FormatSize(long bytes)

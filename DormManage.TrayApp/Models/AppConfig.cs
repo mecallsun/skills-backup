@@ -38,17 +38,21 @@ public class TraySection
 }
 
 /// <summary>
-/// 数据库配置
+/// 数据库配置（v2.13.109 起 SQLite Provider 已移除，仅保留 SQL Server）
 /// </summary>
 public class DatabaseSection
 {
-    /// <summary>数据库类型：SqlServer / Sqlite</summary>
+    /// <summary>数据库类型：固定为 SqlServer（v2.13.109 起移除 SQLite 双 provider）</summary>
     public string Provider { get; set; } = "SqlServer";
 
-    /// <summary>SQL Server 连接串（Provider=SqlServer 时使用）</summary>
+    /// <summary>SQL Server 连接串</summary>
     public string ConnectionString { get; set; } = string.Empty;
 
-    /// <summary>SQLite 数据库文件绝对路径（Provider=Sqlite 时使用）</summary>
+    /// <summary>
+    /// 历史 SQLite 配置字段。SQLite Provider 已于 v2.13.109 移除，
+    /// 仅用于兼容旧版 appsettings.json 反序列化。不再参与任何运行时逻辑。
+    /// </summary>
+    [Obsolete("SQLite provider has been removed; retained for legacy configuration compatibility.")]
     public string SqlitePath { get; set; } = string.Empty;
 }
 

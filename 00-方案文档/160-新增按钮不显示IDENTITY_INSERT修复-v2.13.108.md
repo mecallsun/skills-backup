@@ -237,3 +237,7 @@ Microsoft.Data.SqlClient.SqlException: Cannot insert explicit value for identity
 **Commit**：pending  
 **部署清单**：`publish-final/{Admin,Api,TrayApp,Shared}/`（已重发布 Admin + Api）  
 **打包脚本**：`package-deploy.ps1`（v2.13.108 包）
+
+## v2.13.109 备注：SQLite 根因彻底移除
+
+v2.13.108 修复了 IDENTITY_INSERT 静默失败问题，但根因（SQLite vs SQL Server 双 provider 不一致）依然存在。v2.13.109 起 SQLite 已彻底移除，本 BUG 不再可能以任何形式复发——所有数据库操作统一在 SQL Server 上执行，无双 provider 行为差异。

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using DormManage.Shared.Models;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+// v2.13.109: SQLite Provider 已移除，不再 using Microsoft.Data.Sqlite;
 
 namespace DormManage.Shared.Services;
 
@@ -78,7 +78,7 @@ public class AppConfigManager
     }
 
     /// <summary>
-    /// 硬编码兜底默认（v2.13.22 统一值）
+    /// 硬编码兜底默认（v2.13.22 统一值；v2.13.109 起不再设置 SqlitePath）
     /// </summary>
     private static DatabaseConfigDto BuildFallback()
     {
@@ -89,8 +89,7 @@ public class AppConfigManager
             DbPort = 1433,
             DbName = "WaterMeterDB",
             DbUser = "__DB_USER__",
-            DbPassword = "__DB_PASSWORD__",
-            SqlitePath = string.Empty
+            DbPassword = "__DB_PASSWORD__"
         };
     }
 
@@ -102,45 +101,29 @@ public class AppConfigManager
 
     /// <summary>
     /// 异步测试数据库连接（不写入，仅验证连通性）
-    /// 使用 SqlConnectionStringBuilder 组装字符串（防裸拼接）
+    /// v2.13.109 起仅支持 SQL Server；非 SqlServer 直接返回错误
     /// </summary>
     public async Task<(bool Success, string Message)> TestDbConnectionAsync(DatabaseConfigDto config)
     {
         // v2.13.19：处理前端传来的 "unchanged" 密码哨兵
         config = await ResolveUnchangedPasswordAsync(config);
 
-        if (config.Provider == "Sqlite")
+        // v2.13.109: SQLite 已移除，硬拒绝
+        if (!string.Equals(config.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
         {
-            if (string.IsNullOrWhiteSpace(config.SqlitePath))
-                return (false, "SQLite 数据库路径为空");
-            try
-            {
-                var builder = new SqliteConnectionStringBuilder
-                {
-                    DataSource = config.SqlitePath
-                };
-                await using var conn = new SqliteConnection(builder.ConnectionString);
-                await conn.OpenAsync();
-                return (true, "SQLite 连接成功");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"SQLite 连接失败: {ex.Message}");
-            }
+            return (false, "当前版本仅支持 SQL Server（SQLite 已于 v2.13.109 移除）");
         }
-        else  // SqlServer
+
+        try
         {
-            try
-            {
-                var connStr = config.BuildConnectionString();
-                await using var conn = new System.Data.SqlClient.SqlConnection(connStr);
-                await conn.OpenAsync();
-                return (true, "SQL Server 连接成功");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"SQL Server 连接失败: {ex.Message}");
-            }
+            var connStr = config.BuildConnectionString();
+            await using var conn = new System.Data.SqlClient.SqlConnection(connStr);
+            await conn.OpenAsync();
+            return (true, "SQL Server 连接成功");
+        }
+        catch (Exception ex)
+        {
+            return (false, $"SQL Server 连接失败: {ex.Message}");
         }
     }
 
@@ -190,8 +173,7 @@ public class AppConfigManager
             DbName = newConfig.DbName,
             DbUser = newConfig.DbUser,
             DbPassword = AesEncryptor.Encrypt(newConfig.DbPassword ?? string.Empty),
-            Provider = newConfig.Provider,
-            SqlitePath = newConfig.SqlitePath
+            Provider = "SqlServer"  // v2.13.109 强制单 provider
         };
 
         lock (_lock)
@@ -310,13 +292,13 @@ public class AppConfigManager
 
         var paramsToWrite = new Dictionary<string, (string Value, bool Encrypted, string Desc)>
         {
-            ["db.provider"] = (config.Provider, false, "数据库提供程序 (SqlServer/Sqlite)"),
+            ["db.provider"] = ("SqlServer", false, "数据库提供程序（固定为 SqlServer，v2.13.109 起移除 SQLite）"),
             ["db.server"] = (config.DbServer, false, "数据库服务器"),
             ["db.port"] = (config.DbPort.ToString(), false, "端口号"),
             ["db.name"] = (config.DbName, false, "数据库名"),
             ["db.user"] = (config.DbUser, false, "账号"),
-            ["db.password"] = (config.DbPassword ?? string.Empty, true, "密码 (AES-256)"),
-            ["db.sqlitePath"] = (config.SqlitePath ?? string.Empty, false, "SQLite 数据库路径")
+            ["db.password"] = (config.DbPassword ?? string.Empty, true, "密码 (AES-256)")
+            // v2.13.109: db.sqlitePath 已移除
         };
 
         foreach (var (key, (value, encrypted, desc)) in paramsToWrite)

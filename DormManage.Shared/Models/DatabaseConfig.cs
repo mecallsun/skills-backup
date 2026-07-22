@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+// SQLite Provider 已于 v2.13.109 移除。SqlitePath 字段保留 [Obsolete] 仅为兼容旧配置反序列化。
 
 namespace DormManage.Shared.Models;
 
@@ -28,11 +29,15 @@ public class DatabaseConfigDto
     [JsonPropertyName("dbPassword")]
     public string? DbPassword { get; set; } = "__DB_PASSWORD__";
 
-    /// <summary>提供程序：SqlServer / Sqlite</summary>
+    /// <summary>提供程序：固定为 SqlServer（v2.13.109 起移除 SQLite 双 provider）</summary>
     [JsonPropertyName("provider")]
     public string Provider { get; set; } = "SqlServer";
 
-    /// <summary>Sqlite 文件路径（当 Provider=Sqlite 时使用）</summary>
+    /// <summary>
+    /// 历史 SQLite 配置字段。SQLite Provider 已于 v2.13.109 移除，
+    /// 仅用于兼容旧版 db_setting.json 反序列化。不再参与连接字符串构造、备份恢复、UI 编辑、进程环境变量。
+    /// </summary>
+    [Obsolete("SQLite provider has been removed; retained for legacy configuration deserialization.")]
     [JsonPropertyName("sqlitePath")]
     public string? SqlitePath { get; set; }
 

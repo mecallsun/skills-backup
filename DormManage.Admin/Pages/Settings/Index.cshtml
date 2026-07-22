@@ -244,12 +244,12 @@
                     </div>
                 </div>
 
-                <!-- 数据库连接（v2.13.19 双 UI 双向同步） -->
+                <!-- 数据库连接（v2.13.19 双 UI 双向同步；v2.13.109 起仅 SQL Server） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "db" ? "show active" : "")" id="tab-db">
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
                             <strong><i class="bi bi-database"></i> 数据库连接</strong>
-                            <span class="badge bg-info text-dark">v2.13.19 双 UI 双向同步</span>
+                            <span class="badge bg-info text-dark">v2.13.109 仅 SQL Server</span>
                         </div>
                         <div class="card-body">
                             <div id="dbConfigResult" class="mb-2"></div>
@@ -257,9 +257,9 @@
                             <div class="row g-3">
                                 <div class="col-md-3">
                                     <label class="form-label small">数据库提供程序</label>
-                                    <select id="dbProvider" class="form-select">
-                                        <option value="SqlServer">SQL Server</option>
-                                        <option value="Sqlite">SQLite</option>
+                                    <!-- v2.13.109: SQLite 已移除，下拉仅 SqlServer -->
+                                    <select id="dbProvider" class="form-select" disabled>
+                                        <option value="SqlServer" selected>SQL Server</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
@@ -274,18 +274,15 @@
                                     <label class="form-label small">数据库名称</label>
                                     <input type="text" id="dbName" class="form-control" placeholder="WaterMeterDB">
                                 </div>
-                                <div class="col-md-6 sqlserver-only">
+                                <div class="col-md-6">
                                     <label class="form-label small">账号 <i class="bi bi-person-circle"></i></label>
                                     <input type="text" id="dbUser" class="form-control" placeholder="wateruser">
                                 </div>
-                                <div class="col-md-6 sqlserver-only">
+                                <div class="col-md-6">
                                     <label class="form-label small">密码（留空保持不变）<i class="bi bi-lock"></i></label>
                                     <input type="password" id="dbPassword" class="form-control" placeholder="******">
                                 </div>
-                                <div class="col-md-12 sqlite-only" style="display:none;">
-                                    <label class="form-label small">SQLite 数据库文件路径 <i class="bi bi-file-earmark-binary"></i></label>
-                                    <input type="text" id="dbSqlitePath" class="form-control" placeholder="D:\Data\dorm.db">
-                                </div>
+                                <!-- v2.13.109: 移除 SQLite 数据库文件路径输入框 -->
                             </div>
 
                             <div class="mt-3 d-flex gap-2 align-items-center">
@@ -680,19 +677,15 @@
                 document.getElementById('dbPort').value = c.dbPort || 1433;
                 document.getElementById('dbName').value = c.dbName || '';
                 document.getElementById('dbUser').value = c.dbUser || '';
-                document.getElementById('dbSqlitePath').value = c.sqlitePath || '';
                 document.getElementById('dbPassword').value = '';
-                toggleProviderUI();
+                // v2.13.109: SQLite 字段已移除，无需 toggleProviderUI
             });
         }
 
         // 切换 SqlServer / Sqlite 字段可见性
+        // v2.13.109: SQLite 已移除，函数体保留为空操作以兼容旧调用
         function toggleProviderUI() {
-            const p = document.getElementById('dbProvider').value;
-            const sqlserverOnly = document.querySelectorAll('.sqlserver-only');
-            const sqliteOnly = document.querySelectorAll('.sqlite-only');
-            sqlserverOnly.forEach(el => el.style.display = p === 'SqlServer' ? '' : 'none');
-            sqliteOnly.forEach(el => el.style.display = p === 'Sqlite' ? '' : 'none');
+            /* no-op: 仅 SqlServer 字段 */
         }
 
         // 测试连接（真实 HTTP 调用）
@@ -700,14 +693,14 @@
             const box = document.getElementById('dbTestResult');
             box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在测试连接...</div>';
 
+            // v2.13.109: 强制 provider=SqlServer，移除 sqlitePath 字段
             const payload = {
-                provider: document.getElementById('dbProvider').value,
+                provider: 'SqlServer',
                 dbServer: document.getElementById('dbServer').value,
                 dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
                 dbName: document.getElementById('dbName').value,
                 dbUser: document.getElementById('dbUser').value,
-                dbPassword: document.getElementById('dbPassword').value || 'unchanged',
-                sqlitePath: document.getElementById('dbSqlitePath').value
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged'
             };
 
             try {
@@ -733,14 +726,14 @@
             const box = document.getElementById('dbConfigResult');
             box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在保存并热加载...</div>';
 
+            // v2.13.109: 强制 provider=SqlServer，移除 sqlitePath 字段
             const payload = {
-                provider: document.getElementById('dbProvider').value,
+                provider: 'SqlServer',
                 dbServer: document.getElementById('dbServer').value,
                 dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
                 dbName: document.getElementById('dbName').value,
                 dbUser: document.getElementById('dbUser').value,
-                dbPassword: document.getElementById('dbPassword').value || 'unchanged',
-                sqlitePath: document.getElementById('dbSqlitePath').value
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged'
             };
 
             try {

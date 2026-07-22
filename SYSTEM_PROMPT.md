@@ -67,3 +67,9 @@
 | MeterRecord | DormId | Dorm | DormId |
 | SysUserRole | UserId | SysUser | UserId (CASCADE DELETE) |
 | SysUserRole | RoleId | SysRole | RoleId (CASCADE DELETE) |
+
+---
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。

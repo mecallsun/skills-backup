@@ -82,3 +82,7 @@ RBAC 为 v2.13.x 基于 SQLite 新增，与真实 WaterMeterDB 深度分裂：
 
 ### 4.3 CLAUDE.md §8.1 冒烟清单订正
 清单中的 `/health`、`/api/v1/xx/dictionaries` 端点实际不存在；真实健康检查为 `/api/v1/system/dbhealth/quick`。已在 CLAUDE.md 订正。
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。生产数据库初始化以 init_schema.sql 和 SQL Server 运维脚本为准，不使用 EnsureCreated()。

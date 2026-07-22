@@ -106,30 +106,28 @@ builder.Services.AddDbContextFactory<DormDbContext>((sp, options) =>
     // 关键：每次 CreateDbContext 都从 Runtime 读取最新配置
     var cfg = AppConfigRuntime.Instance.GetCurrent();
 
-    if (string.Equals(cfg.Provider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+    // v2.13.109 起 SQLite Provider 已彻底移除；硬拒绝非 SqlServer，避免历史 Provider=Sqlite 静默失败
+    if (!string.Equals(cfg.Provider, "SqlServer", StringComparison.OrdinalIgnoreCase))
     {
-        // 优先使用 db_setting.json 中保存的 SqlitePath，其次 ContentRootPath/dorm.db
-        var sqlitePath = !string.IsNullOrWhiteSpace(cfg.SqlitePath)
-            ? cfg.SqlitePath
-            : Path.Combine(contentRootPath, "dorm.db");
-        options.UseSqlite($"Data Source={sqlitePath}");
+        throw new InvalidOperationException(
+            $"Database provider must be SqlServer (got: '{cfg.Provider}'). " +
+            "Current version no longer supports SQLite. " +
+            "Please update db_setting.json to set provider=SqlServer.");
     }
-    else
+
+    // SQL Server（生产 + 开发统一）
+    // v2.12.42 BUGFIX: 兼容 SQL Server 2014，使用低版本兼容级别（避免 OPENJSON 等 2016+ 特性）
+    // v2.13.32: cfg.BuildConnectionString() 始终返回最新保存的连接串
+    options.UseSqlServer(cfg.BuildConnectionString(), sqlOptions =>
     {
-        // 默认 SQL Server（生产）
-        // v2.12.42 BUGFIX: 兼容 SQL Server 2014，使用低版本兼容级别（避免 OPENJSON 等 2016+ 特性）
-        // v2.13.32: cfg.BuildConnectionString() 始终返回最新保存的连接串
-        options.UseSqlServer(cfg.BuildConnectionString(), sqlOptions =>
-        {
-            sqlOptions.UseCompatibilityLevel(120);  // SQL Server 2014 兼容级别
-            // 缩短重试参数，避免启动期长时间阻塞
-            sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 2,
-                maxRetryDelay: TimeSpan.FromSeconds(3),
-                errorNumbersToAdd: null);
-            sqlOptions.CommandTimeout(10);  // 单条命令 10s 超时
-        });
-    }
+        sqlOptions.UseCompatibilityLevel(120);  // SQL Server 2014 兼容级别
+        // 缩短重试参数，避免启动期长时间阻塞
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 2,
+            maxRetryDelay: TimeSpan.FromSeconds(3),
+            errorNumbersToAdd: null);
+        sqlOptions.CommandTimeout(10);  // 单条命令 10s 超时
+    });
 
     // v2.13.32: 注入 EF Interceptor（连接/命令日志）
     var interceptor = sp.GetService<DormManage.Shared.Data.Interceptors.DatabaseOperationInterceptor>();
@@ -184,30 +182,13 @@ var kestrelPort = Environment.GetEnvironmentVariable("DormManage_KESTREL_PORT") 
 app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{kestrelPort}");
 
-// 确保数据库创建和种子数据（仅 SQLite 需要；SQL Server 假定数据库已存在）
-// v2.13.32: 改为运行时真源 AppConfigRuntime
+// v2.13.109 起 SQLite 已移除；不再调用 EnsureCreated()。
+// SQL Server Schema 由 init_schema.sql 运维脚本管理；行政宿舍 Excel 导入仅在 SQLite 开发环境使用，删除。
 var runtimeProvider = AppConfigRuntime.Instance.GetCurrent().Provider;
-if (string.Equals(runtimeProvider, "Sqlite", StringComparison.OrdinalIgnoreCase))
+if (!string.Equals(runtimeProvider, "SqlServer", StringComparison.OrdinalIgnoreCase))
 {
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<DormDbContext>();
-        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DataImportService>>();
-        db.Database.EnsureCreated();
-
-        // v2.13.19: 从行政宿舍 Excel 导入正式主数据
-        var excelPath = Path.Combine(builder.Environment.ContentRootPath, "..", "行政宿舍资料", "员工宿舍明细表.xlsx");
-        if (File.Exists(excelPath))
-        {
-            var importer = new DataImportService(db, logger);
-            var result = await importer.ImportAsync(excelPath);
-            app.Logger.LogInformation("行政宿舍数据导入完成: {Result}", result);
-        }
-        else
-        {
-            app.Logger.LogWarning("未找到行政宿舍数据文件: {Path}", excelPath);
-        }
-    }
+    app.Logger.LogError("Database provider must be SqlServer (got: {Provider}). Service startup aborted.", runtimeProvider);
+    throw new InvalidOperationException($"Database provider must be SqlServer (got: '{runtimeProvider}').");
 }
 
 // 配置 HTTP 管道

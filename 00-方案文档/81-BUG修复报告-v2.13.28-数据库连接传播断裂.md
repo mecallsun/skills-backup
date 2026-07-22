@@ -242,3 +242,7 @@ $ dotnet build DormManage.sln -c Release
 - [79-系统启动机制与生产部署文档-v2.13.25.md](./79-系统启动机制与生产部署文档-v2.13.25.md) — 启动机制
 - [71-系统设置数据库连接双UI同步需求-v2.13.19.md](./71-系统设置数据库连接双UI同步需求-v2.13.19.md) — 双 UI 同步
 - [01-技术架构与系统开发方案.md](./01-技术架构与系统开发方案.md) — 总架构
+
+## v2.13.109 备注：SQLite 已彻底移除
+
+本 BUG（数据库连接传播断裂）的根因是 Provider 配置从 Sqlite 误用为 SqlServer。v2.13.109 起 SQLite Provider 已彻底移除，本 BUG 不会再以任何形式复发（ProjectProvider=Sqlite 启动会硬拒绝失败）。

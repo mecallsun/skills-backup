@@ -152,7 +152,7 @@ public sealed class AppConfigRuntime : IAppConfigRuntime
 
     /// <summary>
     /// 硬编码默认配置（灾难场景最终兜底）
-    /// 对齐 v2.13.22 默认值
+    /// 对齐 v2.13.22 默认值；v2.13.109 起 SQLite Provider 已移除，不再设置 SqlitePath
     /// </summary>
     private static DatabaseConfigDto BuildFallback()
     {
@@ -163,8 +163,7 @@ public sealed class AppConfigRuntime : IAppConfigRuntime
             DbPort = 1433,
             DbName = "WaterMeterDB",
             DbUser = "__DB_USER__",
-            DbPassword = "__DB_PASSWORD__",
-            SqlitePath = string.Empty
+            DbPassword = "__DB_PASSWORD__"
         };
     }
 }

@@ -342,3 +342,7 @@ publish-final/
 | v3.1 | 2026-07-12 | 新增原型 JavaScript 验证检查项，引用统一 UI 规范第 20 章 |
 | v3.0 | 2026-07-11 | 更新为 6 阶段 SOP（开发方案→功能需求→原型设计→编程开发→功能测试→交付部署） |
 | v2.10 | 2026-07-10 | 初始 5 阶段 SOP |
+
+## v2.13.109 备注：SQLite Provider 彻底移除
+
+自 v2.13.109 起，DormManage 运行时仅支持 SQL Server。SQLite 代码路径、EF Core SQLite Provider、SQLite 备份恢复逻辑均已移除。历史配置中的 SqlitePath 字段仅为旧配置反序列化兼容，不代表运行时继续支持 SQLite。生产数据库初始化以 init_schema.sql 和 SQL Server 运维脚本为准，不使用 EnsureCreated()。

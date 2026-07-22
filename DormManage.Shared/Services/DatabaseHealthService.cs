@@ -83,16 +83,19 @@ public class DatabaseHealthService : IDatabaseHealthService
         // 步骤 4: 表结构验证
         await RunStep(report, "表结构验证", "检查核心表是否存在", async () =>
         {
+            // v2.13.109 起统一使用 SQL Server INFORMATION_SCHEMA.TABLES 检测（移除 SQLite sqlite_master 分支）
             var requiredTables = new[] { "SysUser", "SysRole", "Dorm", "DormBooking", "MeterRecord", "SysEmployee" };
             foreach (var t in requiredTables)
             {
                 try
                 {
-                    var sql = _db.Database.ProviderName?.Contains("Sqlite", StringComparison.OrdinalIgnoreCase) == true
-                        ? $"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{t}'"
-                        : $"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '{t}'";
+                    var sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @tableName";
                     using var cmd = _db.Database.GetDbConnection().CreateCommand();
                     cmd.CommandText = sql;
+                    var p = cmd.CreateParameter();
+                    p.ParameterName = "@tableName";
+                    p.Value = t;
+                    cmd.Parameters.Add(p);
                     if (cmd.Connection.State != ConnectionState.Open) await cmd.Connection.OpenAsync();
                     var cnt = Convert.ToInt32(await cmd.ExecuteScalarAsync());
                     if (cnt == 0) throw new Exception($"表 {t} 不存在");

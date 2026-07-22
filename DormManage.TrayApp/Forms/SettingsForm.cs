@@ -41,15 +41,14 @@ public sealed class SettingsForm : Form
     private TextBox _txtAdminPath = null!;
     private Button _btnAdminBrowse = null!;
 
-    // 数据库（v2.13.19：字段式输入，与 Web 端 /Settings 风格一致）
+    // 数据库（v2.13.19：字段式输入，与 Web 端 /Settings 风格一致；v2.13.109 起仅 SqlServer）
     private ComboBox _cmbProvider = null!;
     private TextBox _txtDbServer = null!;
     private NumericUpDown _numDbPort = null!;
     private TextBox _txtDbName = null!;
     private TextBox _txtDbUser = null!;
     private TextBox _txtDbPassword = null!;
-    private TextBox _txtSqlitePath = null!;
-    private Button _btnSqliteBrowse = null!;
+    // v2.13.109: 移除 SQLite 路径控件（SQLite 已下线）
 
     // v2.13.32-hotfix: 数据库连接测试按钮 + 测试结果标签
     private Button _btnDbTest = null!;
@@ -122,16 +121,16 @@ public sealed class SettingsForm : Form
         _txtAdminPath = new TextBox();
         _btnAdminBrowse = new Button { Text = "浏览..." };
 
-        _cmbProvider = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList };
-        _cmbProvider.Items.AddRange(new object[] { "SqlServer", "Sqlite" });
+        _cmbProvider = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Enabled = false };
+        // v2.13.109: SQLite 已移除，ComboBox 仅保留 SqlServer 选项（设为只读）
+        _cmbProvider.Items.AddRange(new object[] { "SqlServer" });
 
         _txtDbServer = new TextBox { Text = "192.168.1.237" };
         _numDbPort = new NumericUpDown { Minimum = 1, Maximum = 65535, Value = 1433 };
         _txtDbName = new TextBox { Text = "WaterMeterDB" };
         _txtDbUser = new TextBox { Text = "__DB_USER__" };
         _txtDbPassword = new TextBox { Text = "__DB_PASSWORD__", PasswordChar = '*' };
-        _txtSqlitePath = new TextBox();
-        _btnSqliteBrowse = new Button { Text = "浏览..." };
+        // v2.13.109: 移除 _txtSqlitePath / _btnSqliteBrowse 控件
 
         // v2.13.32-hotfix: 测试连接按钮（无破坏性，仅测试当前填写的字段，不保存任何东西）
         _btnDbTest = new Button { Text = "测试连接", Size = new Size(90, 32) };
@@ -172,7 +171,7 @@ public sealed class SettingsForm : Form
         AddLabeledRow(layout, "数据库名称", _txtDbName);
         AddLabeledRow(layout, "账号", _txtDbUser);
         AddLabeledRow(layout, "密码", _txtDbPassword);
-        AddLabeledRow(layout, "SQLite 数据库路径", BuildSqlitePanel());
+        // v2.13.109: 移除 SQLite 数据库路径行
         // v2.13.32-hotfix: 在数据库字段下方加"测试连接"行（按钮 + 结果标签）
         AddLabeledRow(layout, "", BuildDbTestRow());
         AddLabeledRow(layout, "图片存储根路径", BuildPathRow(_txtImageRoot, _btnImageBrowse, BrowseImageFolder));
@@ -253,10 +252,10 @@ public sealed class SettingsForm : Form
     {
         _btnApiBrowse.Click += (_, _) => BrowseExe(_txtApiPath);
         _btnAdminBrowse.Click += (_, _) => BrowseExe(_txtAdminPath);
-        _btnSqliteBrowse.Click += (_, _) => BrowseSqliteFile();
+        // v2.13.109: 移除 _btnSqliteBrowse 事件订阅
         _btnImageBrowse.Click += (_, _) => BrowseImageFolder();
         _btnDbTest.Click += async (_, _) => await BtnDbTestAsync();  // v2.13.32-hotfix
-        _cmbProvider.SelectedIndexChanged += (_, _) => UpdateProviderVisibility();
+        // v2.13.109: _cmbProvider 已禁用（仅 SqlServer），无需 SelectedIndexChanged
     }
 
     private void StartStatusTimer()
@@ -324,11 +323,6 @@ public sealed class SettingsForm : Form
         return p;
     }
 
-    private Control BuildSqlitePanel()
-    {
-        return BuildPathRow(_txtSqlitePath, _btnSqliteBrowse, BrowseSqliteFile);
-    }
-
     private Control BuildStatusPanel()
     {
         var p = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
@@ -375,14 +369,13 @@ public sealed class SettingsForm : Form
         var dbConfig = await AppConfigManager.Instance.LoadAsync();
         if (dbConfig is not null)
         {
-            _cmbProvider.SelectedItem = dbConfig.Provider;
+            _cmbProvider.SelectedItem = "SqlServer";  // v2.13.109: 强制 SqlServer
             if (_cmbProvider.SelectedIndex < 0) _cmbProvider.SelectedIndex = 0;
             _txtDbServer.Text = dbConfig.DbServer;
             _numDbPort.Value = SafeClamp(dbConfig.DbPort, (int)_numDbPort.Minimum, (int)_numDbPort.Maximum);
             _txtDbName.Text = dbConfig.DbName;
             _txtDbUser.Text = dbConfig.DbUser;
             _txtDbPassword.Text = "";
-            _txtSqlitePath.Text = dbConfig.SqlitePath ?? "";
         }
         else
         {
@@ -392,20 +385,18 @@ public sealed class SettingsForm : Form
 
     private void UpdateProviderVisibility()
     {
+        // v2.13.109: SQLite 已移除，Provider 字段固定为 SqlServer，UI 全部可用
         try
         {
-            var isSqlite = _cmbProvider.SelectedItem?.ToString() == "Sqlite";
-            _txtDbServer.Enabled = !isSqlite;
-            _numDbPort.Enabled = !isSqlite;
-            _txtDbName.Enabled = !isSqlite;
-            _txtDbUser.Enabled = !isSqlite;
-            _txtDbPassword.Enabled = !isSqlite;
-            _txtSqlitePath.Enabled = isSqlite;
-            _btnSqliteBrowse.Enabled = isSqlite;
+            _txtDbServer.Enabled = true;
+            _numDbPort.Enabled = true;
+            _txtDbName.Enabled = true;
+            _txtDbUser.Enabled = true;
+            _txtDbPassword.Enabled = true;
         }
         catch
         {
-            // Provider 切换异常不应阻塞窗口
+            // 异常不应阻塞窗口
         }
     }
 
@@ -436,7 +427,7 @@ public sealed class SettingsForm : Form
             _lblDbTestResult.Text = "正在测试...";
             _lblDbTestResult.ForeColor = Color.Gray;
 
-            var provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer";
+            var provider = "SqlServer";  // v2.13.109: 强制 SqlServer
             var dbDto = new DatabaseConfigDto
             {
                 Provider = provider,
@@ -444,8 +435,7 @@ public sealed class SettingsForm : Form
                 DbPort = (int)_numDbPort.Value,
                 DbName = _txtDbName.Text.Trim(),
                 DbUser = _txtDbUser.Text.Trim(),
-                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text,
-                SqlitePath = _txtSqlitePath.Text.Trim()
+                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text
             };
 
             var (ok, msg) = await AppConfigManager.Instance.TestDbConnectionAsync(dbDto);
@@ -496,31 +486,22 @@ public sealed class SettingsForm : Form
             }
 
             var provider = _cmbProvider.SelectedItem?.ToString() ?? "SqlServer";
-            if (provider == "SqlServer")
+            if (string.IsNullOrWhiteSpace(_txtDbServer.Text))
             {
-                if (string.IsNullOrWhiteSpace(_txtDbServer.Text))
-                {
-                    ShowError("请填写数据库服务器");
-                    _txtDbServer.Focus();
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(_txtDbName.Text))
-                {
-                    ShowError("请填写数据库名称");
-                    _txtDbName.Focus();
-                    return;
-                }
-                if (string.IsNullOrWhiteSpace(_txtDbUser.Text))
-                {
-                    ShowError("请填写数据库账号");
-                    _txtDbUser.Focus();
-                    return;
-                }
+                ShowError("请填写数据库服务器");
+                _txtDbServer.Focus();
+                return;
             }
-            if (provider == "Sqlite" && string.IsNullOrWhiteSpace(_txtSqlitePath.Text))
+            if (string.IsNullOrWhiteSpace(_txtDbName.Text))
             {
-                ShowError("请填写 SQLite 数据库路径");
-                _txtSqlitePath.Focus();
+                ShowError("请填写数据库名称");
+                _txtDbName.Focus();
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(_txtDbUser.Text))
+            {
+                ShowError("请填写数据库账号");
+                _txtDbUser.Focus();
                 return;
             }
 
@@ -535,8 +516,7 @@ public sealed class SettingsForm : Form
                 DbPort = (int)_numDbPort.Value,
                 DbName = _txtDbName.Text.Trim(),
                 DbUser = _txtDbUser.Text.Trim(),
-                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text,
-                SqlitePath = _txtSqlitePath.Text.Trim()
+                DbPassword = string.IsNullOrEmpty(_txtDbPassword.Text) ? "unchanged" : _txtDbPassword.Text
             };
 
             // v2.13.19：保存数据库配置（双擎持久化 + 广播）
@@ -566,10 +546,8 @@ public sealed class SettingsForm : Form
                 Database = new DatabaseSection
                 {
                     Provider = provider,
-                    ConnectionString = dbDto.Provider == "Sqlite"
-                        ? $"Data Source={dbDto.SqlitePath}"
-                        : dbDto.BuildConnectionString(),
-                    SqlitePath = dbDto.SqlitePath ?? ""
+                    ConnectionString = dbDto.BuildConnectionString()
+                    // v2.13.109: 移除 SqlitePath 赋值
                 },
                 Storage = new StorageSection
                 {
@@ -645,20 +623,6 @@ public sealed class SettingsForm : Form
         if (dlg.ShowDialog(this) == DialogResult.OK)
         {
             target.Text = ToRelativeIfUnderBase(dlg.FileName, AppContext.BaseDirectory.TrimEnd('\\'));
-        }
-    }
-
-    private void BrowseSqliteFile()
-    {
-        using var dlg = new OpenFileDialog
-        {
-            Filter = "SQLite 数据库 (*.db;*.sqlite)|*.db;*.sqlite|所有文件 (*.*)|*.*",
-            InitialDirectory = AppContext.BaseDirectory,
-            Title = "选择 SQLite 数据库文件"
-        };
-        if (dlg.ShowDialog(this) == DialogResult.OK)
-        {
-            _txtSqlitePath.Text = ToRelativeIfUnderBase(dlg.FileName, AppContext.BaseDirectory.TrimEnd('\\'));
         }
     }
 
