@@ -227,13 +227,13 @@
                             </div>
                             <div class="card-body py-2">
                                 <ul class="mb-2 mt-1 small">
-                                    @if (Model.SeedIntegrity.MissingPermissionIds.Count > 0)
+                                    @if (Model.SeedIntegrity.MissingPermissionCodes.Count > 0)
                                     {
                                         <li><strong class="text-danger">缺失 SysPermission：</strong>@string.Join("、", Model.SeedIntegrity.MissingPermissionLabels)</li>
                                     }
-                                    @if (Model.SeedIntegrity.MissingRolePermissionIds.Count > 0)
+                                    @if (Model.SeedIntegrity.MissingAdminPermissionCodes.Count > 0)
                                     {
-                                        <li><strong class="text-danger">缺失 SysRolePermission：</strong>@string.Join("、", Model.SeedIntegrity.MissingRolePermissionLabels)</li>
+                                        <li><strong class="text-danger">缺失 admin 授权：</strong>@string.Join("、", Model.SeedIntegrity.MissingRolePermissionLabels)</li>
                                     }
                                     @if (Model.SeedIntegrity.FieldPermissionCount < Model.SeedIntegrity.ExpectedFieldPermissionCount)
                                     {
@@ -266,8 +266,8 @@
                             </div>
                             <div class="card-body py-2 small">
                                 <i class="bi bi-database-check"></i>
-                                SysPermission @Model.SeedIntegrity.PresentPermCount/4 ·
-                                SysRolePermission @Model.SeedIntegrity.PresentRpCount/4 ·
+                                SysPermission @Model.SeedIntegrity.PresentPermCount/5 ·
+                                SysRolePermission(admin) @Model.SeedIntegrity.PresentRpCount/5 ·
                                 SysFieldPermission @Model.SeedIntegrity.FieldPermissionCount/@Model.SeedIntegrity.ExpectedFieldPermissionCount
                             </div>
                         </div>

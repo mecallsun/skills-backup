@@ -572,99 +572,124 @@ public static class DatabaseInitializer
                 }
             }
 
-            // 4. 插入 admin 的 SysRolePermission 关联（v2.13.92 Id 58/59/60 + v2.13.97 Id 61）
-            //    v2.13.103 终极修复：拆分为单条 INSERT + 独立 try/catch
-            //    v2.13.108 P0 终极修复：SQL Server IDENTITY_INSERT — SysRolePermission.Id 也是 IDENTITY(1,1) 列
-            //    v2.13.109 起移除 SQLite 分支；保留 SQL Server 语法不变
+            // 4. 插入 admin (RoleId=1) 的 SysRolePermission 关联（v2.13.92/97/110 共 5 条）
+            //    v2.13.103 拆分单条 INSERT + 独立 try/catch
+            //    v2.13.108 P0 修复 SysPermission.Id INSERT（IDENTITY_INSERT）
+            //    v2.13.114 P0 终极修复 SysRolePermission：SysRolePermission.Id 是 IDENTITY(1,1) 列，
+            //      生产 DB 已累积到 Id=184，硬编码 Id=58/59/60/61/62 中至少 Id=62 已被占用（访客 RoleId=9 占）
+            //      → 旧 SQL `INSERT VALUES (62, 1, 41)` 因 PK 冲突被 try/catch 静默吞掉，admin 永远拿不到 billingstandard:add 权限
+            //    修复方案：去掉硬编码 Id 列（让 IDENTITY 自动分配），去掉 SET IDENTITY_INSERT，
+            //      按 (RoleId, PermissionCode) JOIN SysPermission 唯一性判断（替代 Id 唯一性）
+            //    幂等性保证：多次执行不会重复插入（已有 admin→billingstandard:add 关联则跳过）
             var rpInserts = new[]
             {
-                // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
-                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 58)
-                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                  VALUES (58, 1, 37, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 59)
-                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                  VALUES (59, 1, 38, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 60)
-                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                  VALUES (60, 1, 39, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
+                // v2.13.114：按 (RoleId, PermissionCode) 唯一性判断，不指定 Id（IDENTITY 自动分配）
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'settings:fields'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-22' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'settings:fields';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'fieldpermission:edit'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-22' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'fieldpermission:edit';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'privacy:field:enable'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-22' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'privacy:field:enable';",
                 // v2.13.97 P0 BUG 修复：admin → personnel:add
-                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
-                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                  VALUES (61, 1, 40, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;",
-                // v2.13.110 P0 BUG 修复：admin → billingstandard:add
-                @"SET IDENTITY_INSERT [dbo].[SysRolePermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 62)
-                  INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
-                  VALUES (62, 1, 41, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysRolePermission] OFF;"
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'personnel:add'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-22' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'personnel:add';",
+                // v2.13.110 P0 BUG 修复：admin → billingstandard:add（v2.13.114 终极修复：去掉硬编码 Id）
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'billingstandard:add'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'billingstandard:add';"
             };
 
-            var rpTargetIds = new[] { 58, 59, 60, 61, 62 };
+            // v2.13.114：日志标识改为 PermissionCode（更直观）
+            var rpTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add" };
             for (int i = 0; i < rpInserts.Length; i++)
             {
                 try
                 {
-                    await db.Database.ExecuteSqlRawAsync(rpInserts[i], ct);
-                    result.RolePermSteps.Add($"Id={rpTargetIds[i]} ✓");
+                    var affected = await db.Database.ExecuteSqlRawAsync(rpInserts[i], ct);
+                    result.RolePermSteps.Add($"{rpTargetCodes[i]} ({(affected > 0 ? "新插入" : "已存在")})");
                 }
                 catch (Exception ex)
                 {
-                    result.RolePermSteps.Add($"Id={rpTargetIds[i]} ✗ {ex.GetType().Name}: {ex.Message}");
-                    logger.LogWarning(ex, "[v2.13.103] SysRolePermission Id={Id} INSERT 失败（继续执行）", rpTargetIds[i]);
+                    result.RolePermSteps.Add($"{rpTargetCodes[i]} ✗ {ex.GetType().Name}: {ex.Message}");
+                    logger.LogWarning(ex, "[v2.13.114] SysRolePermission {Code} INSERT 失败（继续执行）", rpTargetCodes[i]);
                     result.AllSucceeded = false;
                 }
             }
 
-            // 5. v2.13.101 验证迁移完整性 — 列出关键 Id 的实际状态
-            // 背景：MigrateFieldPermissionAsync 整体被 try/catch 包裹，失败仅日志不抛出。
-            //       用户曾反馈"权限矩阵看不到新增人员复选框"，根因之一就是迁移静默失败后无任何提示。
-            // 改进：迁移完成后主动 SELECT 关键 Id，缺失项输出 WARNING + 列表，便于运维诊断。
+            // 5. v2.13.101 验证迁移完整性 — 列出关键 PermissionCode 的实际状态
+            // v2.13.114 P0 修订：原按硬编码 Id 验证（Id 38/39/40/41/58/59/60/61/62）已因 IDENTITY 列占用不可靠，
+            //    改为按 PermissionCode JOIN SysPermission 验证 admin 用户是否拥有 5 个权限码
             try
             {
-                var requiredPermIds = new[] { 37, 38, 39, 40, 41 };
-                var requiredRpIds = new[] { 58, 59, 60, 61, 62 };
+                var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add" };
 
-                var presentPerms = await db.Database.SqlQueryRaw<int>(
-                    "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40,41)")
+                var presentPerms = await db.Database.SqlQueryRaw<string>(
+                    $"SELECT PermissionCode FROM SysPermission WHERE PermissionCode IN ({string.Join(",", requiredPermCodes.Select(c => $"N'{c}'"))})")
                     .ToListAsync(ct);
-                var presentRps = await db.Database.SqlQueryRaw<int>(
-                    "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61,62)")
+
+                var presentAdminCodes = await db.Database.SqlQueryRaw<string>(
+                    @"SELECT DISTINCT sp.PermissionCode
+                      FROM SysUserRole ur
+                      INNER JOIN SysRolePermission rp ON ur.RoleId = rp.RoleId
+                      INNER JOIN SysPermission sp ON rp.PermissionId = sp.Id
+                      WHERE ur.UserId = 1")
                     .ToListAsync(ct);
+
                 var fieldPermCount = await db.SysFieldPermissions.CountAsync(ct);
 
-                var missingPerms = requiredPermIds.Except(presentPerms).ToList();
-                var missingRps = requiredRpIds.Except(presentRps).ToList();
+                var missingPerms = requiredPermCodes.Except(presentPerms).ToList();
+                var missingAdminPerms = requiredPermCodes.Except(presentAdminCodes).ToList();
 
-                if (missingPerms.Count == 0 && missingRps.Count == 0 && fieldPermCount >= 5)
+                if (missingPerms.Count == 0 && missingAdminPerms.Count == 0 && fieldPermCount >= 5)
                 {
-                    logger.LogInformation("[v2.13.101 Verify] 隐私字段权限迁移完整性检查通过：SysPermission 5/5、SysRolePermission 5/5、SysFieldPermission {N}/5", fieldPermCount);
+                    logger.LogInformation("[v2.13.114 Verify] 隐私字段权限迁移完整性检查通过：admin 拥有 {N}/5 权限码，SYS FieldPermission {N}/5", presentAdminCodes.Count(c => requiredPermCodes.Contains(c)), fieldPermCount);
                 }
                 else
                 {
                     if (missingPerms.Count > 0)
-                        logger.LogWarning("[v2.13.101 Verify] SysPermission 缺失 {Ids}（personnel:add=40 / billingstandard:add=41 / privacy:field:enable=39 等）", string.Join(",", missingPerms));
-                    if (missingRps.Count > 0)
-                        logger.LogWarning("[v2.13.101 Verify] SysRolePermission 缺失 {Ids}（admin→personnel:add=61 / admin→billingstandard:add=62 等）", string.Join(",", missingRps));
+                        logger.LogWarning("[v2.13.114 Verify] SysPermission 缺失 {Codes}", string.Join(",", missingPerms));
+                    if (missingAdminPerms.Count > 0)
+                        logger.LogWarning("[v2.13.114 Verify] admin 用户缺失 {Codes}（v2.13.97 personnel:add / v2.13.110 billingstandard:add 等）", string.Join(",", missingAdminPerms));
                     if (fieldPermCount < 5)
-                        logger.LogWarning("[v2.13.101 Verify] SysFieldPermission 仅 {N}/5 行，字段权限清单不完整", fieldPermCount);
-                    logger.LogWarning("[v2.13.101 Verify] ⚠ 迁移不完整！请检查：(1) Admin 是否已重启触发 DatabaseInitializer.InitializeAsync；(2) 数据库连接字符串是否指向预期文件；(3) 启动日志是否有错误");
+                        logger.LogWarning("[v2.13.114 Verify] SysFieldPermission 仅 {N}/5 行，字段权限清单不完整", fieldPermCount);
+                    logger.LogWarning("[v2.13.114 Verify] ⚠ 迁移不完整！请检查：(1) Admin 是否已重启触发 DatabaseInitializer.InitializeAsync；(2) 数据库连接字符串是否指向预期文件；(3) 启动日志是否有错误");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogWarning(ex, "[v2.13.101 Verify] 完整性验证异常（不影响迁移主流程）");
+                logger.LogWarning(ex, "[v2.13.114 Verify] 完整性验证异常（不影响迁移主流程）");
             }
 
-            logger.LogInformation("[v2.13.110 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 5 权限码 + 5 角色关联，含 v2.13.97 personnel:add / v2.13.110 billingstandard:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
+            logger.LogInformation("[v2.13.114 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 5 权限码 + 5 角色关联，含 v2.13.97 personnel:add / v2.13.110 billingstandard:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
             return result;
         }
         catch (Exception ex)
@@ -684,37 +709,45 @@ public static class DatabaseInitializer
 
     /// <summary>
     /// v2.13.102 新增：DB seed 完整性查询（供 UI 展示）。
-    /// 复用 v2.13.101 验证 SQL，但不写日志——返回对象供 PageModel 直接序列化到 UI。
+    /// 复用 v2.13.114 验证 SQL（按 PermissionCode JOIN），但不写日志——返回对象供 PageModel 直接序列化到 UI。
     ///
     /// 检测维度：
-    /// - SysPermission 关键 Id（v2.13.92: 37/38/39；v2.13.97: 40）
-    /// - SysRolePermission admin 关联（v2.13.92: 58/59/60；v2.13.97: 61）
+    /// - SysPermission 关键 PermissionCode（v2.13.92: settings:fields/fieldpermission:edit/privacy:field:enable；
+    ///   v2.13.97: personnel:add；v2.13.110: billingstandard:add）
+    /// - SysRolePermission admin (UserId=1) 关联以上 5 个 PermissionCode
     /// - SysFieldPermission 行数 ≥ 5（v2.13.92 隐私字段种子）
+    ///
+    /// v2.13.114 修订：原按硬编码 Id 列表验证已不可靠（SysRolePermission.Id 已被占用至 184+），
+    ///    改为按 PermissionCode 列表 + JOIN SysPermission 派生验证。
     ///
     /// 设计原则：失败不抛异常——UI banner 不能因为检查失败而崩溃；返回 null/空集合让 UI 显示「未运行」。
     /// </summary>
     public static async Task<SeedIntegrityReport> CheckSeedIntegrityAsync(
         DormDbContext db, CancellationToken ct = default)
     {
-        var requiredPermIds = new[] { 37, 38, 39, 40, 41 };
-        var requiredRpIds   = new[] { 58, 59, 60, 61, 62 };
+        var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add" };
         const int expectedFieldPermCount = 5;
 
-        var presentPerms = new List<int>();
-        var presentRps = new List<int>();
+        var presentPerms = new List<string>();
+        var presentAdminPerms = new List<string>();
         int fieldPermCount = 0;
 
         try
         {
-            presentPerms = await db.Database.SqlQueryRaw<int>(
-                "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40,41)").ToListAsync(ct);
+            var permCodesLiteral = string.Join(",", requiredPermCodes.Select(c => $"N'{c}'"));
+            presentPerms = await db.Database.SqlQueryRaw<string>(
+                $"SELECT PermissionCode FROM SysPermission WHERE PermissionCode IN ({permCodesLiteral})").ToListAsync(ct);
         }
         catch { /* 表/视图不存在时返回空集合 */ }
 
         try
         {
-            presentRps = await db.Database.SqlQueryRaw<int>(
-                "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61,62)").ToListAsync(ct);
+            presentAdminPerms = await db.Database.SqlQueryRaw<string>(
+                @"SELECT DISTINCT sp.PermissionCode
+                  FROM SysUserRole ur
+                  INNER JOIN SysRolePermission rp ON ur.RoleId = rp.RoleId
+                  INNER JOIN SysPermission sp ON rp.PermissionId = sp.Id
+                  WHERE ur.UserId = 1").ToListAsync(ct);
         }
         catch { /* 同上 */ }
 
@@ -724,17 +757,17 @@ public static class DatabaseInitializer
         }
         catch { /* 同上 */ }
 
-        var missingPerms = requiredPermIds.Except(presentPerms).ToList();
-        var missingRps   = requiredRpIds.Except(presentRps).ToList();
-        var ok = missingPerms.Count == 0 && missingRps.Count == 0 && fieldPermCount >= expectedFieldPermCount;
+        var missingPerms = requiredPermCodes.Except(presentPerms).ToList();
+        var missingAdminPerms = requiredPermCodes.Except(presentAdminPerms).ToList();
+        var ok = missingPerms.Count == 0 && missingAdminPerms.Count == 0 && fieldPermCount >= expectedFieldPermCount;
 
         return new SeedIntegrityReport
         {
             Ok = ok,
-            RequiredPermissionIds = requiredPermIds.ToList(),
-            MissingPermissionIds = missingPerms,
-            RequiredRolePermissionIds = requiredRpIds.ToList(),
-            MissingRolePermissionIds = missingRps,
+            RequiredPermissionCodes = requiredPermCodes.ToList(),
+            MissingPermissionCodes = missingPerms,
+            RequiredAdminPermissionCodes = requiredPermCodes.ToList(),
+            MissingAdminPermissionCodes = missingAdminPerms,
             FieldPermissionCount = fieldPermCount,
             ExpectedFieldPermissionCount = expectedFieldPermCount,
             CheckedAt = DateTime.Now,
@@ -780,49 +813,56 @@ public class SeedMigrationResult
 
 /// <summary>
 /// v2.13.102 新增：seed 完整性报告（供 UI 序列化）。
+/// v2.13.114 修订：原按 SysPermission.Id/SysRolePermission.Id 验证（IDENTITY 列不可靠）改为按 PermissionCode 验证。
 /// 字段命名遵守 PascalCase，由 Razor `@Model.SeedIntegrity.Ok` 直接渲染。
 /// </summary>
 public class SeedIntegrityReport
 {
     public bool Ok { get; set; }
-    public List<int> RequiredPermissionIds { get; set; } = new();
-    public List<int> MissingPermissionIds { get; set; } = new();
-    public List<int> RequiredRolePermissionIds { get; set; } = new();
-    public List<int> MissingRolePermissionIds { get; set; } = new();
+    /// <summary>v2.13.114：SysPermission 5 个关键 PermissionCode（按 PermissionCode 而非 Id 验证）</summary>
+    public List<string> RequiredPermissionCodes { get; set; } = new();
+    /// <summary>v2.13.114：SysPermission 缺失的 PermissionCode</summary>
+    public List<string> MissingPermissionCodes { get; set; } = new();
+    /// <summary>v2.13.114：admin 用户应拥有的 5 个 PermissionCode</summary>
+    public List<string> RequiredAdminPermissionCodes { get; set; } = new();
+    /// <summary>v2.13.114：admin 用户缺失的 PermissionCode</summary>
+    public List<string> MissingAdminPermissionCodes { get; set; } = new();
     public int FieldPermissionCount { get; set; }
     public int ExpectedFieldPermissionCount { get; set; }
     public DateTime CheckedAt { get; set; }
-    public string Version { get; set; } = "";
+    public string Version { get; set; } = "v2.13.114";
 
-    /// <summary>缺失 SysPermission 的中文标签（含 Id 便于排查）</summary>
-    public List<string> MissingPermissionLabels => MissingPermissionIds
-        .Select(id => id switch
+    /// <summary>v2.13.114：SysPermission 缺失项的中文标签（PermissionCode 形式）</summary>
+    public List<string> MissingPermissionLabels => MissingPermissionCodes
+        .Select(code => code switch
         {
-            37 => "settings:fields (Id=37)",
-            38 => "fieldpermission:edit (Id=38)",
-            39 => "privacy:field:enable (Id=39)",
-            40 => "personnel:add (Id=40)",
-            _ => $"未知(Id={id})"
+            "settings:fields" => "settings:fields（字段权限菜单）",
+            "fieldpermission:edit" => "fieldpermission:edit（编辑字段权限）",
+            "privacy:field:enable" => "privacy:field:enable（启用隐私字段保护）",
+            "personnel:add" => "personnel:add（新增人员按钮）",
+            "billingstandard:add" => "billingstandard:add（新增费用标准按钮）",
+            _ => code
         }).ToList();
 
-    /// <summary>缺失 SysRolePermission 的中文标签</summary>
-    public List<string> MissingRolePermissionLabels => MissingRolePermissionIds
-        .Select(id => id switch
+    /// <summary>v2.13.114：admin 缺失项的中文标签</summary>
+    public List<string> MissingRolePermissionLabels => MissingAdminPermissionCodes
+        .Select(code => code switch
         {
-            58 => "admin→settings:fields (Id=58)",
-            59 => "admin→fieldpermission:edit (Id=59)",
-            60 => "admin→privacy:field:enable (Id=60)",
-            61 => "admin→personnel:add (Id=61)",
-            _ => $"未知(Id={id})"
+            "settings:fields" => "admin → settings:fields（缺失）",
+            "fieldpermission:edit" => "admin → fieldpermission:edit（缺失）",
+            "privacy:field:enable" => "admin → privacy:field:enable（缺失）",
+            "personnel:add" => "admin → personnel:add（缺失）",
+            "billingstandard:add" => "admin → billingstandard:add（缺失）",
+            _ => $"admin → {code}（缺失）"
         }).ToList();
 
-    /// <summary>UI 顶部一句话摘要</summary>
+    /// <summary>v2.13.114：UI 顶部一句话摘要（按 PermissionCode 5/5 计算）</summary>
     public string Summary => Ok
-        ? $"SysPermission {PresentPermCount}/4 · SysRolePermission {PresentRpCount}/4 · SysFieldPermission {FieldPermissionCount}/5"
-        : $"缺失 {MissingPermissionIds.Count + MissingRolePermissionIds.Count} 项";
+        ? $"SysPermission {PresentPermCount}/5 · SysRolePermission(admin) {PresentRpCount}/5 · SysFieldPermission {FieldPermissionCount}/5"
+        : $"缺失 {MissingPermissionCodes.Count + MissingAdminPermissionCodes.Count} 项";
 
-    public int PresentPermCount => RequiredPermissionIds.Count - MissingPermissionIds.Count;
-    public int PresentRpCount => RequiredRolePermissionIds.Count - MissingRolePermissionIds.Count;
+    public int PresentPermCount => RequiredPermissionCodes.Count - MissingPermissionCodes.Count;
+    public int PresentRpCount => RequiredAdminPermissionCodes.Count - MissingAdminPermissionCodes.Count;
 }
 
 /// <summary>
