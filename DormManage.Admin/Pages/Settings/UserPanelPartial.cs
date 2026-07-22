@@ -45,7 +45,7 @@ public partial class IndexModel
     }
 
     [BindProperty(SupportsGet = true, Name = "uSize")]
-    public int UserPageSize { get; set; } = 20;
+    public int UserPageSize { get; set; } = 10;
 
     [BindProperty(SupportsGet = true, Name = "pageSize")]
     public int? PageSizeAlias
@@ -76,6 +76,8 @@ public partial class IndexModel
         public DateTime? LastLoginTime { get; set; }
         public string? LastLoginIp { get; set; }
         public DateTime CreatedAt { get; set; }
+        /// <summary>v2.13.93 新增：账号有效期至（NULL = 永久）</summary>
+        public DateTime? ExpiresAt { get; set; }
     }
 
     public class RoleOption
@@ -133,20 +135,27 @@ public partial class IndexModel
                 IsLocked = u.IsLocked,
                 LastLoginTime = u.LastLoginTime,
                 LastLoginIp = u.LastLoginIp,
-                CreatedAt = u.CreatedAt
+                CreatedAt = u.CreatedAt,
+                // v2.13.93 新增：账号有效期至
+                ExpiresAt = u.ExpiresAt
             };
         }).ToList();
     }
 
     // ====================== 用户管理 Handler（v2.13.65 + v2.13.66 同模式） ======================
 
-    public async Task<IActionResult> OnPostUserCreateAsync(string UserName, string DisplayName, string Password, string Email, string Phone, int[] SelectedRoleIds)
+    public async Task<IActionResult> OnPostUserCreateAsync(string UserName, string DisplayName, string Password, string Email, string Phone, int[] SelectedRoleIds, string? ExpiresAt)
     {
         if (string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password) || string.IsNullOrWhiteSpace(DisplayName))
             return new JsonResult(new { success = false, message = "用户名、姓名、密码为必填项" });
 
         if (await _db.SysUsers.AnyAsync(u => u.UserName == UserName))
             return new JsonResult(new { success = false, message = $"用户名 {UserName} 已存在" });
+
+        // v2.13.93 新增：解析有效期至（datetime-local 提交格式 yyyy-MM-ddTHH:mm）
+        DateTime? expiresAtValue = null;
+        if (!string.IsNullOrWhiteSpace(ExpiresAt) && DateTime.TryParse(ExpiresAt, out var parsed))
+            expiresAtValue = parsed;
 
         var user = new SysUser
         {
@@ -158,7 +167,9 @@ public partial class IndexModel
             IsActive = true,
             IsLocked = false,
             FailedLoginCount = 0,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.Now,
+            // v2.13.93 新增：账号有效期至
+            ExpiresAt = expiresAtValue
         };
         _db.SysUsers.Add(user);
         await _db.SaveChangesAsync();
@@ -173,7 +184,7 @@ public partial class IndexModel
         return new JsonResult(new { success = true, message = $"用户 {UserName} 创建成功", userId = user.Id });
     }
 
-    public async Task<IActionResult> OnPostUserUpdateAsync(int Id, string DisplayName, string Email, string Phone, bool IsActive, int[] SelectedRoleIds)
+    public async Task<IActionResult> OnPostUserUpdateAsync(int Id, string DisplayName, string Email, string Phone, bool IsActive, int[] SelectedRoleIds, string? ExpiresAt)
     {
         var user = await _db.SysUsers.FindAsync(Id);
         if (user is null)
@@ -183,6 +194,11 @@ public partial class IndexModel
         user.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
         user.Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim();
         user.IsActive = IsActive;
+        // v2.13.93 新增：账号有效期至（空字符串视为清空；否则按 datetime-local 解析）
+        if (string.IsNullOrWhiteSpace(ExpiresAt))
+            user.ExpiresAt = null;
+        else if (DateTime.TryParse(ExpiresAt, out var parsed))
+            user.ExpiresAt = parsed;
         user.UpdatedAt = DateTime.Now;
 
         var oldRoles = _db.SysUserRoles.Where(ur => ur.UserId == Id);

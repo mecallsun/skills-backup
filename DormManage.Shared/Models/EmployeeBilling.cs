@@ -90,6 +90,25 @@ public class EmployeeBilling
     public DormBilling? DormBilling { get; set; }
 
     /// <summary>
+    /// v2.13.93 新增：本月实际补贴金额（元，按入住天数折算后），财务可手工调整
+    /// 默认 0，BillingService.GenerateEmployeeBillsAsync 按标准 × 入住天数 / 当月天数 写入
+    /// 费用合计 = TotalShareAmount - SubsidyAmount（不允许为负）
+    /// </summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal SubsidyAmount { get; set; }
+
+    /// <summary>
+    /// v2.13.93 同步 SQL init_schema.sql:499:入住天数（按月折算因子）
+    /// </summary>
+    public int Days { get; set; }
+
+    /// <summary>
+    /// v2.13.93 同步 SQL init_schema.sql:496:部门（冗余便于历史回溯，运行时由 SysEmployee JOIN 覆盖）
+    /// </summary>
+    [MaxLength(128)]
+    public string? Department { get; set; }
+
+    /// <summary>
     /// 是否已发布
     /// </summary>
     public bool IsPublished { get; set; }

@@ -49,7 +49,7 @@
                         <button class="nav-link text-start @(Model.ActiveTab == "attendance" ? "active" : "")"
                                 data-bs-toggle="pill" data-bs-target="#pane-attendance"
                                 onclick="setActiveTab('attendance')">
-                            <i class="bi bi-clock-history"></i> 考勤班次
+                            <i class="bi bi-clock-history"></i> 班次
                         </button>
                         <button class="nav-link text-start @(Model.ActiveTab == "team" ? "active" : "")"
                                 data-bs-toggle="pill" data-bs-target="#pane-team"
@@ -222,12 +222,12 @@
                     </div>
                 </div>
 
-                <!-- 考勤班次 -->
+                <!-- 班次 -->
                 <div class="tab-pane fade @(Model.ActiveTab == "attendance" ? "show active" : "")" id="pane-attendance" role="tabpanel">
                     <div class="card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 考勤班次列表</h5>
+                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 班次列表</h5>
                                 <button class="btn btn-success" onclick="showAddModal('attendance')">
                                     <i class="bi bi-plus-lg"></i> 新增班次
                                 </button>

@@ -26,7 +26,8 @@ public static class DatabaseInitializer
     /// <summary>关键表清单（任一缺失视为 DB 未初始化）</summary>
     public static readonly string[] CriticalTables = new[]
     {
-        "SysUser", "SysRole", "SysEmployee", "Dorm", "DormBooking", "MeterRecord",
+        "SysUser", "SysRole", "SysPermission", "SysRolePermission", "SysEmployee",
+        "Dorm", "DormBooking", "MeterRecord", "SysFieldPermission",
         "Department", "Building", "Floor", "EmployeeType", "MeterUnit",
         "BillingStandard", "AppVersion", "SysConfig", "SysParameter"
     };
@@ -108,7 +109,13 @@ public static class DatabaseInitializer
             // 第 5 步：种子默认管理员
             report.AdminSeeded = await SeedDefaultAdminAsync(db, logger, ct);
 
-            // 第 6 步：写入 AppVersion 当前版本
+            // 第 6 步：v2.13.99 启动迁移 — 补建 SysFieldPermission 表 + 隐私字段权限种子
+            // 原因：v2.13.92 引入的新表/新权限码，EF Core EnsureCreated() 对既有 DB 不生效，
+            //       导致 SQLite 生产库至今缺失，Html.IsFieldHiddenAsync 链路全部短路返回 false，
+            //       表现为「未勾选的隐私字段仍能显示」。
+            report.FieldPermissionMigrated = (await MigrateFieldPermissionAsync(db, logger, ct)).AllSucceeded;
+
+            // 第 7 步：写入 AppVersion 当前版本
             report.AppVersionSeeded = await SyncAppVersionAsync(db, report.Version, logger, ct);
         }
         catch (Exception ex)
@@ -448,12 +455,442 @@ public static class DatabaseInitializer
         }
     }
 
+    /// <summary>
+    /// v2.13.99 启动迁移：补建 SysFieldPermission 表 + v2.13.92 隐私字段权限种子
+    ///
+    /// 背景：
+    ///   v2.13.92 引入 SysFieldPermission 新表 + 3 个权限码（settings:fields / fieldpermission:edit / privacy:field:enable）
+    ///   + admin 3 条角色权限关联 + 5 个敏感字段种子。但 EF Core Database.EnsureCreated()
+    ///   仅对不存在的 DB 完整建表，对既有 DB 立即 return，导致这些 schema 变更从未落到
+    ///   SQLite 生产库（dorm.db / DormManage.Admin/dorm.db）。
+    ///
+    /// 后果：
+    ///   Html.IsFieldHiddenAsync → HasPrivacyFieldEnabledAsync → GetUserPermissionCodesAsync
+    ///   → 查不到 PermissionCode='privacy:field:enable'（SysPermission 表无 Id=39）
+    ///   → 整条隐私判定链路短路返回 false → 所有字段始终可见。
+    ///
+    /// 修复：
+    ///   启动时检测 SysFieldPermission 表是否存在，缺失则按 Provider (SQLite/SQL Server)
+    ///   分别执行 DDL 补建 + 幂等 INSERT（WHERE NOT EXISTS 守卫）。
+    /// </summary>
+    public static async Task<SeedMigrationResult> MigrateFieldPermissionAsync(
+        DormDbContext db, ILogger logger, CancellationToken ct)
+    {
+        var result = new SeedMigrationResult();
+        try
+        {
+            var provider = db.Database.ProviderName ?? "";
+            var isSqlite = provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase);
+
+            // 1. 检测 SysFieldPermission 表是否存在
+            bool tableExists;
+            try
+            {
+                if (isSqlite)
+                {
+                    var rows = await db.Database.SqlQueryRaw<string>(
+                        "SELECT name FROM sqlite_master WHERE type='table' AND name='SysFieldPermission'")
+                        .ToListAsync(ct);
+                    tableExists = rows.Count > 0;
+                }
+                else
+                {
+                    var rows = await db.Database.SqlQueryRaw<string>(
+                        "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'SysFieldPermission'")
+                        .ToListAsync(ct);
+                    tableExists = rows.Count > 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[v2.13.99 Migrate] SysFieldPermission 表检测异常，跳过迁移");
+                return new SeedMigrationResult { FatalError = ex.Message, AllSucceeded = false };
+            }
+
+            if (!tableExists)
+            {
+                logger.LogWarning("[v2.13.99 Migrate] SysFieldPermission 表缺失，开始补建...");
+                result.CreatedFieldPermissionTable = true;
+
+                var createSql = isSqlite
+                    ? @"CREATE TABLE SysFieldPermission (
+                          Id INTEGER PRIMARY KEY AUTOINCREMENT,
+                          FieldKey TEXT(64) NOT NULL,
+                          Module TEXT(32) NOT NULL,
+                          FieldName TEXT(64) NOT NULL,
+                          FieldType TEXT(16) NULL,
+                          SensitivityLevel INTEGER NOT NULL DEFAULT 1,
+                          SortOrder INTEGER NOT NULL DEFAULT 0,
+                          IsActive INTEGER NOT NULL DEFAULT 0,
+                          Description TEXT(200) NULL,
+                          CreatedAt TEXT NOT NULL,
+                          UpdatedAt TEXT NULL,
+                          UpdatedBy TEXT(64) NULL
+                        );
+                        CREATE UNIQUE INDEX IX_SysFieldPermission_FieldKey ON SysFieldPermission(FieldKey);"
+                    : @"IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SysFieldPermission]') AND type in (N'U'))
+                        BEGIN
+                            CREATE TABLE [dbo].[SysFieldPermission] (
+                                [Id] INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+                                [FieldKey] NVARCHAR(64) NOT NULL,
+                                [Module] NVARCHAR(32) NOT NULL,
+                                [FieldName] NVARCHAR(64) NOT NULL,
+                                [FieldType] NVARCHAR(16) NULL,
+                                [SensitivityLevel] INT NOT NULL DEFAULT 1,
+                                [SortOrder] INT NOT NULL DEFAULT 0,
+                                [IsActive] BIT NOT NULL DEFAULT 0,
+                                [Description] NVARCHAR(200) NULL,
+                                [CreatedAt] DATETIME2 NOT NULL,
+                                [UpdatedAt] DATETIME2 NULL,
+                                [UpdatedBy] NVARCHAR(64) NULL
+                            );
+                            CREATE UNIQUE INDEX [IX_SysFieldPermission_FieldKey] ON [dbo].[SysFieldPermission] ([FieldKey]);
+                        END";
+
+                await db.Database.ExecuteSqlRawAsync(createSql, ct);
+                logger.LogInformation("[v2.13.99 Migrate] SysFieldPermission 表已创建");
+            }
+
+            // 2. 插入 5 字段种子（idempotent via WHERE NOT EXISTS）
+            var fieldsSql = isSqlite
+                ? @"INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
+                    SELECT 1, 'employee.realname', 'Personnel', '姓名', 'string', 1, 1, 1, '员工真实姓名（高 PII）', '2026-07-22 00:00:00'
+                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=1);
+                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
+                    SELECT 2, 'employee.phone', 'Personnel', '手机号', 'string', 1, 2, 1, '联系电话（高 PII）', '2026-07-22 00:00:00'
+                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=2);
+                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
+                    SELECT 3, 'employee.employeecode', 'Personnel', '工号', 'string', 2, 3, 1, '公司内唯一标识', '2026-07-22 00:00:00'
+                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=3);
+                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
+                    SELECT 4, 'employee.dormcode', 'Personnel', '宿舍房号', 'string', 2, 4, 1, '当前入住房号（隐私住址）', '2026-07-22 00:00:00'
+                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=4);
+                    INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
+                    SELECT 5, 'employee.remark', 'Personnel', '备注', 'string', 2, 5, 1, '自由文本备注（可能含敏感信息）', '2026-07-22 00:00:00'
+                    WHERE NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE Id=5);"
+                : @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 1)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (1, N'employee.realname', N'Personnel', N'姓名', N'string', 1, 1, 1, N'员工真实姓名（高 PII）', '2026-07-22');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 2)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (2, N'employee.phone', N'Personnel', N'手机号', N'string', 1, 2, 1, N'联系电话（高 PII）', '2026-07-22');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 3)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (3, N'employee.employeecode', N'Personnel', N'工号', N'string', 2, 3, 1, N'公司内唯一标识', '2026-07-22');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 4)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (4, N'employee.dormcode', N'Personnel', N'宿舍房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');";
+
+            await db.Database.ExecuteSqlRawAsync(fieldsSql, ct);
+
+            // 3. 插入 v2.13.92 3 个权限码种子（Id 37/38/39）+ v2.13.97 1 个补充（Id 40）
+            //    v2.13.99 P0 BUG 修复：原 MigrateFieldPermissionAsync 漏写 Id=40，导致 personnel:add 按钮权限失效
+            //    v2.13.100 修订：扩展为补齐所有缺失的 seed（包括 v2.13.97 personnel:add）
+            //    v2.13.103 终极修复：拆分为单条 INSERT + 独立 try/catch，让单条失败不影响其他 + 记录到 result.PermSteps
+            var permInserts = isSqlite
+                ? new[]
+                {
+                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
+                      SELECT 37, 'settings:fields', '字段权限', 1, 18, '/Settings?tab=fields', 'bi-shield-check', 28, 1, 1, '管理敏感字段清单', '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=37)",
+                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
+                      SELECT 38, 'fieldpermission:edit', '编辑字段权限', 2, 37, '', '', 29, 1, 1, '勾选/取消勾选敏感字段', '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=38)",
+                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, Description, CreatedAt)
+                      SELECT 39, 'privacy:field:enable', '启用隐私字段保护', 3, 0, '', '', 30, 1, 1, '勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=39)",
+                    // v2.13.97 P0 BUG 修复：personnel:add 权限码（用户反馈：缺少「新增」按钮权限）
+                    @"INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, ParentId, Route, Icon, SortOrder, IsActive, IsSystem, CreatedAt)
+                      SELECT 40, 'personnel:add', '新增人员', 2, 9, '/Personnel/Create', 'bi-plus-lg', 7, 1, 0, '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysPermission WHERE Id=40)"
+                }
+                : new[]
+                {
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 37)
+                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                      VALUES (37, N'settings:fields', N'字段权限', 1, 18, N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22')",
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 38)
+                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                      VALUES (38, N'fieldpermission:edit', N'编辑字段权限', 2, 37, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22')",
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 39)
+                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                      VALUES (39, N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22')",
+                    // v2.13.97 P0 BUG 修复：personnel:add
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
+                      INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                      VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22')"
+                };
+
+            var permTargetIds = new[] { 37, 38, 39, 40 };
+            for (int i = 0; i < permInserts.Length; i++)
+            {
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync(permInserts[i], ct);
+                    result.PermSteps.Add($"Id={permTargetIds[i]} ✓");
+                }
+                catch (Exception ex)
+                {
+                    result.PermSteps.Add($"Id={permTargetIds[i]} ✗ {ex.GetType().Name}: {ex.Message}");
+                    logger.LogWarning(ex, "[v2.13.103] SysPermission Id={Id} INSERT 失败（继续执行）", permTargetIds[i]);
+                    result.AllSucceeded = false;
+                }
+            }
+
+            // 4. 插入 admin 的 SysRolePermission 关联（v2.13.92 Id 58/59/60 + v2.13.97 Id 61）
+            //    v2.13.103 终极修复：拆分为单条 INSERT + 独立 try/catch
+            var rpInserts = isSqlite
+                ? new[]
+                {
+                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
+                      SELECT 58, 1, 37, '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=58)",
+                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
+                      SELECT 59, 1, 38, '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=59)",
+                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
+                      SELECT 60, 1, 39, '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=60)",
+                    // v2.13.97 P0 BUG 修复：admin → personnel:add
+                    @"INSERT INTO SysRolePermission (Id, RoleId, PermissionId, CreatedAt)
+                      SELECT 61, 1, 40, '2026-07-22 00:00:00'
+                      WHERE NOT EXISTS (SELECT 1 FROM SysRolePermission WHERE Id=61)"
+                }
+                : new[]
+                {
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 58)
+                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                      VALUES (58, 1, 37, '2026-07-22')",
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 59)
+                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                      VALUES (59, 1, 38, '2026-07-22')",
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 60)
+                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                      VALUES (60, 1, 39, '2026-07-22')",
+                    // v2.13.97 P0 BUG 修复：admin → personnel:add
+                    @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
+                      INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+                      VALUES (61, 1, 40, '2026-07-22')"
+                };
+
+            var rpTargetIds = new[] { 58, 59, 60, 61 };
+            for (int i = 0; i < rpInserts.Length; i++)
+            {
+                try
+                {
+                    await db.Database.ExecuteSqlRawAsync(rpInserts[i], ct);
+                    result.RolePermSteps.Add($"Id={rpTargetIds[i]} ✓");
+                }
+                catch (Exception ex)
+                {
+                    result.RolePermSteps.Add($"Id={rpTargetIds[i]} ✗ {ex.GetType().Name}: {ex.Message}");
+                    logger.LogWarning(ex, "[v2.13.103] SysRolePermission Id={Id} INSERT 失败（继续执行）", rpTargetIds[i]);
+                    result.AllSucceeded = false;
+                }
+            }
+
+            // 5. v2.13.101 验证迁移完整性 — 列出关键 Id 的实际状态
+            // 背景：MigrateFieldPermissionAsync 整体被 try/catch 包裹，失败仅日志不抛出。
+            //       用户曾反馈"权限矩阵看不到新增人员复选框"，根因之一就是迁移静默失败后无任何提示。
+            // 改进：迁移完成后主动 SELECT 关键 Id，缺失项输出 WARNING + 列表，便于运维诊断。
+            try
+            {
+                var requiredPermIds = new[] { 37, 38, 39, 40 };
+                var requiredRpIds = new[] { 58, 59, 60, 61 };
+
+                var presentPerms = await db.Database.SqlQueryRaw<int>(
+                    "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40)")
+                    .ToListAsync(ct);
+                var presentRps = await db.Database.SqlQueryRaw<int>(
+                    "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61)")
+                    .ToListAsync(ct);
+                var fieldPermCount = await db.SysFieldPermissions.CountAsync(ct);
+
+                var missingPerms = requiredPermIds.Except(presentPerms).ToList();
+                var missingRps = requiredRpIds.Except(presentRps).ToList();
+
+                if (missingPerms.Count == 0 && missingRps.Count == 0 && fieldPermCount >= 5)
+                {
+                    logger.LogInformation("[v2.13.101 Verify] 隐私字段权限迁移完整性检查通过：SysPermission 4/4、SysRolePermission 4/4、SysFieldPermission {N}/5", fieldPermCount);
+                }
+                else
+                {
+                    if (missingPerms.Count > 0)
+                        logger.LogWarning("[v2.13.101 Verify] SysPermission 缺失 {Ids}（personnel:add=40 / privacy:field:enable=39 等）", string.Join(",", missingPerms));
+                    if (missingRps.Count > 0)
+                        logger.LogWarning("[v2.13.101 Verify] SysRolePermission 缺失 {Ids}（admin→personnel:add=61 等）", string.Join(",", missingRps));
+                    if (fieldPermCount < 5)
+                        logger.LogWarning("[v2.13.101 Verify] SysFieldPermission 仅 {N}/5 行，字段权限清单不完整", fieldPermCount);
+                    logger.LogWarning("[v2.13.101 Verify] ⚠ 迁移不完整！请检查：(1) Admin 是否已重启触发 DatabaseInitializer.InitializeAsync；(2) 数据库连接字符串是否指向预期文件；(3) 启动日志是否有错误");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "[v2.13.101 Verify] 完整性验证异常（不影响迁移主流程）");
+            }
+
+            logger.LogInformation("[v2.13.100 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 4 权限码 + 4 角色关联，含 v2.13.97 personnel:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
+            return result;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "[v2.13.99 Migrate] 迁移失败（非阻塞，应用继续启动）");
+            result.FatalError = ex.GetType().Name + ": " + ex.Message;
+            return result;
+        }
+    }
+
     private static string ComputeSha256(string input)
     {
         using var sha = System.Security.Cryptography.SHA256.Create();
         var bytes = sha.ComputeHash(System.Text.Encoding.UTF8.GetBytes(input));
         return Convert.ToHexString(bytes).ToLowerInvariant();
     }
+
+    /// <summary>
+    /// v2.13.102 新增：DB seed 完整性查询（供 UI 展示）。
+    /// 复用 v2.13.101 验证 SQL，但不写日志——返回对象供 PageModel 直接序列化到 UI。
+    ///
+    /// 检测维度：
+    /// - SysPermission 关键 Id（v2.13.92: 37/38/39；v2.13.97: 40）
+    /// - SysRolePermission admin 关联（v2.13.92: 58/59/60；v2.13.97: 61）
+    /// - SysFieldPermission 行数 ≥ 5（v2.13.92 隐私字段种子）
+    ///
+    /// 设计原则：失败不抛异常——UI banner 不能因为检查失败而崩溃；返回 null/空集合让 UI 显示「未运行」。
+    /// </summary>
+    public static async Task<SeedIntegrityReport> CheckSeedIntegrityAsync(
+        DormDbContext db, CancellationToken ct = default)
+    {
+        var requiredPermIds = new[] { 37, 38, 39, 40 };
+        var requiredRpIds   = new[] { 58, 59, 60, 61 };
+        const int expectedFieldPermCount = 5;
+
+        var presentPerms = new List<int>();
+        var presentRps = new List<int>();
+        int fieldPermCount = 0;
+
+        try
+        {
+            presentPerms = await db.Database.SqlQueryRaw<int>(
+                "SELECT Id FROM SysPermission WHERE Id IN (37,38,39,40)").ToListAsync(ct);
+        }
+        catch { /* 表/视图不存在时返回空集合 */ }
+
+        try
+        {
+            presentRps = await db.Database.SqlQueryRaw<int>(
+                "SELECT Id FROM SysRolePermission WHERE Id IN (58,59,60,61)").ToListAsync(ct);
+        }
+        catch { /* 同上 */ }
+
+        try
+        {
+            fieldPermCount = await db.SysFieldPermissions.CountAsync(ct);
+        }
+        catch { /* 同上 */ }
+
+        var missingPerms = requiredPermIds.Except(presentPerms).ToList();
+        var missingRps   = requiredRpIds.Except(presentRps).ToList();
+        var ok = missingPerms.Count == 0 && missingRps.Count == 0 && fieldPermCount >= expectedFieldPermCount;
+
+        return new SeedIntegrityReport
+        {
+            Ok = ok,
+            RequiredPermissionIds = requiredPermIds.ToList(),
+            MissingPermissionIds = missingPerms,
+            RequiredRolePermissionIds = requiredRpIds.ToList(),
+            MissingRolePermissionIds = missingRps,
+            FieldPermissionCount = fieldPermCount,
+            ExpectedFieldPermissionCount = expectedFieldPermCount,
+            CheckedAt = DateTime.Now,
+            Version = "v2.13.102"
+        };
+    }
+}
+
+/// <summary>
+/// v2.13.103 新增：seed 迁移结果（结构化替代原 bool）。
+///
+/// 背景：
+///   v2.13.102 MigrateFieldPermissionAsync 返回 bool，但 permSql 整段任一 INSERT 失败被 try/catch 吞掉，
+///   返回 false 后 OnPostRoleSeedRepairAsync 又走"report.Ok"分支返回 success=true，
+///   用户看到 success toast 但实际没写入——这是 v2.13.102 隐藏 BUG。
+///
+/// 修复：
+///   - PermSteps / RolePermSteps 记录每条 INSERT 的成功/失败详情（供 UI 直接展示）
+///   - AllSucceeded 单一标志：true = 全部成功；false = 有失败
+///   - FatalError：整段被 try/catch 吞掉的致命异常
+/// </summary>
+public class SeedMigrationResult
+{
+    public List<string> PermSteps { get; set; } = new();
+    public List<string> RolePermSteps { get; set; } = new();
+    public bool CreatedFieldPermissionTable { get; set; }
+    public bool AllSucceeded { get; set; } = true;
+    public string? FatalError { get; set; }
+
+    /// <summary>UI 一句话摘要</summary>
+    public string Summary
+    {
+        get
+        {
+            if (!string.IsNullOrEmpty(FatalError))
+                return $"致命异常：{FatalError}";
+            var ok = PermSteps.Count(p => p.Contains("✓")) + RolePermSteps.Count(p => p.Contains("✓"));
+            var fail = PermSteps.Count(p => p.Contains("✗")) + RolePermSteps.Count(p => p.Contains("✗"));
+            return fail == 0 ? $"全部成功（{ok} 条）" : $"{ok} 成功 / {fail} 失败";
+        }
+    }
+}
+
+/// <summary>
+/// v2.13.102 新增：seed 完整性报告（供 UI 序列化）。
+/// 字段命名遵守 PascalCase，由 Razor `@Model.SeedIntegrity.Ok` 直接渲染。
+/// </summary>
+public class SeedIntegrityReport
+{
+    public bool Ok { get; set; }
+    public List<int> RequiredPermissionIds { get; set; } = new();
+    public List<int> MissingPermissionIds { get; set; } = new();
+    public List<int> RequiredRolePermissionIds { get; set; } = new();
+    public List<int> MissingRolePermissionIds { get; set; } = new();
+    public int FieldPermissionCount { get; set; }
+    public int ExpectedFieldPermissionCount { get; set; }
+    public DateTime CheckedAt { get; set; }
+    public string Version { get; set; } = "";
+
+    /// <summary>缺失 SysPermission 的中文标签（含 Id 便于排查）</summary>
+    public List<string> MissingPermissionLabels => MissingPermissionIds
+        .Select(id => id switch
+        {
+            37 => "settings:fields (Id=37)",
+            38 => "fieldpermission:edit (Id=38)",
+            39 => "privacy:field:enable (Id=39)",
+            40 => "personnel:add (Id=40)",
+            _ => $"未知(Id={id})"
+        }).ToList();
+
+    /// <summary>缺失 SysRolePermission 的中文标签</summary>
+    public List<string> MissingRolePermissionLabels => MissingRolePermissionIds
+        .Select(id => id switch
+        {
+            58 => "admin→settings:fields (Id=58)",
+            59 => "admin→fieldpermission:edit (Id=59)",
+            60 => "admin→privacy:field:enable (Id=60)",
+            61 => "admin→personnel:add (Id=61)",
+            _ => $"未知(Id={id})"
+        }).ToList();
+
+    /// <summary>UI 顶部一句话摘要</summary>
+    public string Summary => Ok
+        ? $"SysPermission {PresentPermCount}/4 · SysRolePermission {PresentRpCount}/4 · SysFieldPermission {FieldPermissionCount}/5"
+        : $"缺失 {MissingPermissionIds.Count + MissingRolePermissionIds.Count} 项";
+
+    public int PresentPermCount => RequiredPermissionIds.Count - MissingPermissionIds.Count;
+    public int PresentRpCount => RequiredRolePermissionIds.Count - MissingRolePermissionIds.Count;
 }
 
 /// <summary>
@@ -472,6 +909,7 @@ public class StartupReport
     public Dictionary<string, int> SeedCounts { get; set; } = new();
     public bool AdminSeeded { get; set; }
     public bool AppVersionSeeded { get; set; }
+    public bool FieldPermissionMigrated { get; set; }
     public List<string> Warnings { get; set; } = new();
 
     public bool Healthy => ConnectionOk && MissingTables.Count == 0 && Warnings.Count == 0;

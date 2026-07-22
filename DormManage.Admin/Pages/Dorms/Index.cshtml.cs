@@ -4,6 +4,7 @@ using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using DormManage.Shared.Data;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.Dorms;
 
@@ -11,7 +12,7 @@ namespace DormManage.Admin.Pages.Dorms;
 /// 宿舍档案页面模型（v2.13.10 与原型 dorms/list.html 对齐）
 /// 筛选条件：楼栋/楼层/状态/关键词（房号/地址）
 /// </summary>
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly DormDbContext _db;
     private readonly IBasicsService _basicsService;
@@ -28,12 +29,7 @@ public class IndexModel : PageModel
     /// <summary>总数（供 PageHeader 组件使用）</summary>
     public int Total => Result?.TotalCount ?? 0;
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须 BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     /// <summary>楼栋ID</summary>
     [BindProperty(SupportsGet = true)]
@@ -56,6 +52,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         // 加载基础资料 - 仅楼栋（v2.13.10 简化为 4 项筛选）
         var buildings = await _basicsService.GetBuildingsAsync(null, 1, 100);
         Buildings = buildings.Items.ToList();
@@ -103,6 +100,26 @@ public class IndexModel : PageModel
             })
             .ToDictionaryAsync(x => x.DormCode);
 
+        // v2.13.95 派生班次（基于当前在宿人员的 AttendanceTypeId 去重集合）
+        // JOIN DormBookings(Status=2) → SysEmployee → AttendanceType，按 DormCode + AttendanceTypeId DISTINCT
+        var attendanceStats = await _db.DormBookings
+            .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.AttendanceTypeId })
+            .Where(x => x.AttendanceTypeId.HasValue)
+            .Join(_db.AttendanceTypes.AsNoTracking(),
+                  x => x.AttendanceTypeId, t => t.Id,
+                  (x, t) => new { x.DormCode, TypeId = t.Id, TypeName = t.Name })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                // 按 AttendanceType.Id 升序拼接去重班次名（AttendanceType 无 SortOrder，用 Id 保稳定）
+                TypeNames = g.OrderBy(x => x.TypeId).Select(x => x.TypeName).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.DormCode, x => x.TypeNames);
+
         var items = dormList.Select(d => new DormDto
         {
             Id = d.Id,
@@ -118,7 +135,9 @@ public class IndexModel : PageModel
             HasBookingHistory = _db.DormBookings.Any(b => b.DormCode == d.DormCode),
             // v2.13.85 派生性别字段
             MaleCount = genderStats.GetValueOrDefault(d.DormCode)?.MaleCount ?? 0,
-            FemaleCount = genderStats.GetValueOrDefault(d.DormCode)?.FemaleCount ?? 0
+            FemaleCount = genderStats.GetValueOrDefault(d.DormCode)?.FemaleCount ?? 0,
+            // v2.13.95 派生班次字段（按 AttendanceType.SortOrder 升序排列）
+            AttendanceTypeNames = attendanceStats.GetValueOrDefault(d.DormCode) ?? new List<string>()
         }).ToList();
 
         // v2.13.85 计算 EffectiveGender 派生：男>0=1 / 女>0=2 / 空房间=0
@@ -193,6 +212,12 @@ public class DormDto
     public bool HasBookingHistory { get; set; }
     /// <summary>是否可删除（v2.12.41）</summary>
     public bool CanDelete { get; set; }
+
+    // ========== v2.13.95 派生班次字段 ==========
+    /// <summary>当前在宿员工的考勤班次名称集合（按 AttendanceType.SortOrder 升序 + 去重）</summary>
+    public List<string> AttendanceTypeNames { get; set; } = new();
+    /// <summary>渲染为「早班/中班」格式字符串（前端直接展示）</summary>
+    public string AttendanceTypeNamesText => string.Join("/", AttendanceTypeNames);
 
     // ========== v2.13.85 派生性别字段 ==========
     /// <summary>当前在宿男员工数（实时派生）</summary>

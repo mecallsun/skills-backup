@@ -143,7 +143,7 @@ public class PersonnelService : IPersonnelService
 
         var sb = new StringBuilder();
         // v2.13.83：标题行增加「性别」列作为第 3 列
-        sb.AppendLine("工号,姓名,性别,部门,员工类型,入职日期,离职日期,考勤班次,联系电话,备注");
+        sb.AppendLine("工号,姓名,性别,部门,员工类型,入职日期,离职日期,班次,联系电话,备注");
 
         foreach (var e in employees)
         {
@@ -186,7 +186,7 @@ public class PersonnelService : IPersonnelService
         var idxTypeId = Col("员工类型");
         var idxHire = Col("入职日期");
         var idxLeave = Col("离职日期");
-        var idxAttendance = Col("考勤班次");
+        var idxAttendance = Col("班次");
         var idxPhone = Col("联系电话");
         var idxRemark = Col("备注");
 

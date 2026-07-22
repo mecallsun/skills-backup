@@ -37,7 +37,7 @@ public class BillingController : ControllerBase
     /// <summary>获取费用标准列表（分页）</summary>
     [HttpGet("standards")]
     public async Task<ApiResponse<PagedResult<BillingStandard>>> GetStandards(
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetStandardsAsync(page, pageSize);
         return ApiResponse<PagedResult<BillingStandard>>.Ok(result);
@@ -61,7 +61,7 @@ public class BillingController : ControllerBase
         [FromQuery] string? billingMonth,
         [FromQuery] string? dormCode,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetDormBillsAsync(billingMonth, dormCode, page, pageSize);
         return ApiResponse<PagedResult<DormBilling>>.Ok(result);
@@ -95,7 +95,7 @@ public class BillingController : ControllerBase
         [FromQuery] string? dormCode,
         [FromQuery] string? empKeyword,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetEmployeeBillsAsync(billingMonth, dormCode, empKeyword, page, pageSize);
         return ApiResponse<PagedResult<EmployeeBilling>>.Ok(result);

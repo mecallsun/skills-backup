@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 
@@ -11,12 +13,15 @@ namespace DormManage.Admin.Pages.Settings;
 ///
 /// 字段（角色列表 + 权限矩阵）：
 /// - Roles / PermissionGroups / RolePermissions (roleId -> permissionIds)
+/// - SeedIntegrity（v2.13.102 新增：DB seed 完整性快照，供 permMatrixModal banner 渲染）
 ///
 /// Handler（命名加 Role 前缀）：
 /// - OnPostRoleCreateAsync(string RoleCode, string RoleName, string Description, int SortOrder)
 /// - OnPostRoleUpdateAsync(int Id, string RoleName, string Description, int SortOrder, bool IsActive)
 /// - OnPostRoleDeleteAsync(int Id)
 /// - OnPostRoleSavePermissionsAsync(int RoleId, int[] PermissionIds)
+/// - OnGetRoleSeedIntegrityAsync()         v2.13.102：banner AJAX 重新检查（reload）
+/// - OnPostRoleSeedRepairAsync()           v2.13.102：banner AJAX 一键修复（不重启 Admin）
 ///
 /// URL 调用：/Settings?handler=RoleCreate 等。
 /// </summary>
@@ -27,6 +32,9 @@ public partial class IndexModel
     public List<RoleListViewModel> Roles { get; set; } = new();
     public List<PermissionGroupViewModel> PermissionGroups { get; set; } = new();
     public Dictionary<int, HashSet<int>> RolePermissions { get; set; } = new();
+
+    /// <summary>v2.13.102：DB seed 完整性快照（每次 OnGetAsync 重查询）</summary>
+    public SeedIntegrityReport? SeedIntegrity { get; set; }
 
     public class RoleListViewModel
     {
@@ -120,6 +128,20 @@ public partial class IndexModel
                 });
             }
             PermissionGroups.Add(group);
+        }
+
+        // v2.13.102 新增：DB seed 完整性快照（permMatrixModal banner 用）
+        // 失败不阻塞 Tab 渲染——返回 null 让 banner 显示「完整性检查未运行」
+        try
+        {
+            SeedIntegrity = await DatabaseInitializer.CheckSeedIntegrityAsync(_db);
+        }
+        catch (Exception ex)
+        {
+            // 记录但不抛——避免 SysPermission 表缺失等极端情况让整页 500
+            var logger = HttpContext?.RequestServices?.GetService<ILoggerFactory>()?.CreateLogger("SeedIntegrity");
+            logger?.LogWarning(ex, "[v2.13.102] LoadRolePanelAsync 中 CheckSeedIntegrityAsync 异常");
+            SeedIntegrity = null;
         }
     }
 
@@ -225,5 +247,63 @@ public partial class IndexModel
 
         var msg = $"角色 {role.RoleName} 的权限已更新（{PermissionIds?.Length ?? 0} 项" + (PrivacyFieldEnabled ? " + 隐私字段保护" : "") + "）";
         return new JsonResult(new { success = true, message = msg });
+    }
+
+    // ====================== v2.13.102 seed 完整性 banner Handler ======================
+
+    /// <summary>
+    /// v2.13.102 新增：AJAX 重新检查（GET /Settings?handler=RoleSeedIntegrity）。
+    /// 返回 success 让前端 reload，由 Razor 重渲染 banner（无需手动拼 HTML）。
+    /// </summary>
+    public IActionResult OnGetRoleSeedIntegrityAsync()
+    {
+        return new JsonResult(new { success = true, message = "请刷新页面查看最新状态" });
+    }
+
+    /// <summary>
+    /// v2.13.102 新增：一键修复（POST /Settings?handler=RoleSeedRepair）。
+    /// 调用 DatabaseInitializer.MigrateFieldPermissionAsync 执行 idempotent INSERT；
+    /// 然后 CheckSeedIntegrityAsync 验证修复结果；返回 JSON 让前端 toast + reload。
+    ///
+    /// 设计原则：修复操作幂等可重复执行；不重启 Admin 立即生效；
+    /// 仅依赖 antiforgery token 防止 CSRF；不依赖具体角色权限（admin 默认可调）。
+    /// </summary>
+    public async Task<IActionResult> OnPostRoleSeedRepairAsync()
+    {
+        try
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("SeedRepair");
+            // v2.13.103 改：返回 SeedMigrationResult 结构化结果
+            var migResult = await DatabaseInitializer.MigrateFieldPermissionAsync(_db, logger, CancellationToken.None);
+            var report = await DatabaseInitializer.CheckSeedIntegrityAsync(_db, CancellationToken.None);
+
+            // v2.13.103 严格判定：只有迁移完全成功 + 完整性检查通过 才 success=true
+            // 否则返回详细步骤让用户看清失败原因
+            if (migResult.AllSucceeded && report.Ok)
+            {
+                return new JsonResult(new
+                {
+                    success = true,
+                    message = $"seed 完整性修复成功（{report.Summary}）。步骤：{string.Join(" | ", migResult.PermSteps.Concat(migResult.RolePermSteps))}"
+                });
+            }
+            // 修复有失败或完整性仍有缺失——返回详细错误
+            var stepsDetail = string.Join(" | ", migResult.PermSteps.Concat(migResult.RolePermSteps));
+            var failMsg = !string.IsNullOrEmpty(migResult.FatalError)
+                ? $"致命异常：{migResult.FatalError}"
+                : $"修复步骤：{stepsDetail}";
+            var missingDetail = report.Ok
+                ? ""
+                : $" 仍有缺失：{string.Join("、", report.MissingPermissionLabels.Concat(report.MissingRolePermissionLabels))}";
+            return new JsonResult(new
+            {
+                success = false,
+                message = $"{failMsg}{missingDetail}。请检查「数据库连接」是否与托盘一致，或使用 scripts/seed_v2.13.103_personnel_add.sql 手动修复。"
+            });
+        }
+        catch (Exception ex)
+        {
+            return new JsonResult(new { success = false, message = $"修复异常：{ex.Message}" });
+        }
     }
 }

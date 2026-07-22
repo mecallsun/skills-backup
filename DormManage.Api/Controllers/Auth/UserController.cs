@@ -35,7 +35,7 @@ public class UserController : ControllerBase
         [FromQuery] int? roleId,
         [FromQuery] bool? isActive,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var query = _db.SysUsers.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -79,7 +79,9 @@ public class UserController : ControllerBase
                 .ToList(),
             LastLoginTime = u.LastLoginTime,
             LastLoginIp = u.LastLoginIp,
-            CreatedAt = u.CreatedAt
+            CreatedAt = u.CreatedAt,
+            // v2.13.93 新增：账号有效期至（NULL = 永久）
+            ExpiresAt = u.ExpiresAt
         }).ToList();
 
         return ApiResponse<PagedResult<UserDto>>.Ok(new PagedResult<UserDto>
@@ -115,7 +117,9 @@ public class UserController : ControllerBase
                 .ToList(),
             LastLoginTime = u.LastLoginTime,
             LastLoginIp = u.LastLoginIp,
-            CreatedAt = u.CreatedAt
+            CreatedAt = u.CreatedAt,
+            // v2.13.93 新增
+            ExpiresAt = u.ExpiresAt
         });
     }
 
@@ -138,7 +142,9 @@ public class UserController : ControllerBase
             IsActive = true,
             IsLocked = false,
             FailedLoginCount = 0,
-            CreatedAt = DateTime.Now
+            CreatedAt = DateTime.Now,
+            // v2.13.93 新增：账号有效期至（NULL = 永久）
+            ExpiresAt = request.ExpiresAt
         };
         _db.SysUsers.Add(user);
         await _db.SaveChangesAsync();
@@ -165,6 +171,9 @@ public class UserController : ControllerBase
         user.Email = request.Email;
         user.Phone = request.Phone;
         user.IsActive = request.IsActive ?? user.IsActive;
+        // v2.13.93 新增：账号有效期至（仅当 request.ExpiresAt 非 null 时覆盖；unset 保留原值）
+        if (request.ExpiresAt.HasValue)
+            user.ExpiresAt = request.ExpiresAt;
         user.UpdatedAt = DateTime.Now;
 
         if (request.RoleIds is not null)
@@ -323,6 +332,8 @@ public class UserDto
     public DateTime? LastLoginTime { get; set; }
     public string? LastLoginIp { get; set; }
     public DateTime CreatedAt { get; set; }
+    /// <summary>v2.13.93 新增：账号有效期至（NULL = 永久）</summary>
+    public DateTime? ExpiresAt { get; set; }
 }
 
 public class RoleBrief
@@ -341,6 +352,8 @@ public class UserCreateRequest
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public int[]? RoleIds { get; set; }
+    /// <summary>v2.13.93 新增：账号有效期至（NULL = 永久）</summary>
+    public DateTime? ExpiresAt { get; set; }
 }
 
 public class UserUpdateRequest
@@ -350,6 +363,8 @@ public class UserUpdateRequest
     public string? Phone { get; set; }
     public bool? IsActive { get; set; }
     public int[]? RoleIds { get; set; }
+    /// <summary>v2.13.93 新增：账号有效期至（NULL = 永久）</summary>
+    public DateTime? ExpiresAt { get; set; }
 }
 
 public class PasswordResetRequest

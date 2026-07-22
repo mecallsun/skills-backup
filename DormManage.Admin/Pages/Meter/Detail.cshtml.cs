@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Admin.Pages.Meter;
 
 /// <summary>
-/// 抄表记录详情页面模型（v2.13.41 100% 原型对齐）
+/// 智能抄表详情页面模型（v2.13.41 100% 原型对齐）
 ///
 /// 改造点（vs 原型 meter/detail.html）：
 /// 1. 补 CreatedAt（ServerCreatedAt）/ DeviceSn / ReadDate 字段
@@ -51,7 +51,7 @@ public class DetailModel : PageModel
         var record = await _db.MeterRecords.FindAsync(Id);
         if (record == null)
         {
-            TempData["ErrorMessage"] = "抄表记录不存在";
+            TempData["ErrorMessage"] = "智能抄表不存在";
             return RedirectToPage("/Meter/Index");
         }
 

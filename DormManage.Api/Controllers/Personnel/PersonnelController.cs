@@ -23,7 +23,7 @@ public class PersonnelController : ControllerBase
         [FromQuery] int? employmentStatusId,
         [FromQuery] string? team,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetListAsync(keyword, department, employeeTypeId, employmentStatusId, team, page, pageSize);
         return ApiResponse<PagedResult<SysEmployeeModel>>.Ok(result);

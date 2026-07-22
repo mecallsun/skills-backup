@@ -10,8 +10,8 @@ public class PaginationModel : PageModel
     /// <summary>当前页码（从 1 开始）</summary>
     public int PageIndex { get; set; } = 1;
 
-    /// <summary>每页条数（默认 20）</summary>
-    public int PageSize { get; set; } = 20;
+    /// <summary>每页条数（默认 10）</summary>
+    public int PageSize { get; set; } = 10;
 
     /// <summary>总记录数</summary>
     public int TotalCount { get; set; }

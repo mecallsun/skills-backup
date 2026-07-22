@@ -59,7 +59,7 @@
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-floor"><i class="bi bi-layers"></i> 楼层管理</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-address"><i class="bi bi-pin-map"></i> 地址管理</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-emptype"><i class="bi bi-person-badge"></i> 员工类型</button>
-                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-attendance"><i class="bi bi-clock-history"></i> 考勤班次</button>
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-attendance"><i class="bi bi-clock-history"></i> 班次</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-team"><i class="bi bi-people-fill"></i> 员工班组</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-unit"><i class="bi bi-speedometer2"></i> 计量单位</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-residence"><i class="bi bi-house-door"></i> 住宿状态</button>
@@ -205,11 +205,11 @@
                 </div>
             </div>
 
-            <!-- 考勤班次 -->
+            <!-- 班次 -->
             <div class="tab-pane fade" id="pane-attendance" role="tabpanel">
                 <div class="table-container p-3">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 考勤班次列表</h5>
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 班次列表</h5>
                         <button class="btn btn-success" onclick="showAddModal('attendance')">
                             <i class="bi bi-plus-lg"></i> 新增类型
                         </button>
@@ -455,10 +455,10 @@
             // 考勤班次
             attendanceTypes: [
                 { id: 1, code: 'DEFAULT', name: '默认', workHours: '09:00-18:00', remark: '标准工时', isActive: true },
-                { id: 2, code: 'MORNING', name: '早班', workHours: '06:00-14:00', remark: '', isActive: true },
-                { id: 3, code: 'MIDDLE', name: '中班', workHours: '14:00-22:00', remark: '', isActive: true },
-                { id: 4, code: 'EVENING', name: '晚班', workHours: '18:00-02:00', remark: '', isActive: true },
-                { id: 5, code: 'NIGHT', name: '夜班', workHours: '22:00-06:00', remark: '', isActive: true },
+                { id: 2, code: 'MORNING', name: '早', workHours: '06:00-14:00', remark: '', isActive: true },
+                { id: 3, code: 'MIDDLE', name: '中', workHours: '14:00-22:00', remark: '', isActive: true },
+                { id: 4, code: 'EVENING', name: '晚', workHours: '18:00-02:00', remark: '', isActive: true },
+                { id: 5, code: 'NIGHT', name: '夜', workHours: '22:00-06:00', remark: '', isActive: true },
                 { id: 6, code: 'OTHER', name: '其他', workHours: '不定期', remark: '', isActive: true }
             ],
 

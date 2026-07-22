@@ -56,6 +56,15 @@ public class BillingStandard : BaseEntity
     [Column("ElectricityPrice")]
     public decimal ElectricUnitPrice { get; set; }
 
+    /// <summary>
+    /// v2.13.93 新增：每员工类型每月补贴标准（元/人·月）
+    /// 与 EmployeeType.ApplicableTypeId 配合使用；
+    /// 在个人账单中按「入住天数 / 当月天数」折算；
+    /// 0 表示该员工类型不享受补贴。
+    /// </summary>
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal SubsidyAmount { get; set; }
+
     /// <summary>生效开始日期（DATE NOT NULL）</summary>
     [Required]
     public DateOnly EffectiveFrom { get; set; }

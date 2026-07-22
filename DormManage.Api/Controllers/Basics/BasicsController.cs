@@ -27,7 +27,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<Department>>> GetDepartments(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetDepartmentsAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<Department>>.Ok(result);
@@ -82,7 +82,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<Building>>> GetBuildings(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetBuildingsAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<Building>>.Ok(result);
@@ -137,7 +137,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<Floor>>> GetFloors(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetFloorsAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<Floor>>.Ok(result);
@@ -192,7 +192,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<Address>>> GetAddresses(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetAddressesAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<Address>>.Ok(result);
@@ -247,7 +247,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<EmployeeType>>> GetEmployeeTypes(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetEmployeeTypesAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<EmployeeType>>.Ok(result);
@@ -302,7 +302,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<AttendanceType>>> GetAttendanceTypes(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetAttendanceTypesAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<AttendanceType>>.Ok(result);
@@ -357,7 +357,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<MeterUnit>>> GetMeterUnits(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetMeterUnitsAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<MeterUnit>>.Ok(result);
@@ -412,7 +412,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<ResidenceStatus>>> GetResidenceStatuses(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetResidenceStatusesAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<ResidenceStatus>>.Ok(result);
@@ -467,7 +467,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<EmploymentStatus>>> GetEmploymentStatuses(
         [FromQuery] string? keyword = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetEmploymentStatusesAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<EmploymentStatus>>.Ok(result);
@@ -522,7 +522,7 @@ public class BasicsController : ControllerBase
     public async Task<ApiResponse<PagedResult<Team>>> GetTeams(
         [FromQuery] string? keyword,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         var result = await _service.GetTeamsAsync(keyword, page, pageSize);
         return ApiResponse<PagedResult<Team>>.Ok(result);

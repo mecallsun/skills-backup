@@ -160,7 +160,7 @@
     <script src="../_shared/tab-bar.js"></script>
     <script>
         // 考勤班次 Badge
-        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早', MIDDLE: '中', EVENING: '晚', NIGHT: '夜', OTHER: '其他' };
         const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
         function attendanceBadge(t) {
             return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;

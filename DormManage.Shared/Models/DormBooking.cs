@@ -169,6 +169,13 @@ public class DormBooking : BaseEntity
     [NotMapped]
     public string? CheckOutOperatorDisplayName { get; set; }
 
+    /// <summary>
+    /// 班组名（v2.13.97 JOIN 派生：SysEmployee.TeamId → Team.Name，运行时计算不存库）
+    /// 人员清单为唯一真源 — 班组改后住宿登记列表自动同步显示最新班组
+    /// </summary>
+    [NotMapped]
+    public string? TeamName { get; set; }
+
     // ========== 计算字段（[NotMapped]，运行时计算） ==========
 
     /// <summary>

@@ -73,6 +73,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             onRestartAll: async () => await _process.RestartAllAsync(),
             onViewLogs: OpenLogsFolder,
             onAbout: ShowAbout,
+            onLicense: ShowLicense,
             onExit: async () =>
             {
                 _log.Info("用户请求退出");
@@ -428,6 +429,21 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         {
             _log.Error("打开关于窗口失败", ex);
             MessageBox.Show(_ownerForm, $"打开关于窗口失败：{ex.Message}", "关于", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    /// <summary>v2.13.94 软件注册授权弹窗（托盘右键菜单入口）</summary>
+    private void ShowLicense()
+    {
+        try
+        {
+            using var form = new Forms.LicenseForm();
+            form.ShowDialog(_ownerForm);
+        }
+        catch (Exception ex)
+        {
+            _log.Error("打开软件注册窗口失败", ex);
+            MessageBox.Show(_ownerForm, $"打开软件注册窗口失败：{ex.Message}", "软件注册", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 

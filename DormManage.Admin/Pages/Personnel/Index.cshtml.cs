@@ -4,6 +4,7 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.Personnel;
 
@@ -18,7 +19,7 @@ namespace DormManage.Admin.Pages.Personnel;
 ///   <c>DormManage.Shared.Services.DictionaryFallbackService.BatchNormalizeEmployeesAsync</c>
 /// - 关联规范文档：<c>00-方案文档/43-无效FK归一通用规范-v2.11.24.md</c>
 /// </summary>
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly DormDbContext _db;
     private readonly IPersonnelService _svc;
@@ -108,15 +109,12 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须可写 + BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     public async Task OnGetAsync()
     {
+        // v2.13.104：强制 PageSize 白名单校验（确保主菜单导航不带参数时默认 20）
+        EnsureValidPagination();
         // 加载筛选下拉数据
         EmployeeTypes = await _db.EmployeeTypes
             .Where(e => e.IsActive)

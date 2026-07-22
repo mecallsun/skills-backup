@@ -10,70 +10,70 @@ namespace DormManage.Shared.Services;
 public interface IBasicsService
 {
     // 部门
-    Task<PagedResult<Department>> GetDepartmentsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<Department>> GetDepartmentsAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<Department?> GetDepartmentByIdAsync(int id);
     Task<ApiResponse<Department>> CreateDepartmentAsync(Department model);
     Task<ApiResponse<Department>> UpdateDepartmentAsync(int id, Department model);
     Task<ApiResponse> DeleteDepartmentAsync(int id);
 
     // 楼栋
-    Task<PagedResult<Building>> GetBuildingsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<Building>> GetBuildingsAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<Building?> GetBuildingByIdAsync(int id);
     Task<ApiResponse<Building>> CreateBuildingAsync(Building model);
     Task<ApiResponse<Building>> UpdateBuildingAsync(int id, Building model);
     Task<ApiResponse> DeleteBuildingAsync(int id);
 
     // 楼层
-    Task<PagedResult<Floor>> GetFloorsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<Floor>> GetFloorsAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<Floor?> GetFloorByIdAsync(int id);
     Task<ApiResponse<Floor>> CreateFloorAsync(Floor model);
     Task<ApiResponse<Floor>> UpdateFloorAsync(int id, Floor model);
     Task<ApiResponse> DeleteFloorAsync(int id);
 
     // 地址
-    Task<PagedResult<Address>> GetAddressesAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<Address>> GetAddressesAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<Address?> GetAddressByIdAsync(int id);
     Task<ApiResponse<Address>> CreateAddressAsync(Address model);
     Task<ApiResponse<Address>> UpdateAddressAsync(int id, Address model);
     Task<ApiResponse> DeleteAddressAsync(int id);
 
     // 员工类型
-    Task<PagedResult<EmployeeType>> GetEmployeeTypesAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<EmployeeType>> GetEmployeeTypesAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<EmployeeType?> GetEmployeeTypeByIdAsync(int id);
     Task<ApiResponse<EmployeeType>> CreateEmployeeTypeAsync(EmployeeType model);
     Task<ApiResponse<EmployeeType>> UpdateEmployeeTypeAsync(int id, EmployeeType model);
     Task<ApiResponse> DeleteEmployeeTypeAsync(int id);
 
     // 考勤班次
-    Task<PagedResult<AttendanceType>> GetAttendanceTypesAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<AttendanceType>> GetAttendanceTypesAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<AttendanceType?> GetAttendanceTypeByIdAsync(int id);
     Task<ApiResponse<AttendanceType>> CreateAttendanceTypeAsync(AttendanceType model);
     Task<ApiResponse<AttendanceType>> UpdateAttendanceTypeAsync(int id, AttendanceType model);
     Task<ApiResponse> DeleteAttendanceTypeAsync(int id);
 
     // 计量单位
-    Task<PagedResult<MeterUnit>> GetMeterUnitsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<MeterUnit>> GetMeterUnitsAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<MeterUnit?> GetMeterUnitByIdAsync(int id);
     Task<ApiResponse<MeterUnit>> CreateMeterUnitAsync(MeterUnit model);
     Task<ApiResponse<MeterUnit>> UpdateMeterUnitAsync(int id, MeterUnit model);
     Task<ApiResponse> DeleteMeterUnitAsync(int id);
 
     // 住宿状态
-    Task<PagedResult<ResidenceStatus>> GetResidenceStatusesAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<ResidenceStatus>> GetResidenceStatusesAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<ResidenceStatus?> GetResidenceStatusByIdAsync(int id);
     Task<ApiResponse<ResidenceStatus>> CreateResidenceStatusAsync(ResidenceStatus model);
     Task<ApiResponse<ResidenceStatus>> UpdateResidenceStatusAsync(int id, ResidenceStatus model);
     Task<ApiResponse> DeleteResidenceStatusAsync(int id);
 
     // 在职状态
-    Task<PagedResult<EmploymentStatus>> GetEmploymentStatusesAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<EmploymentStatus>> GetEmploymentStatusesAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<EmploymentStatus?> GetEmploymentStatusByIdAsync(int id);
     Task<ApiResponse<EmploymentStatus>> CreateEmploymentStatusAsync(EmploymentStatus model);
     Task<ApiResponse<EmploymentStatus>> UpdateEmploymentStatusAsync(int id, EmploymentStatus model);
     Task<ApiResponse> DeleteEmploymentStatusAsync(int id);
 
     // 员工班组
-    Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 20);
+    Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 10);
     Task<Team?> GetTeamByIdAsync(int id);
     Task<ApiResponse<Team>> CreateTeamAsync(Team model);
     Task<ApiResponse<Team>> UpdateTeamAsync(int id, Team model);
@@ -126,7 +126,7 @@ public class BasicsService : IBasicsService
 
     #region 部门
 
-    public async Task<PagedResult<Department>> GetDepartmentsAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<Department>> GetDepartmentsAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.Departments.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -198,7 +198,7 @@ public class BasicsService : IBasicsService
 
     #region 楼栋
 
-    public async Task<PagedResult<Building>> GetBuildingsAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<Building>> GetBuildingsAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.Buildings.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -257,7 +257,7 @@ public class BasicsService : IBasicsService
 
     #region 楼层
 
-    public async Task<PagedResult<Floor>> GetFloorsAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<Floor>> GetFloorsAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.Floors.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -315,7 +315,7 @@ public class BasicsService : IBasicsService
 
     #region 地址
 
-    public async Task<PagedResult<Address>> GetAddressesAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<Address>> GetAddressesAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.Addresses.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -373,7 +373,7 @@ public class BasicsService : IBasicsService
 
     #region 员工类型
 
-    public async Task<PagedResult<EmployeeType>> GetEmployeeTypesAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<EmployeeType>> GetEmployeeTypesAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.EmployeeTypes.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -432,7 +432,7 @@ public class BasicsService : IBasicsService
 
     #region 考勤班次
 
-    public async Task<PagedResult<AttendanceType>> GetAttendanceTypesAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<AttendanceType>> GetAttendanceTypesAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.AttendanceTypes.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -492,7 +492,7 @@ public class BasicsService : IBasicsService
 
     #region 计量单位
 
-    public async Task<PagedResult<MeterUnit>> GetMeterUnitsAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<MeterUnit>> GetMeterUnitsAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.MeterUnits.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -549,7 +549,7 @@ public class BasicsService : IBasicsService
 
     #region 住宿状态
 
-    public async Task<PagedResult<ResidenceStatus>> GetResidenceStatusesAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<ResidenceStatus>> GetResidenceStatusesAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.ResidenceStatuses.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -605,7 +605,7 @@ public class BasicsService : IBasicsService
 
     #region 在职状态
 
-    public async Task<PagedResult<EmploymentStatus>> GetEmploymentStatusesAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<EmploymentStatus>> GetEmploymentStatusesAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.EmploymentStatuses.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -661,7 +661,7 @@ public class BasicsService : IBasicsService
 
     #region 员工班组 (Team)
 
-    public async Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 20)
+    public async Task<PagedResult<Team>> GetTeamsAsync(string? keyword, int page = 1, int pageSize = 10)
     {
         var query = _db.Teams.AsQueryable();
         if (!string.IsNullOrWhiteSpace(keyword))

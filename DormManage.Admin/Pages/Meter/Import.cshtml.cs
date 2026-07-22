@@ -50,7 +50,7 @@ public class ImportModel : PageModel
     public IActionResult OnGetDownloadTemplate()
     {
         using var wb = new XLWorkbook();
-        var ws = wb.Worksheets.Add("抄表记录");
+        var ws = wb.Worksheets.Add("智能抄表");
         // v2.13.69：模板列与原型一致：房号、抄表月份、读数、抄表员、备注
         ws.Cell(1, 1).Value = "房号";
         ws.Cell(1, 2).Value = "抄表月份";
@@ -78,7 +78,7 @@ public class ImportModel : PageModel
         stream.Position = 0;
         return File(stream.ToArray(),
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            $"抄表记录导入模板_{DateTime.Now:yyyyMM}.xlsx");
+            $"智能抄表导入模板_{DateTime.Now:yyyyMM}.xlsx");
     }
 
     public IActionResult OnPostDownloadTemplate() => OnGetDownloadTemplate();

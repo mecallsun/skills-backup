@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Api.Controllers.Meter;
 
 /// <summary>
-/// 抄表记录 API 控制器
+/// 智能抄表 API 控制器（v2.13.96 重命名；Controller 路由不变）
 /// </summary>
 [ApiController]
 [Route("api/meter")]
@@ -29,7 +29,7 @@ public class MeterController : ControllerBase
         string? readMonth,
         byte? status,
         int page = 1,
-        int pageSize = 20)
+        int pageSize = 10)
     {
         var query = _db.MeterRecords.AsQueryable();
 
@@ -582,7 +582,7 @@ public class MeterController : ControllerBase
             .Concat(global::System.Text.Encoding.UTF8.GetBytes(sb.ToString()))
             .ToArray();
 
-        var fileName = $"抄表记录_{DateTime.Now:yyyyMMddHHmmss}.csv";
+        var fileName = $"智能抄表_{DateTime.Now:yyyyMMddHHmmss}.csv";
         return File(bytes, "text/csv; charset=utf-8", fileName);
     }
 }
@@ -599,7 +599,7 @@ public class BatchImportResult
 }
 
 /// <summary>
-/// 抄表记录数据传输对象（v2.13.24 P76：增加用量字段 + 上月读数参考 + 业务深度字段）
+/// 智能抄表数据传输对象（v2.13.96 重命名；类名仍 MeterRecordDto；v2.13.24 P76：增加用量字段 + 上月读数参考 + 业务深度字段）
 /// </summary>
 public class MeterRecordDto
 {
@@ -637,7 +637,7 @@ public class MeterRecordDto
 }
 
 /// <summary>
-/// 抄表记录保存请求（v2.13.24 P76：增加可选的 ReadDate + ReadMode）
+/// 智能抄表保存请求（v2.13.96 重命名；类名仍 MeterRecordSaveRequest；v2.13.24 P76：增加可选的 ReadDate + ReadMode）
 /// </summary>
 public class MeterRecordSaveRequest
 {
@@ -658,7 +658,7 @@ public class MeterRecordSaveRequest
 }
 
 /// <summary>
-/// 抄表记录修正请求
+/// 智能抄表修正请求（v2.13.96 重命名；类名仍 MeterRecordCorrectRequest）
 /// </summary>
 public class MeterRecordCorrectRequest
 {
@@ -669,7 +669,7 @@ public class MeterRecordCorrectRequest
 }
 
 /// <summary>
-/// 抄表记录作废请求（P1-8）
+/// 智能抄表作废请求（v2.13.96 重命名；类名仍 MeterRecordVoidRequest）
 /// </summary>
 public class MeterVoidRequest
 {

@@ -119,9 +119,9 @@
                                 </select>
                             </div>
                             <div class="col-md-3 form-field">
-                                <label class="form-label">考勤班次<span class="required">*</span></label>
+                                <label class="form-label">班次<span class="required">*</span></label>
                                 <select id="attendanceTypeId" class="form-select" required>
-                                    <option value="">请选择考勤班次</option>
+                                    <option value="">请选择班次</option>
                                 </select>
                             </div>
                             <div class="col-md-3 form-field">
@@ -230,7 +230,7 @@
         if (!name) { alert('❌ 姓名不能为空'); return; }
         if (!deptId) { alert('❌ 请选择部门'); return; }
         if (!typeId) { alert('❌ 请选择员工类型'); return; }
-        if (!attendId) { alert('❌ 请选择考勤班次'); return; }
+        if (!attendId) { alert('❌ 请选择班次'); return; }
         if (!statusId) { alert('❌ 请选择在职状态'); return; }
 
         if (typeof PERSONNEL !== 'undefined' && PERSONNEL.some(function (p) { return p.employeeCode === code; })) {

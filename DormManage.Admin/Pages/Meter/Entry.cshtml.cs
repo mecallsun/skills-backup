@@ -47,7 +47,7 @@ public class EntryModel : PageModel
     /// <summary>宿舍列表（用于下拉选择）</summary>
     public List<MeterEntryDto> Dorms { get; set; } = new();
 
-    /// <summary>上月抄表记录参考（用于上月读数提示卡片）</summary>
+    /// <summary>上月智能抄表参考（用于上月读数提示卡片）</summary>
     public MeterRecord? LastRecord { get; set; }
 
     /// <summary>已存在记录警告（status=0/3/4 可覆盖；status=1/2 拒绝）</summary>
@@ -174,7 +174,7 @@ public class EntryModel : PageModel
                 existing.Status = MeterRecord.DetermineStatus(ColdMeter, HotMeter, ElectricMeter);
 
                 await _db.SaveChangesAsync();
-                return new JsonResult(new { success = true, recordId = existing.Id, isUpdate = true, message = "抄表记录已覆盖（旧数据已保存到备注历史）" });
+                return new JsonResult(new { success = true, recordId = existing.Id, isUpdate = true, message = "智能抄表已覆盖（旧数据已保存到备注历史）" });
             }
             else
             {
@@ -206,7 +206,7 @@ public class EntryModel : PageModel
                 };
                 _db.MeterRecords.Add(newRecord);
                 await _db.SaveChangesAsync();
-                return new JsonResult(new { success = true, recordId = newRecord.Id, isUpdate = false, message = "抄表记录已创建" });
+                return new JsonResult(new { success = true, recordId = newRecord.Id, isUpdate = false, message = "智能抄表已创建" });
             }
         }
         catch (Exception ex)
@@ -236,7 +236,7 @@ public class EntryModel : PageModel
 
         var record = await _db.MeterRecords.FindAsync(recordId);
         if (record == null)
-            return new JsonResult(new { success = false, message = $"抄表记录 ID {recordId} 不存在" });
+            return new JsonResult(new { success = false, message = $"智能抄表 ID {recordId} 不存在" });
 
         try
         {

@@ -116,7 +116,7 @@ public class DormDbContext : DbContext
     public DbSet<DormBooking> DormBookings { get; set; } = null!;
 
     /// <summary>
-    /// 抄表记录
+    /// 智能抄表（v2.13.96 重命名；DB 表名仍为 MeterRecord）
     /// </summary>
     public DbSet<MeterRecord> MeterRecords { get; set; } = null!;
 
@@ -431,6 +431,8 @@ public class DormDbContext : DbContext
             entity.Property(e => e.HotWaterUnitPrice).HasColumnName("HotWaterPrice").HasColumnType("decimal(10,2)");
             entity.Property(e => e.ColdWaterUnitPrice).HasColumnName("ColdWaterPrice").HasColumnType("decimal(10,2)");
             entity.Property(e => e.ElectricUnitPrice).HasColumnName("ElectricityPrice").HasColumnType("decimal(10,2)");
+            // v2.13.93 新增：每员工类型每月补贴标准（元/人·月），DDL: ALTER TABLE BillingStandard ADD SubsidyAmount DECIMAL(12,2) NOT NULL DEFAULT 0
+            entity.Property(e => e.SubsidyAmount).HasColumnType("decimal(12,2)").HasDefaultValue(0m);
             // v2.13.24 P0-3 新增：UpdatedAt 列
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
             // EF Core 8.0.10+ 自动处理 DateOnly/DATE 映射，无需自定义转换
@@ -467,6 +469,12 @@ public class DormDbContext : DbContext
             entity.Property(e => e.HotShareAmount).HasColumnType("decimal(12,2)");
             entity.Property(e => e.ElectricityShareAmount).HasColumnType("decimal(12,2)");
             entity.Property(e => e.TotalShareAmount).HasColumnType("decimal(12,2)");
+            // v2.13.93 新增：本月实际补贴金额（元，按入住天数折算后），DDL: ALTER TABLE EmployeeBilling ADD SubsidyAmount DECIMAL(12,2) NOT NULL DEFAULT 0
+            entity.Property(e => e.SubsidyAmount).HasColumnType("decimal(12,2)").HasDefaultValue(0m);
+            // v2.13.93 同步 SQL init_schema.sql:499 (Days)
+            entity.Property(e => e.Days).HasDefaultValue(0);
+            // v2.13.93 同步 SQL init_schema.sql:496 (Department NVARCHAR(128))
+            entity.Property(e => e.Department).HasMaxLength(128);
         });
 
         // ===== v2.13.7 RBAC 实体与真实 SQL Server schema 对齐 =====
@@ -483,6 +491,8 @@ public class DormDbContext : DbContext
             entity.Property(e => e.PasswordResetToken).HasMaxLength(128);
             entity.Ignore(e => e.EmployeeId);  // 真实表无此列
             entity.Ignore(e => e.UpdatedAt);   // 真实表无此列（代码仅赋值不查询，忽略即可）
+            // v2.13.93 新增：账号有效期至，DDL: ALTER TABLE SysUser ADD ExpiresAt DATETIME NULL
+            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
             entity.HasIndex(e => e.UserName).IsUnique();
             entity.HasIndex(e => e.WeChatOpenId).IsUnique().HasFilter(null);  // SQL Server: WHERE WeChatOpenId IS NOT NULL
         });
@@ -623,13 +633,15 @@ public class DormDbContext : DbContext
         );
 
         // 考勤班次种子数据
+        // ========== v2.13.98 简称显示：考勤班次 Name 全部单字化 ==========
+        // DEFAULT="默认" / MORNING="早" / MIDDLE="中" / EVENING="晚" / NIGHT="夜" / OTHER="其他"
         modelBuilder.Entity<AttendanceType>().HasData(
             new AttendanceType { Id = 1, Code = "DEFAULT", Name = "默认", WorkHours = "09:00-18:00", Remark = "标准工时", IsActive = true },
-            new AttendanceType { Id = 2, Code = "MORNING", Name = "早班", WorkHours = "06:00-14:00", Remark = "", IsActive = true },
-            new AttendanceType { Id = 3, Code = "MIDDLE", Name = "中班", WorkHours = "14:00-22:00", Remark = "", IsActive = true },
-            new AttendanceType { Id = 4, Code = "EVENING", Name = "晚班", WorkHours = "18:00-02:00", Remark = "", IsActive = true },
-            new AttendanceType { Id = 5, Code = "NIGHT", Name = "夜班", WorkHours = "22:00-06:00", Remark = "", IsActive = true },
-            new AttendanceType { Id = 6, Code = "OTHER", Name = "其他", WorkHours = "不定期", Remark = "", IsActive = true }
+            new AttendanceType { Id = 2, Code = "MORNING", Name = "早",   WorkHours = "06:00-14:00", Remark = "", IsActive = true },
+            new AttendanceType { Id = 3, Code = "MIDDLE",  Name = "中",   WorkHours = "14:00-22:00", Remark = "", IsActive = true },
+            new AttendanceType { Id = 4, Code = "EVENING", Name = "晚",   WorkHours = "18:00-02:00", Remark = "", IsActive = true },
+            new AttendanceType { Id = 5, Code = "NIGHT",   Name = "夜",   WorkHours = "22:00-06:00", Remark = "", IsActive = true },
+            new AttendanceType { Id = 6, Code = "OTHER",   Name = "其他", WorkHours = "不定期",     Remark = "", IsActive = true }
         );
 
         // 计量单位种子数据
@@ -709,7 +721,7 @@ public class DormDbContext : DbContext
         modelBuilder.Entity<SysRole>().HasData(
             new SysRole { Id = 1, RoleCode = "admin", RoleName = "管理员", Description = "系统超级管理员，拥有全部权限", SortOrder = 0, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRole { Id = 2, RoleCode = "finance", RoleName = "财务", Description = "财务管理角色，可查看费用标准和账单", SortOrder = 1, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysRole { Id = 3, RoleCode = "pda_operator", RoleName = "PDA 操作员", Description = "PDA 抄表操作员，仅可访问抄表模块", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysRole { Id = 3, RoleCode = "pda_operator", RoleName = "PDA 操作员", Description = "PDA 抄表操作员，仅可访问智能抄表模块", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRole { Id = 4, RoleCode = "viewer", RoleName = "访客", Description = "只读角色，仅可查看首页数据看板", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") }
         );
 
@@ -739,7 +751,7 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 11, PermissionCode = "billing:view", PermissionName = "费用标准", PermissionType = 1, ParentId = 0, Route = "/BillingStandard", Icon = "bi-currency-dollar", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 12, PermissionCode = "dormbilling:view", PermissionName = "宿舍账单", PermissionType = 1, ParentId = 0, Route = "/DormBilling", Icon = "bi-receipt", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 13, PermissionCode = "employeebilling:view", PermissionName = "员工账单", PermissionType = 1, ParentId = 0, Route = "/EmployeeBilling", Icon = "bi-wallet2", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 14, PermissionCode = "meter:view", PermissionName = "抄表记录", PermissionType = 1, ParentId = 0, Route = "/Meter", Icon = "bi-gauge", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 14, PermissionCode = "meter:view", PermissionName = "智能抄表", PermissionType = 1, ParentId = 0, Route = "/Meter", Icon = "bi-gauge", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 15, PermissionCode = "meter:entry", PermissionName = "手动录入", PermissionType = 2, ParentId = 14, Route = "/Meter/Entry", Icon = "bi-pencil", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 16, PermissionCode = "meter:import", PermissionName = "批量导入", PermissionType = 2, ParentId = 14, Route = "/Meter/Import", Icon = "bi-upload", SortOrder = 9, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 17, PermissionCode = "basics:view", PermissionName = "基础资料", PermissionType = 1, ParentId = 0, Route = "/Basics", Icon = "bi-database", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
@@ -759,17 +771,19 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 29, PermissionCode = "employeebilling:generate", PermissionName = "生成分摊账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 20, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 30, PermissionCode = "employeebilling:publish", PermissionName = "发布员工账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 21, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 31, PermissionCode = "employeebilling:export", PermissionName = "导出员工账单", PermissionType = 2, ParentId = 13, Route = "", SortOrder = 22, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            // ========== v2.13.88 抄表记录 详情/修正/导出 权限（用户第三轮追加需求） ==========
-            new SysPermission { Id = 32, PermissionCode = "meter:edit", PermissionName = "修正抄表记录", PermissionType = 2, ParentId = 14, Route = "/Meter/Edit", Icon = "", SortOrder = 23, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            new SysPermission { Id = 33, PermissionCode = "meter:delete", PermissionName = "删除抄表记录", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 24, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            new SysPermission { Id = 34, PermissionCode = "meter:export", PermissionName = "导出抄表记录", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 25, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 智能抄表 详情/修正/导出 权限（用户第三轮追加需求）；v2.13.96 重命名 ==========
+            new SysPermission { Id = 32, PermissionCode = "meter:edit", PermissionName = "修正智能抄表", PermissionType = 2, ParentId = 14, Route = "/Meter/Edit", Icon = "", SortOrder = 23, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 33, PermissionCode = "meter:delete", PermissionName = "删除智能抄表", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 24, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 34, PermissionCode = "meter:export", PermissionName = "导出智能抄表", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 25, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             // ========== v2.13.88 第四轮追加：所有列表页导出按钮统一权限管控 ==========
             new SysPermission { Id = 35, PermissionCode = "booking:export", PermissionName = "导出租住登记", PermissionType = 2, ParentId = 2, Route = "", Icon = "", SortOrder = 26, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 36, PermissionCode = "personnel:export", PermissionName = "导出人员清单", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 27, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             // ========== v2.13.92 字段权限（PermissionType=3 数据权限落地）：3 个权限码 ==========
             new SysPermission { Id = 37, PermissionCode = "settings:fields", PermissionName = "字段权限", PermissionType = 1, ParentId = 18, Route = "/Settings?tab=fields", Icon = "bi-shield-check", SortOrder = 28, IsActive = true, IsSystem = true, Description = "管理敏感字段清单", CreatedAt = DateTime.Parse("2026-07-22") },
             new SysPermission { Id = 38, PermissionCode = "fieldpermission:edit", PermissionName = "编辑字段权限", PermissionType = 2, ParentId = 37, Route = "", Icon = "", SortOrder = 29, IsActive = true, IsSystem = true, Description = "勾选/取消勾选敏感字段", CreatedAt = DateTime.Parse("2026-07-22") },
-            new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "启用隐私字段保护", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段", CreatedAt = DateTime.Parse("2026-07-22") }
+            new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "启用隐私字段保护", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段", CreatedAt = DateTime.Parse("2026-07-22") },
+            // ========== v2.13.97 P0 BUG：personnel 子权限补全（用户反馈：缺少「新增」按钮权限） ==========
+            new SysPermission { Id = 40, PermissionCode = "personnel:add", PermissionName = "新增人员", PermissionType = 2, ParentId = 9, Route = "/Personnel/Create", Icon = "bi-plus-lg", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") }
         );
 
         // 角色-权限关联（管理员：全部权限）
@@ -822,6 +836,8 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 58, RoleId = 1, PermissionId = 37, CreatedAt = DateTime.Parse("2026-07-22") },
             new SysRolePermission { Id = 59, RoleId = 1, PermissionId = 38, CreatedAt = DateTime.Parse("2026-07-22") },
             new SysRolePermission { Id = 60, RoleId = 1, PermissionId = 39, CreatedAt = DateTime.Parse("2026-07-22") },
+            // ========== v2.13.97 admin 新增 personnel:add（用户反馈 P0：缺少「新增人员」按钮权限） ==========
+            new SysRolePermission { Id = 61, RoleId = 1, PermissionId = 40, CreatedAt = DateTime.Parse("2026-07-22") },
             // 财务角色
             new SysRolePermission { Id = 19, RoleId = 2, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 20, RoleId = 2, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
@@ -856,7 +872,7 @@ public class DormDbContext : DbContext
             new SysFieldPermission { Id = 5, FieldKey = "employee.remark",     FieldName = "备注",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 5, IsActive = true, Description = "自由文本备注（可能含敏感信息）", CreatedAt = DateTime.Parse("2026-07-22") }
         );
 
-        // 抄表记录种子数据（2026年6月、7月）
+        // 智能抄表种子数据（2026年6月、7月；DB 表名仍为 MeterRecord）
         var currentMonth = DateTime.Now.ToString("yyyy-MM");
         var lastMonth = DateTime.Now.AddMonths(-1).ToString("yyyy-MM");
         modelBuilder.Entity<MeterRecord>().HasData(

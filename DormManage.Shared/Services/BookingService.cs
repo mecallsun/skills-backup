@@ -239,6 +239,8 @@ public class BookingService : IBookingService
         // v2.13.66 BUG：补充用 SysEmployee.Department 实时覆盖 Booking.Department，
         //   解决「住宿登记列表部门未与档案同步」问题（用户在「人员清单」修改部门后，
         //   住宿登记列表仍显示旧部门或 NULL）。同步策略与姓名/工号完全一致。
+        // v2.13.97 BUG：补充用 SysEmployee.Team JOIN 派生班组名（人员清单为唯一真源）。
+        //   同模式冗余字段：姓名/工号/部门/班组 — 4 件套同步策略必须全字段审计。
         // v2.13.59 P0 BUG：使用 .AsNoTracking() + 在投影中用 ?? "" 防御性处理 NULL 字段，
         //   解决生产数据库历史脏数据（[Required] 字段实际为 NULL）导致的 SqlNullValueException。
         //   之前 EF Core 物化 DormBooking 实体时会在 ReadObject 阶段调用 GetString(i) 抛错。
@@ -246,6 +248,9 @@ public class BookingService : IBookingService
             from b in _db.DormBookings.AsNoTracking()
             join emp in _db.Employees.AsNoTracking() on b.EmployeeId equals emp.Id into empGroup
             from emp in empGroup.DefaultIfEmpty()
+            // v2.13.97 P0 BUG 补全：班组 JOIN v2.13.78 FK（SysEmployee.TeamId → Team）
+            join team in _db.Set<Team>().AsNoTracking() on (emp != null ? (int?)emp.TeamId : null) equals team.Id into teamGroup
+            from team in teamGroup.DefaultIfEmpty()
             select new
             {
                 Booking = b,
@@ -258,7 +263,9 @@ public class BookingService : IBookingService
                 // v2.13.66 BUG：实时取最新部门（人员清单为唯一真源；档案缺失/为空时回退冗余字段；都不存在则 NULL）
                 Department = emp != null && !string.IsNullOrEmpty(emp.Department) ? emp.Department : b.Department,
                 // v2.13.86 性别：实时取档案 Gender（人员清单为唯一真源；档案缺失时回退 0=未知）
-                Gender = (int?)(emp != null ? emp.Gender : 0) ?? 0
+                Gender = (int?)(emp != null ? emp.Gender : 0) ?? 0,
+                // v2.13.97 P0 BUG 补全：班组名通过 v2.13.78 Team FK 派生（人员清单为唯一真源；档案缺失/未分配班组则 NULL）
+                TeamName = team != null ? team.Name : null
             };
 
         // v2.13.89：JOIN SysUser 取登记人/入住/退房操作员 DisplayName（页面渲染）
@@ -279,6 +286,7 @@ public class BookingService : IBookingService
                 q.EmployeeCode,
                 q.Department,
                 q.Gender,
+                q.TeamName,
                 RegistrarUser = rUser,
                 CheckInUser = ciUser,
                 CheckOutUser = coUser
@@ -358,6 +366,8 @@ public class BookingService : IBookingService
                 Remark = x.Booking.Remark,
                 RegistrationDate = x.Booking.RegistrationDate,
                 Registrar = x.Booking.Registrar ?? "",
+                // v2.13.97：派生班组名（人员清单 Team FK）
+                TeamName = x.TeamName,
                 // v2.13.89：派生 DisplayName（JOIN SysUser）
                 RegistrarDisplayName = x.RegistrarUser != null ? x.RegistrarUser.DisplayName : (x.Booking.Registrar ?? ""),
                 CheckInOperator = x.Booking.CheckInOperator,
@@ -397,6 +407,11 @@ public class BookingService : IBookingService
             {
                 item.Entity.Department = item.Dto.Department;
             }
+            // v2.13.97 P0 BUG 补全：覆盖显示用班组名（仅 RAM，DB 不写；人员清单为唯一真源 — 与姓名/工号/部门同策略）
+            if (!string.IsNullOrEmpty(item.Dto.TeamName))
+            {
+                item.Entity.TeamName = item.Dto.TeamName;
+            }
             // v2.13.89：覆盖显示用 DisplayName（仅 RAM，DB 不写；与上述字段策略一致 — 真源是 SysUser 表）
             item.Entity.RegistrarDisplayName = item.Dto.RegistrarDisplayName;
             item.Entity.CheckInOperatorDisplayName = item.Dto.CheckInOperatorDisplayName;
@@ -429,6 +444,8 @@ public class BookingService : IBookingService
         public string? Phone { get; set; }
         public string? Department { get; set; }
         public int? AttendanceTypeId { get; set; }
+        // v2.13.97 P0 BUG 补全：班组名（JOIN SysEmployee.TeamId → Team.Name；人员清单为唯一真源）
+        public string? TeamName { get; set; }
         public int? BedNo { get; set; }
         public string? MoveFromDormCode { get; set; }
         public DateOnly? ActualCheckInDate { get; set; }

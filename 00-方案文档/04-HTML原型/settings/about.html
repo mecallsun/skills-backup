@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+  v2.13.94 软件注册授权 — 原型（独立预览页）
+  入口：系统设置 → 关于系统 Tab 顶部 / 设置主页右下角「软件授权」链接
+  数据源：DormManage.Shared.Register.RegisterSdk
+  复用性文档：00-方案文档/147-软件注册授权-v2.13.94.md
+
+  v2.13.94 同步更新（与 settings/index.html tab-about 保持字段/按钮/状态完全一致）：
+  - 4 按钮：复制机器码 + 注册 + 取消注册 + 清理
+  - 状态 Badge 动态切换（已注册 / 已过期 / 未注册 三态）
+  - 授权状态 alert 含 licInfoTitle + licInfoDetail 双段结构
+  - 关于系统表新增「软件授权」行（链接回本页面）
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>关于系统 + 软件注册授权 - 金戈宿舍管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body>
+<div class="container-fluid px-4 py-3">
+  <h3 class="mb-3"><i class="bi bi-info-circle"></i> 关于系统</h3>
+
+  <!-- v2.13.94 软件注册授权卡片（与 settings/index.html tab-about 字段/按钮完全一致） -->
+  <div class="card mb-3" id="card-license">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <strong>
+        <i class="bi bi-shield-lock"></i> 软件注册授权
+        <span class="badge bg-success ms-2" id="licStatusBadge">已注册</span>
+      </strong>
+      <small class="text-muted">试用次数 <strong id="licUseTimes">15</strong> / 30 次</small>
+    </div>
+    <div class="card-body">
+      <div class="alert alert-success py-2" id="licSuccessAlert">
+        <i class="bi bi-check-circle"></i> ✅ 注册成功！有效期至 <strong id="licExpireDate">2027年12月31日</strong>
+      </div>
+      <form id="licenseForm">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">机器码（只读）</label>
+            <input type="text" id="licSN" class="form-control"
+                   value="BFEBF-BFF00-0A06A-4AA2E-3B0E" readonly
+                   style="font-family: monospace;">
+            <small class="text-muted">📌 点击复制，发给公司用于生成注册码</small>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">公司名称</label>
+            <input type="text" id="licLTDName" class="form-control"
+                   value="金戈电子有限公司" readonly>
+          </div>
+          <div class="col-md-12">
+            <label class="form-label">注册码（29 位 = 5-5-5-5-5）</label>
+            <input type="text" id="licCDKEY" name="CDKEY" class="form-control"
+                   placeholder="请输入 29 位注册码（含连字符）"
+                   style="font-family: monospace;">
+          </div>
+          <div class="col-md-12">
+            <div class="alert alert-info mb-0" id="licInfoAlert">
+              <i class="bi bi-calendar-check"></i>
+              <strong id="licInfoTitle">授权状态</strong>
+              <span id="licInfoDetail"></span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-3 d-flex gap-2 justify-content-end">
+          <button type="button" class="btn btn-primary"
+                  onclick="copyLicSN()">
+            <i class="bi bi-clipboard"></i> 复制机器码
+          </button>
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-shield-check"></i> 注册
+          </button>
+          <button type="button" class="btn btn-outline-danger"
+                  onclick="cancelLicense()">
+            <i class="bi bi-x-octagon"></i> 取消注册
+          </button>
+          <button type="button" class="btn btn-outline-secondary"
+                  onclick="clearLicense()">
+            <i class="bi bi-eraser"></i> 清理
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 关于系统原内容（v2.13.94 起版本号 v2.13.94 + 软件授权行） -->
+  <div class="card">
+    <div class="card-header bg-light">
+      <strong><i class="bi bi-info-circle"></i> 关于系统</strong>
+    </div>
+    <div class="card-body" id="aboutBody">
+      <table class="table table-sm table-borderless mb-0">
+        <tr><th width="120" class="text-muted">系统名称</th><td>金戈宿舍管理系统</td></tr>
+        <tr><th class="text-muted">当前版本</th><td><strong>v2.13.94</strong></td></tr>
+        <tr><th class="text-muted">技术栈</th><td>.NET 8 + Razor Pages + Bootstrap 5 + EF Core</td></tr>
+        <tr><th class="text-muted">部署方式</th><td>EXE 自托管 + 托盘守护进程</td></tr>
+        <tr><th class="text-muted">数据库</th><td>SQLite（开发）/ SQL Server（生产）</td></tr>
+        <tr><th class="text-muted">软件授权</th><td>
+          <a href="about.html" target="_blank">软件注册授权说明</a>
+          <span class="text-muted ms-2">（独立预览页）</span>
+        </td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

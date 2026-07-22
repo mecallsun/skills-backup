@@ -5,14 +5,15 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.Meter;
 
 /// <summary>
-/// 抄表记录页面模型（v2.13.10 与原型 meter/index.html 对齐）
+/// 智能抄表页面模型（v2.13.10 与原型 meter/index.html 对齐）
 /// 列表列：序号/房号/月份/冷水读数/热水读数/电表读数/冷水用量/热水用量/电表用量/抄表员/设备/抄表时间/状态/操作
 /// </summary>
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly DormDbContext _db;
     private readonly IBasicsService _basics;
@@ -28,12 +29,7 @@ public class IndexModel : PageModel
     /// <summary>总数（供 PageHeader 组件使用）</summary>
     public int Total => Result?.TotalCount ?? 0;
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须 BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     [BindProperty(SupportsGet = true)]
     public string? ReadMonth { get; set; }
@@ -64,6 +60,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         var existingMonths = await _db.MeterRecords
             .Select(r => r.ReadMonth)
             .Distinct()
@@ -128,7 +125,7 @@ public class IndexModel : PageModel
         var items = new List<MeterRecordDto>();
         foreach (var r in records)
         {
-            // 查询上月同房号抄表记录
+            // 查询上月同房号智能抄表
             var prev = await _db.MeterRecords
                 .Where(p => p.DormCode == r.DormCode && p.ReadMonth.CompareTo(r.ReadMonth) < 0)
                 .OrderByDescending(p => p.ReadMonth)
@@ -243,7 +240,7 @@ public class CoverageDto
     public double Percentage => TotalDorms > 0 ? Math.Round(ReadDorms * 100.0 / TotalDorms, 1) : 0;
 }
 
-/// <summary>抄表记录 DTO（v2.13.10 对齐原型 14 列）</summary>
+/// <summary>智能抄表 DTO（v2.13.10 对齐原型 14 列）</summary>
 public class MeterRecordDto
 {
     public long Id { get; set; }

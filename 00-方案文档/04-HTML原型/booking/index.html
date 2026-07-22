@@ -267,7 +267,8 @@
                             <th>姓名</th>
                             <th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
                             <th>部门</th>
-                            <th>考勤班次</th>
+                            <th class="text-center">班组</th>           <!-- v2.13.97 P0 BUG 补全：JOIN SysEmployee.TeamId → Team.Name -->
+                            <th>班次</th>
                             <th>宿舍</th>
                             <th>类型</th>
                             <th>入退日期</th>
@@ -563,6 +564,7 @@
                         '<td>' + b.employeeName + '</td>' +
                         '<td class="text-center">' + genderBadgeHtml(b.gender) + '</td>' +  // v2.13.86
                         '<td>' + (b.department || '-') + '</td>' +
+                        '<td class="text-center">' + (function(){ var p = (typeof PERSONNEL!=='undefined') ? PERSONNEL.find(function(e){return e.id===b.employeeId;}) : null; var t = p && p.teamId ? ((typeof TEAMS!=='undefined') ? TEAMS.find(function(x){return x.id===p.teamId;}) : null) : null; return t ? '<span class="badge bg-light text-dark border">' + t.name + '</span>' : '<span class="text-muted">-</span>'; })() + '</td>' +
                         '<td>' + attendanceBadgeHtml(b.attendanceTypeId) + '</td>' +
                         '<td>' + b.dormCode + '</td>' +
                         '<td>' + typeBadge + '</td>' +
@@ -736,7 +738,7 @@
         }
 
         // ========== v2.12.29 办理入住/退房 模态弹窗逻辑 ==========
-        const ATTENDANCE_NAME_MODAL = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        const ATTENDANCE_NAME_MODAL = { DEFAULT: '默认', MORNING: '早', MIDDLE: '中', EVENING: '晚', NIGHT: '夜', OTHER: '其他' };
         const ATTENDANCE_BADGE_MODAL = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
 
         function attendanceBadgeModal(t) {

@@ -81,9 +81,9 @@
                             </select>
                         </div>
                         <div class="col-md-3 form-field">
-                            <label class="form-label">考勤班次<span class="required">*</span></label>
+                            <label class="form-label">班次<span class="required">*</span></label>
                             <select asp-for="Input.AttendanceTypeId" asp-items="Model.AttendanceTypes" class="form-select" required>
-                                <option value="">请选择考勤班次</option>
+                                <option value="">请选择班次</option>
                             </select>
                         </div>
                         <div class="col-md-3 form-field">
@@ -101,7 +101,8 @@
                     </div>
                 </div>
 
-                <!-- 区块 3：住宿信息（房号只读，通过办理登记分配） -->
+                <!-- 区块 3：住宿信息（v2.13.93 删除） -->
+                <!--
                 <div class="form-section">
                     <div class="form-section-title">住宿信息</div>
                     <div class="row g-2">
@@ -115,6 +116,9 @@
                         </div>
                     </div>
                 </div>
+                -->
+
+                <!-- v2.13.93 起区块 3「住宿信息」整段删除：新员工不显示房号/床号，需通过入住登记分配 -->
 
                 <!-- 区块 4：其他信息 -->
                 <div class="form-section" style="margin-bottom: 0;">

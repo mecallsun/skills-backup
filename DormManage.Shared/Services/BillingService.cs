@@ -177,6 +177,8 @@ public class BillingService : IBillingService
             existing.HotWaterUnitPrice = standard.HotWaterUnitPrice;
             existing.ColdWaterUnitPrice = standard.ColdWaterUnitPrice;
             existing.ElectricUnitPrice = standard.ElectricUnitPrice;
+            // v2.13.93 新增：补贴标准持久化
+            existing.SubsidyAmount = standard.SubsidyAmount;
             // v2.13.61 修复：适用员工类型改为 FK 关联 + 自动写入冗余 Name 字段
             existing.ApplicableTypeId = standard.ApplicableTypeId;
             existing.ApplicableType = employeeType.Name;
@@ -332,6 +334,10 @@ public class BillingService : IBillingService
             return result;
         }
 
+        // v2.13.93: 解析当月第一天 + 当月天数
+        var monthFirstDay = DateOnly.ParseExact(billingMonth + "-01", "yyyy-MM-dd");
+        var monthDays = DateTime.DaysInMonth(monthFirstDay.Year, monthFirstDay.Month);
+
         foreach (var bill in dormBills)
         {
             try
@@ -359,6 +365,23 @@ public class BillingService : IBillingService
                     var elecShare = Math.Round(bill.ElectricityAmount * shareRatio, 2);
                     var totalShare = Math.Round(coldShare + hotShare + elecShare, 2);
 
+                    // v2.13.93: 计算该员工在当月该房间的实际入住天数（与本月天数取 min）
+                    var stayDays = await ComputeEmployeeStayDaysAsync(empId, bill.DormCode, monthFirstDay, monthDays);
+
+                    // v2.13.93: 取该员工类型生效中的费用标准（按 ApplicableTypeId + EffectiveFrom/To 匹配 monthFirstDay）
+                    var standard = await _db.BillingStandards.FirstOrDefaultAsync(s =>
+                        s.IsActive
+                        && s.EffectiveFrom <= monthFirstDay
+                        && (s.EffectiveTo == null || s.EffectiveTo >= monthFirstDay)
+                        && s.ApplicableTypeId == emp.EmployeeTypeId);
+
+                    // v2.13.93: 补贴 = 标准月补贴 × 入住天数 / 当月天数（四舍五入到分）
+                    decimal subsidyAmount = 0m;
+                    if (standard != null && standard.SubsidyAmount > 0 && stayDays > 0)
+                    {
+                        subsidyAmount = Math.Round(standard.SubsidyAmount * stayDays / monthDays, 2);
+                    }
+
                     if (existing != null)
                     {
                         existing.ShareRatio = shareRatio;
@@ -367,6 +390,13 @@ public class BillingService : IBillingService
                         existing.HotShareAmount = hotShare;
                         existing.ElectricityShareAmount = elecShare;
                         existing.TotalShareAmount = totalShare;
+                        // v2.13.93: 覆盖补贴金额、住宿天数、部门冗余（财务手工调整过的账单项不会被覆盖：检查 IsPublished）
+                        if (!existing.IsPublished)
+                        {
+                            existing.SubsidyAmount = subsidyAmount;
+                            existing.Days = stayDays;
+                            existing.Department = emp.Department;
+                        }
                         result.UpdatedCount++;
                     }
                     else
@@ -384,6 +414,10 @@ public class BillingService : IBillingService
                             HotShareAmount = hotShare,
                             ElectricityShareAmount = elecShare,
                             TotalShareAmount = totalShare,
+                            // v2.13.93 新增字段
+                            SubsidyAmount = subsidyAmount,
+                            Days = stayDays,
+                            Department = emp.Department,
                             DormBillId = bill.Id,
                             GeneratedAt = DateTime.Now,
                             IsPublished = false
@@ -401,6 +435,45 @@ public class BillingService : IBillingService
 
         await _db.SaveChangesAsync();
         return result;
+    }
+
+    /// <summary>
+    /// v2.13.93 新增：计算员工在某房间当月实际入住天数
+    /// 算法：累计 [ActualCheckInDate, ActualCheckOutDate or month-end] 与 [month-start, month-end] 的交集天数（上限 = monthDays）
+    /// DormBooking 含 ActualCheckInDate / ActualCheckOutDate 字段（v2.13.24 P75 业务深度字段）
+    /// </summary>
+    private async Task<int> ComputeEmployeeStayDaysAsync(int employeeId, string dormCode, DateOnly monthFirstDay, int monthDays)
+    {
+        var monthStart = monthFirstDay.ToDateTime(TimeOnly.MinValue);
+        var monthEnd = monthFirstDay.AddDays(monthDays - 1).ToDateTime(TimeOnly.MaxValue);
+
+        var bookings = await _db.DormBookings
+            .Where(b => b.EmployeeId == employeeId
+                && b.DormCode == dormCode
+                && b.BookingDate <= monthFirstDay.AddDays(monthDays - 1)
+                && (b.ActualCheckOutDate == null || b.ActualCheckOutDate >= monthFirstDay)
+                && (b.Status == (int)BookingStatus.Staying || b.Type == (int)BookingType.CheckIn))
+            .Select(b => new { b.ActualCheckInDate, b.ActualCheckOutDate, b.BookingDate })
+            .ToListAsync();
+
+        if (!bookings.Any()) return 0;
+
+        int total = 0;
+        foreach (var b in bookings)
+        {
+            // 优先用 ActualCheckInDate；如未填则回退到 BookingDate
+            var startDate = b.ActualCheckInDate ?? b.BookingDate;
+            var start = startDate.ToDateTime(TimeOnly.MinValue);
+            var end = b.ActualCheckOutDate?.ToDateTime(TimeOnly.MaxValue) ?? monthEnd;
+            if (start < monthStart) start = monthStart;
+            if (end > monthEnd) end = monthEnd;
+            if (end >= start)
+            {
+                var days = (int)Math.Ceiling((end - start).TotalDays);
+                if (days > 0) total += days;
+            }
+        }
+        return Math.Min(total, monthDays);
     }
 
     public async Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int page, int pageSize)

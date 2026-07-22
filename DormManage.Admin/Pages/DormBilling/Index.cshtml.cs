@@ -4,13 +4,14 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using DormManage.Shared.Services;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.DormBilling;
 
 /// <summary>
 /// 宿舍账单页面模型
 /// </summary>
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly DormDbContext _db;
     private readonly IBillingService _billing;
@@ -53,12 +54,7 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public int? FloorId { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须可写 + BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     // 分页摘要（视图使用）
     public int TotalCount => Result?.TotalCount ?? 0;
@@ -68,6 +64,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         // 默认月份为当前月
         if (string.IsNullOrEmpty(BillingMonth))
         {

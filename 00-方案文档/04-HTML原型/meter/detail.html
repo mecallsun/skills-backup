@@ -174,7 +174,7 @@
             actions.innerHTML = `<span class="text-muted">当前状态为「${METER_STATUS[m.status]}」，不可再修改。</span>`;
         }
 
-        // v2.11.4：删除抄表记录（仅 status=0 未完成状态可删除）
+        // v2.11.4：删除智能抄表（仅 status=0 未完成状态可删除）
         function deleteRecord() {
             if (!confirm(`确定要删除 ${m.dormCode}（${m.readMonth}）的未完成占位记录吗？\n删除后系统将在每日0点自动重新生成占位记录。`)) return;
             alert(`✓ 原型演示：记录 ${m.id}（${m.dormCode}）已删除\n（实际将 DELETE /api/meter/records/${m.id}）`);

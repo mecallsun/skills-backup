@@ -4,10 +4,11 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.Booking;
 
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly IBookingService _service;
     private readonly DormDbContext _db;
@@ -47,17 +48,13 @@ public class IndexModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? DormCode { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须可写 + BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     public List<string> DormCodes { get; set; } = new();
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         // v2.13.20 为房号筛选提供 datalist 候选
         DormCodes = await _service.GetAllDormCodesAsync();
 

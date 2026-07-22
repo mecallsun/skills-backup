@@ -59,7 +59,8 @@ public sealed class NotifyIconManager : IDisposable
         Action onViewLogs,
         Action onAbout,
         Func<Task> onExit,
-        Action onToggleAutoStart)
+        Action onToggleAutoStart,
+        Action onLicense)
     {
         ArgumentNullException.ThrowIfNull(owner);
         _uiContext = SynchronizationContext.Current;
@@ -89,7 +90,7 @@ public sealed class NotifyIconManager : IDisposable
 
         BuildMenuItems(
             onOpenAdmin, onOpenApi, onSettings,
-            onRestartAll, onViewLogs, onAbout, onExit, onToggleAutoStart);
+            onRestartAll, onViewLogs, onAbout, onExit, onToggleAutoStart, onLicense);
 
         // 关键：ContextMenuStrip 关联到 NotifyIcon，
         // 并由外部传入 owner 作为 Application.OpenForms 中的窗口宿主，
@@ -105,7 +106,8 @@ public sealed class NotifyIconManager : IDisposable
         Action onViewLogs,
         Action onAbout,
         Func<Task> onExit,
-        Action onToggleAutoStart)
+        Action onToggleAutoStart,
+        Action onLicense)
     {
         // 1. 打开管理后台
         var miOpenAdmin = NewMenuItem("打开管理后台", "🌐", bold: true);
@@ -150,6 +152,11 @@ public sealed class NotifyIconManager : IDisposable
         _miAutoStart.Click += (_, _) => SafeInvoke(onToggleAutoStart);
         _ctx.Items.Add(_miAutoStart);
         RefreshAutoStartStatus(new Services.AutoStartManager().IsEnabled());
+
+        // 7.5 软件注册授权（v2.13.94 新增 — 与"关于"同级）
+        var miLicense = NewMenuItem("软件注册授权...", "🔑", bold: false);
+        miLicense.Click += (_, _) => SafeInvoke(onLicense);
+        _ctx.Items.Add(miLicense);
 
         // 8. 关于
         var miAbout = NewMenuItem("关于", "ℹ", bold: false);

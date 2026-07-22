@@ -1,15 +1,17 @@
 using Microsoft.AspNetCore.Mvc;
+using DormManage.Shared.Data;
 using DormManage.Shared.Services;
 using DormManage.Shared.Models;
 
 namespace DormManage.Api.Controllers.System;
 
 /// <summary>
-/// 系统管理 API（P1-11 服务启停）
+/// 系统管理 API（P1-11 服务启停 + v2.13.102 seed 完整性查询）
 ///
 /// 端点：
 /// - GET  /api/v1/system/services/status  查询 Api/Admin 状态（通过托盘 IPC）
 /// - POST /api/v1/system/services/{name}/{action}  启停重启（action: start/stop/restart）
+/// - GET  /api/v1/system/seed-integrity  v2.13.102 seed 完整性查询（供 UI banner 二次检查）
 /// </summary>
 [ApiController]
 [Route("api/v1/system")]
@@ -17,11 +19,13 @@ public class SystemController : ControllerBase
 {
     private readonly IpcClient _ipc;
     private readonly ILogger<SystemController> _logger;
+    private readonly DormDbContext _db;
 
-    public SystemController(ILogger<SystemController> logger)
+    public SystemController(ILogger<SystemController> logger, DormDbContext db)
     {
         _ipc = new IpcClient();
         _logger = logger;
+        _db = db;
     }
 
     [HttpGet("services/status")]
@@ -74,6 +78,30 @@ public class SystemController : ControllerBase
         catch (Exception ex)
         {
             return ApiResponse.Fail("IPC_UNREACHABLE", $"托盘不可达：{ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// v2.13.102 新增：seed 完整性查询（供权限矩阵 Modal banner AJAX 二次确认）。
+    ///
+    /// 返回 SeedIntegrityReport JSON；前端调用 `fetch('/api/v1/system/seed-integrity')` 后
+    /// 根据 data.ok 重渲染 banner；ok=true 表示 4 项 SysPermission + 4 项 SysRolePermission
+    /// + ≥5 行 SysFieldPermission 均已落地。
+    ///
+    /// 复用 DatabaseInitializer.CheckSeedIntegrityAsync（与 v2.13.101 启动验证 SQL 同源）。
+    /// </summary>
+    [HttpGet("seed-integrity")]
+    public async Task<ApiResponse<SeedIntegrityReport>> CheckSeedIntegrity()
+    {
+        try
+        {
+            var report = await DatabaseInitializer.CheckSeedIntegrityAsync(_db);
+            return ApiResponse<SeedIntegrityReport>.Ok(report, report.Ok ? "完整性检查通过" : report.Summary);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[v2.13.102] seed 完整性查询异常");
+            return ApiResponse<SeedIntegrityReport>.Fail("INTEGRITY_CHECK_FAIL", $"完整性查询异常：{ex.Message}");
         }
     }
 }

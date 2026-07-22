@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using DormManage.Api.Middleware;
 using DormManage.Admin.Filters;
 using DormManage.Shared.Data;
@@ -56,6 +58,22 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Lax;
         options.ExpireTimeSpan = TimeSpan.FromHours(8);  // 默认过期 8 小时
         options.SlidingExpiration = true;              // 滑动过期（活跃时续期）
+        // v2.13.93 新增：每次请求校验账号有效性（停用/锁定/过期），自动踢出已失效会话
+        // 无 OnValidatePrincipal 时，Cookie 一旦签发直到自然过期都不会被踢出 → 已过期账号仍能继续操作
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var userIdClaim = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+                return;
+            var db = context.HttpContext.RequestServices.GetRequiredService<DormDbContext>();
+            var user = await db.SysUsers.FindAsync(userId);
+            if (user == null || !user.IsActive || user.IsLocked
+                || (user.ExpiresAt.HasValue && DateTime.Today > user.ExpiresAt.Value.Date))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
 
 builder.Services.AddAuthorization();  // 启用授权

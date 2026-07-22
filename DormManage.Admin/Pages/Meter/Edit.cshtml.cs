@@ -27,7 +27,7 @@ public class EditModel : PageModel
     public int Id { get; set; }
 
     /// <summary>
-    /// 原始抄表记录
+    /// 原始智能抄表
     /// </summary>
     public MeterRecord? Record { get; set; }
 
@@ -55,7 +55,7 @@ public class EditModel : PageModel
 
         if (Record == null)
         {
-            TempData["ErrorMessage"] = "抄表记录不存在";
+            TempData["ErrorMessage"] = "智能抄表不存在";
             return RedirectToPage("/Meter/Index");
         }
 
@@ -112,7 +112,7 @@ public class EditModel : PageModel
         try
         {
             await _db.SaveChangesAsync();
-            TempData["SuccessMessage"] = "抄表记录修正成功";
+            TempData["SuccessMessage"] = "智能抄表修正成功";
             return RedirectToPage("/Meter/Index");
         }
         catch (DbUpdateException ex)

@@ -1,7 +1,7 @@
 @page
 @model DormManage.Admin.Pages.Meter.IndexModel
 @{
-    ViewData["Title"] = "抄表记录";
+    ViewData["Title"] = "智能抄表";
     Layout = "_Layout";
 
     var currentPage = Model.PageIndex;
@@ -20,7 +20,7 @@
     <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
     @await Component.InvokeAsync("PageHeader", new {
         icon = "bi-clipboard-data-fill",
-        title = "抄表记录",
+        title = "智能抄表",
         count = Model.Total,
         countLabel = "条",
         // v2.13.81 1:1 原型对齐：移除「新增记录」按钮（原型只有「手动补录」Modal + 「批量导入」链接 + 「导出Excel」函数）
@@ -210,7 +210,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="14" class="text-center text-muted py-4">暂无抄表记录</td>
+                                <td colspan="14" class="text-center text-muted py-4">暂无智能抄表</td>
                             </tr>
                         }
                     </tbody>
@@ -337,7 +337,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">抄表记录详情</h5>
+                <h5 class="modal-title">智能抄表详情</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

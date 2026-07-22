@@ -36,7 +36,7 @@ public class BookingController : ControllerBase
         [FromQuery] string? dateFrom = null,
         [FromQuery] string? dateTo = null,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+        [FromQuery] int pageSize = 10)
     {
         DateOnly? df = string.IsNullOrEmpty(dateFrom) ? null : DateOnly.Parse(dateFrom);
         DateOnly? dt = string.IsNullOrEmpty(dateTo) ? null : DateOnly.Parse(dateTo);
@@ -248,7 +248,7 @@ public class BookingController : ControllerBase
         sheet.Cell(1, 2).Value = "工号";
         sheet.Cell(1, 3).Value = "姓名";
         sheet.Cell(1, 4).Value = "部门";
-        sheet.Cell(1, 5).Value = "考勤班次";
+        sheet.Cell(1, 5).Value = "班次";
         sheet.Cell(1, 6).Value = "宿舍";
         sheet.Cell(1, 7).Value = "类型";
         sheet.Cell(1, 8).Value = "入退日期";

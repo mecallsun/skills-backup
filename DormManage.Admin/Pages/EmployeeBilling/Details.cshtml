@@ -105,12 +105,38 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
+            @* v2.13.93 新增：补贴卡片 *@
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #00897b;">
+                    <div class="card-body">
+                        <div class="text-muted small">本月补贴</div>
+                        <div class="fs-3 fw-bold text-success">
+                            @if (Model.Summary.SubsidyAmount > 0)
+                            {
+                                <span>-¥@Model.Summary.SubsidyAmount.ToString("F2")</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">¥0.00</span>
+                            }
+                        </div>
+                        @if (Model.Summary.SubsidyAmount > 0)
+                        {
+                            <small class="text-muted">@Model.Summary.StayDays 天 × @Model.Summary.StandardSubsidyAmount.ToString("F2") 元 / @Model.Summary.MonthDays 天</small>
+                        }
+                        else
+                        {
+                            <small class="text-muted">本月无补贴</small>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
                 <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #388e3c;">
                     <div class="card-body">
-                        <div class="text-muted small">合计</div>
-                        <div class="fs-3 fw-bold text-success">¥@Model.Summary.TotalAmount.ToString("F2")</div>
-                        <small class="text-muted">本月应缴（住宿 + 冷水 + 热水 + 电）</small>
+                        <div class="text-muted small">@* v2.13.93 把"合计"改为"费用合计" *@ 费用合计</div>
+                        <div class="fs-3 fw-bold text-success">¥@Model.Summary.FinalAmount.ToString("F2")</div>
+                        <small class="text-muted">分摊合计 - 补贴金额</small>
                     </div>
                 </div>
             </div>
@@ -142,8 +168,20 @@
                             </tbody>
                             <tfoot class="table-light">
                                 <tr>
-                                    <th colspan="2" class="text-end">合计</th>
-                                    <th class="text-end text-success">¥@Model.Summary.TotalAmount.ToString("F2")</th>
+                                    <th colspan="2" class="text-end">分摊合计</th>
+                                    <th class="text-end">¥@Model.Summary.TotalAmount.ToString("F2")</th>
+                                </tr>
+                                @* v2.13.93 新增：补贴扣减行（如有补贴才显示） *@
+                                @if (Model.Summary.SubsidyAmount > 0)
+                                {
+                                    <tr>
+                                        <th colspan="2" class="text-end text-success">本月补贴扣减</th>
+                                        <th class="text-end text-success">-¥@Model.Summary.SubsidyAmount.ToString("F2")</th>
+                                    </tr>
+                                }
+                                <tr class="table-success">
+                                    <th colspan="2" class="text-end">费用合计</th>
+                                    <th class="text-end text-success">¥@Model.Summary.FinalAmount.ToString("F2")</th>
                                 </tr>
                             </tfoot>
                         </table>

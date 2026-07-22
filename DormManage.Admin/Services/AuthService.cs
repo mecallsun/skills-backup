@@ -36,6 +36,10 @@ public class AuthService : IAuthService
         if (user.IsLocked)
             return (false, "账号已锁定，请联系管理员", null);
 
+        // v2.13.93: 账号有效期校验 — 严格按日期（Today > ExpiresAt.Date 即拒绝；ExpiresAt=NULL 表示永久）
+        if (user.ExpiresAt.HasValue && DateTime.Today > user.ExpiresAt.Value.Date)
+            return (false, "账号已过期，请联系管理员", null);
+
         // 查询用户的角色
         var roleCodes = await (from ur in _db.SysUserRoles
                                join r in _db.SysRoles on ur.RoleId equals r.Id

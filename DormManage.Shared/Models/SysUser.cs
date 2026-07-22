@@ -19,6 +19,13 @@ public class SysUser
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
+    /// <summary>
+    /// v2.13.93 新增：账号有效期至（NULL = 永久有效）
+    /// 当 DateTime.Today > ExpiresAt.Value.Date 时 AuthService.LoginAsync 拒绝登录；
+    /// Cookie OnValidatePrincipal 钩子在每次请求时校验并自动踢出已过期会话。
+    /// </summary>
+    public DateTime? ExpiresAt { get; set; }
+
     // ===== v2.13.26 个人中心与账号安全 =====
     /// <summary>微信 OpenID（企业内部应用绑定唯一标识）</summary>
     [MaxLength(64)]

@@ -82,6 +82,7 @@
                             <th class="text-center">房间数</th>
                             <th class="text-center">容量</th>
                             <th class="text-center">在住人数</th>
+                            <th class="text-center" style="min-width:140px">班次</th>
                             <th class="text-center" style="min-width:120px">使用率</th>
                             <th class="text-center">状态</th>
                             <th width="220" class="text-center">操作</th>
@@ -119,6 +120,20 @@
                                     <td class="text-center">
                                         <span class="badge @(item.CurrentCount > 0 ? "bg-primary" : "bg-secondary")">@item.CurrentCount</span>
                                         / @item.Capacity
+                                    </td>
+                                    <td class="text-center">
+                                        @* v2.13.95 派生班次列（按 AttendanceType.SortOrder 升序 + 去重）*@
+                                        @if (item.AttendanceTypeNames != null && item.AttendanceTypeNames.Count > 0)
+                                        {
+                                            foreach (var name in item.AttendanceTypeNames)
+                                            {
+                                                <span class="badge bg-info text-dark me-1">@name</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <small class="text-muted">-</small>
+                                        }
                                     </td>
                                     <td class="text-center">
                                         @{

@@ -42,7 +42,7 @@ public class ImportModel : PageModel
         using var wb = new XLWorkbook();
         var ws = wb.Worksheets.Add("人员清单");
         // v2.13.83：12 列（含「性别」作为第 3 列），与 personnel/import.html 原型 + Razor 文案一致
-        string[] headers = { "工号", "姓名", "性别", "部门", "员工类型", "考勤班次", "班组", "手机号", "入职日期", "离职日期", "房号", "备注" };
+        string[] headers = { "工号", "姓名", "性别", "部门", "员工类型", "班次", "班组", "手机号", "入职日期", "离职日期", "房号", "备注" };
         for (int i = 0; i < headers.Length; i++)
         {
             ws.Cell(1, i + 1).Value = headers[i];

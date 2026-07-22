@@ -90,8 +90,8 @@
                     </datalist>
                 </div>
                 <div class="col-auto filter-item filter-item-stats">
-                    <label class="form-label mb-1">分摊合计</label>
-                    <div class="form-control text-success fw-bold bg-light">¥@Model.Result?.Items.Sum(i => i.ShareAmount).ToString("N2")</div>
+                    <label class="form-label mb-1">费用合计</label>
+                    <div class="form-control text-success fw-bold bg-light">¥@Model.Result?.Items.Sum(i => i.FinalAmount).ToString("N2")</div>
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
                     <button type="submit" class="btn btn-primary filter-btn">
@@ -124,7 +124,9 @@
                             <th class="text-center">热水分摊</th>
                             <th class="text-center">电分摊</th>
                             <th class="text-center">在住人数</th>
-                            <th class="text-center">分摊金额</th>
+                            <th class="text-center">入住天数</th>
+                            <th class="text-center">补贴金额</th>
+                            <th class="text-center">费用合计</th>
                             <th class="text-center">发布状态</th>
                             <th width="140" class="text-center">操作</th>
                         </tr>
@@ -161,7 +163,32 @@
                                     <td class="text-center">¥@item.HotShareAmount.ToString("N2")</td>
                                     <td class="text-center">¥@item.ElectricityShareAmount.ToString("N2")</td>
                                     <td class="text-center">@item.ResidentCount 人</td>
-                                    <td class="text-center text-success fw-bold">¥@item.ShareAmount.ToString("N2")</td>
+                                    <td class="text-center text-muted">
+                                        @* v2.13.93 新增：入住天数列 *@
+                                        @if (item.Days > 0)
+                                        {
+                                            <span class="badge bg-light text-dark border">@item.Days 天</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @* v2.13.93 新增：补贴金额列 *@
+                                        @if (item.SubsidyAmount > 0)
+                                        {
+                                            <span class="text-success">-¥@item.SubsidyAmount.ToString("N2")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                    <td class="text-center text-success fw-bold">
+                                        @* v2.13.93 新增：费用合计 = 分摊金额 - 补贴金额（≥ 0） *@
+                                        ¥@item.FinalAmount.ToString("N2")
+                                    </td>
                                     <td class="text-center">
                                         @if (item.IsPublished)
                                         {
@@ -196,7 +223,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="13" class="text-center text-muted py-4">暂无员工账单</td>
+                                <td colspan="15" class="text-center text-muted py-4">暂无员工账单</td>
                             </tr>
                         }
                     </tbody>

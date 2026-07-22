@@ -19,7 +19,7 @@
         title = "人员清单",
         count = Model.Total,
         countLabel = "人",
-        primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "personnel:import" },
+        primaryAction = new PageAction { Label = "新增", Url = "/Personnel/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "personnel:add" },
         actions = new List<PageAction> {
             new() { Label = "导入", Url = "/Personnel/Import", Icon = "bi-upload", Style = "info", PermissionCode = "personnel:import" },
             // v2.13.88 第四轮：导出按钮加 personnel:export 权限管控
@@ -72,7 +72,7 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
-                    <label class="form-label mb-1">考勤班次</label>
+                    <label class="form-label mb-1">班次</label>
                     <select name="AttendanceTypeId" class="form-select">
                         <option value="">全部</option>
                         @foreach (var at in Model.AttendanceTypes)
@@ -140,7 +140,7 @@
                             <th>部门</th>
                             <th>员工类型</th>
                             <th>班组</th>
-                            <th>考勤班次</th>
+                            <th>班次</th>
                             <th>入职日期</th>
                             <th>在职状态</th>
                             <th>离职日期</th>

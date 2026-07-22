@@ -36,6 +36,14 @@ public class DetailsModel : PageModel
         public decimal ShareRatio { get; set; }
         /// <summary>v2.13.44 新增：同住人数</summary>
         public int ResidentCount { get; set; }
+        /// <summary>v2.13.93 新增：本月实际补贴金额（元）</summary>
+        public decimal SubsidyAmount { get; set; }
+        /// <summary>v2.13.93 新增：费用合计 = max(TotalShareAmount - SubsidyAmount, 0)</summary>
+        public decimal FinalAmount { get; set; }
+        /// <summary>v2.13.93 新增：员工类型月补贴标准（元/人·月）</summary>
+        public decimal StandardSubsidyAmount { get; set; }
+        /// <summary>v2.13.93 新增：当月天数（用于补贴折算）</summary>
+        public int MonthDays { get; set; }
     }
 
     public class MeterConsumption
@@ -112,6 +120,19 @@ public class DetailsModel : PageModel
             Summary.ShareRatio = Bill.ShareRatio;
             Summary.ResidentCount = Bill.ResidentCount;
             Summary.TotalAmount = Bill.TotalShareAmount;
+            // v2.13.93 新增：补贴字段填充
+            Summary.SubsidyAmount = Bill.SubsidyAmount;
+            Summary.FinalAmount = Math.Max(Bill.TotalShareAmount - Bill.SubsidyAmount, 0m);
+            Summary.StayDays = Bill.Days;  // 优先用真实账单 Days（v2.13.93 同步 SQL）
+            // 查员工类型月补贴标准（用于显示折算依据）
+            var monthFirstDay = DateOnly.ParseExact(Month + "-01", "yyyy-MM-dd");
+            Summary.MonthDays = DateTime.DaysInMonth(monthFirstDay.Year, monthFirstDay.Month);
+            var standard = await _db.BillingStandards.FirstOrDefaultAsync(s =>
+                s.IsActive
+                && s.EffectiveFrom <= monthFirstDay
+                && (s.EffectiveTo == null || s.EffectiveTo >= monthFirstDay)
+                && s.ApplicableTypeId == Employee.EmployeeTypeId);
+            Summary.StandardSubsidyAmount = standard?.SubsidyAmount ?? 0m;
         }
         else if (!string.IsNullOrEmpty(Employee.DormCode))
         {
@@ -162,6 +183,17 @@ public class DetailsModel : PageModel
             new() { Date = Month, Description = "热水费分摊", Amount = Summary.HotAmount },
             new() { Date = Month, Description = "电费分摊", Amount = Summary.ElectricAmount }
         };
+
+        // v2.13.93 新增：补贴扣减行（如有补贴才显示）
+        if (Summary.SubsidyAmount > 0)
+        {
+            BillingItems.Add(new EmployeeBillingItem
+            {
+                Date = Month,
+                Description = $"本月补贴扣减（{Summary.StayDays}/{Summary.MonthDays} × {Summary.StandardSubsidyAmount:F2}元）",
+                Amount = -Summary.SubsidyAmount
+            });
+        }
 
         return Page();
     }

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<!--
+  v2.13.94 托盘软件注册授权弹窗原型（WinForms LicenseForm.cs 1:1）
+  入口：托盘右键菜单 → 软件注册授权...
+  数据源：DormManage.Shared.Register.RegisterSdk（与 Web 端共用）
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>软件注册授权 - 金戈宿舍管理系统（托盘端）</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { padding: 20px; background: #f0f0f0; }
+    .win-form { width: 580px; background: #fff; padding: 16px 20px; border: 1px solid #999; box-shadow: 2px 2px 8px rgba(0,0,0,0.2); margin: 0 auto; }
+    .form-row { display: flex; align-items: center; margin-bottom: 14px; }
+    .form-label { width: 80px; color: #555; }
+    .form-input { flex: 1; }
+    .form-input input { width: 100%; padding: 4px 8px; border: 1px solid #ccc; font-family: inherit; }
+    .form-input input.mono { font-family: Consolas, monospace; }
+    .form-buttons { text-align: right; margin-top: 20px; }
+    .form-buttons button { margin-left: 8px; }
+    .status-ok { color: #2e7d32; font-weight: bold; }
+    .status-expired { color: #ef6c00; font-weight: bold; }
+    .status-locked { color: #c62828; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div class="win-form">
+  <h5 class="mb-3"><i class="bi bi-shield-lock"></i> 软件注册授权 - 金戈宿舍管理系统</h5>
+
+  <!-- 机器码 -->
+  <div class="form-row">
+    <span class="form-label">机器码：</span>
+    <div class="form-input d-flex">
+      <input type="text" class="mono" value="BFEBF-BFF00-0A06A-4AA2E-3B0E" readonly>
+      <button class="btn btn-sm btn-outline-secondary ms-2" style="width: 60px;">📋 复制</button>
+    </div>
+  </div>
+
+  <!-- 公司名称 -->
+  <div class="form-row">
+    <span class="form-label">公司名称：</span>
+    <div class="form-input">
+      <input type="text" value="金戈电子有限公司" readonly>
+    </div>
+  </div>
+
+  <!-- 注册码 -->
+  <div class="form-row">
+    <span class="form-label">注册码：</span>
+    <div class="form-input">
+      <input type="text" class="mono" value="1A2B3-C4D5E-6F7A8-9B0C1-1BB1F" readonly>
+    </div>
+  </div>
+
+  <!-- 有效日期 -->
+  <div class="form-row">
+    <span class="form-label">有效日期：</span>
+    <div class="form-input">
+      <span class="status-ok">2027年12月31日</span>
+    </div>
+  </div>
+
+  <!-- 状态 + 试用次数 -->
+  <div class="form-row">
+    <span class="form-label"></span>
+    <div class="form-input">
+      <span class="status-ok">✅ 此软件已注册</span>
+      <span class="text-muted ms-3">试用次数：0 / 30（剩 557 天）</span>
+    </div>
+  </div>
+
+  <!-- 按钮 -->
+  <div class="form-buttons">
+    <button class="btn btn-outline-danger" style="background: #1976d2; color: #fff; border-color: #1976d2;">
+      <i class="bi bi-x-octagon"></i> 取消注册
+    </button>
+    <button class="btn btn-outline-secondary">
+      <i class="bi bi-eraser"></i> 清理
+    </button>
+    <button class="btn btn-outline-secondary">
+      <i class="bi bi-x-lg"></i> 关闭
+    </button>
+  </div>
+</div>
+</body>
+</html>

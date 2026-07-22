@@ -147,7 +147,7 @@
             if (exist) {
                 dupWarn.style.display = 'block';
                 dupWarn.className = 'alert alert-warning';
-                dupWarn.innerHTML = `⚠️ 该宿舍 <strong>${exist.readMonth}</strong> 已有抄表记录（状态：${METER_STATUS[exist.status]}）。如需修改请到列表中「修正」，不可重复补录。`;
+                dupWarn.innerHTML = `⚠️ 该宿舍 <strong>${exist.readMonth}</strong> 已有智能抄表（状态：${METER_STATUS[exist.status]}）。如需修改请到列表中「修正」，不可重复补录。`;
             } else {
                 // v2.11.4：检查是否有可覆盖的记录（status=0 未完成）
                 const overwriteRec = overwriteableRecord();

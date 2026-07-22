@@ -19,7 +19,7 @@
  *   费用标准 → billing/standards.html
  *   宿舍账单 → billing/dorm-bills.html
  *   员工账单 → billing/employee-bills.html
- *   抄表记录 → meter/index.html
+ *   智能抄表 → meter/index.html
  *   基础资料 → basics/index.html
  *   系统设置 → settings/index.html
  */
@@ -33,7 +33,7 @@ const FIXED_TABS = [
   { id: 'tab-billing',       title: '费用标准',   module: 'billing',        icon: 'bi-cash-stack',        url: 'billing/standards.html' },
   { id: 'tab-dorm-bills',    title: '宿舍账单',   module: 'dorm-bills',     icon: 'bi-receipt',           url: 'billing/dorm-bills.html' },
   { id: 'tab-employee-bills',title: '员工账单',   module: 'employee-bills', icon: 'bi-wallet2',           url: 'billing/employee-bills.html' },
-  { id: 'tab-meter',         title: '抄表记录',   module: 'meter',          icon: 'bi-clipboard-data',    url: 'meter/index.html' },
+  { id: 'tab-meter',         title: '智能抄表',   module: 'meter',          icon: 'bi-clipboard-data',    url: 'meter/index.html' },
   { id: 'tab-basics',        title: '基础资料',   module: 'basics',         icon: 'bi-database',          url: 'basics/index.html' },
   { id: 'tab-settings',      title: '系统设置',   module: 'settings',       icon: 'bi-gear',              url: 'settings/index.html' }
 ];

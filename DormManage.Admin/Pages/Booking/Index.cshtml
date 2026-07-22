@@ -104,7 +104,8 @@
                             <th>姓名</th>
                             <th class="text-center">性别</th>
                             <th>部门</th>
-                            <th class="text-center">考勤班次</th>
+                            <th class="text-center">班组</th>           <!-- v2.13.97 P0 BUG 补全：JOIN SysEmployee.TeamId → Team.Name -->
+                            <th class="text-center">班次</th>
                             <th>宿舍</th>
                             <th class="text-center">类型</th>
                             <th class="text-center">入退日期</th>
@@ -143,6 +144,17 @@
                                         }
                                     </td>
                                     <td>@(item.Department ?? "-")</td>
+                                    <td class="text-center">
+                                        @* v2.13.97 P0 BUG 补全：JOIN SysEmployee.TeamId → Team.Name（人员清单为唯一真源） *@
+                                        @if (!string.IsNullOrEmpty(item.TeamName))
+                                        {
+                                            <span class="badge bg-light text-dark border">@item.TeamName</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
                                     <td class="text-center">
                                         @{
                                             var attClass = item.AttendanceTypeId switch
@@ -311,7 +323,7 @@
                                     }
                                     <div class="col-md-4"><label class="form-label small text-muted">部门</label><div id="coEmpDept"></div></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">员工类型</label><div id="coEmpType"></div></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">考勤班次</label><div id="coEmpAtt"></div></div>
+                                    <div class="col-md-4"><label class="form-label small text-muted">班次</label><div id="coEmpAtt"></div></div>
                                 </div>
                             </div>
                         </div>

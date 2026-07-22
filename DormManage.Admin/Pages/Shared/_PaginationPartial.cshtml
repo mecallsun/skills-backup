@@ -52,7 +52,7 @@
             .Where(p => !p.StartsWith("pageIndex=", StringComparison.OrdinalIgnoreCase) && !p.StartsWith("pageSize=", StringComparison.OrdinalIgnoreCase))
             .ToList();
         qs.Add($"pageIndex={pageIndex}");
-        if (Model.PageSize != 20) qs.Add($"pageSize={Model.PageSize}");
+        if (Model.PageSize != 10) qs.Add($"pageSize={Model.PageSize}");
         return currentPath + "?" + string.Join("&", qs);
     }
 }
@@ -119,25 +119,16 @@
     <script>
         (function () {
             var moduleKey = (location.pathname || '').split('/').filter(Boolean).pop() || 'list';
-            var pageSizeKey = 'pager_pageSize_' + moduleKey;
-            var currentPageSize = '@Model.PageSize';
 
+            // v2.13.99 BUG 修复：移除 JS 启动回退逻辑
+            // v2.13.104 二次修复：移除 localStorage 写入（v2.13.99 后不再读取，写入是冗余）
+            // 用户主动选择 pageSize → URL 跳转（?pageSize=N），PageModel 绑定即生效
             window.changePageSize = function (newSize) {
-                localStorage.setItem(pageSizeKey, newSize);
                 var url = new URL(location.href);
                 url.searchParams.set('pageSize', newSize);
                 url.searchParams.set('pageIndex', '1');
                 location.href = url.toString();
             };
-
-            // 启动时如果 localStorage 有不同的 pageSize 但 URL 未带,使用 localStorage
-            var stored = localStorage.getItem(pageSizeKey);
-            if (stored && stored !== currentPageSize && !location.search.match(/[?&]pageSize=/)) {
-                var url = new URL(location.href);
-                url.searchParams.set('pageSize', stored);
-                url.searchParams.set('pageIndex', '1');
-                location.replace(url.toString());
-            }
         })();
     </script>
 }

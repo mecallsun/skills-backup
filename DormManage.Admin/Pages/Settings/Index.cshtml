@@ -510,6 +510,100 @@
 
                 <!-- 关于系统 -->
                 <div class="tab-pane fade @(Model.ActiveTab == "about" ? "show active" : "")" id="tab-about">
+                    @* v2.13.94 新增：软件注册授权卡片（顶部显眼位置） *@
+                    <div class="card mb-3" id="card-license">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong>
+                                <i class="bi bi-shield-lock"></i> 软件注册授权
+                                @if (Model.License != null)
+                                {
+                                    switch (Model.License.RegInt)
+                                    {
+                                        case 1:
+                                            <span class="badge bg-success ms-2">已注册</span>
+                                            break;
+                                        case 0:
+                                            <span class="badge bg-danger ms-2">已过期</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-warning text-dark ms-2">未注册</span>
+                                            break;
+                                    }
+                                }
+                            </strong>
+                            <small class="text-muted">试用次数 <strong>@(Model.License?.UseTimes ?? 0)</strong> / 30 次</small>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(Model.LicenseMessage))
+                            {
+                                <div class="alert @(Model.LicenseRegInt == 1 ? "alert-success" : (Model.LicenseRegInt == 0 ? "alert-danger" : "alert-warning")) py-2">
+                                    <i class="bi bi-@(Model.LicenseRegInt == 1 ? "check-circle" : (Model.LicenseRegInt == 0 ? "exclamation-triangle" : "info-circle"))"></i>
+                                    @Model.LicenseMessage
+                                </div>
+                            }
+                            <form method="post" action="/Settings?handler=LicenseRegister">
+                                @Html.AntiForgeryToken()
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">机器码（只读）</label>
+                                        <input type="text" class="form-control" value="@Model.License?.SN" readonly onclick="this.select()" style="font-family: monospace;" />
+                                        <small class="text-muted">📌 点击复制，发给公司用于生成注册码</small>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">公司名称</label>
+                                        @if (Model.License?.RegInt == 1)
+                                        {
+                                            <input type="text" class="form-control" value="@Model.License?.LTDName" readonly />
+                                        }
+                                        else
+                                        {
+                                            <input type="text" name="LTDName" class="form-control" value="@Model.License?.LTDName" placeholder="请输入公司/单位名称" maxlength="100" required />
+                                        }
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label class="form-label">注册码（29 位 = 5-5-5-5-5）</label>
+                                        @if (Model.License?.RegInt == 1)
+                                        {
+                                            <input type="text" class="form-control" value="@Model.License?.CDKEY" readonly style="font-family: monospace;" />
+                                        }
+                                        else
+                                        {
+                                            <input type="text" name="CDKEY" class="form-control" placeholder="XXXXX-XXXXX-XXXXX-XXXXX-XXXXX" maxlength="29" style="font-family: monospace; text-transform: uppercase;" required />
+                                            <small class="text-muted">📌 输入注册码，点击「验证注册」激活</small>
+                                        }
+                                    </div>
+                                    @if (Model.License?.RegInt == 1 && Model.License.RegDate.HasValue)
+                                    {
+                                        <div class="col-md-12">
+                                            <div class="alert alert-success mb-0">
+                                                <i class="bi bi-calendar-check"></i>
+                                                <strong>已注册授权</strong>，有效期至 <strong>@Model.License.RegDate.Value.ToString("yyyy年MM月dd日")</strong>
+                                                <span class="text-muted ms-2">（剩 @((Model.License.RegDate.Value.Date - DateTime.Today).Days) 天）</span>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                <div class="mt-3 d-flex gap-2 justify-content-end">
+                                    @if (Model.License?.RegInt == 1)
+                                    {
+                                        <button type="submit" name="action" value="cancel" class="btn btn-outline-danger" onclick="return confirm('确认取消注册？取消后需重新输入注册码。')">
+                                            <i class="bi bi-x-octagon"></i> 取消注册
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button type="submit" name="action" value="register" class="btn btn-primary">
+                                            <i class="bi bi-shield-check"></i> 验证注册
+                                        </button>
+                                        <button type="submit" name="action" value="clear" class="btn btn-outline-secondary" onclick="return confirm('确认清除试用次数？此操作不可恢复。')">
+                                            <i class="bi bi-eraser"></i> 清除试用
+                                        </button>
+                                    }
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
                     <div class="card">
                         <div class="card-header bg-light">
                             <strong><i class="bi bi-info-circle"></i> 关于系统</strong>
@@ -522,7 +616,7 @@
                                 </tr>
                                 <tr>
                                     <th class="text-muted">当前版本</th>
-                                    <td>v2.13.19</td>
+                                    <td>v2.13.94</td>
                                 </tr>
                                 <tr>
                                     <th class="text-muted">技术栈</th>
@@ -883,12 +977,15 @@
                 const phone = btn.getAttribute('data-phone') || '';
                 const isActive = btn.getAttribute('data-is-active') === 'true';
                 const roleIds = (btn.getAttribute('data-role-ids') || '').split(',').filter(s => s);
+                // v2.13.93 新增：有效期至回显（datetime-local 接受 yyyy-MM-ddTHH:mm 格式）
+                const expiresAt = btn.getAttribute('data-expires-at') || '';
                 document.getElementById('editId').value = id;
                 document.getElementById('editUserName').value = userName;
                 document.getElementById('editDisplayName').value = displayName;
                 document.getElementById('editEmail').value = email;
                 document.getElementById('editPhone').value = phone;
                 document.getElementById('editIsActive').checked = isActive;
+                document.getElementById('editExpiresAt').value = expiresAt;
                 document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => {
                     cb.checked = roleIds.includes(cb.value);
                 });
@@ -1132,5 +1229,55 @@
             wireUserPanel();
             wireRolePanel();
         });
+    </script>
+
+    @* v2.13.102 新增：DB seed 完整性 banner AJAX（重新检查 + 一键修复） *@
+    <script>
+        // v2.13.102：banner 重新检查（GET /Settings?handler=RoleSeedIntegrity）
+        window.refreshSeedIntegrityBanner = async function () {
+            const banner = document.getElementById('seedIntegrityBanner');
+            if (!banner) return;
+            try {
+                const res = await fetch('/Settings?handler=RoleSeedIntegrity', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    showToast('重新检查失败：HTTP ' + res.status, 'danger');
+                }
+            } catch (ex) {
+                console.error('refreshSeedIntegrityBanner failed', ex);
+                showToast('重新检查异常：' + ex.message, 'danger');
+            }
+        };
+
+        // v2.13.102：banner 一键修复（POST /Settings?handler=RoleSeedRepair）
+        window.runSeedIntegrityRepair = async function () {
+            if (!confirm('将立即执行 seed 完整性修复（idempotent INSERT），无需重启 Admin。\n确认执行？')) return;
+            const token = document.getElementById('pageAntiforgeryToken')?.value || '';
+            try {
+                const res = await fetch('/Settings?handler=RoleSeedRepair', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    credentials: 'include'
+                });
+                const json = await res.json().catch(() => ({ success: false, message: '响应解析失败' }));
+                if (json.success) {
+                    showToast(json.message || '修复成功', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(json.message || '修复失败', 'danger');
+                }
+            } catch (ex) {
+                console.error('runSeedIntegrityRepair failed', ex);
+                showToast('修复异常：' + ex.message, 'danger');
+            }
+        };
     </script>
 }

@@ -32,7 +32,7 @@ public class DormsController : ControllerBase
         int? floorId,
         int? addressId,
         int page = 1,
-        int pageSize = 20)
+        int pageSize = 10)
     {
         var query = _db.Dorms.AsQueryable();
 
@@ -69,6 +69,32 @@ public class DormsController : ControllerBase
                 CurrentCount = _db.DormBookings.Count(b => b.DormCode == d.DormCode && b.Status == 2)
             })
             .ToListAsync();
+
+        // v2.13.95 派生班次（避免 N+1：批量一次 JOIN 全部页内宿舍）
+        var dormCodes = items.Select(d => d.DormCode).ToList();
+        var attendanceMap = await _db.DormBookings
+            .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
+            .Join(_db.Employees.AsNoTracking(),
+                  b => b.EmployeeId, e => e.Id,
+                  (b, e) => new { b.DormCode, e.AttendanceTypeId })
+            .Where(x => x.AttendanceTypeId.HasValue)
+            .Join(_db.AttendanceTypes.AsNoTracking(),
+                  x => x.AttendanceTypeId, t => t.Id,
+                  (x, t) => new { x.DormCode, TypeId = t.Id, TypeName = t.Name })
+            .GroupBy(x => x.DormCode)
+            .Select(g => new
+            {
+                DormCode = g.Key,
+                // 按 AttendanceType.Id 升序拼接去重班次名（AttendanceType 无 SortOrder，用 Id 保稳定）
+                TypeNames = g.OrderBy(x => x.TypeId).Select(x => x.TypeName).Distinct().ToList()
+            })
+            .ToDictionaryAsync(x => x.DormCode, x => x.TypeNames);
+
+        foreach (var d in items)
+        {
+            if (attendanceMap.TryGetValue(d.DormCode, out var names))
+                d.AttendanceTypeNames = names;
+        }
 
         return ApiResponse<PagedResult<DormDto>>.Ok(new PagedResult<DormDto>
         {
@@ -266,6 +292,8 @@ public class DormDto
     public string? Remark { get; set; }
     public bool IsActive { get; set; }
     public int CurrentCount { get; set; }
+    /// <summary>v2.13.95 派生班次名称集合（按 AttendanceType.SortOrder 升序 + 去重）</summary>
+    public List<string> AttendanceTypeNames { get; set; } = new();
 }
 
 /// <summary>

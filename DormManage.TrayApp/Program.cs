@@ -87,6 +87,17 @@ internal static class Program
         log.Info($"=== 托盘启动 v{Assembly.GetExecutingAssembly().GetName().Version} ===");
         log.Info($"BaseDirectory: {AppContext.BaseDirectory}");
 
+        // 3.5) v2.13.94 软件注册授权：初始化机器码（TrayApp 端 WMI 取真实硬件特征）
+        try
+        {
+            var sn = MachineCodeProvider.Initialize();
+            log.Info($"[LICENSE] 机器码已初始化：{sn}");
+        }
+        catch (Exception ex)
+        {
+            log.Warn($"[LICENSE] 机器码初始化失败，将使用 fallback：{ex.Message}");
+        }
+
         // 4) 创建并运行 ApplicationContext
         try
         {

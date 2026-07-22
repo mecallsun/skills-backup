@@ -106,6 +106,7 @@
                         <th>角色</th>
                         <th>联系方式</th>
                         <th>最后登录</th>
+                        <th style="width:140px">有效期至</th>
                         <th width="120" class="text-center">状态</th>
                         <th width="280">操作</th>
                     </tr>
@@ -145,6 +146,29 @@
                                     <div><code>@u.LastLoginIp</code></div>
                                 }
                             </td>
+                            @* v2.13.93 新增：有效期至列（按剩天数颜色 Badge） *@
+                            <td>
+                                @if (u.ExpiresAt.HasValue)
+                                {
+                                    var days = (u.ExpiresAt.Value.Date - DateTime.Today).Days;
+                                    if (days < 0)
+                                    {
+                                        <span class="badge bg-danger" title="已过期 @(-days) 天">@u.ExpiresAt.Value.ToString("yyyy-MM-dd")</span>
+                                    }
+                                    else if (days <= 30)
+                                    {
+                                        <span class="badge bg-warning text-dark" title="剩 @days 天过期">@u.ExpiresAt.Value.ToString("yyyy-MM-dd")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@u.ExpiresAt.Value.ToString("yyyy-MM-dd")</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">永久</span>
+                                }
+                            </td>
                             <td class="text-center">
                                 @if (u.IsActive && !u.IsLocked)
                                 {
@@ -169,7 +193,8 @@
                                         data-email="@u.Email"
                                         data-phone="@u.Phone"
                                         data-is-active="@u.IsActive.ToString().ToLower()"
-                                        data-role-ids="@u.RoleIds">
+                                        data-role-ids="@u.RoleIds"
+                                        data-expires-at="@(u.ExpiresAt?.ToString("yyyy-MM-ddTHH:mm"))">
                                     <i class="bi bi-pencil"></i> 编辑
                                 </button>
                                 @if (u.IsActive)
@@ -206,7 +231,7 @@
                     }
                     @if (Model.UserUsers.Count == 0)
                     {
-                        <tr><td colspan="8" class="text-center py-4 text-muted">暂无数据</td></tr>
+                        <tr><td colspan="9" class="text-center py-4 text-muted">暂无数据</td></tr>
                     }
                 </tbody>
             </table>
@@ -257,6 +282,12 @@
                             <label class="form-label">电话</label>
                             <input type="text" name="Phone" class="form-control" />
                         </div>
+                    </div>
+                    @* v2.13.93 新增：账号有效期至 *@
+                    <div class="mb-3">
+                        <label class="form-label">有效期至</label>
+                        <input type="datetime-local" name="ExpiresAt" class="form-control" />
+                        <div class="form-text">留空 = 永久有效；登录日期大于此值将拒绝登录</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">角色</label>
@@ -310,6 +341,12 @@
                             <label class="form-label">电话</label>
                             <input type="text" name="Phone" id="editPhone" class="form-control">
                         </div>
+                    </div>
+                    @* v2.13.93 新增：账号有效期至 *@
+                    <div class="mb-3">
+                        <label class="form-label">有效期至</label>
+                        <input type="datetime-local" name="ExpiresAt" id="editExpiresAt" class="form-control" />
+                        <div class="form-text">留空 = 永久有效；登录日期大于此值将拒绝登录</div>
                     </div>
                     <div class="mb-3">
                         <div class="form-check pb-2">

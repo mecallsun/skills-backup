@@ -84,7 +84,7 @@
                 </div>
                 <hr>
                 <button class="btn btn-success" id="importBtn" onclick="doImport()"><i class="bi bi-upload"></i> 导入通过校验的行</button>
-                <a href="index.html" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回抄表记录</a>
+                <a href="index.html" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> 返回智能抄表</a>
             </div>
         </div>
     </div>
@@ -196,7 +196,7 @@
         function doImport() {
             const ok = lastValidated.filter(r => !r.error);
             if (ok.length === 0) { alert('没有可导入的行'); return; }
-            alert(`✓ 原型演示：成功导入 ${ok.length} 条抄表记录，拦截 ${lastValidated.length - ok.length} 条\n（实际将 POST /api/meter/import）`);
+            alert(`✓ 原型演示：成功导入 ${ok.length} 条智能抄表，拦截 ${lastValidated.length - ok.length} 条\n（实际将 POST /api/meter/import）`);
             location.href = 'index.html';
         }
     </script>

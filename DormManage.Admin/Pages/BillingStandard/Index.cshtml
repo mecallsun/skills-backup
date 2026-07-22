@@ -22,7 +22,7 @@
             <strong><i class="bi bi-check-circle"></i> 当前生效：</strong>
             @Model.ActiveStandard.StandardName
             （@Model.ActiveStandard.EffectiveFrom:yyyy-MM-dd ~ @(Model.ActiveStandard.EffectiveTo?.ToString("yyyy-MM-dd") ?? "永久")）
-            水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh
+            水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh | 补贴 @Model.ActiveStandard.SubsidyAmount 元/月/人
         </div>
     }
 
@@ -79,6 +79,7 @@
                         <th>冷水(元/m³)</th>
                         <th>热水(元/m³)</th>
                         <th>电(元/kWh)</th>
+                        <th style="width:120px">补贴标准(元/月/人)</th>
                         <th>适用类型</th>
                         <th style="width:100px">状态</th>
                         <th style="width:120px">操作</th>
@@ -112,6 +113,17 @@
                                 <td>¥ @item.ColdWaterUnitPrice.ToString("F2")</td>
                                 <td>¥ @item.HotWaterUnitPrice.ToString("F2")</td>
                                 <td>¥ @item.ElectricUnitPrice.ToString("F4")</td>
+                                <td>
+                                    @* v2.13.93 新增：补贴标准列（0 显示灰色"无补贴"） *@
+                                    @if (item.SubsidyAmount > 0)
+                                    {
+                                        <span class="text-success fw-bold">¥ @item.SubsidyAmount.ToString("F2")</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">无补贴</span>
+                                    }
+                                </td>
                                 <td>
                                     @if (!string.IsNullOrEmpty(item.ApplicableType))
                                     {
@@ -158,7 +170,7 @@
                     {
                         @* v2.13.42 新增：空状态提示（原型有「暂无费用标准」） *@
                         <tr>
-                            <td colspan="10" class="text-center text-muted py-4">
+                            <td colspan="11" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.4;"></i>
                                 <div class="mt-2">暂无费用标准</div>
                                 <a href="/BillingStandard/Create" class="btn btn-sm btn-primary mt-2">

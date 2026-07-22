@@ -130,7 +130,7 @@ public partial class IndexModel : PageModel
         new() { Module = "费用标准", AdminAccess = true, FinanceAccess = true, PdaAccess = false },
         new() { Module = "宿舍账单", AdminAccess = true, FinanceAccess = true, PdaAccess = false },
         new() { Module = "员工账单", AdminAccess = true, FinanceAccess = true, PdaAccess = false },
-        new() { Module = "抄表记录", AdminAccess = true, FinanceAccess = false, PdaAccess = true },
+        new() { Module = "智能抄表", AdminAccess = true, FinanceAccess = false, PdaAccess = true },
         new() { Module = "基础资料", AdminAccess = true, FinanceAccess = false, PdaAccess = false },
         new() { Module = "系统设置", AdminAccess = true, FinanceAccess = false, PdaAccess = false }
     };
@@ -243,9 +243,104 @@ public partial class IndexModel : PageModel
         await LoadUserPanelAsync();
         await LoadRolePanelAsync();
         await LoadFieldPermissionPanelAsync();  // v2.13.92 字段权限加载
+
+        // v2.13.94：加载软件注册信息（机器码/公司/注册码/有效期）
+        License = DormManage.Shared.Register.RegisterSdk.CheckReg();
+        // 未注册时自动累计试用次数（启动 +1）
+        if (License.RegInt != 1)
+        {
+            License.UseTimes = DormManage.Shared.Register.RegisterSdk.IncrementUseTimes();
+            if (License.UseTimes > DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT && License.RegInt == -1)
+                LicenseMessage = $"⚠️ 已超过试用次数（{License.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}），请注册后继续使用";
+        }
     }
 
     // 注意：数据库连接配置保存已迁移到 /api/v1/system/dbconfig/save (v2.13.19)
+
+    /// <summary>
+    /// v2.13.94 软件注册授权 — 在「关于系统」Tab 顶部展示机器码/公司/注册码/有效期
+    /// 数据源：RegisterSdk.CheckReg()（跨平台兼容层，HKLM/HKCU/文件兜底）
+    /// </summary>
+    public DormManage.Shared.Register.RegItem? License { get; set; }
+    public string? LicenseMessage { get; set; }
+    public int LicenseRegInt => License?.RegInt ?? -1;
+
+    /// <summary>v2.13.94 注册表单 POST handler：register / cancel / clear</summary>
+    public IActionResult OnPostLicenseRegisterAsync(string action, string? CDKEY, string? LTDName)
+    {
+        var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+
+        switch (action)
+        {
+            case "register":
+                if (string.IsNullOrWhiteSpace(CDKEY) || CDKEY.Length != 29)
+                {
+                    LicenseMessage = "❌ 注册码格式错误：必须为 29 位（5-5-5-5-5）";
+                    License = reg;
+                    return Page();
+                }
+                if (string.IsNullOrWhiteSpace(LTDName))
+                {
+                    LicenseMessage = "❌ 请输入公司/单位名称";
+                    License = reg;
+                    return Page();
+                }
+
+                var check = DormManage.Shared.Register.RegisterSdk.CheckRegCDKey(new DormManage.Shared.Register.RegItem
+                {
+                    CDKEY = CDKEY.Trim().ToUpper(),
+                    SN = reg.SN,
+                    LTDName = LTDName.Trim()
+                });
+
+                if (check.RegInt != 1)
+                {
+                    LicenseMessage = $"❌ 注册码校验失败（机器码不匹配或格式无效）";
+                    License = reg;
+                    return Page();
+                }
+
+                var expireDate = check.RegDate ?? DateTime.MinValue;
+                if (expireDate < DateTime.Today)
+                {
+                    LicenseMessage = $"❌ 注册码已过期（有效期至 {expireDate:yyyy-MM-dd}）";
+                    License = reg;
+                    return Page();
+                }
+
+                // 写入注册信息
+                reg.CDKEY = CDKEY.Trim().ToUpper();
+                reg.LTDName = LTDName.Trim();
+                reg.RegDate = expireDate;
+                reg.RegInt = 1;
+                if (DormManage.Shared.Register.RegisterSdk.WriteRegItem(reg))
+                    LicenseMessage = $"✅ 注册成功！有效期至 {expireDate:yyyy年MM月dd日}";
+                else
+                    LicenseMessage = "⚠️ 注册验证通过，但写入失败（请以管理员身份运行）";
+
+                License = DormManage.Shared.Register.RegisterSdk.CheckReg();
+                return Page();
+
+            case "cancel":
+                if (DormManage.Shared.Register.RegisterSdk.DeleteRegItem())
+                    LicenseMessage = "✅ 注册信息已取消";
+                else
+                    LicenseMessage = "⚠️ 取消失败（请以管理员身份运行）";
+                License = DormManage.Shared.Register.RegisterSdk.CheckReg();
+                return Page();
+
+            case "clear":
+                DormManage.Shared.Register.RegisterSdk.DeleteRegAll();
+                LicenseMessage = "✅ 所有注册信息已清除（含试用次数）";
+                License = DormManage.Shared.Register.RegisterSdk.CheckReg();
+                return Page();
+
+            default:
+                LicenseMessage = "⚠️ 未知操作";
+                License = reg;
+                return Page();
+        }
+    }
 
     /// <summary>
     /// v2.13.46 P0-5 修复：系统集成配置保存（接收 Razor 数组 Integration[id] 语法）

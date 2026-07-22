@@ -231,6 +231,7 @@
                                                 <th>手机号</th>
                                                 <th>邮箱</th>
                                                 <th>最近登录</th>
+                                                <th style="width:140px">有效期至</th>
                                                 <th>状态</th>
                                                 <th width="260" class="text-center">操作</th>
                                             </tr>
@@ -288,6 +289,14 @@
                                         <div class="mb-3">
                                             <label class="form-label">邮箱</label>
                                             <input type="email" class="form-control" id="um_email" placeholder="example@company.com">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">有效期至 <small class="text-muted">（v2.13.93 账号有效期；留空 = 永久有效）</small></label>
+                                            <input type="datetime-local" class="form-control" id="um_expiresAt">
+                                            <div class="form-text">
+                                                <i class="bi bi-info-circle"></i>
+                                                过期后用户无法登录；已登录会话会在下次请求时被自动踢出。
+                                            </div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">备注</label>
@@ -544,11 +553,86 @@
                         </div>
                     </div>
 
-                    <!-- 关于 -->
+                    <!-- 关于 + v2.13.94 软件注册授权 -->
                     <div class="tab-pane fade" id="tab-about">
+                        <!-- v2.13.94 软件注册授权卡片（嵌入主入口顶部） -->
+                        <div class="card mb-3" id="card-license">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong>
+                                    <i class="bi bi-shield-lock"></i> 软件注册授权
+                                    <span class="badge bg-success ms-2" id="licStatusBadge">已注册</span>
+                                </strong>
+                                <small class="text-muted">试用次数 <strong id="licUseTimes">15</strong> / 30 次</small>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success py-2" id="licSuccessAlert">
+                                    <i class="bi bi-check-circle"></i> ✅ 注册成功！有效期至 <strong id="licExpireDate">2027年12月31日</strong>
+                                </div>
+                                <form id="licenseForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">机器码（只读）</label>
+                                            <input type="text" id="licSN" class="form-control"
+                                                   value="BFEBF-BFF00-0A06A-4AA2E-3B0E" readonly
+                                                   style="font-family: monospace;">
+                                            <small class="text-muted">📌 点击复制，发给公司用于生成注册码</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">公司名称</label>
+                                            <input type="text" id="licLTDName" class="form-control"
+                                                   value="金戈电子有限公司" readonly>
+                                        </div>
+                                        <div class="col-md-12">
+                                            <label class="form-label">注册码（29 位 = 5-5-5-5-5）</label>
+                                            <input type="text" id="licCDKEY" name="CDKEY" class="form-control"
+                                                   placeholder="请输入 29 位注册码（含连字符）"
+                                                   style="font-family: monospace;">
+                                        </div>
+                                        <div class="col-md-12">
+                                            <div class="alert alert-info mb-0" id="licInfoAlert">
+                                                <i class="bi bi-calendar-check"></i>
+                                                <strong id="licInfoTitle">授权状态</strong>
+                                                <span id="licInfoDetail"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 d-flex gap-2 justify-content-end">
+                                        <button type="button" class="btn btn-primary"
+                                                onclick="copyLicSN()">
+                                            <i class="bi bi-clipboard"></i> 复制机器码
+                                        </button>
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="bi bi-shield-check"></i> 注册
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger"
+                                                onclick="cancelLicense()">
+                                            <i class="bi bi-x-octagon"></i> 取消注册
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary"
+                                                onclick="clearLicense()">
+                                            <i class="bi bi-eraser"></i> 清理
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- 关于系统原内容（v2.13.94 起版本号 v2.13.94） -->
                         <div class="card">
                             <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 关于系统</strong></div>
-                            <div class="card-body" id="aboutBody"></div>
+                            <div class="card-body" id="aboutBody">
+                                <table class="table table-sm table-borderless mb-0">
+                                    <tr><th width="120" class="text-muted">系统名称</th><td>金戈宿舍管理系统</td></tr>
+                                    <tr><th class="text-muted">当前版本</th><td><strong>v2.13.94</strong></td></tr>
+                                    <tr><th class="text-muted">技术栈</th><td>.NET 8 + Razor Pages + Bootstrap 5 + EF Core</td></tr>
+                                    <tr><th class="text-muted">部署方式</th><td>EXE 自托管 + 托盘守护进程</td></tr>
+                                    <tr><th class="text-muted">数据库</th><td>SQLite（开发）/ SQL Server（生产）</td></tr>
+                                    <tr><th class="text-muted">软件授权</th><td>
+                                        <a href="about.html" target="_blank">软件注册授权说明</a>
+                                        <span class="text-muted ms-2">（独立预览页）</span>
+                                    </td></tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -627,6 +711,23 @@
         document.querySelectorAll('.wp').forEach(e => e.textContent = cfg.webPort);
 
         // ==================== 用户管理 ====================
+        // v2.13.93 账号有效期 Badge 渲染（4 态：永久 / 正常 / 即将过期 / 已过期）
+        function expiresAtBadgeHtml(expiresAt) {
+            if (!expiresAt) {
+                return '<span class="badge bg-light text-dark border" title="NULL = 永久有效"><i class="bi bi-infinity"></i> 永久</span>';
+            }
+            const today = new Date(); today.setHours(0,0,0,0);
+            const exp = new Date(expiresAt); exp.setHours(0,0,0,0);
+            const days = Math.round((exp - today) / 86400000);
+            const dateText = exp.toISOString().slice(0, 10);
+            if (days < 0) {
+                return `<span class="badge bg-danger" title="已过期 ${-days} 天，下次登录将被拒绝">${dateText}</span>`;
+            } else if (days <= 30) {
+                return `<span class="badge bg-warning text-dark" title="剩 ${days} 天过期">${dateText}</span>`;
+            } else {
+                return `<span title="${days} 天后到期">${dateText}</span>`;
+            }
+        }
         // 用户搜索
         function renderUsers(filter) {
             let users = [...SYS_USERS];
@@ -644,6 +745,7 @@
                     <td>${u.phone || '<span class="text-muted">—</span>'}</td>
                     <td>${u.email || '<span class="text-muted">—</span>'}</td>
                     <td><small class="text-muted">${u.lastLogin}</small></td>
+                    <td>${expiresAtBadgeHtml(u.expiresAt)}</td>
                     <td>${u.enabled ? '<span class="badge bg-success">启用</span>' : '<span class="badge bg-secondary">停用</span>'}</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-outline-primary" onclick="editUser(${u.id})"><i class="bi bi-pencil"></i> 编辑</button>
@@ -669,6 +771,8 @@
                 document.getElementById('um_role').value = user.role;
                 document.getElementById('um_phone').value = user.phone || '';
                 document.getElementById('um_email').value = user.email || '';
+                // v2.13.93 账号有效期回显（datetime-local 格式 yyyy-MM-ddTHH:mm）
+                document.getElementById('um_expiresAt').value = user.expiresAt ? user.expiresAt + 'T00:00' : '';
                 document.getElementById('um_remark').value = user.remark || '';
                 document.getElementById('um_password_group').style.display = 'none';
                 document.getElementById('um_password').required = false;
@@ -679,6 +783,7 @@
                 document.getElementById('um_role').value = '';
                 document.getElementById('um_phone').value = '';
                 document.getElementById('um_email').value = '';
+                document.getElementById('um_expiresAt').value = '';  // 新增默认永久
                 document.getElementById('um_remark').value = '';
                 document.getElementById('um_password_group').style.display = 'block';
                 document.getElementById('um_password').required = true;
@@ -697,11 +802,14 @@
             const username = document.getElementById('um_username').value.trim();
             const realName = document.getElementById('um_realname').value.trim();
             const role = document.getElementById('um_role').value;
+            const expiresAtRaw = document.getElementById('um_expiresAt').value;
+            const expiresAt = expiresAtRaw ? expiresAtRaw.slice(0, 10) : null;  // 截 yyyy-MM-dd
             if (!username || !realName || !role) {
                 alert('请填写所有必填项（用户名、姓名、角色）');
                 return;
             }
-            alert(`✓ 用户「${realName} (${username})」已保存\n（原型演示：POST /api/settings/users）`);
+            const expDesc = expiresAt ? `有效期至 ${expiresAt}` : '永久有效';
+            alert(`✓ 用户「${realName} (${username})」已保存\n${expDesc}\n（原型演示：POST /api/v1/auth/users）`);
             bootstrap.Modal.getInstance(document.getElementById('userModal')).hide();
         }
 
@@ -743,7 +851,7 @@
         const ROLES_DATA = [
             { id: 1, code: 'admin', name: '管理员', desc: '系统超级管理员，拥有全部权限', sort: 0, userCount: 1, enabled: true, isSystem: true },
             { id: 2, code: 'finance', name: '财务', desc: '财务管理角色，可查看费用标准和账单', sort: 1, userCount: 1, enabled: true, isSystem: false },
-            { id: 3, code: 'pda_operator', name: 'PDA 操作员', desc: 'PDA 抄表操作员，仅可访问抄表模块', sort: 2, userCount: 3, enabled: true, isSystem: false },
+            { id: 3, code: 'pda_operator', name: 'PDA 操作员', desc: 'PDA 抄表操作员，仅可访问智能抄表模块', sort: 2, userCount: 3, enabled: true, isSystem: false },
             { id: 4, code: 'viewer', name: '访客', desc: '只读角色，仅可查看首页数据看板', sort: 3, userCount: 0, enabled: true, isSystem: false }
         ];
 
@@ -836,7 +944,7 @@
                     { code: 'personnel:view', name: '查看列表', type: '菜单' },
                     { code: 'personnel:import', name: '导入员工', type: '按钮' },
                     { code: 'personnel:export', name: '导出 Excel', type: '按钮' },
-                    { code: 'personnel:create', name: '新增员工', type: '按钮' },
+                    { code: 'personnel:add', name: '新增人员', type: '按钮' },
                     { code: 'personnel:edit', name: '编辑员工', type: '按钮' },
                     { code: 'personnel:delete', name: '删除员工', type: '按钮' }
                 ]
@@ -865,7 +973,7 @@
                 ]
             },
             {
-                module: '抄表记录', icon: 'bi-gauge', perms: [
+                module: '智能抄表', icon: 'bi-gauge', perms: [
                     { code: 'meter:view', name: '查看列表', type: '菜单' },
                     { code: 'meter:entry', name: '手动录入', type: '按钮' },
                     { code: 'meter:import', name: '批量导入', type: '按钮' },
@@ -1092,6 +1200,43 @@
             });
             alert('✓ 原型演示：已保存 ' + updates.length + ' 个字段配置\n（实际将 PUT /api/v1/system/field-permissions）');
         }
+
+        // v2.13.94 软件注册授权 JS（与 RegisterSdk API 对齐）
+        function copyLicSN() {
+            const sn = document.getElementById('licSN').value;
+            navigator.clipboard.writeText(sn).then(() => {
+                showToast('✓ 机器码已复制到剪贴板', 'success');
+            }).catch(() => {
+                // fallback
+                const ta = document.createElement('textarea');
+                ta.value = sn; document.body.appendChild(ta); ta.select();
+                document.execCommand('copy'); document.body.removeChild(ta);
+                showToast('✓ 机器码已复制', 'success');
+            });
+        }
+
+        function cancelLicense() {
+            if (!confirm('确定要取消当前注册授权吗？\n取消后将进入 30 次试用模式。')) return;
+            // 实际 POST /Settings?handler=LicenseRegister&action=cancel
+            alert('✓ 原型演示：已取消注册\n（实际将 POST /Settings?handler=LicenseRegister&action=cancel）');
+        }
+
+        function clearLicense() {
+            if (!confirm('确定要清理所有注册信息（含试用次数）吗？\n此操作不可恢复！')) return;
+            alert('✓ 原型演示：已清理注册信息\n（实际将 POST /Settings?handler=LicenseRegister&action=clear）');
+        }
+
+        document.getElementById('licenseForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const cdkey = document.getElementById('licCDKEY').value.trim();
+            if (!cdkey) { alert('请输入注册码'); return; }
+            if (cdkey.length !== 29) {
+                alert('注册码格式错误：必须为 29 位（含 4 个连字符的 5-5-5-5-5 格式）');
+                return;
+            }
+            // 实际 POST /Settings?handler=LicenseRegister&action=register
+            alert('✓ 原型演示：注册请求已发送\n注册码：' + cdkey + '\n（实际将 POST /Settings?handler=LicenseRegister&action=register）');
+        });
 
         document.addEventListener('DOMContentLoaded', function() {
             mountTabBar({ basePath: '..', currentUrl: 'settings/index.html' });

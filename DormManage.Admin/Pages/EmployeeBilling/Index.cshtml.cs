@@ -4,13 +4,14 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using Microsoft.EntityFrameworkCore;
 using DormManage.Shared.Services;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.EmployeeBilling;
 
 /// <summary>
 /// 员工账单页面模型（人员分摊）
 /// </summary>
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly DormDbContext _db;
     private readonly IBillingService _billing;
@@ -51,12 +52,7 @@ public class IndexModel : PageModel
     /// </summary>
     public List<string> DormCodes { get; set; } = new();
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须 BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     [BindProperty(SupportsGet = true)]
     public string? BillingMonth { get; set; }
@@ -98,6 +94,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         // 默认月份为当前月
         if (string.IsNullOrEmpty(BillingMonth))
         {
@@ -155,7 +152,7 @@ public class IndexModel : PageModel
                 EmployeeCode = e.EmployeeCode,
                 EmployeeName = e.EmployeeName,
                 Gender = genderMap.GetValueOrDefault(e.EmployeeId, 0),  // v2.13.86 JOIN SysEmployee 取实时性别
-                Department = "",
+                Department = e.Department ?? "",
                 DormCode = e.DormCode ?? "",
                 BillingMonth = e.BillingMonth,
                 ShareAmount = e.TotalShareAmount,
@@ -165,7 +162,10 @@ public class IndexModel : PageModel
                 ElectricityShareAmount = e.ElectricityShareAmount,
                 ResidentCount = e.ResidentCount,
                 ShareRatio = e.ShareRatio,
-                IsPublished = e.IsPublished
+                IsPublished = e.IsPublished,
+                // v2.13.93 新增：补贴、住宿天数、费用合计
+                SubsidyAmount = e.SubsidyAmount,
+                Days = e.Days
             }).ToList(),
             TotalCount = entities.Total,
             PageIndex = PageIndex,
@@ -197,6 +197,12 @@ public class EmployeeBillingDto
     public int ResidentCount { get; set; }
     public decimal ShareRatio { get; set; }
     public bool IsPublished { get; set; }
+    /// <summary>v2.13.93 新增：补贴金额（元，按入住天数折算后）</summary>
+    public decimal SubsidyAmount { get; set; }
+    /// <summary>v2.13.93 新增：当月入住天数</summary>
+    public int Days { get; set; }
+    /// <summary>v2.13.93 新增：费用合计 = max(ShareAmount - SubsidyAmount, 0)</summary>
+    public decimal FinalAmount => Math.Max(ShareAmount - SubsidyAmount, 0m);
 }
 
 /// <summary>

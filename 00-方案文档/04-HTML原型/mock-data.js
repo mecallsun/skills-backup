@@ -40,10 +40,10 @@ const TEAMS = [
 // 兼容性保留：原 ATTENDANCE_TYPES 字典同步扩展 worksHours
 const ATTENDANCE_TYPES_FULL = [
     { id: 1, code: "DEFAULT", name: "默认", workHours: "09:00-18:00", remark: "标准工时" },
-    { id: 2, code: "MORNING", name: "早班", workHours: "06:00-14:00", remark: "" },
-    { id: 3, code: "MIDDLE",  name: "中班", workHours: "14:00-22:00", remark: "" },
-    { id: 4, code: "EVENING", name: "晚班", workHours: "18:00-02:00", remark: "" },
-    { id: 5, code: "NIGHT",   name: "夜班", workHours: "22:00-06:00", remark: "" },
+    { id: 2, code: "MORNING", name: "早", workHours: "06:00-14:00", remark: "" },
+    { id: 3, code: "MIDDLE",  name: "中", workHours: "14:00-22:00", remark: "" },
+    { id: 4, code: "EVENING", name: "晚", workHours: "18:00-02:00", remark: "" },
+    { id: 5, code: "NIGHT",   name: "夜", workHours: "22:00-06:00", remark: "" },
     { id: 6, code: "OTHER",   name: "其他", workHours: "不定期",     remark: "" }
 ];
 
@@ -67,10 +67,10 @@ const STATUS_BADGE = { 1: "bg-success", 2: "bg-warning text-dark", 3: "bg-second
 // 考勤类型字典（ID + Code + Name + WorkHours）
 const ATTENDANCE_TYPES = [
     { id: 1, code: "DEFAULT", name: "默认", workHours: "09:00-18:00", remark: "标准工时" },
-    { id: 2, code: "MORNING", name: "早班", workHours: "06:00-14:00", remark: "" },
-    { id: 3, code: "MIDDLE", name: "中班", workHours: "14:00-22:00", remark: "" },
-    { id: 4, code: "EVENING", name: "晚班", workHours: "18:00-02:00", remark: "" },
-    { id: 5, code: "NIGHT", name: "夜班", workHours: "22:00-06:00", remark: "" },
+    { id: 2, code: "MORNING", name: "早", workHours: "06:00-14:00", remark: "" },
+    { id: 3, code: "MIDDLE", name: "中", workHours: "14:00-22:00", remark: "" },
+    { id: 4, code: "EVENING", name: "晚", workHours: "18:00-02:00", remark: "" },
+    { id: 5, code: "NIGHT", name: "夜", workHours: "22:00-06:00", remark: "" },
     { id: 6, code: "OTHER", name: "其他", workHours: "不定期", remark: "" }
 ];
 
@@ -85,10 +85,10 @@ const ATTENDANCE_BADGE = {
 
 const ATTENDANCE_NAME = {
     "DEFAULT": "默认",
-    "MORNING": "早班",
-    "MIDDLE": "中班",
-    "EVENING": "晚班",
-    "NIGHT": "夜班",
+    "MORNING": "早",
+    "MIDDLE": "中",
+    "EVENING": "晚",
+    "NIGHT": "夜",
     "OTHER": "其他"
 };
 
@@ -189,7 +189,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13864402977",
@@ -207,7 +207,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13822183986",
@@ -243,7 +243,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13893630997",
@@ -261,7 +261,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13841580806",
@@ -351,7 +351,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13895534074",
@@ -369,7 +369,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13830711328",
@@ -405,7 +405,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13872481201",
@@ -423,7 +423,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13820325845",
@@ -441,7 +441,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13836948677",
@@ -477,7 +477,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13853337611",
@@ -531,7 +531,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13823462217",
@@ -549,7 +549,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13880180877",
@@ -567,7 +567,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13874823574",
@@ -585,7 +585,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13858533199",
@@ -603,7 +603,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13856252953",
@@ -621,7 +621,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13870226298",
@@ -639,7 +639,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13891229468",
@@ -657,7 +657,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "employmentStatusId": 1,
         "employmentStatusName": "在职",
         "phone": "13855858481",
@@ -736,7 +736,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -755,7 +755,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -774,7 +774,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -793,7 +793,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -812,7 +812,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -831,7 +831,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -850,7 +850,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -869,7 +869,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -888,7 +888,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -926,7 +926,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -945,7 +945,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -964,7 +964,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -983,7 +983,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1021,7 +1021,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1040,7 +1040,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1059,7 +1059,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1078,7 +1078,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1135,7 +1135,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1154,7 +1154,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1173,7 +1173,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1211,7 +1211,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1230,7 +1230,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1249,7 +1249,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1268,7 +1268,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1306,7 +1306,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1458,7 +1458,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1477,7 +1477,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1496,7 +1496,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1515,7 +1515,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1553,7 +1553,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -1591,7 +1591,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1667,7 +1667,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1686,7 +1686,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1705,7 +1705,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1724,7 +1724,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -1743,7 +1743,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1762,7 +1762,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1781,7 +1781,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -1857,7 +1857,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1895,7 +1895,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -1952,7 +1952,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -1971,7 +1971,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2009,7 +2009,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -2066,7 +2066,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2085,7 +2085,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -2104,7 +2104,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2123,7 +2123,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2142,7 +2142,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2161,7 +2161,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2180,7 +2180,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2199,7 +2199,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2218,7 +2218,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2237,7 +2237,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2256,7 +2256,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2294,7 +2294,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2313,7 +2313,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -2332,7 +2332,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2370,7 +2370,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2427,7 +2427,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2465,7 +2465,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2484,7 +2484,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2541,7 +2541,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2560,7 +2560,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2579,7 +2579,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2674,7 +2674,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2693,7 +2693,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2712,7 +2712,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2731,7 +2731,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2769,7 +2769,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2788,7 +2788,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2807,7 +2807,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2845,7 +2845,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2864,7 +2864,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2883,7 +2883,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2902,7 +2902,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -2921,7 +2921,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -2959,7 +2959,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -2978,7 +2978,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3016,7 +3016,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3092,7 +3092,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3149,7 +3149,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3168,7 +3168,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3206,7 +3206,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -3263,7 +3263,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3282,7 +3282,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3301,7 +3301,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3339,7 +3339,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3358,7 +3358,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3377,7 +3377,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3415,7 +3415,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3472,7 +3472,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3491,7 +3491,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3510,7 +3510,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3586,7 +3586,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3605,7 +3605,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3643,7 +3643,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3662,7 +3662,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3700,7 +3700,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3719,7 +3719,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3738,7 +3738,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3776,7 +3776,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3814,7 +3814,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -3833,7 +3833,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3852,7 +3852,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -3871,7 +3871,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -3890,7 +3890,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3909,7 +3909,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -3966,7 +3966,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -3985,7 +3985,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -4004,7 +4004,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4023,7 +4023,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4099,7 +4099,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -4137,7 +4137,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4156,7 +4156,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4175,7 +4175,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4194,7 +4194,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4232,7 +4232,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -4251,7 +4251,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4270,7 +4270,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4289,7 +4289,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4308,7 +4308,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4327,7 +4327,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -4346,7 +4346,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4384,7 +4384,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4422,7 +4422,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4441,7 +4441,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4460,7 +4460,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4479,7 +4479,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4498,7 +4498,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4536,7 +4536,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4555,7 +4555,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4574,7 +4574,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4612,7 +4612,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4650,7 +4650,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4669,7 +4669,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4688,7 +4688,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -4707,7 +4707,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -4726,7 +4726,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4764,7 +4764,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4783,7 +4783,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4802,7 +4802,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -4840,7 +4840,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4859,7 +4859,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -4878,7 +4878,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4916,7 +4916,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4935,7 +4935,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4954,7 +4954,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -4992,7 +4992,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5011,7 +5011,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5030,7 +5030,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5049,7 +5049,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5106,7 +5106,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5125,7 +5125,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5144,7 +5144,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5163,7 +5163,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5201,7 +5201,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5239,7 +5239,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5258,7 +5258,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5277,7 +5277,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5296,7 +5296,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5353,7 +5353,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5372,7 +5372,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5391,7 +5391,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5410,7 +5410,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5429,7 +5429,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5543,7 +5543,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5562,7 +5562,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5600,7 +5600,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5638,7 +5638,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5695,7 +5695,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5733,7 +5733,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5828,7 +5828,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5866,7 +5866,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5885,7 +5885,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5904,7 +5904,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -5923,7 +5923,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -5942,7 +5942,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -5999,7 +5999,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6056,7 +6056,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6113,7 +6113,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6189,7 +6189,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6208,7 +6208,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6227,7 +6227,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6246,7 +6246,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6265,7 +6265,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6303,7 +6303,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6322,7 +6322,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6341,7 +6341,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6360,7 +6360,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6379,7 +6379,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6398,7 +6398,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6474,7 +6474,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6493,7 +6493,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6512,7 +6512,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -6531,7 +6531,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6569,7 +6569,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6607,7 +6607,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6626,7 +6626,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6664,7 +6664,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6702,7 +6702,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6721,7 +6721,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6740,7 +6740,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6759,7 +6759,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6797,7 +6797,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -6816,7 +6816,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6835,7 +6835,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6892,7 +6892,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -6911,7 +6911,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6949,7 +6949,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -6968,7 +6968,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -6987,7 +6987,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7025,7 +7025,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7044,7 +7044,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7063,7 +7063,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7101,7 +7101,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7139,7 +7139,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7158,7 +7158,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7177,7 +7177,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7215,7 +7215,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -7234,7 +7234,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7253,7 +7253,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7291,7 +7291,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7310,7 +7310,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7329,7 +7329,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7348,7 +7348,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7424,7 +7424,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7443,7 +7443,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7500,7 +7500,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7557,7 +7557,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7652,7 +7652,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7671,7 +7671,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7690,7 +7690,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7709,7 +7709,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7728,7 +7728,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -7785,7 +7785,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7804,7 +7804,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -7823,7 +7823,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7842,7 +7842,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7861,7 +7861,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7880,7 +7880,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -7937,7 +7937,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7956,7 +7956,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7975,7 +7975,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -7994,7 +7994,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -8032,7 +8032,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8127,7 +8127,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8146,7 +8146,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8184,7 +8184,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8203,7 +8203,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8260,7 +8260,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8279,7 +8279,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8298,7 +8298,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8336,7 +8336,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8412,7 +8412,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8450,7 +8450,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8488,7 +8488,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -8507,7 +8507,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8526,7 +8526,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8545,7 +8545,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8564,7 +8564,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8621,7 +8621,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -8659,7 +8659,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8678,7 +8678,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8697,7 +8697,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8735,7 +8735,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8773,7 +8773,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8792,7 +8792,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8811,7 +8811,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8849,7 +8849,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8868,7 +8868,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8906,7 +8906,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -8925,7 +8925,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -8963,7 +8963,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -8982,7 +8982,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9020,7 +9020,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9039,7 +9039,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9077,7 +9077,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9096,7 +9096,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9115,7 +9115,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -9134,7 +9134,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9153,7 +9153,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9172,7 +9172,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9191,7 +9191,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9229,7 +9229,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9248,7 +9248,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9305,7 +9305,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9324,7 +9324,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9343,7 +9343,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9362,7 +9362,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -9381,7 +9381,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9438,7 +9438,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9476,7 +9476,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9514,7 +9514,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9533,7 +9533,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9552,7 +9552,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9571,7 +9571,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9590,7 +9590,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9609,7 +9609,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9628,7 +9628,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9647,7 +9647,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9704,7 +9704,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9723,7 +9723,7 @@ const PERSONNEL = [
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -9742,7 +9742,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -9761,7 +9761,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9780,7 +9780,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9818,7 +9818,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9837,7 +9837,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -9875,7 +9875,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -9932,7 +9932,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10008,7 +10008,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10027,7 +10027,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10065,7 +10065,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 5,
-        "attendanceTypeName": "夜班",
+        "attendanceTypeName": "夜",
         "attendanceType": "NIGHT"
     },
     {
@@ -10141,7 +10141,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10217,7 +10217,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10255,7 +10255,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10274,7 +10274,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10293,7 +10293,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10312,7 +10312,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10388,7 +10388,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10407,7 +10407,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10464,7 +10464,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10521,7 +10521,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10540,7 +10540,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10559,7 +10559,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10597,7 +10597,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10635,7 +10635,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10692,7 +10692,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10730,7 +10730,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10768,7 +10768,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -10787,7 +10787,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10863,7 +10863,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -10882,7 +10882,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10920,7 +10920,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10939,7 +10939,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10977,7 +10977,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -10996,7 +10996,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11034,7 +11034,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11053,7 +11053,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11091,7 +11091,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11110,7 +11110,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11129,7 +11129,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -11148,7 +11148,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -11186,7 +11186,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11205,7 +11205,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -11281,7 +11281,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11300,7 +11300,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11319,7 +11319,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11338,7 +11338,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11357,7 +11357,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11376,7 +11376,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11433,7 +11433,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11509,7 +11509,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11528,7 +11528,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     // =====================================================================
@@ -11551,7 +11551,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11608,7 +11608,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11646,7 +11646,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11684,7 +11684,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11703,7 +11703,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -11722,7 +11722,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11760,7 +11760,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11798,7 +11798,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11817,7 +11817,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11836,7 +11836,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -11893,7 +11893,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11912,7 +11912,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -11931,7 +11931,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -11988,7 +11988,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -12007,7 +12007,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12026,7 +12026,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -12083,7 +12083,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12140,7 +12140,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12159,7 +12159,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -12197,7 +12197,7 @@ const PERSONNEL = [
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12235,7 +12235,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -12292,7 +12292,7 @@ const PERSONNEL = [
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12330,7 +12330,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12368,7 +12368,7 @@ const PERSONNEL = [
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 4,
-        "attendanceTypeName": "晚班",
+        "attendanceTypeName": "晚",
         "attendanceType": "EVENING"
     },
     {
@@ -12406,7 +12406,7 @@ const PERSONNEL = [
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -12425,7 +12425,7 @@ const PERSONNEL = [
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 3,
-        "attendanceTypeName": "中班",
+        "attendanceTypeName": "中",
         "attendanceType": "MIDDLE"
     },
     {
@@ -12463,7 +12463,7 @@ const PERSONNEL = [
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 2,
-        "attendanceTypeName": "早班",
+        "attendanceTypeName": "早",
         "attendanceType": "MORNING"
     },
     {
@@ -14772,7 +14772,7 @@ const EMPLOYEE_BILLS_202607 = [
         "employeeName": "吕永生",
         "department": "技术部",
         "employeeType": "合同工",
-        "attendanceType": "早班",
+        "attendanceType": "早",
         "dormCode": "D-001",
         "billingMonth": "2026-07",
         "stayDays": 31,
@@ -14794,7 +14794,7 @@ const EMPLOYEE_BILLS_202607 = [
         "employeeName": "廖鹏",
         "department": "后勤部",
         "employeeType": "临时工",
-        "attendanceType": "中班",
+        "attendanceType": "中",
         "dormCode": "D-003",
         "billingMonth": "2026-07",
         "stayDays": 31,
@@ -14816,7 +14816,7 @@ const EMPLOYEE_BILLS_202607 = [
         "employeeName": "曹怡",
         "department": "生产部",
         "employeeType": "外包",
-        "attendanceType": "晚班",
+        "attendanceType": "晚",
         "dormCode": "D-004",
         "billingMonth": "2026-07",
         "stayDays": 13,
@@ -14838,7 +14838,7 @@ const EMPLOYEE_BILLS_202607 = [
         "employeeName": "魏梓",
         "department": "生产部",
         "employeeType": "外包",
-        "attendanceType": "夜班",
+        "attendanceType": "夜",
         "dormCode": "D-005",
         "billingMonth": "2026-07",
         "stayDays": 31,
@@ -24702,7 +24702,7 @@ function renderNav(opts) {
         </a>
         <div class="menu-sep"></div>
         <a class="menu-item cat-meter" href="${link('meter/index.html')}">
-            <i class="bi bi-clipboard-data-fill"></i>抄表记录
+            <i class="bi bi-clipboard-data-fill"></i>智能抄表
         </a>
         <a class="menu-item cat-settings" href="${link('basics/index.html')}">
             <i class="bi bi-database"></i>基础资料
@@ -33904,6 +33904,23 @@ function livingBadge(s) {
 // 辅助：获取宿舍当前在住人数
 function currentResidents(dormCode) {
     return RESIDENCIES.filter(r => r.dormCode === dormCode && r.status === 1).length;
+}
+// 辅助：v2.13.95 宿舍档案列表「班次」列派生
+// 返回该宿舍房号当前在宿员工（Status=1）的考勤班次去重集合（按 AttendanceType.Id 升序）
+// 数据关系：RESIDENCIES → PERSONNEL (EmployeeId=PERSONNEL.Id) → ATTENDANCE_TYPES_FULL (PERSONNEL.attendanceTypeId=ATTENDANCE_TYPES_FULL.id)
+// 注意：mock-data.js 中员工表名为 PERSONNEL（不是 EMPLOYEES）；考勤班次表名为 ATTENDANCE_TYPES_FULL（不是 ATTENDANCE_TYPES，ATTENDANCE_TYPES 是字典）
+function currentAttendanceTypes(dormCode) {
+    const staying = RESIDENCIES.filter(r => r.dormCode === dormCode && r.status === 1);
+    const typeIds = staying
+        .map(r => PERSONNEL.find(e => e.id === r.employeeId))
+        .filter(e => e && e.attendanceTypeId)
+        .map(e => e.attendanceTypeId);
+    if (typeIds.length === 0) return [];
+    const uniqueIds = [...new Set(typeIds)].sort((a, b) => a - b);
+    return uniqueIds
+        .map(id => ATTENDANCE_TYPES_FULL.find(t => t.id === id))
+        .filter(t => t)
+        .map(t => t.name);
 }
 // 辅助：获取宿舍的所有住宿记录（按入住日期倒序）
 function dormHistory(dormCode) {
@@ -51550,16 +51567,20 @@ const SYS_CONFIG = {
 // 用户与角色
 const SYS_ROLES = ['管理员', '财务', 'PDA操作员'];
 const SYS_USERS = [
-    { id: 1, username: 'admin', realName: '系统管理员', role: '管理员', enabled: true, lastLogin: '2026-07-10 08:30', remark: '超级管理员' },
-    { id: 2, username: 'finance01', realName: '王财务', role: '财务', enabled: true, lastLogin: '2026-07-09 17:12', remark: '查看账单 / 导出报表' },
-    { id: 3, username: 'pda001', realName: '陈师傅', role: 'PDA操作员', enabled: true, lastLogin: '2026-07-08 09:15', remark: '抄表员，绑定 PDA-SN-001' },
-    { id: 4, username: 'pda002', realName: '刘师傅', role: 'PDA操作员', enabled: true, lastLogin: '2026-07-08 10:08', remark: '抄表员，绑定 PDA-SN-002' },
-    { id: 5, username: 'pda003', realName: '张师傅', role: 'PDA操作员', enabled: false, lastLogin: '2026-06-20 09:00', remark: '已停用（离场）' }
+    // v2.13.93 新增 expiresAt 字段演示账号有效期 4 态 Badge：
+    //   null = 永久 / 未来日期 = 正常 / 30天内 = 黄 / 已过期 = 红
+    { id: 1, username: 'admin',      realName: '系统管理员', role: '管理员',     enabled: true,  lastLogin: '2026-07-22 08:30', expiresAt: null,         remark: '超级管理员' },
+    { id: 2, username: 'finance01',  realName: '王财务',     role: '财务',       enabled: true,  lastLogin: '2026-07-21 17:12', expiresAt: '2026-12-31', remark: '查看账单 / 导出报表' },
+    { id: 3, username: 'pda001',     realName: '陈师傅',     role: 'PDA操作员',  enabled: true,  lastLogin: '2026-07-21 09:15', expiresAt: '2026-07-27', remark: '抄表员，绑定 PDA-SN-001（5 天内到期）' },
+    { id: 4, username: 'pda002',     realName: '刘师傅',     role: 'PDA操作员',  enabled: true,  lastLogin: '2026-07-20 10:08', expiresAt: '2026-07-20', remark: '抄表员，绑定 PDA-SN-002（已过期）' },
+    { id: 5, username: 'pda003',     realName: '张师傅',     role: 'PDA操作员',  enabled: false, lastLogin: '2026-06-20 09:00', expiresAt: '2026-05-31', remark: '已停用（离场）' },
+    { id: 6, username: 'visitor01',  realName: '外部审计员', role: '访客',       enabled: true,  lastLogin: '2026-07-19 14:22', expiresAt: '2026-08-15', remark: '外部审计人员（30 天临时账号）' },
+    { id: 7, username: 'temp001',    realName: '临时账号',   role: '访客',       enabled: true,  lastLogin: '2026-07-22 10:00', expiresAt: null,         remark: '永久有效（不过期）' }
 ];
 
 // 权限矩阵（角色 × 模块）
 const PERMISSION_MATRIX = [
-    { module: '抄表管理', admin: '增删改查', finance: '只读', operator: '仅上传' },
+    { module: '智能抄表', admin: '增删改查', finance: '只读', operator: '仅上传' },
     { module: '宿舍档案', admin: '增删改查', finance: '只读', operator: '无' },
     { module: '办理登记', admin: '增删改查', finance: '无', operator: '无' },
     { module: '人员清单', admin: '增删改查 / 导入导出', finance: '只读', operator: '无' },

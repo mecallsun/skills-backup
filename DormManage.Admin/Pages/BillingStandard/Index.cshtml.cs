@@ -2,10 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
+using DormManage.Admin.Pages.Shared;
 
 namespace DormManage.Admin.Pages.BillingStandard;
 
-public class IndexModel : PageModel
+public class IndexModel : PaginatedPageModel
 {
     private readonly IBillingService _service;
 
@@ -14,12 +15,7 @@ public class IndexModel : PageModel
     public global::DormManage.Shared.Models.BillingStandard? ActiveStandard { get; set; }
     public PagedResult<global::DormManage.Shared.Models.BillingStandard>? Result { get; set; }
 
-    [BindProperty(SupportsGet = true)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>v2.13.74 BUG 修复：必须 BindProperty 才能从 ?pageSize=N URL 绑定</summary>
-    [BindProperty(SupportsGet = true)]
-    public int PageSize { get; set; } = 20;
+    // PageIndex / PageSize 继承自 v2.13.104 PaginatedPageModel 基类（含白名单校验）
 
     [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
@@ -37,6 +33,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        EnsureValidPagination();  // v2.13.104
         ActiveStandard = await _service.GetActiveStandardAsync();
         ApplicableTypes = await _service.GetStandardApplicableTypesAsync();
         Result = await _service.GetStandardsAsync(Keyword, ApplicableType, IsActive, PageIndex, PageSize);

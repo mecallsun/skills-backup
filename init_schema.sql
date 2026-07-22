@@ -587,3 +587,97 @@ CREATE TABLE [dbo].[SysSystemIntegration] (
 
 GO
 PRINT N'✅ v2.13.24 业务深度 7 张表 DDL 已补充完成';
+
+-- =========================================================================
+-- v2.13.99 隐私字段权限表（SysFieldPermission）
+--   背景：v2.13.92 引入但 SQL Server 生产库从未落地，导致
+--         Html.IsFieldHiddenAsync 链路短路返回 false，隐私字段始终可见。
+--   修复：DatabaseInitializer 启动迁移（运行时自动补建），
+--         本节为手工 DDL（运维补漏 / 新部署一次性脚本）。
+-- =========================================================================
+
+-- 34. SysFieldPermission（字段权限清单）
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[SysFieldPermission]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[SysFieldPermission] (
+        [Id]                INT             IDENTITY(1,1) NOT NULL,
+        [FieldKey]          NVARCHAR(64)    NOT NULL,
+        [Module]            NVARCHAR(32)    NOT NULL,
+        [FieldName]         NVARCHAR(64)    NOT NULL,
+        [FieldType]         NVARCHAR(16)    NULL,
+        [SensitivityLevel]  TINYINT         NOT NULL DEFAULT ((1)),
+        [SortOrder]         INT             NOT NULL DEFAULT ((0)),
+        [IsActive]          BIT             NOT NULL DEFAULT ((0)),
+        [Description]       NVARCHAR(200)   NULL,
+        [CreatedAt]         DATETIME2       NOT NULL DEFAULT (GETDATE()),
+        [UpdatedAt]         DATETIME2       NULL,
+        [UpdatedBy]         NVARCHAR(64)    NULL,
+        CONSTRAINT [PK_SysFieldPermission] PRIMARY KEY ([Id]),
+        CONSTRAINT [UQ_SysFieldPermission_FieldKey] UNIQUE ([FieldKey])
+    );
+END;
+GO
+
+-- 35. v2.13.92 3 个权限码种子（settings:fields / fieldpermission:edit / privacy:field:enable）
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 37)
+    INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+    VALUES (37, N'settings:fields', N'字段权限', 1, 18, N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 38)
+    INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+    VALUES (38, N'fieldpermission:edit', N'编辑字段权限', 2, 37, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 39)
+    INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+    VALUES (39, N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');
+GO
+
+-- 36. v2.13.92 admin 角色关联（SysRolePermission Id 58/59/60）
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 58)
+    INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+    VALUES (58, 1, 37, '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 59)
+    INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+    VALUES (59, 1, 38, '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 60)
+    INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+    VALUES (60, 1, 39, '2026-07-22');
+GO
+
+-- 37. v2.13.92 SysFieldPermission 5 字段种子
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 1)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (1, N'employee.realname', N'Personnel', N'姓名', N'string', 1, 1, 1, N'员工真实姓名（高 PII）', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 2)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (2, N'employee.phone', N'Personnel', N'手机号', N'string', 1, 2, 1, N'联系电话（高 PII）', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 3)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (3, N'employee.employeecode', N'Personnel', N'工号', N'string', 2, 3, 1, N'公司内唯一标识', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 4)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (4, N'employee.dormcode', N'Personnel', N'宿舍房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');
+GO
+
+PRINT N'✅ v2.13.99 SysFieldPermission 表 + 隐私字段权限种子 DDL 已补充';
+
+-- =========================================================================
+-- v2.13.97 补充：personnel:add 权限码（用户反馈 P0：缺少「新增人员」按钮权限）
+--   v2.13.100 修订：v2.13.99 MigrateFieldPermissionAsync 漏写本 seed，
+--                   现同步追加到 init_schema.sql（SQL Server 真相源）
+-- =========================================================================
+
+-- 38. v2.13.97 SysPermission Id=40 (personnel:add)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
+    INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+    VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22');
+GO
+
+-- 39. v2.13.97 SysRolePermission Id=61 (admin → personnel:add)
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysRolePermission] WHERE Id = 61)
+    INSERT INTO [dbo].[SysRolePermission] ([Id],[RoleId],[PermissionId],[CreatedAt])
+    VALUES (61, 1, 40, '2026-07-22');
+GO
+
+PRINT N'✅ v2.13.97 personnel:add (Id=40) + admin 关联 (Id=61) DDL 已补充';

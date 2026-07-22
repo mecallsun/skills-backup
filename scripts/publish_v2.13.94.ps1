@@ -16,7 +16,7 @@ dotnet publish DormManage.Api/DormManage.Api.csproj -c Release -r win-x64 --self
 Write-Host '[3/3] Publishing TrayApp...' -ForegroundColor Cyan
 dotnet publish DormManage.TrayApp/DormManage.TrayApp.csproj -c Release -r win-x64 --self-contained true -o "$dest/TrayApp" --nologo 2>&1 | Select-Object -Last 5
 
-$zipName = "Claude_Deploy_v2.13.92_${ts}.zip"
+$zipName = "Claude_Deploy_v2.13.94_${ts}.zip"
 Write-Host "Packing to $zipName..." -ForegroundColor Cyan
 Compress-Archive -Path "$dest/*" -DestinationPath $zipName -CompressionLevel Optimal
 Get-ChildItem $zipName | Select-Object Name,@{n='MB';e={[math]::Round($_.Length/1MB,1)}} | Format-Table | Out-String | Write-Host
