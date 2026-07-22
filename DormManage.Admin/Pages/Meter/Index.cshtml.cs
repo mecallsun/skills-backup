@@ -119,6 +119,12 @@ public class IndexModel : PageModel
             .ToListAsync();
 
         // 计算用量：本月读数 − 上月读数（同房号）
+        // v2.13.89：批量取所有抄表员的 SysUser.DisplayName（1 次 SQL JOIN，避免 N+1）
+        var operatorUserIds = records.Where(r => r.OperatorUserId.HasValue).Select(r => r.OperatorUserId!.Value).Distinct().ToList();
+        var operatorMap = await _db.SysUsers
+            .Where(u => operatorUserIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
         var items = new List<MeterRecordDto>();
         foreach (var r in records)
         {
@@ -141,6 +147,11 @@ public class IndexModel : PageModel
                 HotUsage = prev != null ? Math.Max(0, r.HotMeter - prev.HotMeter) : 0,
                 ElectricUsage = prev != null ? Math.Max(0, r.ElectricMeter - prev.ElectricMeter) : 0,
                 Operator = r.Operator,
+                OperatorUserId = r.OperatorUserId,
+                // v2.13.89：JOIN DisplayName 优先显示，回退到 Operator 字符串
+                OperatorDisplayName = (r.OperatorUserId.HasValue && operatorMap.ContainsKey(r.OperatorUserId.Value))
+                    ? operatorMap[r.OperatorUserId.Value]
+                    : r.Operator,
                 DeviceSn = r.DeviceSn ?? "-",
                 ServerCreatedAt = r.ServerCreatedAt,
                 Status = r.Status,
@@ -246,6 +257,9 @@ public class MeterRecordDto
     public decimal HotUsage { get; set; }
     public decimal ElectricUsage { get; set; }
     public string Operator { get; set; } = "";
+    // v2.13.89：抄表员 UserId FK + DisplayName（JOIN 派生）
+    public int? OperatorUserId { get; set; }
+    public string? OperatorDisplayName { get; set; }
     public string DeviceSn { get; set; } = "";
     public DateTime ServerCreatedAt { get; set; }
     public byte Status { get; set; }

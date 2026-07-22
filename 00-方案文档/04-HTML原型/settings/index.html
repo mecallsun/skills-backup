@@ -58,6 +58,8 @@
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-app"><i class="bi bi-phone"></i> PDA App 版本</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-users"><i class="bi bi-people"></i> 用户管理</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-roles"><i class="bi bi-shield-lock"></i> 角色与权限</button>
+                            <!-- v2.13.92 字段权限（与角色权限同级并排） -->
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-fields"><i class="bi bi-shield-check"></i> 字段权限</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-backup"><i class="bi bi-hdd-stack"></i> 备份与恢复</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-integration"><i class="bi bi-plug"></i> 系统集成</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#tab-about"><i class="bi bi-info-circle"></i> 关于系统</button>
@@ -438,6 +440,53 @@
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                                         <button type="button" class="btn btn-primary" onclick="saveRole()"><i class="bi bi-save"></i> 保存</button>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- v2.13.92 字段权限（与角色权限同级并排） -->
+                    <div class="tab-pane fade" id="tab-fields">
+                        <div class="card">
+                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                <strong><i class="bi bi-shield-check"></i> 字段权限管理</strong>
+                                <span class="badge bg-info text-dark" title="RBAC 四级权限（数据权限 PermissionType=3 落地）">v2.13.92</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info py-2 mb-3">
+                                    <i class="bi bi-info-circle"></i> <strong>字段权限</strong>用于保护系统中的<strong>敏感/可识别个人信息（PII）</strong>字段。
+                                    在此勾选的字段，将被加入「隐私字段保护清单」；
+                                    当某个角色的「<strong>启用隐私字段保护</strong>」权限被勾选时，该角色在所有页面都看不到这些字段（整列不渲染）。
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="60" class="text-center">勾选</th>
+                                                <th>模块</th>
+                                                <th>字段名</th>
+                                                <th>字段键</th>
+                                                <th width="100" class="text-center">敏感等级</th>
+                                                <th width="80" class="text-center">排序</th>
+                                                <th>说明</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fieldPermissionTbody">
+                                            <tr><td colspan="7" class="text-center text-muted py-4">加载字段清单中...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(true)"><i class="bi bi-check-all"></i> 全选</button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(false)"><i class="bi bi-x-lg"></i> 全不选</button>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="saveFieldPermissions()"><i class="bi bi-check-lg"></i> 保存设置</button>
+                                </div>
+                                <hr>
+                                <div class="text-muted small">
+                                    <i class="bi bi-lightbulb"></i> <strong>使用方式：</strong>勾选字段后，请到「角色与权限」标签页打开对应角色的权限矩阵，
+                                    勾选 <span class="badge bg-info text-dark">启用隐私字段保护</span> 即可让该角色看不到上述字段。
                                 </div>
                             </div>
                         </div>
@@ -991,9 +1040,62 @@
     <script src="../_shared/storage-keys.js"></script>
 <script src="../_shared/tab-bar.js"></script>
     <script>
+        // ========== v2.13.92 字段权限 ==========
+        const FIELD_PERMISSIONS_MOCK = [
+            { id: 1, fieldKey: 'employee.realname',   fieldName: '姓名',     module: 'Personnel', sensitivityLevel: 1, sortOrder: 1, isActive: true,  description: '员工真实姓名（高 PII）' },
+            { id: 2, fieldKey: 'employee.phone',      fieldName: '手机号',   module: 'Personnel', sensitivityLevel: 1, sortOrder: 2, isActive: true,  description: '联系电话（高 PII）' },
+            { id: 3, fieldKey: 'employee.employeecode', fieldName: '工号',   module: 'Personnel', sensitivityLevel: 2, sortOrder: 3, isActive: true,  description: '公司内唯一标识' },
+            { id: 4, fieldKey: 'employee.dormcode',   fieldName: '宿舍房号', module: 'Personnel', sensitivityLevel: 2, sortOrder: 4, isActive: true,  description: '当前入住房号（隐私住址）' },
+            { id: 5, fieldKey: 'employee.remark',     fieldName: '备注',     module: 'Personnel', sensitivityLevel: 2, sortOrder: 5, isActive: false, description: '自由文本备注（可能含敏感信息）' }
+        ];
+
+        function sensitivityBadge(level) {
+            if (level === 1) return '<span class="badge bg-danger">高</span>';
+            if (level === 2) return '<span class="badge bg-warning text-dark">中</span>';
+            return '<span class="badge bg-info text-dark">低</span>';
+        }
+
+        function loadFieldPermissions() {
+            const tbody = document.getElementById('fieldPermissionTbody');
+            if (!tbody) return;
+            const rows = FIELD_PERMISSIONS_MOCK.map(f => `
+                <tr>
+                    <td class="text-center">
+                        <div class="form-check d-inline-block">
+                            <input class="form-check-input fp-cb" type="checkbox" data-id="${f.id}" ${f.isActive ? 'checked' : ''}>
+                        </div>
+                    </td>
+                    <td><span class="badge bg-secondary">${f.module}</span></td>
+                    <td><strong>${f.fieldName}</strong></td>
+                    <td><code class="small text-muted">${f.fieldKey}</code></td>
+                    <td class="text-center">${sensitivityBadge(f.sensitivityLevel)}</td>
+                    <td class="text-center">
+                        <input type="number" class="form-control form-control-sm text-center fp-sort" value="${f.sortOrder}" min="0" max="999" style="width: 70px;">
+                    </td>
+                    <td class="small text-muted">${f.description}</td>
+                </tr>
+            `).join('');
+            tbody.innerHTML = rows;
+        }
+
+        function selectAllFields(checked) {
+            document.querySelectorAll('.fp-cb').forEach(cb => cb.checked = checked);
+        }
+
+        function saveFieldPermissions() {
+            const updates = [];
+            document.querySelectorAll('.fp-cb').forEach(cb => {
+                const id = parseInt(cb.dataset.id, 10);
+                const sortInput = cb.closest('tr').querySelector('.fp-sort');
+                const sortOrder = sortInput ? parseInt(sortInput.value, 10) || 0 : 0;
+                updates.push({ id, isActive: cb.checked, sortOrder });
+            });
+            alert('✓ 原型演示：已保存 ' + updates.length + ' 个字段配置\n（实际将 PUT /api/v1/system/field-permissions）');
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             mountTabBar({ basePath: '..', currentUrl: 'settings/index.html' });
+            loadFieldPermissions();
         });
     </script>
 </body>

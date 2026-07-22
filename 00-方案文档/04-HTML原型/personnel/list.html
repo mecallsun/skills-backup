@@ -114,9 +114,9 @@
                         <tr>
                             <th width="50">序号</th>
                             <th>工号</th>
-                            <th>姓名</th>
+                            <th id="th-realname" data-field-key="employee.realname">姓名</th>
                             <th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
-                            <th>手机号</th>
+                            <th id="th-phone" data-field-key="employee.phone">手机号</th>
                             <th>部门</th>
                             <th>员工类型</th>
                             <th>班组</th>
@@ -141,6 +141,15 @@
     <script src="../_shared/storage-keys.js"></script>
     <script src="../_shared/tab-bar.js"></script>
     <script>
+    // v2.13.92 字段权限模拟：当前用户权限集合（演示用，顶部「切换角色」下拉可改）
+    // 默认 admin 拥有全部权限 → 看到所有字段
+    var currentUserPermissions = ['home:view', 'personnel:view', 'booking:view'];
+    function setPrivacyFieldEnabled(enabled) {
+        if (enabled && currentUserPermissions.indexOf('privacy:field:enable') < 0) currentUserPermissions.push('privacy:field:enable');
+        else if (!enabled) currentUserPermissions = currentUserPermissions.filter(c => c !== 'privacy:field:enable');
+        if (typeof applyFieldPermissionVisibility === 'function') applyFieldPermissionVisibility();
+        if (window.__list) window.__list.reset();
+    }
     // 辅助函数（必须在 mock-data.js 之后定义）
     function attendanceBadgeHtml(id) {
         var t = null;
@@ -314,17 +323,25 @@
 
     function doFilter() { if (window.__list) window.__list.reset(); }
 
-    function buildRowHtml(p, start, idx) {
+    // v2.13.92 字段权限感知：根据当前用户是否启用 privacy:field:enable 决定哪些列渲染
+        const PRIVACY_FIELDS_MOCK = ['employee.realname', 'employee.phone'];
+        const hasPrivacyFieldEnabled = () => {
+            return typeof currentUserPermissions !== 'undefined' && currentUserPermissions.includes('privacy:field:enable');
+        };
+        const fieldHidden = (key) => hasPrivacyFieldEnabled() && PRIVACY_FIELDS_MOCK.includes(key);
+
+        function buildRowHtml(p, start, idx) {
         var code = p.employeeCode || p.code || '-';
-        var name = p.realName || p.name || '-';
+        var name = fieldHidden('employee.realname') ? '***' : (p.realName || p.name || '-');
+        var phone = fieldHidden('employee.phone') ? '***' : (p.phone || '-');
         var deptName = getDepartmentName(p.departmentId) || p.department || '-';
         var statusId = p.employmentStatusId !== undefined ? p.employmentStatusId : p.status;
         return '<tr>'
             + '<td class="text-center text-muted">' + (start + idx + 1) + '</td>'
             + '<td><strong>' + code + '</strong></td>'
-            + '<td>' + name + '</td>'
+            + '<td' + (fieldHidden('employee.realname') ? ' class="d-none"' : '') + '>' + name + '</td>'
             + '<td class="text-center">' + genderBadgeHtml(p.gender) + '</td>'  // v2.13.86 性别 Badge
-            + '<td><small class="text-muted">' + (p.phone || '-') + '</small></td>'
+            + '<td' + (fieldHidden('employee.phone') ? ' class="d-none"' : '') + '><small class="text-muted">' + phone + '</small></td>'
             + '<td>' + deptName + '</td>'
             + '<td>' + typeBadgeHtml(p.employeeTypeId) + '</td>'
             + '<td>' + teamCellHtml(p.teamId) + '</td>'

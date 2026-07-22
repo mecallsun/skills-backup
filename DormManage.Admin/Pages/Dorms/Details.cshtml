@@ -168,10 +168,12 @@
                                 <table class="table table-hover mb-0">
                                     <thead class="table-light">
                                         @* v2.13.60 1:1 对齐原型 dorms/details.html：9 列（工号|姓名|部门|员工类型|考勤班次|床号|入住日期|已入住|操作），删除原 Razor 额外的「序号」+「手机」列 *@
+                                        @* v2.13.91 新增：在「部门」与「员工类型」之间插入「班组」列（FK 关联 SysEmployee.TeamId → Team.Name），与人员清单表头顺序一致 *@
                                         <tr>
                                             <th>工号</th>
                                             <th>姓名</th>
                                             <th>部门</th>
+                                            <th>班组</th>
                                             <th>员工类型</th>
                                             <th>考勤班次</th>
                                             <th>床号</th>
@@ -186,6 +188,10 @@
                                             // v2.12.40 考勤班次从 SysEmployee.AttendanceTypeId → AttendanceType.Name 关联引用
                                             var attendance = Model.EmployeeAttendanceMap.ContainsKey(resident.EmployeeId)
                                                 ? Model.EmployeeAttendanceMap[resident.EmployeeId]
+                                                : null;
+                                            // v2.13.91 班组从 SysEmployee.TeamId → Team.Name 关联引用
+                                            var teamBadge = Model.EmployeeTeamMap.ContainsKey(resident.EmployeeId)
+                                                ? Model.EmployeeTeamMap[resident.EmployeeId]
                                                 : null;
                                             // v2.13.39 员工类型从 SysEmployee.EmployeeTypeId → EmployeeType.Name 关联引用
                                             EmployeeTypeBadgeDto? empType = null;
@@ -202,6 +208,17 @@
                                                 <td><strong>@resident.EmployeeCode</strong></td>
                                                 <td>@resident.EmployeeName</td>
                                                 <td>@(resident.Department ?? "-")</td>
+                                                @* v2.13.91 新增：班组 Badge（FK 关联引用 SysEmployee.TeamId → Team.Name） *@
+                                                <td>
+                                                    @if (teamBadge != null)
+                                                    {
+                                                        <span class="badge @teamBadge.BadgeClass" title="来源：SysEmployee.TeamId → Team.Name">@teamBadge.Name</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </td>
                                                 <td>
                                                     @if (empType != null)
                                                     {

@@ -64,6 +64,8 @@ public class BookingController : ControllerBase
     {
         // v2.13.29: 从登录会话/请求头获取真实用户名（替换原 TODO 兜底 admin）
         var registrar = HttpContext.GetCurrentUserName();
+        // v2.13.89: 同时获取 UserId 用于 FK 关联（用户需求：表存 FK，页面显示姓名）
+        var registrarUserId = HttpContext.GetCurrentUserId();
         return await _service.CheckInAsync(new BookingCheckInRequest
         {
             EmployeeId = request.EmployeeId,
@@ -71,7 +73,7 @@ public class BookingController : ControllerBase
             BookingDate = DateOnly.Parse(request.BookingDate),
             Reason = request.Reason,
             Remark = request.Remark
-        }, registrar);
+        }, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -81,7 +83,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> CheckOut(int id, [FromBody] CheckOutRequest request)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.CheckOutAsync(id, DateOnly.Parse(request.CheckOutDate), request.Reason, request.Remark, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.CheckOutAsync(id, DateOnly.Parse(request.CheckOutDate), request.Reason, request.Remark, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -106,7 +109,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> ConfirmCheckIn(int id)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.ConfirmCheckInAsync(id, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.ConfirmCheckInAsync(id, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -116,7 +120,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> UndoCheckOut(int id)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.UndoCheckOutAsync(id, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.UndoCheckOutAsync(id, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -126,7 +131,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> CancelReservation(int id)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.CancelReservationAsync(id, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.CancelReservationAsync(id, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -136,7 +142,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> ConfirmCheckout(int id)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.ConfirmReservedCheckOutAsync(id, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.ConfirmReservedCheckOutAsync(id, registrar, registrarUserId);
     }
 
     /// <summary>
@@ -146,7 +153,8 @@ public class BookingController : ControllerBase
     public async Task<ApiResponse<DormBooking>> CancelToday(int id)
     {
         var registrar = HttpContext.GetCurrentUserName();
-        return await _service.CancelTodayAsync(id, registrar);
+        var registrarUserId = HttpContext.GetCurrentUserId();
+        return await _service.CancelTodayAsync(id, registrar, registrarUserId);
     }
 
     /// <summary>

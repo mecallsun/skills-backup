@@ -43,6 +43,12 @@ public class DetailsModel : PageModel
     public Dictionary<int, EmployeeTypeBadgeDto> EmployeeTypeMap { get; set; } = new();
 
     /// <summary>
+    /// 班组映射（v2.13.91 新增）：EmployeeId → TeamBadgeDto
+    /// FK 关联引用 SysEmployee.TeamId → Team
+    /// </summary>
+    public Dictionary<int, TeamBadgeDto> EmployeeTeamMap { get; set; } = new();
+
+    /// <summary>
     /// 历史入住记录
     /// </summary>
     public List<BookingRecordDto> HistoryRecords { get; set; } = new();
@@ -127,6 +133,22 @@ public class DetailsModel : PageModel
             };
         }
 
+        // v2.13.91 新增：班组字典（FK 关联引用 Team 表）
+        var teams = await _db.Teams.ToListAsync();
+        var teamMap = teams.ToDictionary(t => t.Id, t => new TeamBadgeDto
+        {
+            Name = t.Name ?? t.Code ?? "-",
+            BadgeClass = TeamBadgeHelper.GetTeamBadgeClass(t.Code)
+        });
+        // 维护 EmployeeId → TeamBadgeDto 索引（前端按 EmployeeId 查询，避免模板内再嵌套判断）
+        foreach (var emp in empDict.Values)
+        {
+            if (emp.TeamId > 0 && teamMap.ContainsKey(emp.TeamId))
+            {
+                EmployeeTeamMap[emp.Id] = teamMap[emp.TeamId];
+            }
+        }
+
         // v2.13.39 新增：计算已入住天数（在 Razor 渲染时直接计算，无需 DTO 字段）
         var today = DateOnly.FromDateTime(DateTime.Now);
 
@@ -144,7 +166,10 @@ public class DetailsModel : PageModel
             BedNo = empBedMap.ContainsKey(b.EmployeeId) ? empBedMap[b.EmployeeId] : null,
             // v2.13.39 新增：员工类型名称（前端渲染 Badge 时按 emp.EmployeeTypeId 查 EmployeeTypeMap）
             EmployeeTypeId = empDict.ContainsKey(b.EmployeeId) && empDict[b.EmployeeId].EmployeeTypeId > 0
-                ? empDict[b.EmployeeId].EmployeeTypeId : null
+                ? empDict[b.EmployeeId].EmployeeTypeId : null,
+            // v2.13.91 新增：班组 ID（前端渲染 Badge 时按 EmployeeId 查 EmployeeTeamMap）
+            TeamId = empDict.ContainsKey(b.EmployeeId) && empDict[b.EmployeeId].TeamId > 0
+                ? empDict[b.EmployeeId].TeamId : null
         }).ToList();
 
         // 历史记录（入住+退房）
@@ -228,6 +253,11 @@ public class BookingRecordDto
     /// 前端通过 EmployeeTypeMap 渲染 Badge。
     /// </summary>
     public int? EmployeeTypeId { get; set; }
+    /// <summary>
+    /// 班组 ID（v2.13.91 新增）：FK 关联 SysEmployee.TeamId → Team，
+    /// 前端通过 EmployeeTeamMap 渲染 Badge。
+    /// </summary>
+    public int? TeamId { get; set; }
 }
 
 /// <summary>
@@ -243,6 +273,15 @@ public class AttendanceBadgeDto
 /// 员工类型 Badge DTO（v2.13.39 新增）：用于在宿舍详情"当前入住人员"列表中展示员工类型 Badge
 /// </summary>
 public class EmployeeTypeBadgeDto
+{
+    public string Name { get; set; } = "";
+    public string BadgeClass { get; set; } = "bg-secondary";
+}
+
+/// <summary>
+/// 班组 Badge DTO（v2.13.91 新增）：用于在宿舍详情"当前入住人员"列表中展示班组 Badge
+/// </summary>
+public class TeamBadgeDto
 {
     public string Name { get; set; } = "";
     public string BadgeClass { get; set; } = "bg-secondary";
@@ -284,5 +323,25 @@ public static partial class EmployeeTypeBadgeHelper
             "ONSITE" => "bg-dark",
             _ => "bg-secondary"
         };
+    }
+}
+
+/// <summary>
+/// 班组 Badge 颜色映射辅助方法（v2.13.91 新增）
+/// 班组无强 enum，按 Code 首字母 A-F 派生命名色，确保视觉区分
+/// </summary>
+public static partial class TeamBadgeHelper
+{
+    public static string GetTeamBadgeClass(string? code)
+    {
+        if (string.IsNullOrEmpty(code)) return "bg-secondary";
+        var c = code.ToUpper();
+        if (c.StartsWith("A")) return "bg-primary";
+        if (c.StartsWith("B")) return "bg-success";
+        if (c.StartsWith("C")) return "bg-info text-dark";
+        if (c.StartsWith("D")) return "bg-warning text-dark";
+        if (c.StartsWith("E")) return "bg-danger";
+        if (c.StartsWith("F")) return "bg-dark";
+        return "bg-secondary";
     }
 }

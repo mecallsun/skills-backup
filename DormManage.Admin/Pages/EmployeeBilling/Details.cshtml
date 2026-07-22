@@ -39,7 +39,11 @@
                     <div class="col-md-2"><div class="text-muted small">部门</div><div>@Model.Employee.Department</div></div>
                     <div class="col-md-2"><div class="text-muted small">员工类型</div><div>@Model.Employee.EmployeeTypeId</div></div>
                     <div class="col-md-2"><div class="text-muted small">当前宿舍</div><div>@(Model.Employee.DormCode ?? "未分配")</div></div>
-                    <div class="col-md-2"><div class="text-muted small">联系电话</div><div>@Model.Employee.Phone</div></div>
+                    @* v2.13.92 字段权限：联系电话条件渲染 *@
+                    @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                    {
+                        <div class="col-md-2"><div class="text-muted small">联系电话</div><div>@Model.Employee.Phone</div></div>
+                    }
                 </div>
             </div>
         </div>

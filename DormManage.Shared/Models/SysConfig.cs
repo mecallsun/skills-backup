@@ -40,9 +40,19 @@ public class SysConfig
     [Column("UpdatedAt")]
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
-    /// <summary>更新人（NVARCHAR(64)）</summary>
+    /// <summary>更新人（NVARCHAR(64)，v2.13.89 改为冗余字段，真源为 UpdatedByUserId FK）</summary>
     [Required]
     [MaxLength(64)]
     [Column("UpdatedBy")]
     public string UpdatedBy { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 更新人 UserId FK（v2.13.89 新增：物理真理源 — 关联账号主键）
+    /// 页面渲染通过 JOIN SysUser 取 DisplayName 显示
+    /// </summary>
+    public int? UpdatedByUserId { get; set; }
+
+    /// <summary>更新人姓名（v2.13.89 JOIN 派生：SysUser.DisplayName）</summary>
+    [NotMapped]
+    public string? UpdatedByDisplayName { get; set; }
 }

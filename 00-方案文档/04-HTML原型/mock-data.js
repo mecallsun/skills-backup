@@ -26,6 +26,17 @@ const EMPLOYEE_TYPES = [
     { id: 5, code: "ONSITE",     name: "驻场",       remark: "客户现场服务人员" }
 ];
 
+// 班组字典（v2.13.91 新增）：与基础资料-班组表 Team 一致，作为单一数据源
+// dorms/details.html 班组列渲染 FK 关联引用 SysEmployee.TeamId → TEAMS.name
+const TEAMS = [
+    { id: 1, code: "TEAM_A1", name: "一班",     sortOrder: 0, remark: "A 段主班" },
+    { id: 2, code: "TEAM_A2", name: "二班",     sortOrder: 1, remark: "A 段副班" },
+    { id: 3, code: "TEAM_B1", name: "三班",     sortOrder: 2, remark: "B 段主班" },
+    { id: 4, code: "TEAM_C1", name: "四班",     sortOrder: 3, remark: "C 段主班" },
+    { id: 5, code: "TEAM_D1", name: "五班",     sortOrder: 4, remark: "D 段主班" },
+    { id: 6, code: "TEAM_E1", name: "维修班",   sortOrder: 5, remark: "E 段维修" }
+];
+
 // 兼容性保留：原 ATTENDANCE_TYPES 字典同步扩展 worksHours
 const ATTENDANCE_TYPES_FULL = [
     { id: 1, code: "DEFAULT", name: "默认", workHours: "09:00-18:00", remark: "标准工时" },

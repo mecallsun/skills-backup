@@ -242,6 +242,7 @@ public partial class IndexModel : PageModel
         // v2.13.67：嵌入子 Tab 后，OnGet 需要同时加载 User + Role 面板数据
         await LoadUserPanelAsync();
         await LoadRolePanelAsync();
+        await LoadFieldPermissionPanelAsync();  // v2.13.92 字段权限加载
     }
 
     // 注意：数据库连接配置保存已迁移到 /api/v1/system/dbconfig/save (v2.13.19)

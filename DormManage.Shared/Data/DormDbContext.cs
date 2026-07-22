@@ -144,6 +144,7 @@ public class DormDbContext : DbContext
     public DbSet<SysUserRole> SysUserRoles { get; set; } = null!;
     public DbSet<SysPermission> SysPermissions { get; set; } = null!;
     public DbSet<SysRolePermission> SysRolePermissions { get; set; } = null!;
+    public DbSet<SysFieldPermission> SysFieldPermissions { get; set; } = null!;  // v2.13.92 新增：字段权限清单
     public DbSet<PdaDevice> PdaDevices { get; set; } = null!;
     public DbSet<MeterImage> MeterImages { get; set; } = null!;
     public DbSet<SysConfig> SysConfigs { get; set; } = null!;
@@ -530,6 +531,20 @@ public class DormDbContext : DbContext
             entity.HasIndex(e => new { e.RoleId, e.PermissionId }).IsUnique();
         });
 
+        // SysFieldPermission（v2.13.92 新增表：字段权限清单，PII 字段脱敏元数据）
+        modelBuilder.Entity<SysFieldPermission>(entity =>
+        {
+            entity.ToTable("SysFieldPermission");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.FieldKey).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.Module).HasMaxLength(32).IsRequired();
+            entity.Property(e => e.FieldName).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.FieldType).HasMaxLength(16);
+            entity.Property(e => e.Description).HasMaxLength(200);
+            entity.Property(e => e.UpdatedBy).HasMaxLength(64);
+            entity.HasIndex(e => e.FieldKey).IsUnique();
+        });
+
         // SysUserFilterCache（v2.13.12 新增表，用户筛选条件云端缓存）
         modelBuilder.Entity<SysUserFilterCache>(entity =>
         {
@@ -750,7 +765,11 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 34, PermissionCode = "meter:export", PermissionName = "导出抄表记录", PermissionType = 2, ParentId = 14, Route = "", Icon = "", SortOrder = 25, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             // ========== v2.13.88 第四轮追加：所有列表页导出按钮统一权限管控 ==========
             new SysPermission { Id = 35, PermissionCode = "booking:export", PermissionName = "导出租住登记", PermissionType = 2, ParentId = 2, Route = "", Icon = "", SortOrder = 26, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            new SysPermission { Id = 36, PermissionCode = "personnel:export", PermissionName = "导出人员清单", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 27, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") }
+            new SysPermission { Id = 36, PermissionCode = "personnel:export", PermissionName = "导出人员清单", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 27, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.92 字段权限（PermissionType=3 数据权限落地）：3 个权限码 ==========
+            new SysPermission { Id = 37, PermissionCode = "settings:fields", PermissionName = "字段权限", PermissionType = 1, ParentId = 18, Route = "/Settings?tab=fields", Icon = "bi-shield-check", SortOrder = 28, IsActive = true, IsSystem = true, Description = "管理敏感字段清单", CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysPermission { Id = 38, PermissionCode = "fieldpermission:edit", PermissionName = "编辑字段权限", PermissionType = 2, ParentId = 37, Route = "", Icon = "", SortOrder = 29, IsActive = true, IsSystem = true, Description = "勾选/取消勾选敏感字段", CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "启用隐私字段保护", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段", CreatedAt = DateTime.Parse("2026-07-22") }
         );
 
         // 角色-权限关联（管理员：全部权限）
@@ -799,6 +818,10 @@ public class DormDbContext : DbContext
             // ========== v2.13.88 第四轮：admin 导出权限 booking:export + personnel:export ==========
             new SysRolePermission { Id = 56, RoleId = 1, PermissionId = 35, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysRolePermission { Id = 57, RoleId = 1, PermissionId = 36, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.92 admin 字段权限（settings:fields / fieldpermission:edit / privacy:field:enable） ==========
+            new SysRolePermission { Id = 58, RoleId = 1, PermissionId = 37, CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysRolePermission { Id = 59, RoleId = 1, PermissionId = 38, CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysRolePermission { Id = 60, RoleId = 1, PermissionId = 39, CreatedAt = DateTime.Parse("2026-07-22") },
             // 财务角色
             new SysRolePermission { Id = 19, RoleId = 2, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysRolePermission { Id = 20, RoleId = 2, PermissionId = 11, CreatedAt = DateTime.Parse("2026-07-14") },
@@ -822,6 +845,15 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 28, RoleId = 3, PermissionId = 17, CreatedAt = DateTime.Parse("2026-07-14") },
             // 访客
             new SysRolePermission { Id = 29, RoleId = 4, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") }
+        );
+
+        // ========== v2.13.92 SysFieldPermission 默认字段清单（5 个核心敏感字段） ==========
+        modelBuilder.Entity<SysFieldPermission>().HasData(
+            new SysFieldPermission { Id = 1, FieldKey = "employee.realname",   FieldName = "姓名",     Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 1, IsActive = true, Description = "员工真实姓名（高 PII）",   CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysFieldPermission { Id = 2, FieldKey = "employee.phone",      FieldName = "手机号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 2, IsActive = true, Description = "联系电话（高 PII）",       CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysFieldPermission { Id = 3, FieldKey = "employee.employeecode", FieldName = "工号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 3, IsActive = true, Description = "公司内唯一标识",         CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysFieldPermission { Id = 4, FieldKey = "employee.dormcode",   FieldName = "宿舍房号", Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 4, IsActive = true, Description = "当前入住房号（隐私住址）", CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysFieldPermission { Id = 5, FieldKey = "employee.remark",     FieldName = "备注",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 5, IsActive = true, Description = "自由文本备注（可能含敏感信息）", CreatedAt = DateTime.Parse("2026-07-22") }
         );
 
         // 抄表记录种子数据（2026年6月、7月）

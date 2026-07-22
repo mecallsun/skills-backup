@@ -143,6 +143,7 @@ builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13
 builder.Services.AddScoped<IOperationLogService, OperationLogService>();  // v2.13.29: 统一操作日志
 builder.Services.AddScoped<IPermissionService, PermissionService>();  // v2.13.76 RBAC 三级权限控制
 builder.Services.AddScoped<PagePermissionFilter>();                    // v2.13.76 Razor Pages 路由级权限守卫
+builder.Services.AddScoped<ISysFieldPermissionService, SysFieldPermissionService>();  // v2.13.92 字段权限服务
 
 // v2.13.0: 认证服务
 builder.Services.AddScoped<DormManage.Admin.Services.IAuthService, DormManage.Admin.Services.AuthService>();

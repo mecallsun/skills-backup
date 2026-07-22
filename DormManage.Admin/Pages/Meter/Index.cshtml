@@ -173,7 +173,7 @@
                                     <td class="text-end">
                                         <span class="@(item.ElectricUsage == 0 ? "badge bg-info text-dark" : "")">@item.ElectricUsage.ToString("N2")</span>
                                     </td>
-                                    <td><small class="text-muted">@item.Operator</small></td>
+                                    <td><small class="text-muted">@item.OperatorDisplayName</small></td>
                                     <td><small class="text-muted">@(item.DeviceSn == "-" ? "-" : item.DeviceSn)</small></td>
                                     <td><small class="text-muted">@item.ServerCreatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
                                     <td>

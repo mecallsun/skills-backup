@@ -116,11 +116,23 @@ public class DormBooking : BaseEntity
     public DateTime RegistrationDate { get; set; }
 
     /// <summary>
-    /// 登记人（创建记录时 = 当前登录用户名）
+    /// 登记人（创建记录时 = 当前登录用户名，v2.13.89 改为冗余字段，真源为 RegistrarUserId FK）
     /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
     /// </summary>
     [MaxLength(64)]
     public string? Registrar { get; set; }
+
+    /// <summary>
+    /// 登记人 UserId FK（v2.13.89 新增：物理真理源 — 关联账号主键）
+    /// 页面渲染通过 JOIN SysUser 取 DisplayName 显示；Service 层维护实时覆盖
+    /// </summary>
+    public int? RegistrarUserId { get; set; }
+
+    /// <summary>
+    /// 登记人姓名（v2.13.89 JOIN 派生：SysUser.DisplayName，运行时计算不存库）
+    /// </summary>
+    [NotMapped]
+    public string? RegistrarDisplayName { get; set; }
 
     /// <summary>
     /// 入住确认操作人（v2.13.24 P75 新增）— Status 由 1→2 时记录
@@ -130,10 +142,32 @@ public class DormBooking : BaseEntity
     public string? CheckInOperator { get; set; }
 
     /// <summary>
+    /// 入住确认操作人 UserId FK（v2.13.89 新增）
+    /// </summary>
+    public int? CheckInOperatorUserId { get; set; }
+
+    /// <summary>
+    /// 入住确认操作人姓名（v2.13.89 JOIN 派生）
+    /// </summary>
+    [NotMapped]
+    public string? CheckInOperatorDisplayName { get; set; }
+
+    /// <summary>
     /// 退房确认操作人（v2.13.24 P75 新增）— Status 由 2→3 时记录
     /// </summary>
     [MaxLength(64)]
     public string? CheckOutOperator { get; set; }
+
+    /// <summary>
+    /// 退房确认操作人 UserId FK（v2.13.89 新增）
+    /// </summary>
+    public int? CheckOutOperatorUserId { get; set; }
+
+    /// <summary>
+    /// 退房确认操作人姓名（v2.13.89 JOIN 派生）
+    /// </summary>
+    [NotMapped]
+    public string? CheckOutOperatorDisplayName { get; set; }
 
     // ========== 计算字段（[NotMapped]，运行时计算） ==========
 

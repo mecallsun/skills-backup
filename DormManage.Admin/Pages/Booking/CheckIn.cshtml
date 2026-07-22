@@ -153,7 +153,11 @@
                         <div class="emp-info-card" id="empInfo" style="display:none;">
                             <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
                             <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span> <span id="empGender"></span></span>
-                            <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                            @* v2.13.92 字段权限：手机号条件渲染 *@
+                            @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                            {
+                                <span class="emp-info-item" id="empPhoneField"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                            }
                             <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                             <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
                             <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
@@ -181,7 +185,8 @@
                             </div>
                             <div class="col-md-4 form-field">
                                 <label class="form-label" for="registrar">登记人</label>
-                                <input type="text" id="registrar" class="form-control" disabled>
+                                @* v2.13.89 显示当前登录用户的 DisplayName（而非 UserName）*@
+                                <input type="text" id="registrar" class="form-control" value="@User.FindFirst("DisplayName")?.Value ?? User.Identity?.Name" disabled>
                             </div>
                         </div>
                     </div>
@@ -251,10 +256,9 @@
         let selectedEmp = null;          // v2.13.36 选中员工对象（按原型 selectedEmp 模式）
         let empSearchResults = [];       // 员工搜索结果缓存
 
-        // 初始化默认值（v2.13.36 对齐原型 L172-174）
+        // 初始化默认值（v2.13.36 对齐原型 L172-174，v2.13.89 登记人由 Razor 渲染）
         const today = new Date().toISOString().slice(0, 10);
         document.getElementById('bookingDate').value = today;
-        document.getElementById('registrar').value = 'admin';  // TODO: 从登录用户上下文获取
 
         // ===== 1. 员工搜索（v2.13.36 对齐原型 L177-191） =====
         function onEmpSearch() {

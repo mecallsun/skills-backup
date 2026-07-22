@@ -210,6 +210,28 @@
                 </div>
                 <div class="modal-body">
                     <div id="permMatrixFeedback" class="alert d-none mb-3"></div>
+
+                    @* v2.13.92 新增：隐私字段权限总开关（独立于 perm-cb 自动级联之外） *@
+                    <div class="card mb-3 border-info">
+                        <div class="card-header py-2 bg-info bg-opacity-10">
+                            <strong><i class="bi bi-shield-check"></i> 隐私字段权限（数据权限）</strong>
+                        </div>
+                        <div class="card-body py-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="PrivacyFieldEnabled" value="true" id="perm_privacy_field"
+                                       @(Model.RolePrivacyFieldEnabled ? "checked" : "")>
+                                <label class="form-check-label" for="perm_privacy_field">
+                                    <strong>启用隐私字段保护</strong>
+                                    <small class="text-muted d-block ms-4">
+                                        勾选后，该角色将看不到「字段权限」清单中所有敏感字段（如姓名、手机号、工号等）。
+                                        配置清单请到 <a href="#" onclick="setActiveTab('fields'); return false;">字段权限</a> 标签。
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         @foreach (var group in Model.PermissionGroups)
                         {

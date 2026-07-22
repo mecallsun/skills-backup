@@ -8,6 +8,11 @@ public static class HttpContextExtensions
 {
     public static int GetCurrentUserId(this HttpContext ctx)
     {
+        // v2.13.89：优先从 X-User-Id Header 获取（API 调用方可能未走 Cookie 认证）
+        var headerId = ctx.Request.Headers["X-User-Id"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(headerId) && int.TryParse(headerId, out var hid)) return hid;
+
+        // 其次从 Claims 中获取
         var c = ctx.User?.FindFirst(ClaimTypes.NameIdentifier);
         return c != null && int.TryParse(c.Value, out var id) ? id : 0;
     }

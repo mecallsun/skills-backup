@@ -36,7 +36,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">
             <i class="bi bi-gear"></i> 系统设置
-            <span class="badge bg-warning text-dark ms-2">v2.13.67</span>
+            <span class="badge bg-warning text-dark ms-2">v2.13.92</span>
         </h2>
     </div>
 
@@ -75,6 +75,11 @@
                                 data-bs-toggle="pill" data-bs-target="#tab-roles"
                                 onclick="setActiveTab('roles')">
                             <i class="bi bi-shield-lock"></i> 角色与权限
+                        </button>
+                        <button class="nav-link @(Model.ActiveTab == "fields" ? "active" : "") text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-fields"
+                                onclick="setActiveTab('fields')">
+                            <i class="bi bi-shield-check"></i> 字段权限
                         </button>
                         <button class="nav-link @(Model.ActiveTab == "backup" ? "active" : "") text-start"
                                 data-bs-toggle="pill" data-bs-target="#tab-backup"
@@ -367,6 +372,11 @@
                 <!-- v2.13.67 角色管理子 Tab — 完整 CRUD 嵌入（之前为引导到独立页面 /Settings/Role） -->
                 <div class="tab-pane fade @(Model.ActiveTab == "roles" ? "show active" : "")" id="tab-roles">
                     @await Html.PartialAsync("_RolePanel", Model)
+                </div>
+
+                <!-- v2.13.92 字段权限子 Tab — SysFieldPermission CRUD（与角色权限同级并排） -->
+                <div class="tab-pane fade @(Model.ActiveTab == "fields" ? "show active" : "")" id="tab-fields">
+                    @await Html.PartialAsync("_FieldPermissionPanel", Model)
                 </div>
 
                 <!-- 备份与恢复 -->
@@ -977,6 +987,10 @@
                 const cb = document.getElementById('perm_' + pid);
                 if (cb) cb.checked = true;
             });
+            // v2.13.92 字段权限：根据当前角色权限集合设置「启用隐私字段保护」checkbox
+            const privacyPermId = @(Model.Permissions.FirstOrDefault(p => p.PermissionCode == "privacy:field:enable")?.Id ?? 0);
+            const privacyFieldEnabled = privacyPermId > 0 && permIds.includes(privacyPermId);
+            document.getElementById('perm_privacy_field').checked = privacyFieldEnabled;
             // v2.13.76 RBAC：挂载子→父级联（按钮任一勾选 → 上级菜单必须勾选；父菜单反选时若子全未选也可反选）
             wirePermMatrixCascade();
             new bootstrap.Modal(document.getElementById('permMatrixModal')).show();

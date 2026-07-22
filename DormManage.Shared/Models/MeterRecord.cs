@@ -139,9 +139,19 @@ public class MeterRecord : BaseEntity
 
     // ========== 抄表信息 ==========
 
-    /// <summary>抄表员 / PDA 操作员（NVARCHAR(64)）</summary>
+    /// <summary>抄表员 / PDA 操作员（NVARCHAR(64)，v2.13.89 改为冗余字段，真源为 OperatorUserId FK）</summary>
     [MaxLength(64)]
     public string Operator { get; set; } = string.Empty;
+
+    /// <summary>
+    /// 抄表员 UserId FK（v2.13.89 新增：物理真理源 — 关联账号主键）
+    /// 页面渲染通过 JOIN SysUser 取 DisplayName 显示
+    /// </summary>
+    public int? OperatorUserId { get; set; }
+
+    /// <summary>抄表员姓名（v2.13.89 JOIN 派生：SysUser.DisplayName）</summary>
+    [NotMapped]
+    public string? OperatorDisplayName { get; set; }
 
     /// <summary>设备序列号（NVARCHAR(64)，SQL NOT NULL）— v2.13.80 修正 DB 一致性</summary>
     [MaxLength(64)]

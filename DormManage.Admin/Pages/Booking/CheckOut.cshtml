@@ -68,7 +68,11 @@
                     <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
                     <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
                     <span class="emp-info-item"><span class="label">性别:</span><span class="value" id="empGender"></span></span>
-                    <span class="emp-info-item"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                    @* v2.13.92 字段权限：手机号条件渲染 *@
+                    @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                    {
+                        <span class="emp-info-item" id="empPhoneField"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                    }
                     <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
                     <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
                     <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>

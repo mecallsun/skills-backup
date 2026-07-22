@@ -189,7 +189,7 @@
                                             case 4: <span class="badge bg-danger">已取消</span>; break;
                                         }
                                     </td>
-                                    <td class="text-center"><small class="text-muted">@item.Registrar</small></td>
+                                    <td class="text-center"><small class="text-muted">@item.RegistrarDisplayName</small></td>
                                     <td class="text-center"><small class="text-muted">@item.RegistrationDate.ToString("yyyy-MM-dd HH:mm")</small></td>
                                     <td class="text-center">
                                         @* v2.13.88 RBAC 细化：按按钮功能拆分为 booking:edit / booking:checkout / booking:cancel，独立控制 *@
@@ -304,7 +304,11 @@
                                 <div class="row g-2 mt-2" id="coEmpInfo" style="display:none;">
                                     <div class="col-md-4"><label class="form-label small text-muted">工号</label><div id="coEmpCode" class="fw-bold"></div></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">姓名</label><div id="coEmpName" class="fw-bold"></div></div>
-                                    <div class="col-md-4"><label class="form-label small text-muted">手机号</label><div id="coEmpPhone"></div></div>
+                                    @* v2.13.92 字段权限：手机号字段条件渲染 *@
+                                    @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                                    {
+                                        <div class="col-md-4"><label class="form-label small text-muted">手机号</label><div id="coEmpPhone"></div></div>
+                                    }
                                     <div class="col-md-4"><label class="form-label small text-muted">部门</label><div id="coEmpDept"></div></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">员工类型</label><div id="coEmpType"></div></div>
                                     <div class="col-md-4"><label class="form-label small text-muted">考勤班次</label><div id="coEmpAtt"></div></div>
@@ -702,14 +706,17 @@ async function selectCoEmp(empId) {
 
     document.getElementById('coEmpCode').textContent = emp.employeeCode || '-';
     document.getElementById('coEmpName').textContent = emp.realName || '-';
-    document.getElementById('coEmpPhone').textContent = emp.phone || '-';
+    // v2.13.92 字段权限：手机号条件渲染
+    const phoneEl = document.getElementById('coEmpPhone');
+    if (phoneEl) phoneEl.textContent = emp.phone || '-';
     document.getElementById('coEmpDept').textContent = emp.department || '-';
     document.getElementById('coEmpInfo').style.display = 'block';
 
     document.getElementById('coValidationPanel').innerHTML =
         `<p class="mb-1"><i class="bi bi-check2 text-success"></i> 已选择：<strong>${emp.realName}</strong>（${emp.employeeCode}）</p>
          <p class="mb-1 small text-muted">部门：${emp.department || '-'}</p>
-         <p class="mb-0 small text-muted">手机：${emp.phone || '-'}</p>`;
+         <p class="mb-0 small text-muted">手机：${emp.phone || '-'}</p>
+         `;
 
     // 加载员工在宿记录
     try {

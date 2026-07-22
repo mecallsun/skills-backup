@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DormManage.Shared.Models;
+using DormManage.Shared.Services;
 
 namespace DormManage.Admin.Pages.Settings;
 
@@ -65,6 +66,16 @@ public partial class IndexModel
             .Select(g => new { RoleId = g.Key, Count = g.Count() }).ToListAsync();
         var rolePerms = await _db.SysRolePermissions.ToListAsync();
         var allPerms = await _db.SysPermissions.OrderBy(p => p.SortOrder).ToListAsync();
+
+        // v2.13.92 加载字段权限相关上下文（RolePrivacyFieldEnabled 供 permMatrixModal 渲染）
+        var privacyPermId = allPerms.FirstOrDefault(p => p.PermissionCode == "privacy:field:enable")?.Id;
+        var privacyRoleIds = privacyPermId.HasValue
+            ? rolePerms.Where(rp => rp.PermissionId == privacyPermId.Value).Select(rp => rp.RoleId).ToHashSet()
+            : new HashSet<int>();
+
+        // 默认从第一行的角色 ID 取（页面渲染时会随 permMatrixModal 打开时覆盖）
+        var firstRid = roles.FirstOrDefault()?.Id ?? 0;
+        RolePrivacyFieldEnabled = firstRid > 0 && privacyRoleIds.Contains(firstRid);
 
         Roles = roles.Select(r => new RoleListViewModel
         {
@@ -172,7 +183,7 @@ public partial class IndexModel
         return new JsonResult(new { success = true, message = $"角色 {role.RoleName} 已删除" });
     }
 
-    public async Task<IActionResult> OnPostRoleSavePermissionsAsync(int RoleId, int[] PermissionIds)
+    public async Task<IActionResult> OnPostRoleSavePermissionsAsync(int RoleId, int[] PermissionIds, bool PrivacyFieldEnabled = false)
     {
         var role = await _db.SysRoles.FindAsync(RoleId);
         if (role is null)
@@ -193,8 +204,26 @@ public partial class IndexModel
                 });
             }
         }
+
+        // v2.13.92 字段权限：单独处理 privacy:field:enable 权限（数据权限 PermissionType=3）
+        var privacyPerm = await _db.SysPermissions.FirstOrDefaultAsync(p => p.PermissionCode == "privacy:field:enable");
+        if (privacyPerm != null)
+        {
+            var hasPrivacy = await _db.SysRolePermissions.AnyAsync(rp => rp.RoleId == RoleId && rp.PermissionId == privacyPerm.Id);
+            if (PrivacyFieldEnabled && !hasPrivacy)
+            {
+                _db.SysRolePermissions.Add(new SysRolePermission
+                {
+                    RoleId = RoleId,
+                    PermissionId = privacyPerm.Id,
+                    CreatedAt = DateTime.Now
+                });
+            }
+        }
+
         await _db.SaveChangesAsync();
 
-        return new JsonResult(new { success = true, message = $"角色 {role.RoleName} 的权限已更新（{PermissionIds?.Length ?? 0} 项）" });
+        var msg = $"角色 {role.RoleName} 的权限已更新（{PermissionIds?.Length ?? 0} 项" + (PrivacyFieldEnabled ? " + 隐私字段保护" : "") + "）";
+        return new JsonResult(new { success = true, message = msg });
     }
 }

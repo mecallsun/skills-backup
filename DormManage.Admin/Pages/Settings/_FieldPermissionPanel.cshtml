@@ -1,0 +1,150 @@
+@model DormManage.Admin.Pages.Settings.IndexModel
+
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-shield-check"></i> 字段权限管理</strong>
+        <span class="badge bg-info text-dark" title="v2.13.92 新增：数据权限 PermissionType=3 落地">RBAC 四级权限</span>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info py-2 mb-3">
+            <i class="bi bi-info-circle"></i>
+            <strong>字段权限</strong>用于保护系统中的<strong>敏感/可识别个人信息（PII）</strong>字段。
+            在此勾选的字段，将被加入「隐私字段保护清单」；
+            当某个角色的<strong>「启用隐私字段保护」</strong>权限被勾选时，该角色在所有页面都看不到这些字段（整列不渲染）。
+        </div>
+
+        <div id="fieldPermissionFeedback" class="alert d-none mb-3"></div>
+
+        <form id="fieldPermissionForm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">勾选</th>
+                            <th>模块</th>
+                            <th>字段名</th>
+                            <th>字段键</th>
+                            <th width="100" class="text-center">敏感等级</th>
+                            <th width="80" class="text-center">排序</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var f in Model.FieldPermissions)
+                        {
+                            <tr>
+                                <td class="text-center">
+                                    <div class="form-check d-inline-block">
+                                        <input type="checkbox" class="form-check-input fp-cb"
+                                               name="FieldIds" value="@f.Id"
+                                               data-id="@f.Id"
+                                               @(f.IsActive ? "checked" : "")>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-secondary">@f.Module</span></td>
+                                <td><strong>@f.FieldName</strong></td>
+                                <td><code class="small text-muted">@f.FieldKey</code></td>
+                                <td class="text-center">
+                                    @if (f.SensitivityLevel == 1)
+                                    {
+                                        <span class="badge bg-danger">高</span>
+                                    }
+                                    else if (f.SensitivityLevel == 2)
+                                    {
+                                        <span class="badge bg-warning text-dark">中</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-info text-dark">低</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <input type="number" class="form-control form-control-sm text-center fp-sort"
+                                           name="SortOrder[@f.Id]" value="@f.SortOrder" min="0" max="999"
+                                           style="width: 70px;">
+                                </td>
+                                <td class="small text-muted">@f.Description</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(true)">
+                        <i class="bi bi-check-all"></i> 全选
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(false)">
+                        <i class="bi bi-x-lg"></i> 全不选
+                    </button>
+                </div>
+                <button type="submit" class="btn btn-primary" id="fieldPermissionSubmit">
+                    <i class="bi bi-check-lg"></i> 保存设置
+                </button>
+            </div>
+        </form>
+
+        <hr>
+        <div class="text-muted small">
+            <i class="bi bi-lightbulb"></i> <strong>使用方式：</strong>
+            勾选字段后，请到「<a href="#" onclick="setActiveTab('roles'); return false;">角色与权限</a>」标签页打开对应角色的权限矩阵，
+            勾选 <span class="badge bg-info text-dark">启用隐私字段保护</span> 即可让该角色看不到上述字段。
+        </div>
+    </div>
+</div>
+
+<script>
+    // v2.13.92 字段权限 JS
+    function selectAllFields(checked) {
+        document.querySelectorAll('.fp-cb').forEach(cb => cb.checked = checked);
+    }
+
+    function wireFieldPermissionPanel() {
+        const form = document.getElementById('fieldPermissionForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('fieldPermissionFeedback');
+            const updates = [];
+            document.querySelectorAll('.fp-cb').forEach(cb => {
+                const id = parseInt(cb.dataset.id, 10);
+                const isActive = cb.checked;
+                const sortInput = document.querySelector('.fp-sort[name="SortOrder[' + id + ']"]');
+                const sortOrder = sortInput ? parseInt(sortInput.value, 10) || 0 : 0;
+                updates.push({ id, isActive, sortOrder });
+            });
+
+            const btn = document.getElementById('fieldPermissionSubmit');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+
+            try {
+                const resp = await fetch('/api/v1/system/field-permissions', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    body: JSON.stringify({ updates: updates })
+                });
+                const j = await resp.json();
+                if (resp.ok && j.success) {
+                    showFeedback('fieldPermissionFeedback', 'success', '✓ 字段权限已保存！共更新 ' + updates.length + ' 个字段');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showFeedback('fieldPermissionFeedback', 'danger', '✗ 保存失败：' + (j?.message || 'HTTP ' + resp.status));
+                }
+            } catch (err) {
+                showFeedback('fieldPermissionFeedback', 'danger', '✗ 请求失败：' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', wireFieldPermissionPanel);
+</script>

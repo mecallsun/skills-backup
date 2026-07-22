@@ -106,6 +106,7 @@ builder.Services.AddScoped<ISysUserFilterCacheService, SysUserFilterCacheService
 builder.Services.AddScoped<ISysUserSelfService, SysUserSelfService>();  // v2.13.26: 个人中心与账号安全服务
 builder.Services.AddScoped<IOperationLogService, OperationLogService>();  // v2.13.29: 统一操作日志
 builder.Services.AddScoped<IPermissionService, PermissionService>();  // v2.13.76 RBAC 三级权限控制
+builder.Services.AddScoped<ISysFieldPermissionService, SysFieldPermissionService>();  // v2.13.92 字段权限服务
 builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 
 // 注册 v2.11.24 数据清洗后台服务（启动时一次性 FK 归一）

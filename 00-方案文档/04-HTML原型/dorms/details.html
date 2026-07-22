@@ -82,7 +82,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>工号</th><th>姓名</th><th class="text-center">性别</th>  <!-- v2.13.86 新增 -->
-                                    <th>部门</th><th>员工类型</th><th>考勤班次</th>
+                                    <th>部门</th><th>班组</th><th>员工类型</th><th>考勤班次</th>  <!-- v2.13.91 新增：班组 -->
                                     <th>床号</th>
                                     <th>入住日期</th><th>已入住</th><th width="200">操作</th>
                                 </tr>
@@ -191,6 +191,34 @@
                 if (!code && emp.attendanceType) code = emp.attendanceType;
                 return code ? (ATTENDANCE_BADGE[code] || 'bg-secondary') : 'bg-secondary';
             };
+            // v2.13.91 新增：班组 - FK 关联引用 SysEmployee.TeamId → Team
+            const teamName = (emp) => {
+                if (!emp) return '-';
+                if (emp.teamId != null && typeof TEAMS !== 'undefined') {
+                    const t = TEAMS.find(x => x.id === emp.teamId);
+                    return t ? t.name : '-';
+                }
+                if (emp.team) return emp.team;
+                return '-';
+            };
+            const teamBadge = (emp) => {
+                if (!emp) return 'bg-secondary';
+                let code = null;
+                if (emp.teamId != null && typeof TEAMS !== 'undefined') {
+                    const t = TEAMS.find(x => x.id === emp.teamId);
+                    if (t) code = t.code;
+                }
+                if (!code && emp.team) code = emp.team;
+                if (!code) return 'bg-secondary';
+                const c = code.toUpperCase();
+                if (c.startsWith('A')) return 'bg-primary';
+                if (c.startsWith('B')) return 'bg-success';
+                if (c.startsWith('C')) return 'bg-info text-dark';
+                if (c.startsWith('D')) return 'bg-warning text-dark';
+                if (c.startsWith('E')) return 'bg-danger';
+                if (c.startsWith('F')) return 'bg-dark';
+                return 'bg-secondary';
+            };
             tbody.innerHTML = active.map(r => {
                 const emp = findEmployee(r.employeeId);
                 const days = Math.floor((new Date() - new Date(r.checkInDate)) / (1000*60*60*24));
@@ -200,6 +228,8 @@
                     <td>${emp.realName}</td>
                     <td class="text-center">${emp.gender === 1 ? '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>' : emp.gender === 2 ? '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>' : '<span class="badge bg-secondary">-</span>'}</td>  <!-- v2.13.86 -->
                     <td>${emp.department}</td>
+                    <!-- v2.13.91 新增：班组 - FK 关联引用 SysEmployee.TeamId → Team.Name -->
+                    <td>${teamName(emp) !== '-' ? '<span class="badge ' + teamBadge(emp) + '" title="来源：SysEmployee.TeamId → Team.Name">' + teamName(emp) + '</span>' : '<span class="text-muted">-</span>'}</td>
                     <!-- v2.11.7：员工类型 - FK 关联引用 SysEmployee → EmployeeType (含 fallback) -->
                     <td><span class="badge ${empTypeBadge(emp)}" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">${empTypeNameByFk(emp)}</span></td>
                     <td><span class="badge ${attendanceBadge(emp)}">${attendanceLabel(emp)}</span></td>

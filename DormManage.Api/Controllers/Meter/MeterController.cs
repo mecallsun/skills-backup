@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using DormManage.Shared.Data;
 using DormManage.Shared.Models;
+using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace DormManage.Api.Controllers.Meter;
@@ -42,39 +43,47 @@ public class MeterController : ControllerBase
             query = query.Where(r => r.Status == status.Value);
 
         var total = await query.CountAsync();
-        var items = await query
+        // v2.13.89：JOIN SysUser 拿抄表员 DisplayName（页面渲染）
+        var itemsWithUser = await query
             .OrderByDescending(r => r.ReadMonth)
             .ThenBy(r => r.DormCode)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
+            .GroupJoin(_db.SysUsers.AsNoTracking(),
+                r => r.OperatorUserId,
+                u => u.Id,
+                (r, userGroup) => new { Record = r, User = userGroup.FirstOrDefault() })
             .ToListAsync();
 
-        var dtos = items.Select(r => new MeterRecordDto
+        var dtos = itemsWithUser.Select(x => new MeterRecordDto
         {
-            Id = r.Id,
-            DormId = r.DormId,
-            DormCode = r.DormCode,
-            ReadMonth = r.ReadMonth,
-            ColdMeter = r.ColdMeter,
-            HotMeter = r.HotMeter,
-            ElectricMeter = r.ElectricMeter,
-            ColdUsage = r.ColdUsage,
-            HotUsage = r.HotUsage,
-            ElectricUsage = r.ElectricUsage,
-            PreviousColdReading = r.PreviousColdReading,
-            PreviousHotReading = r.PreviousHotReading,
-            PreviousElectricReading = r.PreviousElectricReading,
-            ReadDate = r.ReadDate,
-            ReadMode = r.ReadMode,
-            CorrectionReason = r.CorrectionReason,
-            CorrectedBy = r.CorrectedBy,
-            CorrectedAt = r.CorrectedAt,
-            ConfirmedAt = r.ConfirmedAt,
-            Operator = r.Operator,
-            Status = r.Status,
-            StatusName = r?.Status.ToString() ?? "Unknown",
-            Remark = r.Remark,
-            ServerCreatedAt = r.ServerCreatedAt
+            Id = x.Record.Id,
+            DormId = x.Record.DormId,
+            DormCode = x.Record.DormCode,
+            ReadMonth = x.Record.ReadMonth,
+            ColdMeter = x.Record.ColdMeter,
+            HotMeter = x.Record.HotMeter,
+            ElectricMeter = x.Record.ElectricMeter,
+            ColdUsage = x.Record.ColdUsage,
+            HotUsage = x.Record.HotUsage,
+            ElectricUsage = x.Record.ElectricUsage,
+            PreviousColdReading = x.Record.PreviousColdReading,
+            PreviousHotReading = x.Record.PreviousHotReading,
+            PreviousElectricReading = x.Record.PreviousElectricReading,
+            ReadDate = x.Record.ReadDate,
+            ReadMode = x.Record.ReadMode,
+            CorrectionReason = x.Record.CorrectionReason,
+            CorrectedBy = x.Record.CorrectedBy,
+            CorrectedAt = x.Record.CorrectedAt,
+            ConfirmedAt = x.Record.ConfirmedAt,
+            Operator = x.Record.Operator,
+            OperatorUserId = x.Record.OperatorUserId,
+            // v2.13.89：JOIN DisplayName 优先显示，回退到冗余 Operator 字符串
+            OperatorDisplayName = x.User != null ? x.User.DisplayName : x.Record.Operator,
+            Status = x.Record.Status,
+            StatusName = x.Record.Status.ToString() ?? "Unknown",
+            Remark = x.Record.Remark,
+            ServerCreatedAt = x.Record.ServerCreatedAt
         }).ToList();
 
         return ApiResponse<PagedResult<MeterRecordDto>>.Ok(new PagedResult<MeterRecordDto>
@@ -95,6 +104,11 @@ public class MeterController : ControllerBase
         var record = await _db.MeterRecords.FindAsync(id);
         if (record == null)
             return ApiResponse<MeterRecordDto>.Fail("NOT_FOUND", "记录不存在");
+
+        // v2.13.89：JOIN SysUser 拿抄表员 DisplayName
+        var operatorUser = record.OperatorUserId.HasValue
+            ? await _db.SysUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == record.OperatorUserId.Value)
+            : null;
 
         var dto = new MeterRecordDto
         {
@@ -118,8 +132,10 @@ public class MeterController : ControllerBase
             CorrectedAt = record.CorrectedAt,
             ConfirmedAt = record.ConfirmedAt,
             Operator = record.Operator,
+            OperatorUserId = record.OperatorUserId,
+            OperatorDisplayName = operatorUser != null ? operatorUser.DisplayName : record.Operator,
             Status = record.Status,
-            StatusName = record?.Status.ToString() ?? "Unknown",
+            StatusName = record.Status.ToString() ?? "Unknown",
             Remark = record.Remark,
             ServerCreatedAt = record.ServerCreatedAt
         };
@@ -220,6 +236,8 @@ public class MeterController : ControllerBase
                 PreviousHotReading = prevHot,
                 PreviousElectricReading = prevElec,
                 Operator = request.Operator ?? "管理员",
+                // v2.13.89：抄表员 UserId FK（用户需求：表存 FK，页面显示姓名）
+                OperatorUserId = HttpContext.GetCurrentUserId() > 0 ? HttpContext.GetCurrentUserId() : null,
                 // v2.13.80 修复：SQL Server ClientRecordId + DeviceSn 都是 NOT NULL，但 C# 模型为 string?
                 // 手动补录/PDA 上传时必须赋值，否则 INSERT 失败 "不能将值 NULL 插入列 ClientRecordId"
                 // 手动补录场景：DeviceSn="" + ClientRecordId="MANUAL-{Guid}"
@@ -607,6 +625,9 @@ public class MeterRecordDto
     public string? CorrectedBy { get; set; }
     public DateTime? CorrectedAt { get; set; }
     public DateTime? ConfirmedAt { get; set; }
+    // v2.13.89：抄表员 UserId FK + DisplayName（JOIN 派生）
+    public int? OperatorUserId { get; set; }
+    public string? OperatorDisplayName { get; set; }
 
     public string Operator { get; set; } = "";
     public byte Status { get; set; }

@@ -23,42 +23,42 @@ public interface IBookingService
     /// <summary>
     /// 办理入住
     /// </summary>
-    Task<ApiResponse<DormBooking>> CheckInAsync(BookingCheckInRequest request, string registrar);
+    Task<ApiResponse<DormBooking>> CheckInAsync(BookingCheckInRequest request, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 办理退房
     /// </summary>
-    Task<ApiResponse<DormBooking>> CheckOutAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar);
+    Task<ApiResponse<DormBooking>> CheckOutAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 快速确认入住（v2.11.8）：Type=1 入住 && Status=1 预约 → 即时变更为 Status=2 在宿
     /// v2.11.18 修订：同步 SysEmployee.DormCode
     /// </summary>
-    Task<ApiResponse<DormBooking>> ConfirmCheckInAsync(int id, string registrar);
+    Task<ApiResponse<DormBooking>> ConfirmCheckInAsync(int id, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 撤销退房（v2.11.10）：Type=2 退房 && Status=3 已退房 && BookingDate=今天 → 变更为 Status=2 在宿
     /// v2.11.18 修订：同步 SysEmployee.DormCode
     /// </summary>
-    Task<ApiResponse<DormBooking>> UndoCheckOutAsync(int id, string registrar);
+    Task<ApiResponse<DormBooking>> UndoCheckOutAsync(int id, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 撤销预约（v2.11.11）：Status=1 预约 → 即时变更为 Status=4 已取消
     /// v2.11.18 修订：未生效预约，不修改 SysEmployee.DormCode
     /// </summary>
-    Task<ApiResponse<DormBooking>> CancelReservationAsync(int id, string registrar);
+    Task<ApiResponse<DormBooking>> CancelReservationAsync(int id, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 撤销在宿（v2.11.17）：Type=1 入住 && Status=2 在宿 && BookingDate=今天 → 变更为 Status=4 已取消
     /// v2.11.18 修订：同时清空 SysEmployee.DormCode
     /// </summary>
-    Task<ApiResponse<DormBooking>> CancelTodayAsync(int id, string registrar);
+    Task<ApiResponse<DormBooking>> CancelTodayAsync(int id, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 创建退房记录（v2.11.17）：Type=1 入住 && Status=2 在宿 → 创建 Type=2 退房新记录
     /// v2.11.18 修订：同时清空 SysEmployee.DormCode
     /// </summary>
-    Task<ApiResponse<DormBooking>> ConfirmCheckOutCreateAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar);
+    Task<ApiResponse<DormBooking>> ConfirmCheckOutCreateAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// 更新记录
@@ -89,7 +89,7 @@ public interface IBookingService
     /// 获取员工的在宿记录（用于退房选择）
     /// </summary>
     Task<List<DormBooking>> GetStayingRecordsAsync(int employeeId);
-    Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar);
+    Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar, int? registrarUserId = null);
 
     /// <summary>
     /// v2.13.32-hotfix BUG：一次性数据修复 — 把 DormBooking.EmployeeName 与 SysEmployee.RealName 不一致的记录
@@ -190,6 +190,44 @@ public class BookingService : IBookingService
         _db = db;
     }
 
+    /// <summary>
+    /// v2.13.89：填充 DormBooking 的 DisplayName 派生字段（JOIN SysUser）
+    /// — 单条返回路径使用（列表路径已在 GetListAsync 内 JOIN）
+    /// — 性能：1 次 IN 查询拉取所有 FK → DisplayName，避免 N+1
+    /// </summary>
+    private async Task EnrichWithDisplayNameAsync(params DormBooking[] bookings)
+    {
+        var ids = bookings
+            .SelectMany(b => new int?[] { b.RegistrarUserId, b.CheckInOperatorUserId, b.CheckOutOperatorUserId })
+            .Where(id => id.HasValue && id.Value > 0)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+        if (ids.Count == 0) return;
+
+        var users = await _db.SysUsers.AsNoTracking()
+            .Where(u => ids.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.DisplayName);
+
+        foreach (var b in bookings)
+        {
+            if (b.RegistrarUserId.HasValue && users.TryGetValue(b.RegistrarUserId.Value, out var rName))
+                b.RegistrarDisplayName = rName;
+            else if (!string.IsNullOrEmpty(b.Registrar))
+                b.RegistrarDisplayName = b.Registrar;
+
+            if (b.CheckInOperatorUserId.HasValue && users.TryGetValue(b.CheckInOperatorUserId.Value, out var ciName))
+                b.CheckInOperatorDisplayName = ciName;
+            else if (!string.IsNullOrEmpty(b.CheckInOperator))
+                b.CheckInOperatorDisplayName = b.CheckInOperator;
+
+            if (b.CheckOutOperatorUserId.HasValue && users.TryGetValue(b.CheckOutOperatorUserId.Value, out var coName))
+                b.CheckOutOperatorDisplayName = coName;
+            else if (!string.IsNullOrEmpty(b.CheckOutOperator))
+                b.CheckOutOperatorDisplayName = b.CheckOutOperator;
+        }
+    }
+
     /// <inheritdoc/>
     public async Task<PagedResult<DormBooking>> GetListAsync(string? keyword, string? department, string? dormCode, int? type, int? status, DateOnly? dateFrom, DateOnly? dateTo, int page, int pageSize)
     {
@@ -223,10 +261,33 @@ public class BookingService : IBookingService
                 Gender = (int?)(emp != null ? emp.Gender : 0) ?? 0
             };
 
+        // v2.13.89：JOIN SysUser 取登记人/入住/退房操作员 DisplayName（页面渲染）
+        // 物理真理源：RegistrarUserId/CheckInOperatorUserId/CheckOutOperatorUserId FK
+        var userJoin =
+            from q in query
+            join rUser in _db.SysUsers.AsNoTracking() on q.Booking.RegistrarUserId equals rUser.Id into rGroup
+            from rUser in rGroup.DefaultIfEmpty()
+            join ciUser in _db.SysUsers.AsNoTracking() on q.Booking.CheckInOperatorUserId equals ciUser.Id into ciGroup
+            from ciUser in ciGroup.DefaultIfEmpty()
+            join coUser in _db.SysUsers.AsNoTracking() on q.Booking.CheckOutOperatorUserId equals coUser.Id into coGroup
+            from coUser in coGroup.DefaultIfEmpty()
+            select new
+            {
+                q.Booking,
+                q.AttendanceTypeId,
+                q.RealName,
+                q.EmployeeCode,
+                q.Department,
+                q.Gender,
+                RegistrarUser = rUser,
+                CheckInUser = ciUser,
+                CheckOutUser = coUser
+            };
+
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             keyword = keyword.ToLower();
-            query = query.Where(x =>
+            userJoin = userJoin.Where(x =>
                 (x.EmployeeCode ?? "").ToLower().Contains(keyword) ||
                 (x.Booking.EmployeeCode ?? "").ToLower().Contains(keyword) ||
                 (x.Booking.EmployeeName ?? "").ToLower().Contains(keyword) ||
@@ -238,7 +299,7 @@ public class BookingService : IBookingService
         {
             // v2.13.66 BUG：部门筛选使用 emp.Department 优先（与覆盖策略一致），回退到 Booking.Department
             var dept = department.Trim().ToLower();
-            query = query.Where(x =>
+            userJoin = userJoin.Where(x =>
                 (x.Department != null && x.Department.ToLower().Contains(dept)) ||
                 (x.Booking.Department != null && x.Booking.Department.ToLower().Contains(dept)));
         }
@@ -246,23 +307,23 @@ public class BookingService : IBookingService
         if (!string.IsNullOrWhiteSpace(dormCode))
         {
             var dc = dormCode.Trim().ToLower();
-            query = query.Where(x => (x.Booking.DormCode ?? "").ToLower().Contains(dc));
+            userJoin = userJoin.Where(x => (x.Booking.DormCode ?? "").ToLower().Contains(dc));
         }
 
         if (type.HasValue)
-            query = query.Where(x => x.Booking.Type == type.Value);
+            userJoin = userJoin.Where(x => x.Booking.Type == type.Value);
 
         if (status.HasValue)
-            query = query.Where(x => x.Booking.Status == status.Value);
+            userJoin = userJoin.Where(x => x.Booking.Status == status.Value);
 
         if (dateFrom.HasValue)
-            query = query.Where(x => x.Booking.BookingDate >= dateFrom.Value);
+            userJoin = userJoin.Where(x => x.Booking.BookingDate >= dateFrom.Value);
 
         if (dateTo.HasValue)
-            query = query.Where(x => x.Booking.BookingDate <= dateTo.Value);
+            userJoin = userJoin.Where(x => x.Booking.BookingDate <= dateTo.Value);
 
-        var total = await query.CountAsync();
-        var items = await query
+        var total = await userJoin.CountAsync();
+        var rawItems = await userJoin
             .OrderByDescending(x => x.Booking.BookingDate)
             .ThenByDescending(x => x.Booking.Id)
             .Skip((page - 1) * pageSize)
@@ -271,65 +332,80 @@ public class BookingService : IBookingService
 
         // v2.13.59 物化修复：使用 BookingDto 替代直接返回 DormBooking 实体，
         // 避免 EF Core 物化 [Required] string 字段为 NULL 时抛 SqlNullValueException。
-        var dtos = items.Select(x => new BookingListDto
+        // v2.13.89：投影时同时保留 DormBooking 引用（Entity），用于把 DisplayName 回填到实体
+        var items = rawItems.Select(x => new
         {
-            Id = x.Booking.Id,
-            EmployeeId = x.Booking.EmployeeId,
-            EmployeeCode = x.EmployeeCode ?? "",
-            EmployeeName = x.RealName ?? "",
-            Gender = x.Gender,
-            Phone = x.Booking.Phone,
-            Department = x.Department ?? x.Booking.Department,
-            AttendanceTypeId = x.AttendanceTypeId ?? x.Booking.AttendanceTypeId,
-            BedNo = x.Booking.BedNo,
-            MoveFromDormCode = x.Booking.MoveFromDormCode,
-            ActualCheckInDate = x.Booking.ActualCheckInDate,
-            ActualCheckOutDate = x.Booking.ActualCheckOutDate,
-            DormCode = x.Booking.DormCode ?? "",
-            Type = x.Booking.Type,
-            BookingDate = x.Booking.BookingDate,
-            Status = x.Booking.Status,
-            Reason = x.Booking.Reason,
-            CancellationReason = x.Booking.CancellationReason,
-            Remark = x.Booking.Remark,
-            RegistrationDate = x.Booking.RegistrationDate,
-            Registrar = x.Booking.Registrar ?? "",
-            CheckInOperator = x.Booking.CheckInOperator,
-            CheckOutOperator = x.Booking.CheckOutOperator,
-            IsActive = x.Booking.IsActive,
-            CreatedAt = x.Booking.CreatedAt,
-            UpdatedAt = x.Booking.UpdatedAt
+            Dto = new BookingListDto
+            {
+                Id = x.Booking.Id,
+                EmployeeId = x.Booking.EmployeeId,
+                EmployeeCode = x.EmployeeCode ?? "",
+                EmployeeName = x.RealName ?? "",
+                Gender = x.Gender,
+                Phone = x.Booking.Phone,
+                Department = x.Department ?? x.Booking.Department,
+                AttendanceTypeId = x.AttendanceTypeId ?? x.Booking.AttendanceTypeId,
+                BedNo = x.Booking.BedNo,
+                MoveFromDormCode = x.Booking.MoveFromDormCode,
+                ActualCheckInDate = x.Booking.ActualCheckInDate,
+                ActualCheckOutDate = x.Booking.ActualCheckOutDate,
+                DormCode = x.Booking.DormCode ?? "",
+                Type = x.Booking.Type,
+                BookingDate = x.Booking.BookingDate,
+                Status = x.Booking.Status,
+                Reason = x.Booking.Reason,
+                CancellationReason = x.Booking.CancellationReason,
+                Remark = x.Booking.Remark,
+                RegistrationDate = x.Booking.RegistrationDate,
+                Registrar = x.Booking.Registrar ?? "",
+                // v2.13.89：派生 DisplayName（JOIN SysUser）
+                RegistrarDisplayName = x.RegistrarUser != null ? x.RegistrarUser.DisplayName : (x.Booking.Registrar ?? ""),
+                CheckInOperator = x.Booking.CheckInOperator,
+                CheckInOperatorDisplayName = x.CheckInUser != null ? x.CheckInUser.DisplayName : (x.Booking.CheckInOperator ?? ""),
+                CheckOutOperator = x.Booking.CheckOutOperator,
+                CheckOutOperatorDisplayName = x.CheckOutUser != null ? x.CheckOutUser.DisplayName : (x.Booking.CheckOutOperator ?? ""),
+                IsActive = x.Booking.IsActive,
+                CreatedAt = x.Booking.CreatedAt,
+                UpdatedAt = x.Booking.UpdatedAt
+            },
+            // v2.13.89：保留 DormBooking 引用，用于把 DisplayName 回填到实体（前端 Index 表格直接读 DormBooking）
+            Entity = x.Booking
         }).ToList();
 
         // v2.13.32-hotfix / v2.13.47 物化阶段：覆盖 AttendanceTypeId / RealName / EmployeeCode
         // v2.13.66 BUG 修复扩展：增加覆盖 Department（人员清单为唯一真源）
         // v2.13.59 P0 BUG 修复：仅对非空字符串赋值（避免 NULL 覆盖回 null，符合 .AsNoTracking() 语义）
+        // v2.13.89：同时把 DisplayName 从 BookingListDto 同步到 Entity（前端 Index 表格直接读 DormBooking）
         foreach (var item in items)
         {
-            if (item.AttendanceTypeId.HasValue)
+            if (item.Dto.AttendanceTypeId.HasValue)
             {
-                item.Booking.AttendanceTypeId = item.AttendanceTypeId;
+                item.Entity.AttendanceTypeId = item.Dto.AttendanceTypeId;
             }
             // v2.13.32-hotfix BUG：覆盖显示用姓名（仅 RAM，DB 不写）
-            if (!string.IsNullOrEmpty(item.RealName))
+            if (!string.IsNullOrEmpty(item.Dto.EmployeeName))
             {
-                item.Booking.EmployeeName = item.RealName;
+                item.Entity.EmployeeName = item.Dto.EmployeeName;
             }
             // v2.13.47 BUG：覆盖显示用工号（仅 RAM，DB 不写；与姓名覆盖策略一致 — 人员清单为唯一真源）
-            if (!string.IsNullOrEmpty(item.EmployeeCode))
+            if (!string.IsNullOrEmpty(item.Dto.EmployeeCode))
             {
-                item.Booking.EmployeeCode = item.EmployeeCode;
+                item.Entity.EmployeeCode = item.Dto.EmployeeCode;
             }
             // v2.13.66 BUG：覆盖显示用部门（仅 RAM，DB 不写；人员清单为唯一真源）
-            if (!string.IsNullOrEmpty(item.Department))
+            if (!string.IsNullOrEmpty(item.Dto.Department))
             {
-                item.Booking.Department = item.Department;
+                item.Entity.Department = item.Dto.Department;
             }
+            // v2.13.89：覆盖显示用 DisplayName（仅 RAM，DB 不写；与上述字段策略一致 — 真源是 SysUser 表）
+            item.Entity.RegistrarDisplayName = item.Dto.RegistrarDisplayName;
+            item.Entity.CheckInOperatorDisplayName = item.Dto.CheckInOperatorDisplayName;
+            item.Entity.CheckOutOperatorDisplayName = item.Dto.CheckOutOperatorDisplayName;
         }
 
         return new PagedResult<DormBooking>
         {
-            Items = items.Select(x => x.Booking).ToList(),
+            Items = items.Select(x => x.Entity).ToList(),
             TotalCount = total,
             PageIndex = page,
             PageSize = pageSize
@@ -366,8 +442,12 @@ public class BookingService : IBookingService
         public string? Remark { get; set; }
         public DateTime RegistrationDate { get; set; }
         public string Registrar { get; set; } = "";
+        // v2.13.89：JOIN SysUser.DisplayName 派生（页面渲染优先显示姓名）
+        public string RegistrarDisplayName { get; set; } = "";
         public string? CheckInOperator { get; set; }
+        public string CheckInOperatorDisplayName { get; set; } = "";
         public string? CheckOutOperator { get; set; }
+        public string CheckOutOperatorDisplayName { get; set; } = "";
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
@@ -453,7 +533,13 @@ public class BookingService : IBookingService
     /// <inheritdoc/>
     public async Task<DormBooking?> GetByIdAsync(int id)
     {
-        return await _db.DormBookings.FindAsync(id);
+        var booking = await _db.DormBookings.FindAsync(id);
+        if (booking != null)
+        {
+            // v2.13.89：详情端点也填充 DisplayName（JOIN SysUser）
+            await EnrichWithDisplayNameAsync(booking);
+        }
+        return booking;
     }
 
     /// <summary>
@@ -477,7 +563,7 @@ public class BookingService : IBookingService
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> CheckInAsync(BookingCheckInRequest request, string registrar)
+    public async Task<ApiResponse<DormBooking>> CheckInAsync(BookingCheckInRequest request, string registrar, int? registrarUserId = null)
     {
         return await InSerializableTxAsync(async () =>
         {
@@ -635,9 +721,11 @@ public class BookingService : IBookingService
             BedNo = assignedBedNo,
             ActualCheckInDate = request.BookingDate,
             CheckInOperator = registrar,
+            CheckInOperatorUserId = registrarUserId,
             AttendanceTypeId = employee.AttendanceTypeId,
             RegistrationDate = DateTime.Now,
             Registrar = registrar,
+            RegistrarUserId = registrarUserId,
             CreatedAt = DateTime.Now
         };
 
@@ -648,12 +736,13 @@ public class BookingService : IBookingService
 
         await _db.SaveChangesAsync();
 
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
         });
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> CheckOutAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar)
+    public async Task<ApiResponse<DormBooking>> CheckOutAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar, int? registrarUserId = null)
     {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
@@ -685,6 +774,7 @@ public class BookingService : IBookingService
         // v2.13.24 P75：退房时记录实际退房日期和操作人
         booking.ActualCheckOutDate = checkOutDate;
         booking.CheckOutOperator = registrar;
+        booking.CheckOutOperatorUserId = registrarUserId;
 
         _db.DormBookings.Update(booking);
 
@@ -694,11 +784,12 @@ public class BookingService : IBookingService
 
         await _db.SaveChangesAsync();
 
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> ConfirmCheckInAsync(int id, string registrar)
+    public async Task<ApiResponse<DormBooking>> ConfirmCheckInAsync(int id, string registrar, int? registrarUserId = null)
     {
         return await InSerializableTxAsync(async () =>
         {
@@ -724,11 +815,13 @@ public class BookingService : IBookingService
 
         booking.Status = BookingStatus.Staying;
         booking.Registrar = registrar;
+        booking.RegistrarUserId = registrarUserId;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
         // v2.13.24 P75：快速确认入住时记录实际入住日期和操作人
         booking.ActualCheckInDate = booking.BookingDate;
         booking.CheckInOperator = registrar;
+        booking.CheckInOperatorUserId = registrarUserId;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：同步 PERSONNEL.dormCode = 该记录的 dormCode
@@ -736,12 +829,13 @@ public class BookingService : IBookingService
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "快速确认入住", booking.BedNo);
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
         });
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> UndoCheckOutAsync(int id, string registrar)
+    public async Task<ApiResponse<DormBooking>> UndoCheckOutAsync(int id, string registrar, int? registrarUserId = null)
     {
         return await InSerializableTxAsync(async () =>
         {
@@ -767,6 +861,7 @@ public class BookingService : IBookingService
 
         booking.Status = BookingStatus.Staying;
         booking.Registrar = registrar;
+        booking.RegistrarUserId = registrarUserId;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
         _db.DormBookings.Update(booking);
@@ -776,12 +871,13 @@ public class BookingService : IBookingService
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "撤销退房", booking.BedNo);
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
         });
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> CancelReservationAsync(int id, string registrar)
+    public async Task<ApiResponse<DormBooking>> CancelReservationAsync(int id, string registrar, int? registrarUserId = null)
     {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
@@ -792,21 +888,24 @@ public class BookingService : IBookingService
 
         booking.Status = BookingStatus.Cancelled;
         booking.Registrar = registrar;
+        booking.RegistrarUserId = registrarUserId;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
         // v2.13.24 P75：取消时记录操作人
         booking.CheckInOperator = registrar;  // 视为撤销该次预约
+        booking.CheckInOperatorUserId = registrarUserId;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销预约（未生效），不修改 PERSONNEL.dormCode
         // 因为预约从未将 PERSONNEL.dormCode 设置为该记录 dormCode
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> CancelTodayAsync(int id, string registrar)
+    public async Task<ApiResponse<DormBooking>> CancelTodayAsync(int id, string registrar, int? registrarUserId = null)
     {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
@@ -820,10 +919,12 @@ public class BookingService : IBookingService
 
         booking.Status = BookingStatus.Cancelled;
         booking.Registrar = registrar;
+        booking.RegistrarUserId = registrarUserId;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
         // v2.13.24 P75：撤销在宿时记录
         booking.CheckInOperator = registrar;
+        booking.CheckInOperatorUserId = registrarUserId;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：撤销在宿 → 清空 PERSONNEL.dormCode
@@ -831,11 +932,12 @@ public class BookingService : IBookingService
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "撤销在宿", booking.BedNo);
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> ConfirmCheckOutCreateAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar)
+    public async Task<ApiResponse<DormBooking>> ConfirmCheckOutCreateAsync(int id, DateOnly checkOutDate, string? reason, string? remark, string registrar, int? registrarUserId = null)
     {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
@@ -863,10 +965,13 @@ public class BookingService : IBookingService
             ActualCheckInDate = booking.ActualCheckInDate ?? booking.BookingDate,
             ActualCheckOutDate = checkOutDate,
             CheckInOperator = booking.CheckInOperator,
+            CheckInOperatorUserId = booking.CheckInOperatorUserId,
             CheckOutOperator = registrar,
+            CheckOutOperatorUserId = registrarUserId,
             AttendanceTypeId = booking.AttendanceTypeId,
             RegistrationDate = DateTime.Now,
             Registrar = registrar,
+            RegistrarUserId = registrarUserId,
             CreatedAt = DateTime.Now
         };
         _db.DormBookings.Add(checkOutBooking);
@@ -876,6 +981,7 @@ public class BookingService : IBookingService
         booking.UpdatedAt = DateTime.Now;
         booking.ActualCheckOutDate = checkOutDate;
         booking.CheckOutOperator = registrar;
+        booking.CheckOutOperatorUserId = registrarUserId;
         _db.DormBookings.Update(booking);
 
         // v2.11.18：创建退房记录 → 清空 PERSONNEL.dormCode
@@ -883,6 +989,7 @@ public class BookingService : IBookingService
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "创建退房记录", booking.BedNo);
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(checkOutBooking);
         return ApiResponse<DormBooking>.Ok(checkOutBooking);
     }
 
@@ -969,6 +1076,7 @@ public class BookingService : IBookingService
         _db.DormBookings.Update(booking);
         await _db.SaveChangesAsync();
 
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
     }
 
@@ -1166,7 +1274,7 @@ public class BookingService : IBookingService
     }
 
     /// <inheritdoc/>
-    public async Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar)
+    public async Task<ApiResponse<DormBooking>> ConfirmReservedCheckOutAsync(int id, string registrar, int? registrarUserId = null)
     {
         var booking = await _db.DormBookings.FindAsync(id);
         if (booking == null)
@@ -1193,6 +1301,7 @@ public class BookingService : IBookingService
         // 更新预约记录为已退房
         booking.Status = BookingStatus.CheckedOut;
         booking.Registrar = registrar;
+        booking.RegistrarUserId = registrarUserId;
         booking.RegistrationDate = DateTime.Now;
         booking.UpdatedAt = DateTime.Now;
         _db.DormBookings.Update(booking);
@@ -1201,6 +1310,7 @@ public class BookingService : IBookingService
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "快速确认退房", booking.BedNo);
 
         await _db.SaveChangesAsync();
+        await EnrichWithDisplayNameAsync(booking);
         return ApiResponse<DormBooking>.Ok(booking);
     }
 }

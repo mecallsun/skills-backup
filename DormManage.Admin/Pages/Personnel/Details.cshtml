@@ -84,10 +84,14 @@
                                     }
                                 </td>
                             </tr>
-                            <tr>
-                                <th width="60" class="text-muted">手机号</th>
-                                <td>@(Model.Employee.Phone ?? "-")</td>
-                            </tr>
+                            @* v2.13.92 字段权限：手机号行条件渲染 *@
+                            @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                            {
+                                <tr>
+                                    <th width="60" class="text-muted">手机号</th>
+                                    <td>@(Model.Employee.Phone ?? "-")</td>
+                                </tr>
+                            }
                             <tr>
                                 <th width="60" class="text-muted">部门</th>
                                 <td>@(string.IsNullOrEmpty(Model.Employee.Department) ? "-" : Model.Employee.Department)</td>

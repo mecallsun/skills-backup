@@ -64,6 +64,12 @@ public class DetailModel : PageModel
             HotMeter = record.HotMeter,
             ElectricMeter = record.ElectricMeter,
             Operator = record.Operator,
+            OperatorUserId = record.OperatorUserId,
+            // v2.13.89：JOIN SysUser 取 DisplayName，fallback 到 Operator 字符串
+            OperatorDisplayName = record.OperatorUserId.HasValue
+                ? await _db.SysUsers.Where(u => u.Id == record.OperatorUserId.Value)
+                    .Select(u => u.DisplayName).FirstOrDefaultAsync() ?? record.Operator
+                : record.Operator,
             Status = record.Status,
             StatusName = record.GetStatusName(),
             Remark = record.Remark,
@@ -133,6 +139,9 @@ public class MeterRecordDetailDto
     public decimal HotMeter { get; set; }
     public decimal ElectricMeter { get; set; }
     public string Operator { get; set; } = "";
+    // v2.13.89：抄表员 UserId FK + DisplayName（JOIN 派生）
+    public int? OperatorUserId { get; set; }
+    public string? OperatorDisplayName { get; set; }
     public byte Status { get; set; }
     public string StatusName { get; set; } = "";
     public string? Remark { get; set; }

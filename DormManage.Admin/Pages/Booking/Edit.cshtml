@@ -96,10 +96,14 @@ else
                     <label class="form-label small text-muted">班组</label>
                     <input type="text" class="form-control form-control-sm" value="@(Model.Team ?? "-")" readonly disabled style="background:#f8f9fa;">
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted">手机号</label>
-                    <input type="text" class="form-control form-control-sm" value="@(Model.Phone ?? "-")" readonly disabled style="background:#f8f9fa;">
-                </div>
+                @* v2.13.92 字段权限：手机号条件渲染 *@
+                @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                {
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">手机号</label>
+                        <input type="text" class="form-control form-control-sm" value="@(Model.Phone ?? "-")" readonly disabled style="background:#f8f9fa;">
+                    </div>
+                }
                 <div class="col-md-3">
                     <label class="form-label small text-muted">员工类型</label>
                     <input type="text" class="form-control form-control-sm" value="@(Model.EmployeeTypeName ?? "-")" readonly disabled style="background:#f8f9fa;">
