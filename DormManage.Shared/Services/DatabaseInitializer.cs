@@ -491,6 +491,27 @@ public static class DatabaseInitializer
                 logger.LogWarning(exDormMeter, "[v2.13.120 Migrate] DormMeter 表检测/创建异常（继续后续迁移）");
             }
 
+            // 0.5 v2.13.120-hotfix 主菜单重命名兜底：生产 DB 中 SysPermission.PermissionName 字段
+            //     仍是 v2.13.96 之前的旧值「抄表记录」，EF Core HasData() 对已存在记录不生效。
+            //     此处 UPDATE 强制改为「智能抄表」保证主菜单实时刷新（无需手动 SQL）。
+            try
+            {
+                var renameMeterSql = @"-- v2.13.120 主菜单重命名兜底（v2.13.96/v2.13.118 遗漏的生产 DB PermissionName UPDATE）
+                            UPDATE [dbo].[SysPermission] SET [PermissionName] = N'智能抄表' WHERE [PermissionCode] = N'meter:view' AND [PermissionName] <> N'智能抄表';
+                            UPDATE [dbo].[SysPermission] SET [PermissionName] = N'新增智能抄表' WHERE [PermissionCode] = N'meter:create' AND [PermissionName] NOT LIKE N'%智能抄表%';
+                            UPDATE [dbo].[SysPermission] SET [PermissionName] = N'修正智能抄表' WHERE [PermissionCode] = N'meter:edit' AND [PermissionName] NOT LIKE N'%智能抄表%';
+                            UPDATE [dbo].[SysPermission] SET [PermissionName] = N'删除智能抄表' WHERE [PermissionCode] = N'meter:delete' AND [PermissionName] NOT LIKE N'%智能抄表%';
+                            UPDATE [dbo].[SysPermission] SET [PermissionName] = N'导出智能抄表' WHERE [PermissionCode] = N'meter:export' AND [PermissionName] NOT LIKE N'%智能抄表%';";
+
+                var affected = await db.Database.ExecuteSqlRawAsync(renameMeterSql, ct);
+                if (affected > 0)
+                    logger.LogInformation("[v2.13.120-hotfix Rename] SysPermission.PermissionName 已 UPDATE {N} 行：抄表记录 → 智能抄表", affected);
+            }
+            catch (Exception exRename)
+            {
+                logger.LogWarning(exRename, "[v2.13.120-hotfix Rename] 主菜单重命名兜底异常（不影响后续）");
+            }
+
             // 1. 检测 SysFieldPermission 表是否存在
             bool tableExists;
             try
