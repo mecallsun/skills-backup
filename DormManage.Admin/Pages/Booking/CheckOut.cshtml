@@ -131,7 +131,9 @@
 const API_BASE = '/api/v1/bookings';
 
 // 考勤班次 Badge（v2.13.38 与原型一致）
-const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+// v2.13.122 100% 原型 1:1 对齐：班次简称单字化（默认/早/中/晚/夜/其他）
+//   与 v2.13.98 班次简化命名统一 + 数据库 AttendanceType.Name
+const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早', MIDDLE: '中', EVENING: '晚', NIGHT: '夜', OTHER: '其他' };
 const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
 function attendanceBadge(t) {
     return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;

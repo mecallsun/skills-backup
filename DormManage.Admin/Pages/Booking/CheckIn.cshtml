@@ -151,8 +151,10 @@
                             <div id="empSuggestions" class="suggestion-list" style="display:none;"></div>
                         </div>
                         <div class="emp-info-card" id="empInfo" style="display:none;">
+                            @* v2.13.122 100% 原型 1:1 对齐：8 字段独立顺序（工号/姓名/性别/手机/部门/类型/班次/班组）*@
                             <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
-                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span> <span id="empGender"></span></span>
+                            <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
+                            <span class="emp-info-item"><span class="label">性别:</span><span class="value" id="empGender"></span></span>
                             @* v2.13.92 字段权限：手机号条件渲染 *@
                             @if (!await Html.IsFieldHiddenAsync("employee.phone"))
                             {
@@ -163,7 +165,8 @@
                             <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
                             <span class="emp-info-item"><span class="label">班组:</span><span class="value" id="empTeam"></span></span>
                         </div>
-                        <div id="empWarn" class="emp-warn"></div>
+                        @* v2.13.122 100% 原型 1:1 对齐：empWarn 用 Bootstrap alert-warning 类（替代自定义 emp-warn class）*@
+                        <div id="empWarn" class="alert alert-warning mt-2 mb-0 py-2" style="display:none; font-size: 0.85rem;"></div>
                     </div>
 
                     <!-- 区块 2：入住日期与原因（v2.13.36 对齐原型 L103-126） -->
@@ -246,8 +249,9 @@
         // ============ v2.13.36 1:1 克隆原型 booking/check-in.html 全部 JS 逻辑 ============
         const API_BASE = '/api/v1/bookings';
 
-        // 考勤班次 Badge（v2.13.36 对齐原型 ATTENDANCE_BADGE L166-169）
-        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早班', MIDDLE: '中班', EVENING: '晚班', NIGHT: '夜班', OTHER: '其他' };
+        // 考勤班次 Badge（v2.13.122 100% 原型 1:1 对齐 — ATTENDANCE_NAME 单字化：默认/早/中/晚/夜/其他）
+        //   与 v2.13.98 班次简称单字化统一（DB AttendanceType.Name + UI 一致）
+        const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早', MIDDLE: '中', EVENING: '晚', NIGHT: '夜', OTHER: '其他' };
         const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
         function attendanceBadge(t) {
             return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;
@@ -307,44 +311,44 @@
             }
         });
 
-        // ===== 3. 选中员工（v2.13.36 对齐原型 L200-222） =====
+        // ===== 3. 选中员工（v2.13.122 100% 原型 1:1 对齐 L199-244） =====
         function selectEmp(emp) {
             selectedEmp = emp;
+            // v2.13.122 原型 L201：选中后输入框值设为员工姓名（便于用户确认当前选中）
+            document.getElementById('empKeyword').value = emp.realName;
             document.getElementById('empSuggestions').style.display = 'none';
             document.getElementById('empInfo').style.display = 'block';
             document.getElementById('empCode').textContent = emp.employeeCode;
             document.getElementById('empName').textContent = emp.realName;
+
+            // v2.13.122 原型 L207-213：性别 Badge 用 bootstrap-icons bi-gender-male/female 图标
+            //   1=男(primary) / 2=女(danger) / 其他=未知(secondary)
+            let genderHtml = '<span class="badge bg-secondary">未知</span>';
+            if (emp.gender === 1) {
+                genderHtml = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+            } else if (emp.gender === 2) {
+                genderHtml = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+            }
+            document.getElementById('empGender').innerHTML = genderHtml;
+
+            // v2.13.122 原型 L214：手机号 fallback '-'
             document.getElementById('empPhone').textContent = emp.phone || '-';
 
-            // v2.13.113 BUG 修复：部门走 FK 关联（API 返回 DepartmentName），fallback 冗余 Department 字段
+            // v2.13.122 原型 L218-221：部门 FK 关联（API 已返回 DepartmentName），fallback redundancy
             document.getElementById('empDept').textContent = emp.departmentName || emp.department || '-';
 
-            // 员工类型：API 返回 EmployeeTypeName（FK 关联 EmployeeType.Name）
+            // v2.13.122 原型 L222-226：员工类型 FK 关联（API 已返回 EmployeeTypeName）
             document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
 
-            // 考勤班次：v2.13.88 BUG 修复 — 用 AttendanceType.Code（DEFAULT/MORNING/MIDDLE/EVENING/NIGHT/OTHER）映射 Badge 颜色 + AttendanceTypeName 显示
-            // 之前用 emp.attendanceType（FK id 字符串 "1"/"2"/...）传给 attendanceBadge() 全部映射失败 → 默认 secondary badge
+            // v2.13.122 原型 L228-231：考勤班次 FK 关联 → 用 AttendanceType.Code 映射 Badge + AttendanceTypeName 显示
             const attCode = emp.attendanceTypeCode || 'DEFAULT';
-            const attName = emp.attendanceTypeName || '默认';
-            document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode] || 'bg-secondary'}">${attName}</span>`;
+            document.getElementById('empAtt').innerHTML = attendanceBadge(attCode);
 
-            // v2.13.113 BUG 修复：班组 FK 关联（API 返回 TeamName），Badge 渲染
+            // v2.13.122 原型 L234-240：班组 FK 关联（API 已返回 TeamName）→ Badge 渲染
             const teamName = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
-            const teamEl = document.getElementById('empTeam');
-            if (teamEl) {
-                teamEl.innerHTML = teamName
-                    ? `<span class="badge bg-primary">${teamName}</span>`
-                    : '<span class="text-muted">-</span>';
-            }
-
-            // v2.13.88 BUG 修复：在姓名后追加性别显示（与 CheckOut 页面保持一致）
-            const genderVal = (emp.gender === 1 || emp.gender === 2 || emp.gender === 0) ? emp.gender : null;
-            const genderText = genderVal === 1 ? '男' : genderVal === 2 ? '女' : (genderVal === 0 ? '未知' : '-');
-            const genderBadge = genderVal === 1 ? 'bg-primary' : genderVal === 2 ? 'bg-danger' : 'bg-secondary';
-            const genderSpan = document.getElementById('empGender');
-            if (genderSpan) {
-                genderSpan.innerHTML = `<span class="badge ${genderBadge} ms-1">${genderText}</span>`;
-            }
+            document.getElementById('empTeam').innerHTML = teamName && teamName !== '-'
+                ? `<span class="badge bg-primary">${teamName}</span>`
+                : '<span class="text-muted">-</span>';
 
             // 校验员工 + 刷新列表
             validateEmp();
