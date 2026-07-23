@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $baseDir = $PSScriptRoot
 $srcDir = Join-Path $baseDir 'publish-final'
 $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-$zipPath = Join-Path $baseDir ("DormManage_v2.13.114_" + $ts + ".zip")
+$zipPath = Join-Path $baseDir ("DormManage_v2.13.117_" + $ts + ".zip")
 
 if (-not (Test-Path $srcDir)) {
     Write-Error ("Source directory not found: " + $srcDir)
@@ -32,7 +32,10 @@ $extra = @(
     (Join-Path $baseDir '00-方案文档\163-宿舍档案列表班组列-v2.13.111.md'),
     (Join-Path $baseDir '00-方案文档\164-可分配房号智能排序与班组列-v2.13.112.md'),
     (Join-Path $baseDir '00-方案文档\165-入住信息员工信息FK显示修复-v2.13.113.md'),
-    (Join-Path $baseDir '00-方案文档\166-费用标准新增按钮生产DB权限修复-v2.13.114.md')
+    (Join-Path $baseDir '00-方案文档\166-费用标准新增按钮生产DB权限修复-v2.13.114.md'),
+    (Join-Path $baseDir '00-方案文档\167-统一房号列名-v2.13.115.md'),
+    (Join-Path $baseDir '00-方案文档\168-入住选员工档案驱动房号规则需求统一-v2.13.116.md'),
+    (Join-Path $baseDir '00-方案文档\169-宿舍档案按钮BUG修复-v2.13.117.md')
 )
 foreach ($f in $extra) {
     if (Test-Path $f) {
@@ -61,4 +64,7 @@ Write-Host "  163-宿舍档案列表班组列-v2.13.111.md         交付报告"
 Write-Host "  164-可分配房号智能排序与班组列-v2.13.112.md 交付报告"
 Write-Host "  165-入住信息员工信息FK显示修复-v2.13.113.md 交付报告"
 Write-Host "  166-费用标准新增按钮生产DB权限修复-v2.13.114.md 交付报告"
+Write-Host "  167-统一房号列名-v2.13.115.md                 交付报告"
+Write-Host "  168-入住选员工档案驱动房号规则需求统一-v2.13.116.md 交付报告"
+Write-Host "  169-宿舍档案按钮BUG修复-v2.13.117.md         交付报告"
 
