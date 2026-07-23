@@ -66,6 +66,8 @@
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-employment"><i class="bi bi-person-check"></i> 在职状态</button>
                             <!-- v2.13.120 设备档案（与员工类型/班次等基础资料字典并列） -->
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-device"><i class="bi bi-cpu"></i> 设备档案</button>
+                            <!-- v2.13.130 设备记录（设备读数日志 — 与设备档案 + 智能抄表构成三层数据模型） -->
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-equipmentreading"><i class="bi bi-journal-text"></i> 设备记录</button>
                         </div>
                     </div>
                 </div>
@@ -393,6 +395,71 @@
                 </div>
             </div>
 
+            <!-- v2.13.130 设备记录（设备读数日志 — 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型） -->
+            <div class="tab-pane fade" id="pane-equipmentreading" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="bi bi-journal-text"></i> 设备记录列表</h5>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-warning" onclick="showBatchDeleteEquipmentReadingModal()">
+                                    <i class="bi bi-trash3"></i> 批量删除
+                                </button>
+                                <button class="btn btn-success" onclick="showAddEquipmentReadingModal()">
+                                    <i class="bi bi-plus-lg"></i> 新增设备记录
+                                </button>
+                            </div>
+                        </div>
+                        <div class="filter-row mb-3">
+                            <div class="filter-item flex-grow">
+                                <input type="text" id="eqReadingKeyword" class="form-control form-control-sm" placeholder="设备ID模糊搜索" />
+                            </div>
+                            <div class="filter-item">
+                                <select id="eqReadingType" class="form-select form-select-sm" style="min-width:120px;">
+                                    <option value="">— 全部类型 —</option>
+                                    <option value="1">⚡ 电表</option>
+                                    <option value="2">💧 冷水</option>
+                                    <option value="3">♨️ 热水</option>
+                                </select>
+                            </div>
+                            <div class="filter-item">
+                                <input type="datetime-local" id="eqReadingStartTime" class="form-control form-control-sm" />
+                            </div>
+                            <div class="filter-item">
+                                <input type="datetime-local" id="eqReadingEndTime" class="form-control form-control-sm" />
+                            </div>
+                            <div class="filter-item">
+                                <button class="btn btn-primary filter-btn" onclick="loadEquipmentReadings()"><i class="bi bi-search"></i> 查询</button>
+                            </div>
+                            <div class="filter-item">
+                                <button class="btn btn-outline-secondary filter-btn" onclick="resetEquipmentReadingFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60">序号</th>
+                                        <th>设备ID</th>
+                                        <th width="120">设备类型</th>
+                                        <th width="120">读数</th>
+                                        <th width="170">读取时间</th>
+                                        <th>备注</th>
+                                        <th width="100">创建人</th>
+                                        <th width="150">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equipmentReadingTable"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-footer mt-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">共 N 条 · 第 X-Y 条 · 共 Z 页</small>
+                            <nav><ul class="pagination pagination-sm mb-0"></ul></nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
                 </div>
             </div>
     </div>
@@ -432,6 +499,93 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" onclick="saveData()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- v2.13.130 设备记录 新增/编辑 Modal（独占模式：backdrop=static + keyboard=false） -->
+    <div class="modal fade" id="equipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h5 class="modal-title" id="equipmentReadingModalTitle"><i class="bi bi-journal-text text-success"></i> 新增设备记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="eqReadingId" value="0" />
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">设备ID <span class="text-danger">*</span></label>
+                            <input type="text" id="eqReadingEquipmentId" class="form-control" placeholder="如 EL-001 / CW-101 / HW-201" maxlength="64" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">设备类型 <span class="text-danger">*</span></label>
+                            <select id="eqReadingEquipmentType" class="form-select">
+                                <option value="1">⚡ 电表</option>
+                                <option value="2">💧 冷水</option>
+                                <option value="3">♨️ 热水</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label">读数 <span class="text-danger">*</span></label>
+                            <input type="number" id="eqReadingReading" class="form-control" placeholder="如 1234.56" step="0.01" min="0" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">读取时间 <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="eqReadingReadTime" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <label class="form-label">备注</label>
+                        <textarea id="eqReadingRemark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveEquipmentReading()"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- v2.13.130 设备记录 批量删除 Modal（独占模式：时间段 + 二次确认） -->
+    <div class="modal fade" id="batchDeleteEquipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header py-2 bg-warning text-dark">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> 批量删除设备记录</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning py-2 mb-3">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>危险操作！</strong>将永久删除指定时间段内的<strong>所有</strong>设备记录，请谨慎使用。
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">起始时间 <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="batchDelStartTime" class="form-control" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">结束时间 <span class="text-danger">*</span></label>
+                            <input type="datetime-local" id="batchDelEndTime" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" id="batchDelConfirm" />
+                        <label class="form-check-label" for="batchDelConfirm">
+                            我已确认要删除该时间段的所有设备记录（此操作不可撤销）
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" id="batchDeleteConfirmBtn" class="btn btn-danger" onclick="confirmBatchDeleteEquipmentReadings()" disabled>
+                        <i class="bi bi-trash3"></i> 确认删除
+                    </button>
                 </div>
             </div>
         </div>
@@ -552,6 +706,12 @@
                 { id: 1, dormId: 1, dormCode: 'A101', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A101-001', coldWaterMeterId: 'C-A101-001', hotWaterMeterId: 'H-A101-001', remark: '3 楼朝南', updatedAt: '2026-07-23 10:30' },
                 { id: 2, dormId: 2, dormCode: 'A102', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A102-001', coldWaterMeterId: 'C-A102-001', hotWaterMeterId: '',            remark: '',            updatedAt: '2026-07-23 10:32' },
                 { id: 3, dormId: 3, dormCode: 'A103', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A103-001', coldWaterMeterId: 'C-A103-001', hotWaterMeterId: 'H-A103-001', remark: '',            updatedAt: '2026-07-23 10:35' }
+            ],
+            // v2.13.130 设备读数日志（设备记录 — 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型）
+            equipmentReadings: [
+                { id: 1, equipmentId: 'E-A101-001', equipmentType: 1, reading: 1234.56, readTime: '2026-07-20 09:30:00', remark: '月初例行抄表',   createdBy: 'admin' },
+                { id: 2, equipmentId: 'C-A101-001', equipmentType: 2, reading: 456.78,  readTime: '2026-07-20 09:32:00', remark: '',              createdBy: 'admin' },
+                { id: 3, equipmentId: 'H-A101-001', equipmentType: 3, reading: 234.56,  readTime: '2026-07-20 09:34:00', remark: '本月底热水用量突增', createdBy: 'admin' }
             ]
         };
 
@@ -769,6 +929,154 @@
         // 初始化渲染所有表格
         var types = ['departments', 'buildings', 'floors', 'addresses', 'employeeTypes', 'attendanceTypes', 'teams', 'meterUnits', 'residenceStatuses', 'employmentStatuses'];
         types.forEach(function(type) { renderTable(type); });
+
+        // ========== v2.13.130 设备读数日志（设备记录） ==========
+        const EQUIPMENT_TYPE_META = {
+            1: { name: '电表', badge: 'bg-warning text-dark', icon: 'bi-lightning-charge-fill' },
+            2: { name: '冷水', badge: 'bg-info text-dark',    icon: 'bi-droplet-fill' },
+            3: { name: '热水', badge: 'bg-danger',            icon: 'bi-droplet-half' }
+        };
+
+        function renderEquipmentReadingTable() {
+            const list = BASICS_DATA.equipmentReadings || [];
+            const kw = (document.getElementById('eqReadingKeyword')?.value || '').trim().toLowerCase();
+            const type = document.getElementById('eqReadingType')?.value;
+            const filtered = list.filter(r => {
+                if (kw && !(r.equipmentId || '').toLowerCase().includes(kw)) return false;
+                if (type && String(r.equipmentType) !== type) return false;
+                return true;
+            });
+            const tbody = document.getElementById('equipmentReadingTable');
+            if (!tbody) return;
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">暂无设备记录</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map((r, i) => {
+                const meta = EQUIPMENT_TYPE_META[r.equipmentType] || { name: '未知', badge: 'bg-secondary', icon: 'bi-question-circle' };
+                const seq = i + 1;
+                return `<tr>
+                    <td class="text-muted">${seq}</td>
+                    <td><strong>${r.equipmentId}</strong></td>
+                    <td><span class="badge ${meta.badge}"><i class="bi ${meta.icon}"></i> ${meta.name}</span></td>
+                    <td>${(r.reading || 0).toFixed(2)}</td>
+                    <td><small>${r.readTime}</small></td>
+                    <td><small class="text-muted">${r.remark || '—'}</small></td>
+                    <td><small class="text-muted">${r.createdBy || '—'}</small></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="editEquipmentReading(${r.id})" title="编辑"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteEquipmentReading(${r.id})" title="删除"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function loadEquipmentReadings() { renderEquipmentReadingTable(); }
+        function resetEquipmentReadingFilter() {
+            document.getElementById('eqReadingKeyword').value = '';
+            document.getElementById('eqReadingType').value = '';
+            document.getElementById('eqReadingStartTime').value = '';
+            document.getElementById('eqReadingEndTime').value = '';
+            renderEquipmentReadingTable();
+        }
+
+        function showAddEquipmentReadingModal() {
+            document.getElementById('equipmentReadingModalTitle').innerHTML = '<i class="bi bi-journal-text text-success"></i> 新增设备记录';
+            document.getElementById('eqReadingId').value = '0';
+            document.getElementById('eqReadingEquipmentId').value = '';
+            document.getElementById('eqReadingEquipmentType').value = '1';
+            document.getElementById('eqReadingReading').value = '';
+            document.getElementById('eqReadingReadTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('eqReadingRemark').value = '';
+            new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
+        }
+
+        function editEquipmentReading(id) {
+            const r = (BASICS_DATA.equipmentReadings || []).find(x => x.id === id);
+            if (!r) { alert('记录不存在'); return; }
+            document.getElementById('equipmentReadingModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary"></i> 编辑设备记录';
+            document.getElementById('eqReadingId').value = r.id;
+            document.getElementById('eqReadingEquipmentId').value = r.equipmentId || '';
+            document.getElementById('eqReadingEquipmentType').value = r.equipmentType;
+            document.getElementById('eqReadingReading').value = r.reading;
+            document.getElementById('eqReadingReadTime').value = (r.readTime || '').replace(' ', 'T').slice(0, 16);
+            document.getElementById('eqReadingRemark').value = r.remark || '';
+            new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
+        }
+
+        function saveEquipmentReading() {
+            const id = parseInt(document.getElementById('eqReadingId').value || '0');
+            const equipmentId = document.getElementById('eqReadingEquipmentId').value.trim();
+            const equipmentType = parseInt(document.getElementById('eqReadingEquipmentType').value);
+            const reading = parseFloat(document.getElementById('eqReadingReading').value);
+            const readTimeStr = document.getElementById('eqReadingReadTime').value;
+            const remark = document.getElementById('eqReadingRemark').value.trim();
+
+            if (!equipmentId) { alert('设备ID不能为空'); return; }
+            if (isNaN(reading) || reading < 0) { alert('请输入有效的读数（≥ 0）'); return; }
+            if (!readTimeStr) { alert('请选择读取时间'); return; }
+
+            const readTime = readTimeStr.replace('T', ' ') + ':00';
+            if (id > 0) {
+                const r = BASICS_DATA.equipmentReadings.find(x => x.id === id);
+                if (r) {
+                    r.equipmentId = equipmentId; r.equipmentType = equipmentType;
+                    r.reading = reading; r.readTime = readTime; r.remark = remark;
+                }
+            } else {
+                const newId = Math.max(0, ...BASICS_DATA.equipmentReadings.map(x => x.id)) + 1;
+                BASICS_DATA.equipmentReadings.push({ id: newId, equipmentId, equipmentType, reading, readTime, remark, createdBy: 'admin' });
+            }
+            bootstrap.Modal.getInstance(document.getElementById('equipmentReadingModal')).hide();
+            renderEquipmentReadingTable();
+            alert('保存成功');
+        }
+
+        function deleteEquipmentReading(id) {
+            if (!confirm('确认删除该设备记录？此操作不可撤销。')) return;
+            BASICS_DATA.equipmentReadings = BASICS_DATA.equipmentReadings.filter(x => x.id !== id);
+            renderEquipmentReadingTable();
+        }
+
+        // v2.13.130 批量删除 Modal（独占模式：时间段 + 二次确认）
+        function showBatchDeleteEquipmentReadingModal() {
+            document.getElementById('batchDelStartTime').value = '';
+            document.getElementById('batchDelEndTime').value = '';
+            document.getElementById('batchDelConfirm').checked = false;
+            document.getElementById('batchDeleteConfirmBtn').disabled = true;
+            new bootstrap.Modal(document.getElementById('batchDeleteEquipmentReadingModal')).show();
+        }
+        function updateBatchDeleteButtonState() {
+            const start = document.getElementById('batchDelStartTime').value;
+            const end = document.getElementById('batchDelEndTime').value;
+            const confirmed = document.getElementById('batchDelConfirm').checked;
+            document.getElementById('batchDeleteConfirmBtn').disabled = !(start && end && confirmed);
+        }
+        function confirmBatchDeleteEquipmentReadings() {
+            const start = document.getElementById('batchDelStartTime').value;
+            const end = document.getElementById('batchDelEndTime').value;
+            if (!start || !end) { alert('请填写完整的起始时间和结束时间'); return; }
+            if (new Date(start) > new Date(end)) { alert('起始时间必须早于或等于结束时间'); return; }
+            const startD = new Date(start), endD = new Date(end);
+            const before = BASICS_DATA.equipmentReadings.length;
+            BASICS_DATA.equipmentReadings = BASICS_DATA.equipmentReadings.filter(r => {
+                const t = new Date((r.readTime || '').replace(' ', 'T'));
+                return t < startD || t > endD;
+            });
+            const deleted = before - BASICS_DATA.equipmentReadings.length;
+            bootstrap.Modal.getInstance(document.getElementById('batchDeleteEquipmentReadingModal')).hide();
+            renderEquipmentReadingTable();
+            alert(`批量删除成功，共删除 ${deleted} 条记录`);
+        }
+        // 监听 modal 内的 change/click
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'batchDelConfirm' || e.target.id === 'batchDelStartTime' || e.target.id === 'batchDelEndTime') {
+                updateBatchDeleteButtonState();
+            }
+        });
+
+        // v2.13.130 初始化渲染设备记录表格
+        renderEquipmentReadingTable();
 
         console.log('BASICS_DATA.departments:', BASICS_DATA.departments);
     </script>

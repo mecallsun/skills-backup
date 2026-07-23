@@ -357,5 +357,32 @@ BEGIN
 END;
 GO
 
+-- ============================================================
+-- v2.13.130 设备读数日志（EquipmentReading）— 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型
+-- 设计：不 FK 到 DormMeter（PDA 原始上传流水可能没经过设备档案配置），独立日志表
+-- 索引：EquipmentId（查最新读数）、ReadTime（按时间段查询/批量删除）、(EquipmentType, ReadTime) 复合索引
+-- ============================================================
+IF OBJECT_ID('dbo.EquipmentReading', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.EquipmentReading (
+        ReadingId       INT            IDENTITY(1,1) NOT NULL,
+        EquipmentId     NVARCHAR(64)   NOT NULL,             -- 设备 ID（电表/冷水/热水表编号）
+        EquipmentType   TINYINT        NOT NULL,             -- 1=电表 2=冷水 3=热水
+        Reading         DECIMAL(12,2)  NOT NULL DEFAULT 0,
+        ReadTime        DATETIME       NOT NULL,             -- 读取时间（业务读取时刻）
+        Remark          NVARCHAR(500)  NULL,
+        CreatedBy       NVARCHAR(64)   NULL,                 -- 记录创建人（审计）
+        CreatedAt       DATETIME       NOT NULL DEFAULT GETDATE(),
+        UpdatedAt       DATETIME       NULL DEFAULT GETDATE(),
+        CONSTRAINT PK_EquipmentReading PRIMARY KEY CLUSTERED (ReadingId),
+        CONSTRAINT CK_EquipmentReading_Type CHECK (EquipmentType BETWEEN 1 AND 3)
+    );
+    CREATE NONCLUSTERED INDEX IX_EquipmentReading_EquipmentId ON dbo.EquipmentReading (EquipmentId);
+    CREATE NONCLUSTERED INDEX IX_EquipmentReading_ReadTime    ON dbo.EquipmentReading (ReadTime);
+    CREATE NONCLUSTERED INDEX IX_EquipmentReading_Type_Time   ON dbo.EquipmentReading (EquipmentType, ReadTime);
+    PRINT '✓ dbo.EquipmentReading 表已创建（v2.13.130）';
+END;
+GO
+
 PRINT '✅ 数据库结构创建完成';
 GO

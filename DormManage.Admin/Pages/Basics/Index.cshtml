@@ -6,6 +6,9 @@
     // v2.13.120 设备档案按钮权限（写入 JS 全局变量，避免 Razor @await 在 JS 模板里失效）
     var deviceCanEdit = (await Html.HasPermissionAsync("device:edit")).ToString().ToLower();
     var deviceCanDelete = (await Html.HasPermissionAsync("device:delete")).ToString().ToLower();
+    // v2.13.130 设备记录按钮权限
+    var equipmentReadingCanEdit = (await Html.HasPermissionAsync("equipment-reading:edit")).ToString().ToLower();
+    var equipmentReadingCanDelete = (await Html.HasPermissionAsync("equipment-reading:delete")).ToString().ToLower();
 }
 
 <div class="container-fluid">
@@ -79,6 +82,12 @@
                                 data-bs-toggle="pill" data-bs-target="#pane-device"
                                 onclick="setActiveTab('device')">
                             <i class="bi bi-cpu"></i> 设备档案
+                        </button>
+                        @* v2.13.130 新增：设备记录（设备读数日志）— 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型 *@
+                        <button class="nav-link text-start @(Model.ActiveTab == "equipmentreading" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-equipmentreading"
+                                onclick="setActiveTab('equipmentreading')">
+                            <i class="bi bi-journal-text"></i> 设备记录
                         </button>
                     </div>
                 </div>
@@ -436,6 +445,86 @@
                     </div>
                 </div>
 
+                @* v2.13.130 设备读数日志（设备记录 — 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型） *@
+                <div class="tab-pane fade @(Model.ActiveTab == "equipmentreading" ? "show active" : "")" id="pane-equipmentreading" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-journal-text"></i> 设备记录列表</h5>
+                                <div class="d-flex gap-2">
+                                    @if (await Html.HasPermissionAsync("equipment-reading:batch-delete"))
+                                    {
+                                        <button class="btn btn-warning" onclick="showBatchDeleteEquipmentReadingModal()">
+                                            <i class="bi bi-trash3"></i> 批量删除
+                                        </button>
+                                    }
+                                    @if (await Html.HasPermissionAsync("equipment-reading:create"))
+                                    {
+                                        <button class="btn btn-success" onclick="showAddEquipmentReadingModal()">
+                                            <i class="bi bi-plus-lg"></i> 新增设备记录
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+
+                            @* 筛选区（设备ID / 类型 / 时间区间） *@
+                            <div class="row g-2 mb-3 align-items-end">
+                                <div class="col-auto">
+                                    <label class="form-label small text-muted mb-1">设备ID</label>
+                                    <input type="text" id="eqReadingKeyword" class="form-control form-control-sm" placeholder="设备ID模糊搜索" style="min-width:200px;" />
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label small text-muted mb-1">设备类型</label>
+                                    <select id="eqReadingType" class="form-select form-select-sm" style="min-width:120px;">
+                                        <option value="">— 全部 —</option>
+                                        <option value="1">⚡ 电表</option>
+                                        <option value="2">💧 冷水</option>
+                                        <option value="3">♨️ 热水</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label small text-muted mb-1">起始时间</label>
+                                    <input type="datetime-local" id="eqReadingStartTime" class="form-control form-control-sm" style="min-width:170px;" />
+                                </div>
+                                <div class="col-auto">
+                                    <label class="form-label small text-muted mb-1">结束时间</label>
+                                    <input type="datetime-local" id="eqReadingEndTime" class="form-control form-control-sm" style="min-width:170px;" />
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary btn-sm" onclick="loadEquipmentReadings()"><i class="bi bi-search"></i> 查询</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetEquipmentReadingFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>设备ID</th>
+                                            <th width="120">设备类型</th>
+                                            <th width="120">读数</th>
+                                            <th width="170">读取时间</th>
+                                            <th>备注</th>
+                                            <th width="100">创建人</th>
+                                            <th width="150">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="equipmentReadingTable"></tbody>
+                                </table>
+                            </div>
+
+                            @* 分页（v2.13.105 默认 10 / 20 / 50 / 100）*@
+                            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+                            {
+                                PageIndex = 1,
+                                PageSize = 10,
+                                TotalCount = 0
+                            })
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -534,6 +623,96 @@
     </div>
 </div>
 
+<!-- v2.13.130 设备记录 新增/编辑 Modal（独占模式：backdrop=static + keyboard=false） -->
+<div class="modal fade" id="equipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="equipmentReadingModalTitle"><i class="bi bi-journal-text text-success"></i> 新增设备记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="eqReadingId" value="0" />
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">设备ID <span class="text-danger">*</span></label>
+                        <input type="text" id="eqReadingEquipmentId" class="form-control" placeholder="如 EL-001 / CW-101 / HW-201" maxlength="64" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">设备类型 <span class="text-danger">*</span></label>
+                        <select id="eqReadingEquipmentType" class="form-select">
+                            <option value="1">⚡ 电表</option>
+                            <option value="2">💧 冷水</option>
+                            <option value="3">♨️ 热水</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row g-2 mt-1">
+                    <div class="col-md-6">
+                        <label class="form-label">读数 <span class="text-danger">*</span></label>
+                        <input type="number" id="eqReadingReading" class="form-control" placeholder="如 1234.56" step="0.01" min="0" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">读取时间 <span class="text-danger">*</span></label>
+                        <input type="datetime-local" id="eqReadingReadTime" class="form-control" />
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-label">备注</label>
+                    <textarea id="eqReadingRemark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveEquipmentReading()"><i class="bi bi-check-lg"></i> 保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- v2.13.130 设备记录 批量删除 Modal（独占模式：时间段 + 二次确认） -->
+<div class="modal fade" id="batchDeleteEquipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header py-2 bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> 批量删除设备记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning py-2 mb-3">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <strong>危险操作！</strong>将永久删除指定时间段内的<strong>所有</strong>设备记录，请谨慎使用。
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">起始时间 <span class="text-danger">*</span></label>
+                        <input type="datetime-local" id="batchDelStartTime" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">结束时间 <span class="text-danger">*</span></label>
+                        <input type="datetime-local" id="batchDelEndTime" class="form-control" />
+                    </div>
+                </div>
+                <div class="form-check mt-3">
+                    <input class="form-check-input" type="checkbox" id="batchDelConfirm" />
+                    <label class="form-check-label" for="batchDelConfirm">
+                        我已确认要删除该时间段的所有设备记录（此操作不可撤销）
+                    </label>
+                </div>
+                <div id="batchDeletePreview" class="alert alert-info mt-3 mb-0 py-2" style="display:none;">
+                    <i class="bi bi-info-circle"></i> <span id="batchDeletePreviewText">—</span>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" id="batchDeleteConfirmBtn" class="btn btn-danger" onclick="confirmBatchDeleteEquipmentReadings()" disabled>
+                    <i class="bi bi-trash3"></i> 确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Styles {
 <style>
     .basics-nav .nav-link {
@@ -590,11 +769,18 @@
         const typeMap = {
             'dept': 'dept', 'building': 'building', 'floor': 'floor',
             'address': 'address', 'emptype': 'emptype', 'attendance': 'attendance',
-            'team': 'team', 'unit': 'unit', 'residence': 'residence', 'employment': 'employment'
+            'team': 'team', 'unit': 'unit', 'residence': 'residence', 'employment': 'employment',
+            'device': 'device', 'equipmentreading': 'equipmentreading'
         };
         const type = tabParam && typeMap[tabParam] ? typeMap[tabParam] : 'dept';
         setActiveTab(type);
-        loadData(type);
+        if (type === 'device') {
+            // 由下方 listener 统一加载
+        } else if (type === 'equipmentreading') {
+            // 由下方 listener 统一加载
+        } else {
+            loadData(type);
+        }
     });
 
     // 设置当前 tab 高亮（URL 参数持久化）
@@ -1090,12 +1276,223 @@
     // 设备档案自动加载（如果 tab=device）
     document.addEventListener('DOMContentLoaded', function () {
         if ('@Model.ActiveTab' === 'device') loadDeviceMeters();
+        if ('@Model.ActiveTab' === 'equipmentreading') loadEquipmentReadings();
     });
+
+    // ========== v2.13.130 设备读数日志（设备记录） ==========
+    const EQUIPMENT_TYPE_MAP = {
+        1: { name: '电表',   badge: 'bg-warning text-dark', icon: 'bi-lightning-charge-fill' },
+        2: { name: '冷水',   badge: 'bg-info text-dark',    icon: 'bi-droplet-fill' },
+        3: { name: '热水',   badge: 'bg-danger',            icon: 'bi-droplet-half' }
+    };
+
+    function getEquipmentTypeBadge(type) {
+        const meta = EQUIPMENT_TYPE_MAP[type] || { name: '未知', badge: 'bg-secondary', icon: 'bi-question-circle' };
+        return `<span class="badge ${meta.badge}"><i class="bi ${meta.icon}"></i> ${meta.name}</span>`;
+    }
+
+    // 列表加载（filter + paging，参数从 URL/筛选区读取）
+    async function loadEquipmentReadings(page = 1, pageSize = 10) {
+        const tbody = document.getElementById('equipmentReadingTable');
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">加载中…</td></tr>';
+        try {
+            const url = new URL('/api/basics/equipment-readings', window.location.origin);
+            const kw = document.getElementById('eqReadingKeyword')?.value?.trim();
+            if (kw) url.searchParams.set('equipmentId', kw);
+            const type = document.getElementById('eqReadingType')?.value;
+            if (type) url.searchParams.set('equipmentType', type);
+            const start = document.getElementById('eqReadingStartTime')?.value;
+            if (start) url.searchParams.set('startTime', new Date(start).toISOString());
+            const end = document.getElementById('eqReadingEndTime')?.value;
+            if (end) url.searchParams.set('endTime', new Date(end).toISOString());
+            url.searchParams.set('page', page);
+            url.searchParams.set('pageSize', pageSize);
+
+            const resp = await fetch(url, { credentials: 'same-origin' });
+            const result = await resp.json();
+            if (!result.success) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${escapeHtml(result.message || '加载失败')}</td></tr>`;
+                return;
+            }
+            const data = result.data || { items: [], totalCount: 0 };
+            const items = data.items || [];
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">暂无设备记录</td></tr>';
+                updatePagination('equipmentreading', page, pageSize, 0, () => loadEquipmentReadings());
+                return;
+            }
+            const canEdit = window.__equipmentReadingCanEdit === true;
+            const canDelete = window.__equipmentReadingCanDelete === true;
+            tbody.innerHTML = items.map((r, i) => {
+                const seq = (page - 1) * pageSize + i + 1;
+                return `<tr>
+                    <td class="text-muted">${seq}</td>
+                    <td><strong>${escapeHtml(r.equipmentId)}</strong></td>
+                    <td>${getEquipmentTypeBadge(r.equipmentType)}</td>
+                    <td>${(r.reading || 0).toFixed(2)}</td>
+                    <td><small>${formatDate(r.readTime)}</small></td>
+                    <td><small class="text-muted">${escapeHtml(r.remark || '—')}</small></td>
+                    <td><small class="text-muted">${escapeHtml(r.createdBy || '—')}</small></td>
+                    <td>
+                        ${canEdit ? `<button class="btn btn-sm btn-outline-primary" onclick="showEditEquipmentReadingModal(${r.id})" title="编辑"><i class="bi bi-pencil"></i></button> ` : ''}
+                        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteEquipmentReading(${r.id})" title="删除"><i class="bi bi-trash"></i></button>` : ''}
+                    </td>
+                </tr>`;
+            }).join('');
+            updatePagination('equipmentreading', page, pageSize, data.totalCount, () => loadEquipmentReadings());
+        } catch (err) {
+            console.error('加载设备记录失败:', err);
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">加载失败，请刷新重试</td></tr>';
+        }
+    }
+
+    function resetEquipmentReadingFilter() {
+        document.getElementById('eqReadingKeyword').value = '';
+        document.getElementById('eqReadingType').value = '';
+        document.getElementById('eqReadingStartTime').value = '';
+        document.getElementById('eqReadingEndTime').value = '';
+        loadEquipmentReadings();
+    }
+
+    function showAddEquipmentReadingModal() {
+        document.getElementById('equipmentReadingModalTitle').innerHTML = '<i class="bi bi-journal-text text-success"></i> 新增设备记录';
+        document.getElementById('eqReadingId').value = '0';
+        document.getElementById('eqReadingEquipmentId').value = '';
+        document.getElementById('eqReadingEquipmentType').value = '1';
+        document.getElementById('eqReadingReading').value = '';
+        // 默认读取时间为当前本地时间（datetime-local 需要 yyyy-MM-ddTHH:mm 格式）
+        const now = new Date();
+        const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('eqReadingReadTime').value = localISO;
+        document.getElementById('eqReadingRemark').value = '';
+        new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
+    }
+
+    async function showEditEquipmentReadingModal(id) {
+        try {
+            const resp = await fetch(`/api/basics/equipment-readings/${id}`, { credentials: 'same-origin' });
+            const result = await resp.json();
+            if (!result.success) { alert(result.message || '加载失败'); return; }
+            const r = result.data;
+            document.getElementById('equipmentReadingModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary"></i> 编辑设备记录';
+            document.getElementById('eqReadingId').value = r.id;
+            document.getElementById('eqReadingEquipmentId').value = r.equipmentId || '';
+            document.getElementById('eqReadingEquipmentType').value = r.equipmentType;
+            document.getElementById('eqReadingReading').value = r.reading;
+            // ReadTime 转 datetime-local 格式（去掉秒和时区）
+            const rt = new Date(r.readTime);
+            const localISO = new Date(rt.getTime() - rt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('eqReadingReadTime').value = localISO;
+            document.getElementById('eqReadingRemark').value = r.remark || '';
+            new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
+        } catch (err) { console.error('加载设备记录失败:', err); alert('加载失败：' + err.message); }
+    }
+
+    async function saveEquipmentReading() {
+        const id = parseInt(document.getElementById('eqReadingId').value || '0');
+        const equipmentId = document.getElementById('eqReadingEquipmentId').value.trim();
+        const equipmentType = parseInt(document.getElementById('eqReadingEquipmentType').value);
+        const reading = parseFloat(document.getElementById('eqReadingReading').value);
+        const readTimeStr = document.getElementById('eqReadingReadTime').value;
+        const remark = document.getElementById('eqReadingRemark').value.trim();
+
+        if (!equipmentId) { alert('设备ID不能为空'); return; }
+        if (!equipmentType) { alert('请选择设备类型'); return; }
+        if (isNaN(reading) || reading < 0) { alert('请输入有效的读数（≥ 0）'); return; }
+        if (!readTimeStr) { alert('请选择读取时间'); return; }
+
+        const payload = {
+            id: id,
+            equipmentId: equipmentId,
+            equipmentType: equipmentType,
+            reading: reading,
+            readTime: new Date(readTimeStr).toISOString(),
+            remark: remark
+        };
+
+        const method = id > 0 ? 'PUT' : 'POST';
+        const url = id > 0 ? `/api/basics/equipment-readings/${id}` : '/api/basics/equipment-readings';
+        try {
+            const resp = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const result = await resp.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('equipmentReadingModal')).hide();
+                loadEquipmentReadings();
+            } else {
+                alert(result.message || '保存失败');
+            }
+        } catch (err) { console.error('保存设备记录失败:', err); alert('保存失败：' + err.message); }
+    }
+
+    async function deleteEquipmentReading(id) {
+        if (!confirm('确认删除该设备记录？此操作不可撤销。')) return;
+        try {
+            const resp = await fetch(`/api/basics/equipment-readings/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            const result = await resp.json();
+            if (result.success) loadEquipmentReadings();
+            else alert(result.message || '删除失败');
+        } catch (err) { console.error('删除设备记录失败:', err); alert('删除失败：' + err.message); }
+    }
+
+    // ========== v2.13.130 批量删除（独占 Modal + 时间段 + 二次确认） ==========
+    function showBatchDeleteEquipmentReadingModal() {
+        document.getElementById('batchDelStartTime').value = '';
+        document.getElementById('batchDelEndTime').value = '';
+        document.getElementById('batchDelConfirm').checked = false;
+        document.getElementById('batchDeleteConfirmBtn').disabled = true;
+        document.getElementById('batchDeletePreview').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('batchDeleteEquipmentReadingModal')).show();
+    }
+
+    // 启用/禁用确认按钮（需勾选 + 时间段合法）
+    document.addEventListener('change', function (e) {
+        if (e.target.id === 'batchDelConfirm' || e.target.id === 'batchDelStartTime' || e.target.id === 'batchDelEndTime') {
+            updateBatchDeleteButtonState();
+        }
+    });
+    function updateBatchDeleteButtonState() {
+        const start = document.getElementById('batchDelStartTime').value;
+        const end = document.getElementById('batchDelEndTime').value;
+        const confirmed = document.getElementById('batchDelConfirm').checked;
+        const btn = document.getElementById('batchDeleteConfirmBtn');
+        btn.disabled = !(start && end && confirmed);
+    }
+
+    async function confirmBatchDeleteEquipmentReadings() {
+        const start = document.getElementById('batchDelStartTime').value;
+        const end = document.getElementById('batchDelEndTime').value;
+        if (!start || !end) { alert('请填写完整的起始时间和结束时间'); return; }
+        if (new Date(start) > new Date(end)) { alert('起始时间必须早于或等于结束时间'); return; }
+        try {
+            const resp = await fetch('/api/basics/equipment-readings/batch-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify({ startTime: new Date(start).toISOString(), endTime: new Date(end).toISOString() })
+            });
+            const result = await resp.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('batchDeleteEquipmentReadingModal')).hide();
+                alert(result.message || `批量删除成功，共删除 ${result.data || 0} 条记录`);
+                loadEquipmentReadings();
+            } else {
+                alert(result.message || '批量删除失败');
+            }
+        } catch (err) { console.error('批量删除失败:', err); alert('批量删除失败：' + err.message); }
+    }
 </script>
 
 <script>
     // v2.13.120 注入设备档案按钮权限到全局（避免 Razor at-符 在 JS 注释中误解析）
     window.__deviceCanEdit = @deviceCanEdit;
     window.__deviceCanDelete = @deviceCanDelete;
+    // v2.13.130 注入设备记录按钮权限到全局
+    window.__equipmentReadingCanEdit = @equipmentReadingCanEdit;
+    window.__equipmentReadingCanDelete = @equipmentReadingCanDelete;
 </script>
 }

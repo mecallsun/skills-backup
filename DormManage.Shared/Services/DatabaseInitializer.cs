@@ -491,6 +491,45 @@ public static class DatabaseInitializer
                 logger.LogWarning(exDormMeter, "[v2.13.120 Migrate] DormMeter 表检测/创建异常（继续后续迁移）");
             }
 
+            // 0.6 v2.13.130 检测 EquipmentReading 表是否存在（设备读数日志 — 与 DormMeter 配置层 + MeterRecord 聚合层解耦）
+            //    独立日志表，不 FK 到 DormMeter（PDA 原始上传流水可能没经过设备档案配置）
+            //    若不存在则自动创建（无需手动执行 init_schema.sql，避免部署遗漏）
+            try
+            {
+                var eqReadingTableExists = await db.Database.SqlQueryRaw<string>(
+                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'EquipmentReading'")
+                    .ToListAsync(ct);
+                if (eqReadingTableExists.Count == 0)
+                {
+                    logger.LogInformation("[v2.13.130 Migrate] EquipmentReading 表缺失，开始创建...");
+                    var createEqReadingSql = @"IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'EquipmentReading')
+                            BEGIN
+                                CREATE TABLE [dbo].[EquipmentReading] (
+                                    [ReadingId]       INT             IDENTITY(1,1) NOT NULL,
+                                    [EquipmentId]     NVARCHAR(64)    NOT NULL,
+                                    [EquipmentType]   TINYINT         NOT NULL,
+                                    [Reading]         DECIMAL(12,2)   NOT NULL DEFAULT 0,
+                                    [ReadTime]        DATETIME        NOT NULL,
+                                    [Remark]          NVARCHAR(500)   NULL,
+                                    [CreatedBy]       NVARCHAR(64)    NULL,
+                                    [CreatedAt]       DATETIME        NOT NULL DEFAULT GETDATE(),
+                                    [UpdatedAt]       DATETIME        NULL DEFAULT GETDATE(),
+                                    CONSTRAINT [PK_EquipmentReading] PRIMARY KEY CLUSTERED ([ReadingId]),
+                                    CONSTRAINT [CK_EquipmentReading_Type] CHECK ([EquipmentType] BETWEEN 1 AND 3)
+                                );
+                                CREATE NONCLUSTERED INDEX [IX_EquipmentReading_EquipmentId] ON [dbo].[EquipmentReading] ([EquipmentId]);
+                                CREATE NONCLUSTERED INDEX [IX_EquipmentReading_ReadTime]    ON [dbo].[EquipmentReading] ([ReadTime]);
+                                CREATE NONCLUSTERED INDEX [IX_EquipmentReading_Type_Time]   ON [dbo].[EquipmentReading] ([EquipmentType], [ReadTime]);
+                            END";
+                    await db.Database.ExecuteSqlRawAsync(createEqReadingSql, ct);
+                    logger.LogInformation("[v2.13.130 Migrate] EquipmentReading 表已创建（含 3 索引 + CHECK 约束）");
+                }
+            }
+            catch (Exception exEqReading)
+            {
+                logger.LogWarning(exEqReading, "[v2.13.130 Migrate] EquipmentReading 表检测/创建异常（继续后续迁移）");
+            }
+
             // 0.5 v2.13.120-hotfix 主菜单重命名兜底：生产 DB 中 SysPermission.PermissionName 字段
             //     仍是 v2.13.96 之前的旧值「抄表记录」，EF Core HasData() 对已存在记录不生效。
             //     此处 UPDATE 强制改为「智能抄表」保证主菜单实时刷新（无需手动 SQL）。
@@ -632,10 +671,37 @@ public static class DatabaseInitializer
                   IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 45)
                   INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
                   VALUES (45, N'device:delete', N'删除设备档案', 2, 42, N'', N'', 34, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                // v2.13.130 新增：设备记录（基础资料二级菜单：equipment-reading:view + 4 个子权限：create/edit/delete/batch-delete）
+                // 三层数据模型：设备档案(DormMeter v2.13.120) → 设备读数日志(EquipmentReading v2.13.130) → 智能抄表(MeterRecord)
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 46)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (46, N'equipment-reading:view', N'查看设备记录', 1, 10, N'/Basics?tab=equipmentreading', N'bi-journal-text', 41, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 47)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (47, N'equipment-reading:create', N'新增设备记录', 2, 46, N'', N'', 42, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 48)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (48, N'equipment-reading:edit', N'修改设备记录', 2, 46, N'', N'', 43, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 49)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (49, N'equipment-reading:delete', N'删除设备记录', 2, 46, N'', N'', 44, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 50)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (50, N'equipment-reading:batch-delete', N'批量删除设备记录', 2, 46, N'', N'', 45, 1, 0, '2026-07-23');
                   SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
             };
 
-            var permTargetIds = new[] { 37, 38, 39, 40, 41, 42, 43, 44, 45 };
+            var permTargetIds = new[] { 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50 };
             for (int i = 0; i < permInserts.Length; i++)
             {
                 try
@@ -737,11 +803,52 @@ public static class DatabaseInitializer
                   )
                   INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
                   SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
-                  WHERE PermissionCode = N'device:delete';"
+                  WHERE PermissionCode = N'device:delete';",
+                // v2.13.130 新增：admin → equipment-reading:* 5 个权限码幂等授权
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'equipment-reading:view'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'equipment-reading:view';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'equipment-reading:create'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'equipment-reading:create';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'equipment-reading:edit'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'equipment-reading:edit';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'equipment-reading:delete'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'equipment-reading:delete';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'equipment-reading:batch-delete'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'equipment-reading:batch-delete';"
             };
 
-            // v2.13.114：日志标识改为 PermissionCode（更直观）；v2.13.120 新增 4 个 device 权限码
-            var rpTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete" };
+            // v2.13.114：日志标识改为 PermissionCode（更直观）；v2.13.120 新增 4 个 device 权限码；v2.13.130 新增 5 个 equipment-reading 权限码
+            var rpTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete", "equipment-reading:view", "equipment-reading:create", "equipment-reading:edit", "equipment-reading:delete", "equipment-reading:batch-delete" };
             for (int i = 0; i < rpInserts.Length; i++)
             {
                 try
@@ -762,7 +869,7 @@ public static class DatabaseInitializer
             //    改为按 PermissionCode JOIN SysPermission 验证 admin 用户是否拥有 5 个权限码
             try
             {
-                var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete" };
+                var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete", "equipment-reading:view", "equipment-reading:create", "equipment-reading:edit", "equipment-reading:delete", "equipment-reading:batch-delete" };
 
                 var presentPerms = await db.Database.SqlQueryRaw<string>(
                     $"SELECT PermissionCode FROM SysPermission WHERE PermissionCode IN ({string.Join(",", requiredPermCodes.Select(c => $"N'{c}'"))})")
@@ -783,7 +890,7 @@ public static class DatabaseInitializer
 
                 if (missingPerms.Count == 0 && missingAdminPerms.Count == 0 && fieldPermCount >= 5)
                 {
-                    logger.LogInformation("[v2.13.120 Verify] 隐私字段权限迁移完整性检查通过：admin 拥有 {N}/9 权限码（含 v2.13.120 device 4 个），SYS FieldPermission {N}/5", presentAdminCodes.Count(c => requiredPermCodes.Contains(c)), fieldPermCount);
+                    logger.LogInformation("[v2.13.130 Verify] 隐私字段权限迁移完整性检查通过：admin 拥有 {N}/14 权限码（含 v2.13.120 device 4 个 + v2.13.130 equipment-reading 5 个），SYS FieldPermission {N}/5", presentAdminCodes.Count(c => requiredPermCodes.Contains(c)), fieldPermCount);
                 }
                 else
                 {
@@ -801,7 +908,7 @@ public static class DatabaseInitializer
                 logger.LogWarning(ex, "[v2.13.114 Verify] 完整性验证异常（不影响迁移主流程）");
             }
 
-            logger.LogInformation("[v2.13.114 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 5 权限码 + 5 角色关联，含 v2.13.97 personnel:add / v2.13.110 billingstandard:add 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
+            logger.LogInformation("[v2.13.130 Migrate] 隐私字段权限迁移完成（SysFieldPermission 表 + 5 字段种子 + 14 权限码 + 14 角色关联，含 v2.13.97 personnel:add / v2.13.110 billingstandard:add / v2.13.120 device:* / v2.13.130 equipment-reading:* 修复）。结果：{Result}", string.Join("; ", result.PermSteps) + " | " + string.Join("; ", result.RolePermSteps));
             return result;
         }
         catch (Exception ex)

@@ -634,4 +634,82 @@ public class BasicsController : ControllerBase
     }
 
     #endregion
+
+    #region 设备读数日志 (EquipmentReading) — v2.13.130 新增
+
+    /// <summary>
+    /// 获取设备读数日志列表（filter + paging）
+    /// </summary>
+    [HttpGet("equipment-readings")]
+    public async Task<ApiResponse<PagedResult<EquipmentReadingDto>>> GetEquipmentReadings(
+        [FromQuery] string? equipmentId = null,
+        [FromQuery] byte? equipmentType = null,
+        [FromQuery] DateTime? startTime = null,
+        [FromQuery] DateTime? endTime = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var query = new EquipmentReadingQuery
+        {
+            EquipmentId = equipmentId,
+            EquipmentType = equipmentType,
+            StartTime = startTime,
+            EndTime = endTime,
+            PageIndex = page,
+            PageSize = pageSize
+        };
+        var result = await _service.GetEquipmentReadingsAsync(query);
+        return ApiResponse<PagedResult<EquipmentReadingDto>>.Ok(result);
+    }
+
+    /// <summary>
+    /// 获取设备读数日志详情
+    /// </summary>
+    [HttpGet("equipment-readings/{id}")]
+    public async Task<ApiResponse<EquipmentReadingDto>> GetEquipmentReading(int id)
+    {
+        var entity = await _service.GetEquipmentReadingByIdAsync(id);
+        if (entity == null) return ApiResponse<EquipmentReadingDto>.Fail("NOT_FOUND", "记录不存在");
+        return ApiResponse<EquipmentReadingDto>.Ok(entity);
+    }
+
+    /// <summary>
+    /// 新增设备读数日志
+    /// </summary>
+    [HttpPost("equipment-readings")]
+    public async Task<ApiResponse<EquipmentReadingDto>> CreateEquipmentReading([FromBody] EquipmentReadingDto model)
+    {
+        // 从 X-User-Name header 读取当前操作员（v2.13.130 审计字段 CreatedBy）
+        var userName = Request.Headers["X-User-Name"].FirstOrDefault();
+        return await _service.CreateEquipmentReadingAsync(model, userName);
+    }
+
+    /// <summary>
+    /// 更新设备读数日志
+    /// </summary>
+    [HttpPut("equipment-readings/{id}")]
+    public async Task<ApiResponse<EquipmentReadingDto>> UpdateEquipmentReading(int id, [FromBody] EquipmentReadingDto model)
+    {
+        return await _service.UpdateEquipmentReadingAsync(id, model);
+    }
+
+    /// <summary>
+    /// 删除单条设备读数日志
+    /// </summary>
+    [HttpDelete("equipment-readings/{id}")]
+    public async Task<ApiResponse> DeleteEquipmentReading(int id)
+    {
+        return await _service.DeleteEquipmentReadingAsync(id);
+    }
+
+    /// <summary>
+    /// 按时间段批量删除设备读数日志（v2.13.130 独占 Modal 入口）
+    /// </summary>
+    [HttpPost("equipment-readings/batch-delete")]
+    public async Task<ApiResponse<int>> BatchDeleteEquipmentReadings([FromBody] EquipmentReadingBatchDeleteRequest req)
+    {
+        return await _service.DeleteEquipmentReadingsByTimeRangeAsync(req.StartTime, req.EndTime);
+    }
+
+    #endregion
 }

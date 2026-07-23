@@ -126,6 +126,11 @@ public class DormDbContext : DbContext
     public DbSet<MeterRecord> MeterRecords { get; set; } = null!;
 
     /// <summary>
+    /// 设备读数日志（v2.13.130 新增）— 与 DormMeter 配置层 + MeterRecord 聚合层 共同构成「设备-抄表」三层数据模型
+    /// </summary>
+    public DbSet<EquipmentReading> EquipmentReadings { get; set; } = null!;
+
+    /// <summary>
     /// 费用标准
     /// </summary>
     public DbSet<BillingStandard> BillingStandards { get; set; } = null!;
@@ -437,6 +442,24 @@ public class DormDbContext : DbContext
             entity.Property(e => e.ColdWaterMeterId).HasMaxLength(64);
             entity.Property(e => e.HotWaterMeterId).HasMaxLength(64);
             entity.Property(e => e.Remark).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
+        });
+
+        // ===== v2.13.130 设备读数日志（与 DormMeter + MeterRecord 解耦，独立日志表） =====
+        modelBuilder.Entity<EquipmentReading>(entity =>
+        {
+            entity.ToTable("EquipmentReading");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("ReadingId");
+            entity.Property(e => e.EquipmentId).HasMaxLength(64).IsRequired();
+            // v2.13.130 索引：支持「按设备查最新读数」「按时间段批量删除」两个高频查询
+            entity.HasIndex(e => e.EquipmentId).HasDatabaseName("IX_EquipmentReading_EquipmentId");
+            entity.HasIndex(e => e.ReadTime).HasDatabaseName("IX_EquipmentReading_ReadTime");
+            entity.HasIndex(e => new { e.EquipmentType, e.ReadTime }).HasDatabaseName("IX_EquipmentReading_Type_Time");
+            entity.Property(e => e.Reading).HasColumnType("decimal(12,2)");
+            entity.Property(e => e.Remark).HasMaxLength(500);
+            entity.Property(e => e.CreatedBy).HasMaxLength(64);
             entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
         });

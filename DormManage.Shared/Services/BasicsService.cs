@@ -86,6 +86,14 @@ public interface IBasicsService
     Task<ApiResponse<DormMeterDto>> UpdateDeviceMeterAsync(int id, DormMeterDto model);
     Task<ApiResponse> DeleteDeviceMeterAsync(int id);
     Task<List<DormOptionDto>> GetDormsForDeviceAsync();
+
+    // v2.13.130 新增：设备读数日志（EquipmentReading — 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型）
+    Task<PagedResult<EquipmentReadingDto>> GetEquipmentReadingsAsync(EquipmentReadingQuery query);
+    Task<EquipmentReadingDto?> GetEquipmentReadingByIdAsync(int id);
+    Task<ApiResponse<EquipmentReadingDto>> CreateEquipmentReadingAsync(EquipmentReadingDto model, string? createdBy);
+    Task<ApiResponse<EquipmentReadingDto>> UpdateEquipmentReadingAsync(int id, EquipmentReadingDto model);
+    Task<ApiResponse> DeleteEquipmentReadingAsync(int id);
+    Task<ApiResponse<int>> DeleteEquipmentReadingsByTimeRangeAsync(DateTime startTime, DateTime endTime);
 }
 
 /// <summary>
@@ -857,6 +865,172 @@ public class BasicsService : IBasicsService
     }
 
     #endregion
+
+    #region 设备读数日志 (EquipmentReading) — v2.13.130 新增
+
+    public async Task<PagedResult<EquipmentReadingDto>> GetEquipmentReadingsAsync(EquipmentReadingQuery query)
+    {
+        var q = _db.EquipmentReadings.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.EquipmentId))
+        {
+            var kw = query.EquipmentId.Trim();
+            q = q.Where(x => x.EquipmentId.Contains(kw));
+        }
+
+        if (query.EquipmentType.HasValue)
+        {
+            var type = query.EquipmentType.Value;
+            q = q.Where(x => x.EquipmentType == type);
+        }
+
+        if (query.StartTime.HasValue)
+        {
+            var start = query.StartTime.Value;
+            q = q.Where(x => x.ReadTime >= start);
+        }
+
+        if (query.EndTime.HasValue)
+        {
+            var end = query.EndTime.Value;
+            q = q.Where(x => x.ReadTime <= end);
+        }
+
+        var total = await q.CountAsync();
+
+        // 默认按 ReadTime 倒序（最新读数在前），与 PDA 端抄表日志一致
+        var items = await q
+            .OrderByDescending(x => x.ReadTime)
+            .Skip((query.PageIndex - 1) * query.PageSize)
+            .Take(query.PageSize)
+            .Select(x => new EquipmentReadingDto
+            {
+                Id = x.Id,
+                EquipmentId = x.EquipmentId,
+                EquipmentType = x.EquipmentType,
+                Reading = x.Reading,
+                ReadTime = x.ReadTime,
+                Remark = x.Remark,
+                CreatedBy = x.CreatedBy,
+                CreatedAt = x.CreatedAt,
+                UpdatedAt = x.UpdatedAt ?? DateTime.MinValue
+            })
+            .ToListAsync();
+
+        return new PagedResult<EquipmentReadingDto>
+        {
+            Items = items,
+            TotalCount = total,
+            PageIndex = query.PageIndex,
+            PageSize = query.PageSize
+        };
+    }
+
+    public async Task<EquipmentReadingDto?> GetEquipmentReadingByIdAsync(int id)
+    {
+        var x = await _db.EquipmentReadings.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
+        if (x == null) return null;
+        return new EquipmentReadingDto
+        {
+            Id = x.Id,
+            EquipmentId = x.EquipmentId,
+            EquipmentType = x.EquipmentType,
+            Reading = x.Reading,
+            ReadTime = x.ReadTime,
+            Remark = x.Remark,
+            CreatedBy = x.CreatedBy,
+            CreatedAt = x.CreatedAt,
+            UpdatedAt = x.UpdatedAt ?? DateTime.MinValue
+        };
+    }
+
+    public async Task<ApiResponse<EquipmentReadingDto>> CreateEquipmentReadingAsync(EquipmentReadingDto model, string? createdBy)
+    {
+        // 基础校验
+        if (string.IsNullOrWhiteSpace(model.EquipmentId))
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_ID_REQUIRED", "设备 ID 不能为空");
+
+        if (model.EquipmentId.Length > 64)
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_ID_TOO_LONG", "设备 ID 不能超过 64 字符");
+
+        if (!EquipmentType.IsValid(model.EquipmentType))
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_TYPE_INVALID", $"设备类型无效（{model.EquipmentType}）");
+
+        if (model.Reading < 0)
+            return ApiResponse<EquipmentReadingDto>.Fail("READING_INVALID", "读数不能为负数");
+
+        if (model.ReadTime == default)
+            return ApiResponse<EquipmentReadingDto>.Fail("READ_TIME_REQUIRED", "读取时间不能为空");
+
+        var entity = new EquipmentReading
+        {
+            EquipmentId = model.EquipmentId.Trim(),
+            EquipmentType = model.EquipmentType,
+            Reading = model.Reading,
+            ReadTime = model.ReadTime,
+            Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim(),
+            CreatedBy = string.IsNullOrWhiteSpace(createdBy) ? null : createdBy.Trim()
+        };
+        _db.EquipmentReadings.Add(entity);
+        await _db.SaveChangesAsync();
+
+        var dto = await GetEquipmentReadingByIdAsync(entity.Id);
+        return ApiResponse<EquipmentReadingDto>.Ok(dto!, "新增成功");
+    }
+
+    public async Task<ApiResponse<EquipmentReadingDto>> UpdateEquipmentReadingAsync(int id, EquipmentReadingDto model)
+    {
+        var entity = await _db.EquipmentReadings.FindAsync(id);
+        if (entity == null) return ApiResponse<EquipmentReadingDto>.Fail("NOT_FOUND", "记录不存在");
+
+        // 校验
+        if (string.IsNullOrWhiteSpace(model.EquipmentId))
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_ID_REQUIRED", "设备 ID 不能为空");
+        if (model.EquipmentId.Length > 64)
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_ID_TOO_LONG", "设备 ID 不能超过 64 字符");
+        if (!EquipmentType.IsValid(model.EquipmentType))
+            return ApiResponse<EquipmentReadingDto>.Fail("EQUIPMENT_TYPE_INVALID", $"设备类型无效（{model.EquipmentType}）");
+        if (model.Reading < 0)
+            return ApiResponse<EquipmentReadingDto>.Fail("READING_INVALID", "读数不能为负数");
+        if (model.ReadTime == default)
+            return ApiResponse<EquipmentReadingDto>.Fail("READ_TIME_REQUIRED", "读取时间不能为空");
+
+        entity.EquipmentId = model.EquipmentId.Trim();
+        entity.EquipmentType = model.EquipmentType;
+        entity.Reading = model.Reading;
+        entity.ReadTime = model.ReadTime;
+        entity.Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim();
+        entity.UpdatedAt = DateTime.Now;
+
+        await _db.SaveChangesAsync();
+
+        var dto = await GetEquipmentReadingByIdAsync(id);
+        return ApiResponse<EquipmentReadingDto>.Ok(dto!, "更新成功");
+    }
+
+    public async Task<ApiResponse> DeleteEquipmentReadingAsync(int id)
+    {
+        var entity = await _db.EquipmentReadings.FindAsync(id);
+        if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
+        _db.EquipmentReadings.Remove(entity);
+        await _db.SaveChangesAsync();
+        return ApiResponse.Ok("删除成功");
+    }
+
+    public async Task<ApiResponse<int>> DeleteEquipmentReadingsByTimeRangeAsync(DateTime startTime, DateTime endTime)
+    {
+        // 校验时间区间
+        if (startTime > endTime)
+            return ApiResponse<int>.Fail("TIME_RANGE_INVALID", "起始时间必须早于或等于结束时间");
+
+        var affected = await _db.EquipmentReadings
+            .Where(x => x.ReadTime >= startTime && x.ReadTime <= endTime)
+            .ExecuteDeleteAsync();
+
+        return ApiResponse<int>.Ok(affected, $"批量删除成功，共删除 {affected} 条记录");
+    }
+
+    #endregion
 }
 
 /// <summary>v2.13.120 设备档案 DTO（含 Dorm JOIN 字段）</summary>
@@ -884,4 +1058,37 @@ public class DormOptionDto
     public int FloorNo { get; set; }
     /// <summary>是否已配置设备档案（前端过滤/提示）</summary>
     public bool HasDevice { get; set; }
+}
+
+/// <summary>v2.13.130 设备读数日志 DTO</summary>
+public class EquipmentReadingDto
+{
+    public int Id { get; set; }
+    public string EquipmentId { get; set; } = "";
+    /// <summary>1=电表 2=冷水 3=热水（与 EquipmentType 常量配套）</summary>
+    public byte EquipmentType { get; set; }
+    public decimal Reading { get; set; }
+    public DateTime ReadTime { get; set; }
+    public string? Remark { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>v2.13.130 设备读数日志查询条件（filter + paging）</summary>
+public class EquipmentReadingQuery
+{
+    public string? EquipmentId { get; set; }
+    public byte? EquipmentType { get; set; }
+    public DateTime? StartTime { get; set; }
+    public DateTime? EndTime { get; set; }
+    public int PageIndex { get; set; } = 1;
+    public int PageSize { get; set; } = 10;
+}
+
+/// <summary>v2.13.130 设备读数日志批量删除请求</summary>
+public class EquipmentReadingBatchDeleteRequest
+{
+    public DateTime StartTime { get; set; }
+    public DateTime EndTime { get; set; }
 }
