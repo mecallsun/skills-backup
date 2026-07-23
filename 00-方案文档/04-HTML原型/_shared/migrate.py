@@ -30,7 +30,7 @@ MODULE_RULES = [
     ("dorms/edit.html",            "dorms",         "编辑宿舍",     "bi-building",       "dorms/edit.html"),
     ("dorms/details.html",         "dorms",         "宿舍详情",     "bi-building",       "dorms/details.html"),
     ("dorms/history.html",         "dorms",         "宿舍历史",     "bi-building",       "dorms/history.html"),
-    ("meter/index.html",           "meter",         "抄表记录",     "bi-clipboard-data", "meter/index.html"),
+    ("meter/index.html",           "meter",         "智能抄表",     "bi-clipboard-data", "meter/index.html"),
     ("meter/edit.html",            "meter",         "编辑抄表",     "bi-clipboard-data", "meter/edit.html"),
     ("meter/detail.html",          "meter",         "抄表明细",     "bi-clipboard-data", "meter/detail.html"),
     ("meter/entry.html",           "meter",         "手动录入",     "bi-clipboard-data", "meter/entry.html"),

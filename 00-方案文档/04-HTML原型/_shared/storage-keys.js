@@ -53,7 +53,7 @@ const MODULE_ICON_MAP = {
   'dorms':      { icon: 'bi-building',        color: '#1976d2', title: '宿舍管理' },
   'personnel':  { icon: 'bi-people-fill',     color: '#2e7d32', title: '人员清单' },
   'billing':    { icon: 'bi-cash-stack',      color: '#e65100', title: '费用' },
-  'meter':      { icon: 'bi-clipboard-data',  color: '#00838f', title: '抄表记录' },
+  'meter':      { icon: 'bi-clipboard-data',  color: '#00838f', title: '智能抄表' },
   'basics':     { icon: 'bi-database',        color: '#546e7a', title: '基础资料' },
   'settings':   { icon: 'bi-gear',            color: '#546e7a', title: '系统设置' },
   'profile':    { icon: 'bi-person-circle',   color: '#7b1fa2', title: '个人中心' }
@@ -68,7 +68,7 @@ const ICON_RAIL_MENU = [
   { key: 'billing',   icon: 'bi-cash-stack',        title: '费用标准',   url: 'billing/standards.html' },
   { key: 'dorm-bills',icon: 'bi-receipt',           title: '宿舍账单',   url: 'billing/dorm-bills.html' },
   { key: 'employee-bills', icon: 'bi-wallet2',     title: '员工账单',   url: 'billing/employee-bills.html' },
-  { key: 'meter',     icon: 'bi-clipboard-data',    title: '抄表记录',   url: 'meter/index.html' },
+  { key: 'meter',     icon: 'bi-clipboard-data',    title: '智能抄表',   url: 'meter/index.html' },
   { key: 'basics',    icon: 'bi-database',          title: '基础资料',   url: 'basics/index.html' },
   { key: 'settings',  icon: 'bi-gear',              title: '系统设置',   url: 'settings/index.html' }
 ];

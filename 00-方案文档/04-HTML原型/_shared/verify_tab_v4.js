@@ -21,7 +21,7 @@ localStorage.setItem('dormmanage:tabs:v1:admin', JSON.stringify({
     { id: 'tab-002', title: '办理登记', url: 'booking/index.html', module: 'booking', icon: 'bi-clipboard-check' },
     { id: 'tab-003', title: '宿舍管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
     { id: 'tab-004', title: '人员清单', url: 'personnel/list.html', module: 'personnel', icon: 'bi-people-fill' },
-    { id: 'tab-005', title: '抄表记录', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
+    { id: 'tab-005', title: '智能抄表', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
   ]
 }));
 </script>`;

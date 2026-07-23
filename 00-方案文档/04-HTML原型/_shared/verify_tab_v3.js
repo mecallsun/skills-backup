@@ -27,7 +27,7 @@ const presetTabs = [
   { id: 'tab-001', title: '首页', url: 'index.html', module: 'index', icon: 'bi-speedometer2' },
   { id: 'tab-002', title: '宿舍管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
   { id: 'tab-003', title: '人员清单', url: 'personnel/list.html', module: 'personnel', icon: 'bi-people-fill' },
-  { id: 'tab-004', title: '抄表记录', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
+  { id: 'tab-004', title: '智能抄表', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
 ];
 
 const tmpHtml = 'C:\\Users\\Mecall\\AppData\\Local\\Temp\\tab-test.html';

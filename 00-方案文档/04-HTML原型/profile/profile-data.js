@@ -19,7 +19,7 @@ const PROFILE_USER = {
 const PROFILE_CACHE_MODULES = [
     { moduleName: 'personnel',     moduleDisplay: '人员清单', updatedAt: '2026-07-19 16:24' },
     { moduleName: 'booking',       moduleDisplay: '办理登记', updatedAt: '2026-07-20 09:15' },
-    { moduleName: 'meter',         moduleDisplay: '抄表记录', updatedAt: '2026-07-18 11:02' },
+    { moduleName: 'meter',         moduleDisplay: '智能抄表', updatedAt: '2026-07-18 11:02' },
     { moduleName: 'dorms',         moduleDisplay: '宿舍档案', updatedAt: '2026-07-17 14:50' },
     { moduleName: 'billingStandard', moduleDisplay: '费用标准', updatedAt: '2026-07-15 10:30' },
     { moduleName: 'dormBilling',   moduleDisplay: '宿舍账单', updatedAt: '2026-07-16 16:08' },
