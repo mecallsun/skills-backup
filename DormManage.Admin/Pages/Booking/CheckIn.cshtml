@@ -209,7 +209,7 @@
                     <!-- 区块 4a：选择房间（仅入住时显示）（v2.13.36 对齐原型 L139-146） -->
                     <div class="form-section" id="stepDorm">
                         <div class="form-section-title">选择房间</div>
-                        <select id="dormSelect" class="form-select" onchange="onDormSelect()">
+                        <select id="dormSelect" class="form-select" onchange="onDormSelect()" disabled>
                             <option value="">请先选择员工和入住日期</option>
                         </select>
                         <small class="text-muted mt-1 d-block" id="dormHint">系统自动过滤：余量 > 0、与已入住人员性别相同（同性别或空房间）— v2.13.84</small>
@@ -350,16 +350,25 @@
                 ? `<span class="badge bg-primary">${teamName}</span>`
                 : '<span class="text-muted">-</span>';
 
-            // 校验员工 + 刷新列表
-            validateEmp();
-            refreshDorms();
+            // v2.13.124 R9 强锁定：先调用校验，根据结果决定 dormSelect 状态
+            const valid = await validateEmp();
+            const dormSelect = document.getElementById('dormSelect');
+            if (valid) {
+                // 校验通过：解锁 dormSelect + 加载房号列表
+                dormSelect.disabled = false;
+                refreshDorms();
+            } else {
+                // 校验失败：锁定 dormSelect，禁用提交
+                dormSelect.disabled = true;
+                dormSelect.innerHTML = '<option value="">⚠️ 员工状态校验失败，请查看下方提示</option>';
+            }
             // 如果是退房模式，刷新在宿记录
             if (document.getElementById('opOut').checked) refreshRecords();
         }
 
-        // ===== 4. 校验员工（v2.13.36 对齐原型 L224-243） =====
+        // ===== 4. 校验员工（v2.13.36 对齐原型 L224-243 + v2.13.124 R9 强锁定返回 boolean） =====
         async function validateEmp() {
-            if (!selectedEmp) return;
+            if (!selectedEmp) return false;
             try {
                 // 并行调 2 个 API 拿历史 + 在宿
                 const [histRes, stayRes] = await Promise.all([
@@ -372,10 +381,12 @@
                 const opType = document.querySelector('input[name="opType"]:checked').value;
 
                 const warn = document.getElementById('empWarn');
+                let valid = true;
                 let msgs = [];
                 if (opType === '1' && active.length > 0) {
                     msgs.push(`员工当前已在宿 ${active[0].dormCode}（${active[0].bookingDate}），请先办理退房`);
                     warn.className = 'emp-warn alert alert-danger';
+                    valid = false;  // v2.13.124 R9：校验失败
                 } else if (last && last.type === 2 && last.status === 3) {
                     msgs.push(`员工状态正常（上次退房：${last.bookingDate} ${last.dormCode}）`);
                     warn.className = 'emp-warn alert alert-success';
@@ -385,8 +396,14 @@
                 }
                 warn.innerHTML = msgs.join('<br>');
                 warn.style.display = 'block';
+                return valid;
             } catch (err) {
                 console.error('校验员工失败', err);
+                const warn = document.getElementById('empWarn');
+                warn.className = 'emp-warn alert alert-danger';
+                warn.innerHTML = '⚠️ 校验失败：' + err.message;
+                warn.style.display = 'block';
+                return false;  // v2.13.124 R9：网络错误也锁定
             }
         }
 
@@ -452,12 +469,16 @@
                             const teamText = (d.teamNames && d.teamNames.length > 0)
                                 ? d.teamNames.join('/')
                                 : '-';
+                            // v2.13.124 R10 新增：完整班次集合显示（用户原话要求"附带显示已入住人员班次名称"）
+                            const attText = (d.attendanceTypes && d.attendanceTypes.length > 0)
+                                ? d.attendanceTypes.join('/')
+                                : '-';
                             const sameTeamHint = d.hasSameTeam === 1
                                 ? '<span class="badge bg-warning text-dark ms-1"><i class="bi bi-star-fill"></i> 同班组</span>'
                                 : '';
-                            return `<option value="${d.dormCode}" data-bedno="${d.nextAssignedBedNo || 0}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''} | 班组 ${teamText}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary} ${sameTeamHint} ${bedNoHint}）</option>`;
+                            return `<option value="${d.dormCode}" data-bedno="${d.nextAssignedBedNo || 0}">${d.dormCode} | ${d.buildingName || ''} | ${d.addressText || ''} | 班组 ${teamText} | 班次 ${attText}（余量 ${d.availableCount || d.available} / ${d.capacity} 人 · ${genderSummary} ${sameTeamHint} ${bedNoHint}）</option>`;
                         }).join('');
-                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（按 v2.13.112 智能排序：同班组 → 空房 → 同班次 → 字典序）`;
+                    document.getElementById('dormHint').innerHTML = `共 <strong>${res.data.length}</strong> 间可选房间（按 v2.13.124 智能排序：同班组 → 同班次 → 不同班次 → 空房）`;
                 }
             } catch (err) {
                 console.error('加载可用房间失败', err);

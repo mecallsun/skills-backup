@@ -277,7 +277,7 @@
             if (opType !== '1' || !selectedEmp) return;
             const date = document.getElementById('bookingDate').value;
             const rawList = availableDorms(date);
-            // v2.13.112 智能排序：同员工班组 > 空房 > 同班次 > 字典序
+            // v2.13.124 智能排序：同员工班组 > 同班次但不同班组 > 不同班组不同班次 > 空房间
             const list = sortAvailableDormsByPriority(
                 rawList, selectedEmp.teamId, selectedEmp.attendanceTypeId
             );
@@ -288,9 +288,13 @@
                     const teamText = (d.teamNames && d.teamNames.length > 0)
                         ? d.teamNames.join('/')
                         : '-';
-                    return `<option value="${d.dormCode}">${d.dormCode} | ${d.building} | ${d.address} | 班组 ${teamText}（余量 ${d.available} / ${d.capacity} 人）</option>`;
+                    // v2.13.124 新增：班次完整集合显示（用户原话要求"附带显示已入住人员班次名称"）
+                    const attText = (d.attendanceTypes && d.attendanceTypes.length > 0)
+                        ? d.attendanceTypes.join('/')
+                        : '-';
+                    return `<option value="${d.dormCode}">${d.dormCode} | ${d.building} | ${d.address} | 班组 ${teamText} | 班次 ${attText}（余量 ${d.available} / ${d.capacity} 人）</option>`;
                 }).join('');
-            document.getElementById('dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间（含余量且日期不冲突，按智能排序：同班组 → 空房 → 同班次）`;
+            document.getElementById('dormHint').innerHTML = `共 <strong>${list.length}</strong> 间可用房间（含余量且日期不冲突，按智能排序：同班组 → 同班次 → 不同班次 → 空房）`;
         }
 
         function submitForm() {

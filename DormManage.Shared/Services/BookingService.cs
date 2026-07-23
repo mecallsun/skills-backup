@@ -194,6 +194,20 @@ public class DormOption
     public int? MainAttendanceTypeId { get; set; }
     /// <summary>智能排序得分（1=同员工班组，0=否；前端可直接基于此排序）</summary>
     public int HasSameTeam { get; set; }
+
+    // ========== v2.13.124 班次显示 + 排序反转字段 ==========
+    /// <summary>v2.13.124 新增：该房号主要考勤班次名称（按人数最多）。
+    /// 数据关系：DormBooking Status=2 → SysEmployee.AttendanceTypeId → AttendanceType.Name。
+    /// 与 MainAttendanceTypeId 配套显示，避免前端再 JOIN 字典表。</summary>
+    public string? MainAttendanceTypeName { get; set; }
+    /// <summary>v2.13.124 新增：该房号所有在住员工的完整班次集合（去重 + 按人数降序）。
+    /// 例 ["早", "中"] 表示该房有"早"班和"中"班的住客。用户原话要求"列表附带显示班组及班次名称"。
+    /// 来源：DormBooking Status=2 → SysEmployee.AttendanceTypeId → AttendanceType.Name。</summary>
+    public List<string> AttendanceTypes { get; set; } = new();
+    /// <summary>v2.13.124 排序权重 P2：1=不同班组但同班次（"作息一致但陌生人"）</summary>
+    public int IsSameAttendanceOnly { get; set; }
+    /// <summary>v2.13.124 排序权重 P4：1=空房间（兜底）</summary>
+    public int IsEmpty { get; set; }
 }
 
 /// <summary>
@@ -1201,10 +1215,38 @@ public class BookingService : IBookingService
                 MainAttendanceTypeId = g.Where(x => x.AttendanceTypeId.HasValue)
                                           .GroupBy(x => x.AttendanceTypeId!.Value)
                                           .OrderByDescending(gg => gg.Count())
-                                          .Select(gg => (int?)gg.Key).FirstOrDefault()
+                                          .Select(gg => (int?)gg.Key).FirstOrDefault(),
+                // v2.13.124 新增：该房号所有住客的 AttendanceTypeId 集合（去重），用于派生 AttendanceTypes 名称
+                AttendanceTypeIds = g.Where(x => x.AttendanceTypeId.HasValue)
+                                      .Select(x => x.AttendanceTypeId!.Value)
+                                      .Distinct()
+                                      .ToList()
             })
             .ToListAsync();
-        var stayingMap = stayingDetails.ToDictionary(x => x.DormCode);
+
+        // v2.13.124 新增：一次性查询 AttendanceType 字典（AttendanceType 表通常 <20 条，无 N+1 风险）
+        var attendanceDict = await _db.AttendanceTypes.AsNoTracking()
+            .ToDictionaryAsync(a => a.Id, a => a.Name);
+
+        // v2.13.124 新增：在内存中合并 MainAttendanceTypeName + AttendanceTypes
+        var enrichedStayingDetails = stayingDetails.Select(s => new
+        {
+            s.DormCode,
+            s.TotalCount,
+            s.MaleCount,
+            s.FemaleCount,
+            s.MainAttendanceTypeId,
+            // 主要班次名称
+            MainAttendanceTypeName = s.MainAttendanceTypeId.HasValue
+                && attendanceDict.TryGetValue(s.MainAttendanceTypeId.Value, out var mainName)
+                    ? mainName : null,
+            // 完整班次集合（按 MainAttendanceTypeId 优先，按 AttendanceTypeIds 顺序补齐）
+            AttendanceTypes = s.AttendanceTypeIds
+                .Where(id => attendanceDict.ContainsKey(id))
+                .Select(id => attendanceDict[id])
+                .ToList()
+        }).ToList();
+        var stayingMap = enrichedStayingDetails.ToDictionary(x => x.DormCode);
 
         // v2.13.112 派生班组（与 v2.13.111 同 EmployeeTeamMap 模式：仅显示不参与筛选）
         var dormCodesForTeam = stayingDetails.Select(x => x.DormCode).ToList();
@@ -1331,16 +1373,31 @@ public class BookingService : IBookingService
                 MainAttendanceTypeId = staying?.MainAttendanceTypeId,
                 HasSameTeam = (!string.IsNullOrEmpty(empTeamName)
                                && teamMap.GetValueOrDefault(d.DormCode)?.Contains(empTeamName) == true)
-                            ? 1 : 0
+                            ? 1 : 0,
+                // v2.13.124 新增：主要班次名称 + 完整班次集合（避免前端再 JOIN 字典表）
+                MainAttendanceTypeName = staying?.MainAttendanceTypeName,
+                AttendanceTypes = staying?.AttendanceTypes ?? new List<string>(),
+                // v2.13.124 新排序权重：不同班组但同班次（P2）+ 空房间（P4）
+                IsSameAttendanceOnly = (totalCount > 0
+                                         && (!string.IsNullOrEmpty(empTeamName)
+                                             && teamMap.GetValueOrDefault(d.DormCode)?.Contains(empTeamName) != true)
+                                         && staying?.MainAttendanceTypeId == empAttId
+                                         && empAttId.HasValue) ? 1 : 0,
+                IsEmpty = totalCount == 0 ? 1 : 0
             });
         }
 
-        // v2.13.112 4 级智能排序：同员工班组 > 空房 > 同班次 > 字典序
+        // v2.13.124 重写 4 级智能排序：同班组 > 同班次 > 不同班次 > 空房间
+        // P1 同班组（含同/不同班次，"有熟人"最高权重）
+        // P2 不同班组但同班次（"作息一致但陌生人"）
+        // P3 不同班组且不同班次（"完全陌生人"）
+        // P4 空房间（兜底）
         var sortedResult = result
-            .OrderByDescending(d => d.HasSameTeam)       // 1st: 同员工班组（高优先）
-            .ThenByDescending(d => d.CurrentCount == 0)  // 2nd: 空房号优先
-            .ThenBy(d => d.MainAttendanceTypeId == empAttId ? 0 : 1)  // 3rd: 同班次优先
-            .ThenBy(d => d.DormCode)                     // 4th: 字典序（稳定排序）
+            .OrderByDescending(d => d.HasSameTeam)             /* P1 同班组 */
+            .ThenByDescending(d => d.IsSameAttendanceOnly)      /* P2 不同班组但同班次 */
+            .ThenByDescending(d => d.CurrentCount > 0 && d.IsSameAttendanceOnly == 0) /* P3 不同班组不同班次 */
+            .ThenByDescending(d => d.IsEmpty)                   /* P4 空房间（兜底）*/
+            .ThenBy(d => d.DormCode)                            /* 字典序稳定排序 */
             .ToList();
 
         return sortedResult;
