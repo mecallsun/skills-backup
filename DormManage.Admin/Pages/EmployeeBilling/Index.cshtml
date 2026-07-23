@@ -80,7 +80,7 @@
                     </select>
                 </div>
                 <div class="col-auto filter-item">
-                    <label class="form-label mb-1">宿舍房号</label>
+                    <label class="form-label mb-1">房号</label>
                     <input list="dormListEmployeeBilling" type="text" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="选择或输入房号">
                     <datalist id="dormListEmployeeBilling">
                         @foreach (var code in Model.DormCodes)
@@ -118,7 +118,7 @@
                             <th>工号</th>
                             <th>姓名</th>
                             <th>部门</th>
-                            <th>宿舍</th>
+                            <th>房号</th>
                             <th class="text-center">计费月份</th>
                             <th class="text-center">冷水分摊</th>
                             <th class="text-center">热水分摊</th>
