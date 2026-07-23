@@ -115,6 +115,11 @@ builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 // v2.13.25: 延迟从 30s 调整为 5s（启动机制保证表已就绪）
 builder.Services.AddHostedService<DataCleanupHostedService>();
 
+// 注册 v2.13.128 智能抄表每日占位自动补全后台服务（每天 0:01 触发）
+// 业务规则：每个启用宿舍房号当月必须至少有一条 MeterRecord；缺失则新增占位记录
+// 规范文档：00-方案文档/177-智能抄表每日占位自动补全-v2.13.128.md
+builder.Services.AddHostedService<MeterMonthlyAutoFillHostedService>();
+
 var app = builder.Build();
 
 // v2.13.32 热加载：启动时同步预热 AppConfigRuntime（避免首个请求触发 lazy load 阻塞）
