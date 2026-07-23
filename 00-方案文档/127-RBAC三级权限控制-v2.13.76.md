@@ -145,7 +145,7 @@ bool HasPerm(string? code) => string.IsNullOrEmpty(code) || PermService.CurrentU
 |------|--------------|---------|
 | Booking/Index | 办理入住 → booking:checkin | 修复姓名关联 → booking:checkin |
 | Personnel/Index | 新增 → personnel:import | 导入 → personnel:import |
-| Dorms/Index | 新增宿舍 → dorm:create | 新窗口新增 → dorm:create |
+| Dorms/Index | 新增宿舍 → dorm:create | — |
 | Meter/Index | 新增记录 → meter:entry | 手动补录 → meter:entry / 批量导入 → meter:import |
 | BillingStandard/Index | 新增标准 → billing:edit | — |
 

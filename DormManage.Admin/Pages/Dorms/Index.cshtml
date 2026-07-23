@@ -18,8 +18,7 @@
         title = "宿舍档案",
         count = Model.Total,
         countLabel = "间",
-        primaryAction = new PageAction { Label = "新增宿舍", OnClick = "openDormModal(0)", Icon = "bi-plus-lg", Style = "success", PermissionCode = "dorm:create" },
-        actions = new List<PageAction> { new() { Label = "新窗口新增", Icon = "bi-box-arrow-up-right", Url = "/Dorms/Create", Style = "secondary", PermissionCode = "dorm:create" } }
+        primaryAction = new PageAction { Label = "新增宿舍", Url = "/Dorms/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "dorm:create" }
     })
 
     <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->
@@ -231,8 +230,8 @@
         document.body.appendChild(f);
         f.submit();
     }
-    // v2.13.11 Modal 弹窗（与原型 dorms/list.html modalDormCreate/modalDormEdit 一致）：
-    //   通过 iframe 复用现有 Create/Edit 页面，提交后自动关闭弹窗 + 刷新列表
+    // v2.13.117 「新增宿舍」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
+    //   原 Modal 弹窗 + iframe 模式保留给行内「编辑」按钮使用（OPT-1 优化项，行 179-181）
     function openDormModal(id) {
         var url = id > 0 ? '/Dorms/Edit?id=' + id + '&inModal=1' : '/Dorms/Create?inModal=1';
         var frame = document.getElementById('dormModalFrame');
