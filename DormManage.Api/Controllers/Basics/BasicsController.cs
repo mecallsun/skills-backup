@@ -569,4 +569,69 @@ public class BasicsController : ControllerBase
     }
 
     #endregion
+
+    #region 设备档案 (DormMeter) — v2.13.120 新增
+
+    /// <summary>
+    /// 获取设备档案列表（含 Dorm JOIN）
+    /// </summary>
+    [HttpGet("device-meters")]
+    public async Task<ApiResponse<PagedResult<DormMeterDto>>> GetDeviceMeters(
+        [FromQuery] string? keyword = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        var result = await _service.GetDeviceMetersAsync(keyword, page, pageSize);
+        return ApiResponse<PagedResult<DormMeterDto>>.Ok(result);
+    }
+
+    /// <summary>
+    /// 获取设备档案详情
+    /// </summary>
+    [HttpGet("device-meters/{id}")]
+    public async Task<ApiResponse<DormMeterDto>> GetDeviceMeter(int id)
+    {
+        var entity = await _service.GetDeviceMeterByIdAsync(id);
+        if (entity == null) return ApiResponse<DormMeterDto>.Fail("NOT_FOUND", "记录不存在");
+        return ApiResponse<DormMeterDto>.Ok(entity);
+    }
+
+    /// <summary>
+    /// 新增设备档案
+    /// </summary>
+    [HttpPost("device-meters")]
+    public async Task<ApiResponse<DormMeterDto>> CreateDeviceMeter([FromBody] DormMeterDto model)
+    {
+        return await _service.CreateDeviceMeterAsync(model);
+    }
+
+    /// <summary>
+    /// 更新设备档案
+    /// </summary>
+    [HttpPut("device-meters/{id}")]
+    public async Task<ApiResponse<DormMeterDto>> UpdateDeviceMeter(int id, [FromBody] DormMeterDto model)
+    {
+        return await _service.UpdateDeviceMeterAsync(id, model);
+    }
+
+    /// <summary>
+    /// 删除设备档案
+    /// </summary>
+    [HttpDelete("device-meters/{id}")]
+    public async Task<ApiResponse> DeleteDeviceMeter(int id)
+    {
+        return await _service.DeleteDeviceMeterAsync(id);
+    }
+
+    /// <summary>
+    /// 获取 Dorm 列表（设备档案新增/编辑时选择房号用）
+    /// </summary>
+    [HttpGet("dorms-for-device")]
+    public async Task<ApiResponse<List<DormOptionDto>>> GetDormsForDevice()
+    {
+        var result = await _service.GetDormsForDeviceAsync();
+        return ApiResponse<List<DormOptionDto>>.Ok(result);
+    }
+
+    #endregion
 }

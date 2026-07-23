@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $baseDir = $PSScriptRoot
 $srcDir = Join-Path $baseDir 'publish-final'
 $ts = Get-Date -Format 'yyyyMMdd_HHmmss'
-$zipPath = Join-Path $baseDir ("DormManage_v2.13.119_" + $ts + ".zip")
+$zipPath = Join-Path $baseDir ("DormManage_v2.13.120_" + $ts + ".zip")
 
 if (-not (Test-Path $srcDir)) {
     Write-Error ("Source directory not found: " + $srcDir)
@@ -37,7 +37,9 @@ $extra = @(
     (Join-Path $baseDir '00-方案文档\168-入住选员工档案驱动房号规则需求统一-v2.13.116.md'),
     (Join-Path $baseDir '00-方案文档\169-宿舍档案按钮BUG修复-v2.13.117.md'),
     (Join-Path $baseDir '00-方案文档\170-主菜单抄表记录改智能抄表全面统一-v2.13.118.md'),
-    (Join-Path $baseDir '00-方案文档\171-主程序代码抄表记录改智能抄表-v2.13.119.md')
+    (Join-Path $baseDir '00-方案文档\171-主程序代码抄表记录改智能抄表-v2.13.119.md'),
+    (Join-Path $baseDir '00-方案文档\172-基础资料设备档案模块-v2.13.120.md'),
+    (Join-Path $baseDir '01-Database\03_Migration_v2.13.120_DormMeter.sql')
 )
 foreach ($f in $extra) {
     if (Test-Path $f) {
@@ -71,4 +73,6 @@ Write-Host "  168-入住选员工档案驱动房号规则需求统一-v2.13.116.
 Write-Host "  169-宿舍档案按钮BUG修复-v2.13.117.md         交付报告"
 Write-Host "  170-主菜单抄表记录改智能抄表全面统一-v2.13.118.md 交付报告"
 Write-Host "  171-主程序代码抄表记录改智能抄表-v2.13.119.md 交付报告"
+Write-Host "  172-基础资料设备档案模块-v2.13.120.md         交付报告"
+Write-Host "  03_Migration_v2.13.120_DormMeter.sql          DormMeter 表迁移脚本"
 

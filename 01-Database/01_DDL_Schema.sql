@@ -333,5 +333,29 @@ BEGIN
 END;
 GO
 
+-- ============================================================
+-- v2.13.120 设备档案（DormMeter）— 与 Dorm 1:1 关系
+-- ============================================================
+IF OBJECT_ID('dbo.DormMeter', 'U') IS NULL
+BEGIN
+    CREATE TABLE dbo.DormMeter (
+        DormMeterId        INT            IDENTITY(1,1) NOT NULL,
+        DormId             INT            NOT NULL,           -- 房号 FK → Dorm.DormId (UNIQUE 1:1)
+        ElectricMeterId    NVARCHAR(64)   NULL,               -- 电表 ID/编号（现场标识）
+        ColdWaterMeterId   NVARCHAR(64)   NULL,               -- 冷水表 ID/编号
+        HotWaterMeterId    NVARCHAR(64)   NULL,               -- 热水表 ID/编号
+        Remark             NVARCHAR(500)  NULL,
+        IsActive           BIT            NOT NULL DEFAULT 1,
+        CreatedAt          DATETIME       NOT NULL DEFAULT GETDATE(),
+        UpdatedAt          DATETIME       NULL DEFAULT GETDATE(),
+        CONSTRAINT PK_DormMeter PRIMARY KEY CLUSTERED (DormMeterId),
+        CONSTRAINT FK_DormMeter_Dorm FOREIGN KEY (DormId)
+            REFERENCES dbo.Dorm(DormId) ON DELETE CASCADE,
+        CONSTRAINT UX_DormMeter_DormId UNIQUE (DormId)        -- 1:1 唯一约束
+    );
+    PRINT '✓ dbo.DormMeter 表已创建（v2.13.120）';
+END;
+GO
+
 PRINT '✅ 数据库结构创建完成';
 GO

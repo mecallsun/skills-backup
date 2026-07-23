@@ -64,6 +64,8 @@
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-unit"><i class="bi bi-speedometer2"></i> 计量单位</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-residence"><i class="bi bi-house-door"></i> 住宿状态</button>
                             <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-employment"><i class="bi bi-person-check"></i> 在职状态</button>
+                            <!-- v2.13.120 设备档案（与员工类型/班次等基础资料字典并列） -->
+                            <button class="nav-link text-start" data-bs-toggle="pill" data-bs-target="#pane-device"><i class="bi bi-cpu"></i> 设备档案</button>
                         </div>
                     </div>
                 </div>
@@ -343,6 +345,54 @@
                 </div>
             </div>
 
+            <!-- v2.13.120 设备档案（与 Dorm 1:1，含 dormCode/building/floor/电/冷/热/备注） -->
+            <div class="tab-pane fade" id="pane-device" role="tabpanel">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0"><i class="bi bi-cpu"></i> 设备档案列表</h5>
+                            <button class="btn btn-success" onclick="showDeviceAddModal()">
+                                <i class="bi bi-plus-lg"></i> 新增设备档案
+                            </button>
+                        </div>
+                        <div class="filter-row mb-3">
+                            <div class="filter-item flex-grow">
+                                <input type="text" id="deviceKeyword" class="form-control form-control-sm" placeholder="房号/电表ID/冷/热水表ID" />
+                            </div>
+                            <div class="filter-item">
+                                <button class="btn btn-primary filter-btn" onclick="loadDeviceMeters()"><i class="bi bi-search"></i> 查询</button>
+                            </div>
+                            <div class="filter-item">
+                                <button class="btn btn-outline-secondary filter-btn" onclick="resetDeviceFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="60">序号</th>
+                                        <th>房号</th>
+                                        <th>楼栋</th>
+                                        <th>楼层</th>
+                                        <th>电表ID</th>
+                                        <th>冷水ID</th>
+                                        <th>热水ID</th>
+                                        <th>备注</th>
+                                        <th>更新时间</th>
+                                        <th width="150">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="deviceTable"></tbody>
+                            </table>
+                        </div>
+                        <div class="pagination-footer mt-3 d-flex justify-content-between align-items-center">
+                            <small class="text-muted">共 N 条 · 第 X-Y 条 · 共 Z 页</small>
+                            <nav><ul class="pagination pagination-sm mb-0"></ul></nav>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
                 </div>
             </div>
     </div>
@@ -496,6 +546,12 @@
                 { id: 7, code: 'F',       name: 'F班',  sortOrder: 6, remark: '', isActive: true },
                 { id: 8, code: 'G',       name: 'G班',  sortOrder: 7, remark: '', isActive: true },
                 { id: 9, code: 'H',       name: 'H班',  sortOrder: 8, remark: '', isActive: true }
+            ],
+            // v2.13.120 设备档案（与 Dorm 1:1，每条对应一间宿舍的电/冷/热水表 ID）
+            deviceMeters: [
+                { id: 1, dormId: 1, dormCode: 'A101', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A101-001', coldWaterMeterId: 'C-A101-001', hotWaterMeterId: 'H-A101-001', remark: '3 楼朝南', updatedAt: '2026-07-23 10:30' },
+                { id: 2, dormId: 2, dormCode: 'A102', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A102-001', coldWaterMeterId: 'C-A102-001', hotWaterMeterId: '',            remark: '',            updatedAt: '2026-07-23 10:32' },
+                { id: 3, dormId: 3, dormCode: 'A103', buildingName: 'A栋', floorNo: 1, electricMeterId: 'E-A103-001', coldWaterMeterId: 'C-A103-001', hotWaterMeterId: 'H-A103-001', remark: '',            updatedAt: '2026-07-23 10:35' }
             ]
         };
 

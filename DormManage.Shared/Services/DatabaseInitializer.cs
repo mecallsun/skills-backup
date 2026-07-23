@@ -553,10 +553,31 @@ public static class DatabaseInitializer
                   IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 41)
                   INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
                   VALUES (41, N'billingstandard:add', N'新增费用标准', 2, 11, N'/BillingStandard/Create', N'bi-plus-lg', 5, 1, 0, '2026-07-22');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                // v2.13.120 新增：设备档案（基础资料二级菜单：device:view + 3 个子权限）
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 42)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (42, N'device:view', N'查看设备档案', 1, 10, N'/Basics?tab=device', N'bi-cpu', 31, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 43)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (43, N'device:create', N'新增设备档案', 2, 42, N'', N'', 32, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 44)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (44, N'device:edit', N'修改设备档案', 2, 42, N'', N'', 33, 1, 0, '2026-07-23');
+                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
+                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
+                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 45)
+                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (45, N'device:delete', N'删除设备档案', 2, 42, N'', N'', 34, 1, 0, '2026-07-23');
                   SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
             };
 
-            var permTargetIds = new[] { 37, 38, 39, 40, 41 };
+            var permTargetIds = new[] { 37, 38, 39, 40, 41, 42, 43, 44, 45 };
             for (int i = 0; i < permInserts.Length; i++)
             {
                 try
@@ -625,11 +646,44 @@ public static class DatabaseInitializer
                   )
                   INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
                   SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
-                  WHERE PermissionCode = N'billingstandard:add';"
+                  WHERE PermissionCode = N'billingstandard:add';",
+                // v2.13.120 新增：admin → device:view / device:create / device:edit / device:delete（4 个权限码幂等授权）
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'device:view'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'device:view';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'device:create'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'device:create';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'device:edit'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'device:edit';",
+                @"IF NOT EXISTS (
+                      SELECT 1 FROM [dbo].[SysRolePermission] rp
+                      INNER JOIN [dbo].[SysPermission] sp ON rp.PermissionId = sp.Id
+                      WHERE rp.RoleId = 1 AND sp.PermissionCode = N'device:delete'
+                  )
+                  INSERT INTO [dbo].[SysRolePermission] ([RoleId],[PermissionId],[CreatedAt])
+                  SELECT 1, Id, '2026-07-23' FROM [dbo].[SysPermission]
+                  WHERE PermissionCode = N'device:delete';"
             };
 
-            // v2.13.114：日志标识改为 PermissionCode（更直观）
-            var rpTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add" };
+            // v2.13.114：日志标识改为 PermissionCode（更直观）；v2.13.120 新增 4 个 device 权限码
+            var rpTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete" };
             for (int i = 0; i < rpInserts.Length; i++)
             {
                 try
@@ -650,7 +704,7 @@ public static class DatabaseInitializer
             //    改为按 PermissionCode JOIN SysPermission 验证 admin 用户是否拥有 5 个权限码
             try
             {
-                var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add" };
+                var requiredPermCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete" };
 
                 var presentPerms = await db.Database.SqlQueryRaw<string>(
                     $"SELECT PermissionCode FROM SysPermission WHERE PermissionCode IN ({string.Join(",", requiredPermCodes.Select(c => $"N'{c}'"))})")
@@ -671,7 +725,7 @@ public static class DatabaseInitializer
 
                 if (missingPerms.Count == 0 && missingAdminPerms.Count == 0 && fieldPermCount >= 5)
                 {
-                    logger.LogInformation("[v2.13.114 Verify] 隐私字段权限迁移完整性检查通过：admin 拥有 {N}/5 权限码，SYS FieldPermission {N}/5", presentAdminCodes.Count(c => requiredPermCodes.Contains(c)), fieldPermCount);
+                    logger.LogInformation("[v2.13.120 Verify] 隐私字段权限迁移完整性检查通过：admin 拥有 {N}/9 权限码（含 v2.13.120 device 4 个），SYS FieldPermission {N}/5", presentAdminCodes.Count(c => requiredPermCodes.Contains(c)), fieldPermCount);
                 }
                 else
                 {

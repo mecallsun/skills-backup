@@ -3,6 +3,9 @@
 @{
     ViewData["Title"] = "基础资料";
     Layout = "_Layout";
+    // v2.13.120 设备档案按钮权限（写入 JS 全局变量，避免 Razor @await 在 JS 模板里失效）
+    var deviceCanEdit = (await Html.HasPermissionAsync("device:edit")).ToString().ToLower();
+    var deviceCanDelete = (await Html.HasPermissionAsync("device:delete")).ToString().ToLower();
 }
 
 <div class="container-fluid">
@@ -70,6 +73,12 @@
                                 data-bs-toggle="pill" data-bs-target="#pane-employment"
                                 onclick="setActiveTab('employment')">
                             <i class="bi bi-person-check"></i> 在职状态
+                        </button>
+                        @* v2.13.120 新增：设备档案 *@
+                        <button class="nav-link text-start @(Model.ActiveTab == "device" ? "active" : "")"
+                                data-bs-toggle="pill" data-bs-target="#pane-device"
+                                onclick="setActiveTab('device')">
+                            <i class="bi bi-cpu"></i> 设备档案
                         </button>
                     </div>
                 </div>
@@ -370,6 +379,63 @@
                     </div>
                 </div>
 
+                @* v2.13.120 设备档案（与 Dorm 1:1）*@
+                <div class="tab-pane fade @(Model.ActiveTab == "device" ? "show active" : "")" id="pane-device" role="tabpanel">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 class="mb-0"><i class="bi bi-cpu"></i> 设备档案列表</h5>
+                                @if (await Html.HasPermissionAsync("device:create"))
+                                {
+                                    <button class="btn btn-success" onclick="showDeviceAddModal()">
+                                        <i class="bi bi-plus-lg"></i> 新增设备档案
+                                    </button>
+                                }
+                            </div>
+
+                            @* 筛选区 *@
+                            <div class="row g-2 mb-3 align-items-end">
+                                <div class="col-auto">
+                                    <label class="form-label small text-muted mb-1">关键词</label>
+                                    <input type="text" id="deviceKeyword" class="form-control form-control-sm" placeholder="房号/电表ID/冷/热水表ID" style="min-width:260px;" />
+                                </div>
+                                <div class="col-auto">
+                                    <button class="btn btn-primary btn-sm" onclick="loadDeviceMeters()"><i class="bi bi-search"></i> 查询</button>
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetDeviceFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="60">序号</th>
+                                            <th>房号</th>
+                                            <th>楼栋</th>
+                                            <th>楼层</th>
+                                            <th>电表ID</th>
+                                            <th>冷水ID</th>
+                                            <th>热水ID</th>
+                                            <th>备注</th>
+                                            <th width="80">更新时间</th>
+                                            <th width="150">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="deviceTable"></tbody>
+                                </table>
+                            </div>
+
+                            @* 分页（v2.13.105 默认 10 / 20 / 50 / 100）*@
+                            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+                            {
+                                PageIndex = 1,
+                                PageSize = 10,
+                                TotalCount = 0
+                            })
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -419,6 +485,50 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="button" class="btn btn-primary" onclick="saveData()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- v2.13.120 设备档案 新增/编辑 Modal -->
+<div class="modal fade" id="deviceModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="deviceModalTitle"><i class="bi bi-cpu text-success"></i> 新增设备档案</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deviceId" value="0" />
+                <div class="mb-3">
+                    <label class="form-label">房号 <span class="text-danger">*</span></label>
+                    <select id="deviceDormId" class="form-select">
+                        <option value="">— 请选择房号 —</option>
+                    </select>
+                    <small class="text-muted">每间宿舍只能配置 1 条设备档案（1:1 约束）</small>
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">电表 ID</label>
+                        <input type="text" id="deviceElectric" class="form-control" placeholder="现场电表编号" maxlength="64" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">冷水表 ID</label>
+                        <input type="text" id="deviceCold" class="form-control" placeholder="现场冷水表编号" maxlength="64" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">热水表 ID</label>
+                        <input type="text" id="deviceHot" class="form-control" placeholder="现场热水表编号" maxlength="64" />
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <label class="form-label">备注</label>
+                    <textarea id="deviceRemark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="saveDeviceMeter()"><i class="bi bi-check-lg"></i> 保存</button>
             </div>
         </div>
     </div>
@@ -790,5 +900,202 @@
             console.error('保存失败:', err);
         }
     }
+
+    // ========== v2.13.120 设备档案 ==========
+    let deviceDormOptions = [];
+
+    async function loadDeviceMeters(page = 1, pageSize = 10) {
+        const kw = document.getElementById('deviceKeyword')?.value?.trim() || '';
+        try {
+            const url = new URL('/api/basics/device-meters', window.location.origin);
+            url.searchParams.set('keyword', kw);
+            url.searchParams.set('page', page);
+            url.searchParams.set('pageSize', pageSize);
+            const resp = await fetch(url, { credentials: 'same-origin' });
+            const result = await resp.json();
+            if (!result.success) { alert(result.message || '加载失败'); return; }
+            renderDeviceTable(result.data.items, page, pageSize);
+            renderDevicePagination(result.data, page, pageSize);
+        } catch (err) {
+            console.error('加载设备档案失败:', err);
+        }
+    }
+
+    function renderDeviceTable(items, page, pageSize) {
+        const tbody = document.getElementById('deviceTable');
+        if (!items || items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">暂无设备档案</td></tr>';
+            return;
+        }
+        const canEdit = window.__deviceCanEdit === true;
+        const canDelete = window.__deviceCanDelete === true;
+        tbody.innerHTML = items.map((it, idx) => {
+            const no = (page - 1) * pageSize + idx + 1;
+            return `
+                <tr>
+                    <td class="text-center text-muted">${no}</td>
+                    <td><strong>${escapeHtml(it.dormCode)}</strong></td>
+                    <td>${escapeHtml(it.buildingName || '-')}</td>
+                    <td>${it.floorNo} 楼</td>
+                    <td>${escapeHtml(it.electricMeterId || '-')}</td>
+                    <td>${escapeHtml(it.coldWaterMeterId || '-')}</td>
+                    <td>${escapeHtml(it.hotWaterMeterId || '-')}</td>
+                    <td><small>${escapeHtml(it.remark || '')}</small></td>
+                    <td><small class="text-muted">${formatDate(it.updatedAt)}</small></td>
+                    <td class="text-center">
+                        ${canEdit ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="showDeviceEditModal(${it.id})">修改</button>` : ''}
+                        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteDeviceMeter(${it.id}, '${escapeHtml(it.dormCode)}')">删除</button>` : ''}
+                        ${!canEdit && !canDelete ? '<small class="text-muted">无操作权限</small>' : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderDevicePagination(data, page, pageSize) {
+        // 复用 _PaginationPartial 但更新统计 + 分页器
+        const total = data.totalCount;
+        const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
+        const end = Math.min(page * pageSize, total);
+        const totalPages = Math.max(1, Math.ceil(total / pageSize));
+        const footer = document.querySelector('#pane-device .pagination-footer');
+        if (footer) {
+            footer.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="text-muted small">
+                        共 ${total} 条 · 第 ${start}-${end} 条 · 共 ${totalPages} 页
+                        <select class="form-select form-select-sm d-inline-block ms-2" style="width:90px;" onchange="loadDeviceMeters(1, this.value)">
+                            <option value="10" ${pageSize===10?'selected':''}>10 条/页</option>
+                            <option value="20" ${pageSize===20?'selected':''}>20 条/页</option>
+                            <option value="50" ${pageSize===50?'selected':''}>50 条/页</option>
+                            <option value="100" ${pageSize===100?'selected':''}>100 条/页</option>
+                        </select>
+                    </div>
+                    <nav><ul class="pagination pagination-sm mb-0"></ul></nav>
+                </div>
+            `;
+            const ul = footer.querySelector('.pagination');
+            ul.innerHTML = buildDevicePager(page, totalPages);
+        }
+    }
+
+    function buildDevicePager(page, totalPages) {
+        let html = `<li class="page-item ${page===1?'disabled':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${page-1}, 10)">«</a></li>`;
+        const win = 2;
+        let start = Math.max(1, page - win);
+        let end = Math.min(totalPages, page + win);
+        if (start > 1) { html += `<li class="page-item"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(1, 10)">1</a></li>`; if (start > 2) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; }
+        for (let i = start; i <= end; i++) html += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${i}, 10)">${i}</a></li>`;
+        if (end < totalPages) { if (end < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; html += `<li class="page-item"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${totalPages}, 10)">${totalPages}</a></li>`; }
+        html += `<li class="page-item ${page===totalPages?'disabled':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${page+1}, 10)">»</a></li>`;
+        return html;
+    }
+
+    function resetDeviceFilter() {
+        document.getElementById('deviceKeyword').value = '';
+        loadDeviceMeters(1, 10);
+    }
+
+    async function loadDormOptionsForDevice(excludeDeviceId) {
+        try {
+            const resp = await fetch('/api/basics/dorms-for-device', { credentials: 'same-origin' });
+            const result = await resp.json();
+            if (!result.success) return;
+            deviceDormOptions = result.data || [];
+            const sel = document.getElementById('deviceDormId');
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">— 请选择房号 —</option>' +
+                deviceDormOptions.map(d => {
+                    const tag = d.hasDevice ? '（已配置）' : '';
+                    return `<option value="${d.dormId}">${escapeHtml(d.buildingName)} / ${d.floorNo}楼 / ${escapeHtml(d.dormCode)} ${tag}</option>`;
+                }).join('');
+            if (cur) sel.value = cur;
+        } catch (err) { console.error('加载房号选项失败:', err); }
+    }
+
+    async function showDeviceAddModal() {
+        document.getElementById('deviceId').value = '0';
+        document.getElementById('deviceDormId').value = '';
+        document.getElementById('deviceElectric').value = '';
+        document.getElementById('deviceCold').value = '';
+        document.getElementById('deviceHot').value = '';
+        document.getElementById('deviceRemark').value = '';
+        document.getElementById('deviceModalTitle').innerHTML = '<i class="bi bi-cpu text-success"></i> 新增设备档案';
+        await loadDormOptionsForDevice();
+        new bootstrap.Modal(document.getElementById('deviceModal')).show();
+    }
+
+    async function showDeviceEditModal(id) {
+        try {
+            const resp = await fetch(`/api/basics/device-meters/${id}`, { credentials: 'same-origin' });
+            const result = await resp.json();
+            if (!result.success) { alert(result.message || '加载失败'); return; }
+            const it = result.data;
+            document.getElementById('deviceId').value = it.id;
+            await loadDormOptionsForDevice(id);
+            document.getElementById('deviceDormId').value = it.dormId;
+            document.getElementById('deviceElectric').value = it.electricMeterId || '';
+            document.getElementById('deviceCold').value = it.coldWaterMeterId || '';
+            document.getElementById('deviceHot').value = it.hotWaterMeterId || '';
+            document.getElementById('deviceRemark').value = it.remark || '';
+            document.getElementById('deviceModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary"></i> 编辑设备档案 #' + it.id;
+            new bootstrap.Modal(document.getElementById('deviceModal')).show();
+        } catch (err) { console.error('加载失败:', err); }
+    }
+
+    async function saveDeviceMeter() {
+        const id = parseInt(document.getElementById('deviceId').value || '0');
+        const dormId = parseInt(document.getElementById('deviceDormId').value || '0');
+        if (!dormId) { alert('请选择房号'); return; }
+        const payload = {
+            id: id,
+            dormId: dormId,
+            electricMeterId: document.getElementById('deviceElectric').value.trim(),
+            coldWaterMeterId: document.getElementById('deviceCold').value.trim(),
+            hotWaterMeterId: document.getElementById('deviceHot').value.trim(),
+            remark: document.getElementById('deviceRemark').value.trim()
+        };
+        try {
+            const url = id > 0 ? `/api/basics/device-meters/${id}` : '/api/basics/device-meters';
+            const method = id > 0 ? 'PUT' : 'POST';
+            const resp = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const result = await resp.json();
+            if (result.success) {
+                bootstrap.Modal.getInstance(document.getElementById('deviceModal')).hide();
+                loadDeviceMeters();
+            } else {
+                alert(result.message || '保存失败');
+            }
+        } catch (err) { console.error('保存失败:', err); alert('保存失败：' + err.message); }
+    }
+
+    async function deleteDeviceMeter(id, code) {
+        if (!confirm(`确定删除设备档案「${code}」吗？此操作不可恢复。`)) return;
+        try {
+            const resp = await fetch(`/api/basics/device-meters/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            const result = await resp.json();
+            if (result.success) loadDeviceMeters();
+            else alert(result.message || '删除失败');
+        } catch (err) { console.error('删除失败:', err); alert('删除失败：' + err.message); }
+    }
+
+    function escapeHtml(s) { return s == null ? '' : String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+    function formatDate(d) { if (!d) return '-'; const x = new Date(d); return x.toLocaleString('zh-CN', { hour12: false }); }
+
+    // 设备档案自动加载（如果 tab=device）
+    document.addEventListener('DOMContentLoaded', function () {
+        if ('@Model.ActiveTab' === 'device') loadDeviceMeters();
+    });
+</script>
+
+<script>
+    // v2.13.120 注入设备档案按钮权限到全局（避免 Razor at-符 在 JS 注释中误解析）
+    window.__deviceCanEdit = @deviceCanEdit;
+    window.__deviceCanDelete = @deviceCanDelete;
 </script>
 }

@@ -96,6 +96,11 @@ public class DormDbContext : DbContext
     /// </summary>
     public DbSet<Team> Teams { get; set; } = null!;
 
+    /// <summary>
+    /// v2.13.120 设备档案（与 Dorm 1:1，电表/冷水表/热水表 ID）
+    /// </summary>
+    public DbSet<DormMeter> DormMeters { get; set; } = null!;
+
     #endregion
 
     #region 业务表
@@ -412,6 +417,28 @@ public class DormDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Code).HasMaxLength(20);
+        });
+
+        // ===== v2.13.120 设备档案（与 Dorm 1:1） =====
+        modelBuilder.Entity<DormMeter>(entity =>
+        {
+            entity.ToTable("DormMeter");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("DormMeterId");
+            entity.Property(e => e.DormId).IsRequired();
+            // v2.13.120 关键：DormId UNIQUE 约束，强制 1:1 关系
+            entity.HasIndex(e => e.DormId).IsUnique().HasDatabaseName("UX_DormMeter_DormId");
+            // FK → Dorm.DormId，删除 Dorm 时级联清理 DormMeter
+            entity.HasOne(e => e.Dorm)
+                  .WithMany()
+                  .HasForeignKey(e => e.DormId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            entity.Property(e => e.ElectricMeterId).HasMaxLength(64);
+            entity.Property(e => e.ColdWaterMeterId).HasMaxLength(64);
+            entity.Property(e => e.HotWaterMeterId).HasMaxLength(64);
+            entity.Property(e => e.Remark).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime").HasDefaultValueSql("GETDATE()");
         });
 
         // ===== 费用管理实体 =====
@@ -785,7 +812,12 @@ public class DormDbContext : DbContext
             // ========== v2.13.97 P0 BUG：personnel 子权限补全（用户反馈：缺少「新增」按钮权限） ==========
             new SysPermission { Id = 40, PermissionCode = "personnel:add", PermissionName = "新增人员", PermissionType = 2, ParentId = 9, Route = "/Personnel/Create", Icon = "bi-plus-lg", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") },
             // ========== v2.13.110 P0 BUG：billing 子权限补全（用户反馈：缺少「新增标准」按钮权限） ==========
-            new SysPermission { Id = 41, PermissionCode = "billingstandard:add", PermissionName = "新增费用标准", PermissionType = 2, ParentId = 11, Route = "/BillingStandard/Create", Icon = "bi-plus-lg", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") }
+            new SysPermission { Id = 41, PermissionCode = "billingstandard:add", PermissionName = "新增费用标准", PermissionType = 2, ParentId = 11, Route = "/BillingStandard/Create", Icon = "bi-plus-lg", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") },
+            // ========== v2.13.120 新增：设备档案（基础资料二级菜单） ==========
+            new SysPermission { Id = 42, PermissionCode = "device:view", PermissionName = "查看设备档案", PermissionType = 1, ParentId = 10, Route = "/Basics?tab=device", Icon = "bi-cpu", SortOrder = 31, IsActive = true, CreatedAt = DateTime.Parse("2026-07-23") },
+            new SysPermission { Id = 43, PermissionCode = "device:create", PermissionName = "新增设备档案", PermissionType = 2, ParentId = 42, Route = "", Icon = "", SortOrder = 32, IsActive = true, CreatedAt = DateTime.Parse("2026-07-23") },
+            new SysPermission { Id = 44, PermissionCode = "device:edit", PermissionName = "修改设备档案", PermissionType = 2, ParentId = 42, Route = "", Icon = "", SortOrder = 33, IsActive = true, CreatedAt = DateTime.Parse("2026-07-23") },
+            new SysPermission { Id = 45, PermissionCode = "device:delete", PermissionName = "删除设备档案", PermissionType = 2, ParentId = 42, Route = "", Icon = "", SortOrder = 34, IsActive = true, CreatedAt = DateTime.Parse("2026-07-23") }
         );
 
         // 角色-权限关联（管理员：全部权限）

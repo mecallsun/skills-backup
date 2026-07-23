@@ -78,6 +78,14 @@ public interface IBasicsService
     Task<ApiResponse<Team>> CreateTeamAsync(Team model);
     Task<ApiResponse<Team>> UpdateTeamAsync(int id, Team model);
     Task<ApiResponse> DeleteTeamAsync(int id);
+
+    // v2.13.120 新增：设备档案（DormMeter 1:1 with Dorm）
+    Task<PagedResult<DormMeterDto>> GetDeviceMetersAsync(string? keyword, int page = 1, int pageSize = 10);
+    Task<DormMeterDto?> GetDeviceMeterByIdAsync(int id);
+    Task<ApiResponse<DormMeterDto>> CreateDeviceMeterAsync(DormMeterDto model);
+    Task<ApiResponse<DormMeterDto>> UpdateDeviceMeterAsync(int id, DormMeterDto model);
+    Task<ApiResponse> DeleteDeviceMeterAsync(int id);
+    Task<List<DormOptionDto>> GetDormsForDeviceAsync();
 }
 
 /// <summary>
@@ -709,4 +717,171 @@ public class BasicsService : IBasicsService
     }
 
     #endregion
+
+    #region 设备档案 (DormMeter) — v2.13.120 新增
+
+    public async Task<PagedResult<DormMeterDto>> GetDeviceMetersAsync(string? keyword, int page, int pageSize)
+    {
+        var query = _db.DormMeters.AsNoTracking().Include(m => m.Dorm).AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            keyword = keyword.Trim();
+            query = query.Where(m =>
+                (m.Dorm != null && m.Dorm.DormCode.Contains(keyword)) ||
+                (m.ElectricMeterId != null && m.ElectricMeterId.Contains(keyword)) ||
+                (m.ColdWaterMeterId != null && m.ColdWaterMeterId.Contains(keyword)) ||
+                (m.HotWaterMeterId != null && m.HotWaterMeterId.Contains(keyword)));
+        }
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderBy(m => m.Dorm != null ? m.Dorm.DormCode : "")
+            .Skip((page - 1) * pageSize).Take(pageSize)
+            .Select(m => new DormMeterDto
+            {
+                Id = m.Id,
+                DormId = m.DormId,
+                DormCode = m.Dorm != null ? m.Dorm.DormCode : "",
+                BuildingName = m.Dorm != null ? (m.Dorm.BuildingName ?? m.Dorm.Building ?? "") : "",
+                FloorNo = m.Dorm != null ? m.Dorm.FloorId : 0,
+                ElectricMeterId = m.ElectricMeterId,
+                ColdWaterMeterId = m.ColdWaterMeterId,
+                HotWaterMeterId = m.HotWaterMeterId,
+                Remark = m.Remark,
+                CreatedAt = m.CreatedAt,
+                UpdatedAt = m.UpdatedAt ?? DateTime.MinValue
+            }).ToListAsync();
+
+        return new PagedResult<DormMeterDto>
+        {
+            Items = items,
+            TotalCount = total,
+            PageIndex = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<DormMeterDto?> GetDeviceMeterByIdAsync(int id)
+    {
+        var m = await _db.DormMeters.AsNoTracking().Include(x => x.Dorm).FirstOrDefaultAsync(x => x.Id == id);
+        if (m == null) return null;
+        return new DormMeterDto
+        {
+            Id = m.Id,
+            DormId = m.DormId,
+            DormCode = m.Dorm != null ? m.Dorm.DormCode : "",
+            ElectricMeterId = m.ElectricMeterId,
+            ColdWaterMeterId = m.ColdWaterMeterId,
+            HotWaterMeterId = m.HotWaterMeterId,
+            Remark = m.Remark,
+            CreatedAt = m.CreatedAt,
+            UpdatedAt = m.UpdatedAt ?? DateTime.MinValue
+        };
+    }
+
+    public async Task<ApiResponse<DormMeterDto>> CreateDeviceMeterAsync(DormMeterDto model)
+    {
+        // 校验 Dorm 存在
+        var dorm = await _db.Dorms.FindAsync(model.DormId);
+        if (dorm == null) return ApiResponse<DormMeterDto>.Fail("DORM_NOT_FOUND", $"房号 Id={model.DormId} 不存在");
+
+        // 校验 1:1（DormId 唯一）
+        var exists = await _db.DormMeters.AnyAsync(x => x.DormId == model.DormId);
+        if (exists) return ApiResponse<DormMeterDto>.Fail("DORM_ALREADY_HAS_DEVICE", $"房号 {dorm.DormCode} 已有设备档案，请先删除原记录");
+
+        var entity = new DormMeter
+        {
+            DormId = model.DormId,
+            ElectricMeterId = string.IsNullOrWhiteSpace(model.ElectricMeterId) ? null : model.ElectricMeterId.Trim(),
+            ColdWaterMeterId = string.IsNullOrWhiteSpace(model.ColdWaterMeterId) ? null : model.ColdWaterMeterId.Trim(),
+            HotWaterMeterId = string.IsNullOrWhiteSpace(model.HotWaterMeterId) ? null : model.HotWaterMeterId.Trim(),
+            Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim()
+        };
+        _db.DormMeters.Add(entity);
+        await _db.SaveChangesAsync();
+
+        var dto = await GetDeviceMeterByIdAsync(entity.Id);
+        return ApiResponse<DormMeterDto>.Ok(dto!, "新增成功");
+    }
+
+    public async Task<ApiResponse<DormMeterDto>> UpdateDeviceMeterAsync(int id, DormMeterDto model)
+    {
+        var entity = await _db.DormMeters.FindAsync(id);
+        if (entity == null) return ApiResponse<DormMeterDto>.Fail("NOT_FOUND", "记录不存在");
+
+        // 如果修改了 DormId，校验 1:1 唯一性
+        if (entity.DormId != model.DormId)
+        {
+            var dorm = await _db.Dorms.FindAsync(model.DormId);
+            if (dorm == null) return ApiResponse<DormMeterDto>.Fail("DORM_NOT_FOUND", $"房号 Id={model.DormId} 不存在");
+            var conflict = await _db.DormMeters.AnyAsync(x => x.DormId == model.DormId && x.Id != id);
+            if (conflict) return ApiResponse<DormMeterDto>.Fail("DORM_ALREADY_HAS_DEVICE", $"房号 {dorm.DormCode} 已被其他设备档案使用");
+            entity.DormId = model.DormId;
+        }
+
+        entity.ElectricMeterId = string.IsNullOrWhiteSpace(model.ElectricMeterId) ? null : model.ElectricMeterId.Trim();
+        entity.ColdWaterMeterId = string.IsNullOrWhiteSpace(model.ColdWaterMeterId) ? null : model.ColdWaterMeterId.Trim();
+        entity.HotWaterMeterId = string.IsNullOrWhiteSpace(model.HotWaterMeterId) ? null : model.HotWaterMeterId.Trim();
+        entity.Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim();
+        entity.UpdatedAt = DateTime.Now;
+
+        await _db.SaveChangesAsync();
+        var dto = await GetDeviceMeterByIdAsync(id);
+        return ApiResponse<DormMeterDto>.Ok(dto!, "更新成功");
+    }
+
+    public async Task<ApiResponse> DeleteDeviceMeterAsync(int id)
+    {
+        var entity = await _db.DormMeters.FindAsync(id);
+        if (entity == null) return ApiResponse.Fail("NOT_FOUND", "记录不存在");
+        _db.DormMeters.Remove(entity);
+        await _db.SaveChangesAsync();
+        return ApiResponse.Ok("删除成功");
+    }
+
+    public async Task<List<DormOptionDto>> GetDormsForDeviceAsync()
+    {
+        // 已存在设备档案的房号标记为「已配置」，方便前端过滤/提示
+        var usedDormIds = await _db.DormMeters.Select(m => m.DormId).ToListAsync();
+        return await _db.Dorms.AsNoTracking()
+            .OrderBy(d => d.DormCode)
+            .Select(d => new DormOptionDto
+            {
+                DormId = d.Id,
+                DormCode = d.DormCode,
+                BuildingName = d.BuildingName ?? d.Building ?? "",
+                FloorNo = d.FloorId,
+                HasDevice = usedDormIds.Contains(d.Id)
+            }).ToListAsync();
+    }
+
+    #endregion
+}
+
+/// <summary>v2.13.120 设备档案 DTO（含 Dorm JOIN 字段）</summary>
+public class DormMeterDto
+{
+    public int Id { get; set; }
+    public int DormId { get; set; }
+    public string DormCode { get; set; } = "";
+    public string BuildingName { get; set; } = "";
+    public int FloorNo { get; set; }
+    public string? ElectricMeterId { get; set; }
+    public string? ColdWaterMeterId { get; set; }
+    public string? HotWaterMeterId { get; set; }
+    public string? Remark { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+/// <summary>v2.13.120 房号选项 DTO（设备档案新增/编辑下拉用）</summary>
+public class DormOptionDto
+{
+    public int DormId { get; set; }
+    public string DormCode { get; set; } = "";
+    public string BuildingName { get; set; } = "";
+    public int FloorNo { get; set; }
+    /// <summary>是否已配置设备档案（前端过滤/提示）</summary>
+    public bool HasDevice { get; set; }
 }
