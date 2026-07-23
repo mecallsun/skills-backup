@@ -194,37 +194,49 @@ document.addEventListener('click', e => {
     }
 });
 
-// ===== 3. 选中员工（v2.13.38 加载在宿记录 + 填充员工信息） =====
+// ===== 3. 选中员工（v2.13.38 加载在宿记录 + 填充员工信息 + v2.13.127 null check + try/catch） =====
 async function selectEmp(emp) {
     selectedEmp = emp;
-    document.getElementById('empSuggestions').style.display = 'none';
-    document.getElementById('empKeyword').value = emp.realName;
-    document.getElementById('empInfo').style.display = 'block';
-    document.getElementById('empCode').textContent = emp.employeeCode;
-    document.getElementById('empName').textContent = emp.realName;
-    // v2.13.86 性别 Badge（emp.gender 由 employee-search API 返回）
-    if (emp.gender === 1) {
-        document.getElementById('empGender').innerHTML = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
-    } else if (emp.gender === 2) {
-        document.getElementById('empGender').innerHTML = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
-    } else {
-        document.getElementById('empGender').innerHTML = '<span class="badge bg-secondary">未知</span>';
-    }
-    document.getElementById('empPhone').textContent = emp.phone || '-';
-    // v2.13.113 BUG 修复：部门走 FK 关联（API 返回 DepartmentName）
-    document.getElementById('empDept').textContent = emp.departmentName || emp.department || '-';
-    document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
-    // v2.13.88 BUG 修复：与 CheckIn 页面一致 — 用 AttendanceType.Code（枚举关键字）映射 Badge 颜色
-    const attCode2 = emp.attendanceTypeCode || 'DEFAULT';
-    const attName2 = emp.attendanceTypeName || '默认';
-    document.getElementById('empAtt').innerHTML = `<span class="badge ${ATTENDANCE_BADGE[attCode2] || 'bg-secondary'}">${attName2}</span>`;
-    // v2.13.113 BUG 修复：班组 FK 关联（API 返回 TeamName），Badge 渲染
-    const teamName2 = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
-    const teamEl2 = document.getElementById('empTeam');
-    if (teamEl2) {
-        teamEl2.innerHTML = teamName2
+    try {
+        // v2.13.127 防御性 null check（与 CheckIn 一致）：手机号 span 可能因 IsFieldHiddenAsync("employee.phone") 隐藏
+        function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+        function setHtml(id, value) { const el = document.getElementById(id); if (el) el.innerHTML = value; }
+
+        const empSuggestions = document.getElementById('empSuggestions');
+        if (empSuggestions) empSuggestions.style.display = 'none';
+        const empKeywordEl = document.getElementById('empKeyword');
+        if (empKeywordEl) empKeywordEl.value = emp.realName;
+        const empInfoEl = document.getElementById('empInfo');
+        if (empInfoEl) empInfoEl.style.display = 'block';
+
+        setText('empCode', emp.employeeCode);
+        setText('empName', emp.realName);
+        // v2.13.86 性别 Badge
+        let genderHtml = '<span class="badge bg-secondary">未知</span>';
+        if (emp.gender === 1) {
+            genderHtml = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+        } else if (emp.gender === 2) {
+            genderHtml = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+        }
+        setHtml('empGender', genderHtml);
+
+        // v2.13.127 BUG 修复：手机号 span 可能因字段权限隐藏，原版无条件 setText 会抛 TypeError 中断函数
+        setText('empPhone', emp.phone || '-');
+        // v2.13.113 BUG 修复：部门走 FK 关联
+        setText('empDept', emp.departmentName || emp.department || '-');
+        setText('empType', emp.employeeTypeName || emp.employeeType || '-');
+        // v2.13.88 BUG 修复：用 AttendanceType.Code 映射 Badge 颜色
+        const attCode2 = emp.attendanceTypeCode || 'DEFAULT';
+        const attName2 = emp.attendanceTypeName || '默认';
+        setHtml('empAtt', `<span class="badge ${ATTENDANCE_BADGE[attCode2] || 'bg-secondary'}">${attName2}</span>`);
+        // v2.13.113 BUG 修复：班组 FK 关联，Badge 渲染
+        const teamName2 = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
+        setHtml('empTeam', teamName2
             ? `<span class="badge bg-primary">${teamName2}</span>`
-            : '<span class="text-muted">-</span>';
+            : '<span class="text-muted">-</span>');
+
+    } catch (err) {
+        console.error('[selectEmp] 渲染异常:', err);
     }
 
     // 加载在宿记录（v2.13.38 与原型一致：自动绑定第一条 active 记录）

@@ -311,50 +311,66 @@
             }
         });
 
-        // ===== 3. 选中员工（v2.13.122 100% 原型 1:1 对齐 L199-244 + v2.13.125 修复 selectEmp 缺 async） =====
+        // ===== 3. 选中员工（v2.13.122 100% 原型 1:1 对齐 L199-244 + v2.13.125 修复 selectEmp 缺 async + v2.13.127 修复 null check） =====
         async function selectEmp(emp) {
             selectedEmp = emp;
-            // v2.13.122 原型 L201：选中后输入框值设为员工姓名（便于用户确认当前选中）
-            document.getElementById('empKeyword').value = emp.realName;
-            document.getElementById('empSuggestions').style.display = 'none';
-            document.getElementById('empInfo').style.display = 'block';
-            document.getElementById('empCode').textContent = emp.employeeCode;
-            document.getElementById('empName').textContent = emp.realName;
+            try {
+                // v2.13.127 防御性 null check：empInfo 容器与所有字段 span 都可能因 Razor 条件渲染缺失
+                const empInfo = document.getElementById('empInfo');
+                if (empInfo) empInfo.style.display = 'block';
 
-            // v2.13.122 原型 L207-213：性别 Badge 用 bootstrap-icons bi-gender-male/female 图标
-            //   1=男(primary) / 2=女(danger) / 其他=未知(secondary)
-            let genderHtml = '<span class="badge bg-secondary">未知</span>';
-            if (emp.gender === 1) {
-                genderHtml = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
-            } else if (emp.gender === 2) {
-                genderHtml = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+                // v2.13.122 原型 L201：选中后输入框值设为员工姓名
+                const empKeyword = document.getElementById('empKeyword');
+                if (empKeyword) empKeyword.value = emp.realName;
+                const empSuggestions = document.getElementById('empSuggestions');
+                if (empSuggestions) empSuggestions.style.display = 'none';
+
+                // v2.13.127 通用赋值工具：元素存在才赋值（避免 null.textContent TypeError 中断整个函数）
+                function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+                function setHtml(id, value) { const el = document.getElementById(id); if (el) el.innerHTML = value; }
+
+                // 8 字段（含 v2.13.92 字段权限可能隐藏的手机号）
+                setText('empCode', emp.employeeCode);
+                setText('empName', emp.realName);
+
+                // v2.13.122 原型 L207-213：性别 Badge 用 bi-gender 图标
+                let genderHtml = '<span class="badge bg-secondary">未知</span>';
+                if (emp.gender === 1) {
+                    genderHtml = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+                } else if (emp.gender === 2) {
+                    genderHtml = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+                }
+                setHtml('empGender', genderHtml);
+
+                // v2.13.127 BUG 修复点：手机号 span 可能因 IsFieldHiddenAsync("employee.phone") 隐藏，
+                //   原 v2.13.122 代码无条件 setText('empPhone') ⇒ null.textContent TypeError 中断函数
+                //   导致后续 部门/类型/班次/班组 4 字段全部不渲染（用户 BUG 报告）
+                setText('empPhone', emp.phone || '-');
+
+                // v2.13.122 原型 L218-221：部门 FK 关联（API 已返回 DepartmentName）
+                setText('empDept', emp.departmentName || emp.department || '-');
+
+                // v2.13.122 原型 L222-226：员工类型 FK 关联（API 已返回 EmployeeTypeName）
+                setText('empType', emp.employeeTypeName || emp.employeeType || '-');
+
+                // v2.13.122 原型 L228-231：考勤班次 FK 关联 → 用 AttendanceType.Code 映射 Badge
+                const attCode = emp.attendanceTypeCode || 'DEFAULT';
+                setHtml('empAtt', attendanceBadge(attCode));
+
+                // v2.13.122 原型 L234-240：班组 FK 关联（API 已返回 TeamName）→ Badge 渲染
+                const teamName = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
+                setHtml('empTeam', teamName && teamName !== '-'
+                    ? `<span class="badge bg-primary">${teamName}</span>`
+                    : '<span class="text-muted">-</span>');
+
+                // v2.13.126 R9 强锁定：先调用校验，根据结果统一处理 dormSelect + recordSelect
+                const valid = await validateEmp();
+                applyValidationResult(valid);
+                // 如果是退房模式，刷新在宿记录
+                if (document.getElementById('opOut').checked) refreshRecords();
+            } catch (err) {
+                console.error('[selectEmp] 渲染异常:', err);
             }
-            document.getElementById('empGender').innerHTML = genderHtml;
-
-            // v2.13.122 原型 L214：手机号 fallback '-'
-            document.getElementById('empPhone').textContent = emp.phone || '-';
-
-            // v2.13.122 原型 L218-221：部门 FK 关联（API 已返回 DepartmentName），fallback redundancy
-            document.getElementById('empDept').textContent = emp.departmentName || emp.department || '-';
-
-            // v2.13.122 原型 L222-226：员工类型 FK 关联（API 已返回 EmployeeTypeName）
-            document.getElementById('empType').textContent = emp.employeeTypeName || emp.employeeType || '-';
-
-            // v2.13.122 原型 L228-231：考勤班次 FK 关联 → 用 AttendanceType.Code 映射 Badge + AttendanceTypeName 显示
-            const attCode = emp.attendanceTypeCode || 'DEFAULT';
-            document.getElementById('empAtt').innerHTML = attendanceBadge(attCode);
-
-            // v2.13.122 原型 L234-240：班组 FK 关联（API 已返回 TeamName）→ Badge 渲染
-            const teamName = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
-            document.getElementById('empTeam').innerHTML = teamName && teamName !== '-'
-                ? `<span class="badge bg-primary">${teamName}</span>`
-                : '<span class="text-muted">-</span>';
-
-            // v2.13.126 R9 强锁定：先调用校验，根据结果统一处理 dormSelect + recordSelect
-            const valid = await validateEmp();
-            applyValidationResult(valid);
-            // 如果是退房模式，刷新在宿记录
-            if (document.getElementById('opOut').checked) refreshRecords();
         }
 
         // ===== 3.5 R9 强锁定统一应用（v2.13.126 提取，selectEmp + onTypeChange 共用） =====
