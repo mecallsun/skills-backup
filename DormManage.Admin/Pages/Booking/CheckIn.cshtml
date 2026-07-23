@@ -311,8 +311,8 @@
             }
         });
 
-        // ===== 3. 选中员工（v2.13.122 100% 原型 1:1 对齐 L199-244） =====
-        function selectEmp(emp) {
+        // ===== 3. 选中员工（v2.13.122 100% 原型 1:1 对齐 L199-244 + v2.13.125 修复 selectEmp 缺 async） =====
+        async function selectEmp(emp) {
             selectedEmp = emp;
             // v2.13.122 原型 L201：选中后输入框值设为员工姓名（便于用户确认当前选中）
             document.getElementById('empKeyword').value = emp.realName;
