@@ -454,6 +454,43 @@ public static class DatabaseInitializer
         {
             // v2.13.109 起 SQLite 已移除；统一使用 SQL Server 语法
 
+            // 0. v2.13.120 检测 DormMeter 表是否存在（设备档案 — 与 Dorm 1:1）
+            //    若不存在则自动创建（无需手动执行 init_schema.sql，避免部署遗漏）
+            try
+            {
+                var dormMeterTableExists = await db.Database.SqlQueryRaw<string>(
+                    "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DormMeter'")
+                    .ToListAsync(ct);
+                if (dormMeterTableExists.Count == 0)
+                {
+                    logger.LogInformation("[v2.13.120 Migrate] DormMeter 表缺失，开始创建...");
+                    var createDormMeterSql = @"IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'DormMeter')
+                            BEGIN
+                                CREATE TABLE [dbo].[DormMeter] (
+                                    [DormMeterId] INT IDENTITY(1,1) NOT NULL,
+                                    [DormId] INT NOT NULL,
+                                    [ElectricMeterId] NVARCHAR(64) NULL,
+                                    [ColdWaterMeterId] NVARCHAR(64) NULL,
+                                    [HotWaterMeterId] NVARCHAR(64) NULL,
+                                    [Remark] NVARCHAR(500) NULL,
+                                    [IsActive] BIT NOT NULL DEFAULT 1,
+                                    [CreatedAt] DATETIME NOT NULL DEFAULT GETDATE(),
+                                    [UpdatedAt] DATETIME NULL DEFAULT GETDATE(),
+                                    CONSTRAINT [PK_DormMeter] PRIMARY KEY CLUSTERED ([DormMeterId]),
+                                    CONSTRAINT [FK_DormMeter_Dorm] FOREIGN KEY ([DormId])
+                                        REFERENCES [dbo].[Dorm]([DormId]) ON DELETE CASCADE,
+                                    CONSTRAINT [UX_DormMeter_DormId] UNIQUE ([DormId])
+                                );
+                            END";
+                    await db.Database.ExecuteSqlRawAsync(createDormMeterSql, ct);
+                    logger.LogInformation("[v2.13.120 Migrate] DormMeter 表已创建（含 FK + UNIQUE INDEX）");
+                }
+            }
+            catch (Exception exDormMeter)
+            {
+                logger.LogWarning(exDormMeter, "[v2.13.120 Migrate] DormMeter 表检测/创建异常（继续后续迁移）");
+            }
+
             // 1. 检测 SysFieldPermission 表是否存在
             bool tableExists;
             try
