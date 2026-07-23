@@ -133,11 +133,11 @@
             </nav>
         </div>
 
-        <!-- 表单卡片（v2.13.36 1:1 克隆原型 L76-156） -->
+        <!-- 表单卡片（v2.13.36 1:1 克隆原型 L76-156，v2.13.126 名称统一：入住信息录入 → 办理入住） -->
         <div class="form-card">
             <div class="form-card-header">
                 <i class="bi bi-clipboard-plus text-primary"></i>
-                <h3>入住信息录入</h3>
+                <h3>办理入住</h3>
             </div>
 
             <form id="checkInForm" onsubmit="event.preventDefault(); submitForm(); return false;">
@@ -217,10 +217,10 @@
                         <small id="dormBedHint"></small>
                     </div>
 
-                    <!-- 区块 4b：选择在宿记录（仅退房时显示）（v2.13.36 新增对齐原型需求） -->
+                    <!-- 区块 4b：选择在宿记录（仅退房时显示）（v2.13.36 新增对齐原型需求，v2.13.126 R9 强锁定默认 disabled） -->
                     <div class="form-section" id="stepRecord" style="display:none;">
                         <div class="form-section-title">选择在宿记录</div>
-                        <select id="recordSelect" class="form-select">
+                        <select id="recordSelect" class="form-select" disabled>
                             <option value="">请先选择员工</option>
                         </select>
                         <small class="text-muted mt-1 d-block">仅显示该员工的「在宿」状态记录</small>
@@ -350,20 +350,35 @@
                 ? `<span class="badge bg-primary">${teamName}</span>`
                 : '<span class="text-muted">-</span>';
 
-            // v2.13.124 R9 强锁定：先调用校验，根据结果决定 dormSelect 状态
+            // v2.13.126 R9 强锁定：先调用校验，根据结果统一处理 dormSelect + recordSelect
             const valid = await validateEmp();
-            const dormSelect = document.getElementById('dormSelect');
-            if (valid) {
-                // 校验通过：解锁 dormSelect + 加载房号列表
-                dormSelect.disabled = false;
-                refreshDorms();
-            } else {
-                // 校验失败：锁定 dormSelect，禁用提交
-                dormSelect.disabled = true;
-                dormSelect.innerHTML = '<option value="">⚠️ 员工状态校验失败，请查看下方提示</option>';
-            }
+            applyValidationResult(valid);
             // 如果是退房模式，刷新在宿记录
             if (document.getElementById('opOut').checked) refreshRecords();
+        }
+
+        // ===== 3.5 R9 强锁定统一应用（v2.13.126 提取，selectEmp + onTypeChange 共用） =====
+        function applyValidationResult(valid) {
+            const opType = document.querySelector('input[name="opType"]:checked').value;
+            const dormSelect = document.getElementById('dormSelect');
+            const recordSelect = document.getElementById('recordSelect');
+
+            if (valid) {
+                // 校验通过：按 opType 解锁对应下拉框 + 加载数据
+                if (opType === '1') {
+                    dormSelect.disabled = false;
+                    refreshDorms();
+                } else {
+                    recordSelect.disabled = false;
+                    refreshRecords();
+                }
+            } else {
+                // 校验失败：锁定两个下拉框，注入错误提示
+                dormSelect.disabled = true;
+                dormSelect.innerHTML = '<option value="">⚠️ 员工状态校验失败，请查看下方提示</option>';
+                recordSelect.disabled = true;
+                recordSelect.innerHTML = '<option value="">⚠️ 员工状态校验失败，请查看下方提示</option>';
+            }
         }
 
         // ===== 4. 校验员工（v2.13.36 对齐原型 L224-243 + v2.13.124 R9 强锁定返回 boolean） =====
@@ -407,14 +422,15 @@
             }
         }
 
-        // ===== 5. 操作类型切换（v2.13.36 对齐原型 L245-249） =====
-        function onTypeChange() {
+        // ===== 5. 操作类型切换（v2.13.36 对齐原型 L245-249，v2.13.126 R9 强锁定联动） =====
+        async function onTypeChange() {
             const opType = document.querySelector('input[name="opType"]:checked').value;
             document.getElementById('stepDorm').style.display = opType === '1' ? 'block' : 'none';
             document.getElementById('stepRecord').style.display = opType === '2' ? 'block' : 'none';
             if (selectedEmp) {
-                validateEmp();
-                if (opType === '2') refreshRecords();
+                // v2.13.126 修复：切换 opType 时也联动 R9 强锁定（原版只调 validateEmp 但 dormSelect.disabled 不联动）
+                const valid = await validateEmp();
+                applyValidationResult(valid);
             }
         }
 
