@@ -157,8 +157,15 @@ async function onEmpSearch() {
         const resp = await fetch(`${API_BASE}/employee-search?keyword=${encodeURIComponent(kw)}`);
         const res = await resp.json();
         if (res.success && res.data && res.data.length > 0) {
-            // 仅保留当前在宿员工（dormCode 非空）
-            empSearchResults = res.data.filter(e => e.realName && e.realName.includes(kw) && e.dormCode);
+            // v2.13.121 BUG 修复：原 v2.13.36 仅按 realName.includes(kw) 二次过滤，
+            //   用户按工号搜（如 "JG000607"）时过滤失败 → 退房员工下拉列表为空。
+            // 修复：姓名 + 工号 双重匹配，同时仍要求 dormCode 非空（仅保留在宿员工）。
+            empSearchResults = res.data.filter(e =>
+                e.dormCode && (
+                    (e.realName && e.realName.includes(kw)) ||
+                    (e.employeeCode && e.employeeCode.includes(kw))
+                )
+            );
             if (empSearchResults.length === 0) { sug.style.display = 'none'; return; }
             sug.innerHTML = empSearchResults.slice(0, 10).map((e, i) =>
                 `<div class="suggestion-item" onclick='selectEmp(${JSON.stringify(empSearchResults[i])})'>

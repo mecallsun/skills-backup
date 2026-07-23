@@ -271,8 +271,15 @@
                 .then(r => r.json())
                 .then(res => {
                     if (res.success && res.data && res.data.length > 0) {
-                        // 前端二次过滤：仅显示姓名包含 kw 的员工（按原型仅按姓名筛选）
-                        empSearchResults = res.data.filter(e => e.realName && e.realName.includes(kw));
+                        // v2.13.121 BUG 修复：原 v2.13.36 仅按 realName.includes(kw) 二次过滤，
+                        //   用户按工号搜（如 "JG000607"）时 API 返回正确，但前端过滤掉，因
+                        //   e.realName="刘院飘" 不含 "JG000607"，导致下拉列表为空、用户
+                        //   无法选择员工 → 档案信息 / 房号列表都不显示。
+                        // 修复：姓名 + 工号 双重匹配。
+                        empSearchResults = res.data.filter(e =>
+                            (e.realName && e.realName.includes(kw)) ||
+                            (e.employeeCode && e.employeeCode.includes(kw))
+                        );
                         if (empSearchResults.length === 0) { sug.style.display = 'none'; return; }
                         sug.innerHTML = empSearchResults.slice(0, 10).map((e, i) =>
                             `<div class="suggestion-item" onclick='selectEmp(${JSON.stringify(empSearchResults[i])})'>
