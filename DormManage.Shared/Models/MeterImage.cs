@@ -16,7 +16,7 @@ public class MeterImage
     [Column("ImageId")]
     public long Id { get; set; }
 
-    /// <summary>抄表记录ID（FK → MeterRecord.RecordId，BIGINT）</summary>
+    /// <summary>智能抄表ID（FK → MeterRecord.RecordId，BIGINT）</summary>
     public long RecordId { get; set; }
 
     /// <summary>表类型（cold/hot/electric）</summary>

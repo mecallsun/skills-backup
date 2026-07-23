@@ -216,7 +216,7 @@ public class BillingService : IBillingService
 
         if (!records.Any())
         {
-            result.Errors.Add($"该月份({billingMonth})没有正常的抄表记录");
+            result.Errors.Add($"该月份({billingMonth})没有正常的智能抄表记录");
             return result;
         }
 

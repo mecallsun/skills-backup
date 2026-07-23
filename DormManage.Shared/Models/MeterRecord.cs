@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DormManage.Shared.Models;
 
-/// <summary>抄表记录状态枚举（v2.13.24 5 项标准）</summary>
+/// <summary>智能抄表状态枚举（v2.13.24 5 项标准）</summary>
 public enum MeterRecordStatus
 {
     /// <summary>未完成（占位记录，三表全 0）</summary>
@@ -60,7 +60,7 @@ public static class MeterStatusExtensions
 }
 
 /// <summary>
-/// 抄表记录 — v2.13.24 P76 业务深度字段补全
+/// 智能抄表 — v2.13.24 P76 业务深度字段补全
 ///
 /// 与 init_schema.sql [MeterRecord] 表 1:1 对齐 + 业务深度字段：
 /// - ColdUsage/HotUsage/ElectricUsage 用量字段（SQL NOT NULL，EF 完全缺失）
@@ -74,7 +74,7 @@ public static class MeterStatusExtensions
 public class MeterRecord : BaseEntity
 {
     /// <summary>
-    /// 抄表记录ID（v2.13.79 修复：SQL BIGINT ↔ EF long 类型对齐）
+    /// 智能抄表ID（v2.13.79 修复：SQL BIGINT ↔ EF long 类型对齐）
     /// 原 BaseEntity.Id 为 int，但 init_schema.sql [MeterRecord].[RecordId] 为 BIGINT IDENTITY(1,1)，
     /// EF 物化时 Int64 → Int32 cast 失败 → /Meter 列表 Error。
     /// 覆盖基类 int Id 为 long Id 并显式映射到 RecordId 列。

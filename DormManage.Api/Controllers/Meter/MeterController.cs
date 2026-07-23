@@ -21,7 +21,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 获取抄表记录列表
+    /// 获取智能抄表记录列表
     /// </summary>
     [HttpGet("records")]
     public async Task<ApiResponse<PagedResult<MeterRecordDto>>> GetRecords(
@@ -96,7 +96,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 获取抄表记录详情
+    /// 获取智能抄表详情
     /// </summary>
     [HttpGet("records/{id}")]
     public async Task<ApiResponse<MeterRecordDto>> GetRecord(long id)
@@ -144,7 +144,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 新增/更新抄表记录（覆盖模式）
+    /// 新增/更新智能抄表（覆盖模式）
     /// </summary>
     [HttpPost("records")]
     public async Task<ApiResponse<MeterRecordDto>> SaveRecord([FromBody] MeterRecordSaveRequest request)
@@ -300,7 +300,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 修正抄表记录
+    /// 修正智能抄表
     /// </summary>
     [HttpPut("records/{id}/correct")]
     public async Task<ApiResponse<MeterRecordDto>> CorrectRecord(long id, [FromBody] MeterRecordCorrectRequest request)
@@ -359,7 +359,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 删除抄表记录（仅未完成状态）
+    /// 删除智能抄表（仅未完成状态）
     /// </summary>
     [HttpDelete("records/{id}")]
     public async Task<ApiResponse> DeleteRecord(long id)
@@ -405,7 +405,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 作废抄表记录（P1-8）：保留数据但标记为已作废，用于误录或错误纠正
+    /// 作废智能抄表（P1-8）：保留数据但标记为已作废，用于误录或错误纠正
     /// </summary>
     [HttpPost("records/{id}/void")]
     public async Task<ApiResponse<MeterRecordDto>> VoidRecord(long id, [FromBody] MeterVoidRequest request)
@@ -492,7 +492,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 手动补录单条抄表记录
+    /// 手动补录单条智能抄表
     /// </summary>
     [HttpPost("manual-entry")]
     public async Task<ApiResponse<MeterRecordDto>> ManualEntry([FromBody] MeterRecordSaveRequest request)
@@ -501,7 +501,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 批量导入抄表记录
+    /// 批量导入智能抄表
     /// </summary>
     [HttpPost("batch-import")]
     public async Task<ApiResponse<BatchImportResult>> BatchImport([FromBody] List<MeterRecordSaveRequest> records)
@@ -544,7 +544,7 @@ public class MeterController : ControllerBase
     }
 
     /// <summary>
-    /// 导出抄表记录为 Excel (CSV 格式)
+    /// 导出智能抄表为 Excel (CSV 格式)
     /// </summary>
     [HttpGet("export")]
     public async Task<IActionResult> Export(
