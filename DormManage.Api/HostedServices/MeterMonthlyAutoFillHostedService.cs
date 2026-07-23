@@ -106,26 +106,27 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
     }
 
     /// <summary>
-    /// 核心业务：扫描 Dorm + 当月 MeterRecord，差集新增占位
+    /// 核心业务：扫描 Dorm + 当月 MeterRecord，差集新增占位（公开 static，
+    ///   供 MeterController.TriggerMonthlyAutoFill 手动调用，无需重启服务）
     /// </summary>
-    private async Task RunOnceAsync(CancellationToken stoppingToken)
+    public static async Task<MonthlyAutoFillResult> RunOnceAsync(
+        DormDbContext db,
+        ILogger logger,
+        CancellationToken stoppingToken)
     {
         var nowLocal = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, BusinessTimeZone);
         var todayLocal = nowLocal.Date;
         var readMonth = todayLocal.ToString("yyyy-MM");
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "[Meter占位自动补全] 开始：目标月份={ReadMonth}，执行时间={Now:yyyy-MM-dd HH:mm:ss}",
             readMonth, nowLocal);
-
-        using var scope = _services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<DormDbContext>();
 
         // 启动校验：数据库不可达时跳过本次
         if (!await db.Database.CanConnectAsync(stoppingToken))
         {
-            _logger.LogWarning("[Meter占位自动补全] 数据库不可达，跳过本次扫描");
-            return;
+            logger.LogWarning("[Meter占位自动补全] 数据库不可达，跳过本次扫描");
+            return new MonthlyAutoFillResult { ReadMonth = readMonth, Success = false, Error = "数据库不可达" };
         }
 
         // Step 1: 取所有启用的宿舍房号（Dorm.IsActive=true — 锁定约束延伸）
@@ -138,8 +139,8 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
 
         if (activeDorms.Count == 0)
         {
-            _logger.LogInformation("[Meter占位自动补全] 无启用宿舍，跳过");
-            return;
+            logger.LogInformation("[Meter占位自动补全] 无启用宿舍，跳过");
+            return new MonthlyAutoFillResult { ReadMonth = readMonth, Success = true, ActiveDormCount = 0, InsertedCount = 0 };
         }
 
         // Step 2: 取当月所有非作废记录（Status != Voided(4)）
@@ -161,10 +162,18 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
 
         if (missingDorms.Count == 0)
         {
-            _logger.LogInformation(
+            logger.LogInformation(
                 "[Meter占位自动补全] ✓ {ReadMonth} 全部 {Total} 间启用宿舍已有记录，无需补全",
                 readMonth, activeDorms.Count);
-            return;
+            return new MonthlyAutoFillResult
+            {
+                ReadMonth = readMonth,
+                Success = true,
+                ActiveDormCount = activeDorms.Count,
+                ExistingDormCount = existingDormCodes.Count,
+                MissingDormCount = 0,
+                InsertedCount = 0,
+            };
         }
 
         // Step 4: 为每个缺失的房号查上月最后一条记录（用于继承读数）
@@ -235,8 +244,52 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
         await db.MeterRecords.AddRangeAsync(newRecords, stoppingToken);
         await db.SaveChangesAsync(stoppingToken);
 
-        _logger.LogInformation(
+        logger.LogInformation(
             "[Meter占位自动补全] ✓ {ReadMonth} 补全 {Inserted} 条占位记录（启用 {Active} 间，已有 {Existing} 间，缺失 {Missing} 间）",
             readMonth, newRecords.Count, activeDorms.Count, existingDormCodes.Count, missingDorms.Count);
+
+        return new MonthlyAutoFillResult
+        {
+            ReadMonth = readMonth,
+            Success = true,
+            ActiveDormCount = activeDorms.Count,
+            ExistingDormCount = existingDormCodes.Count,
+            MissingDormCount = missingDorms.Count,
+            InsertedCount = newRecords.Count,
+            InsertedDormCodes = newRecords.Select(r => r.DormCode).ToList(),
+        };
     }
+
+    /// <summary>
+    /// 私有实例调用包装（HostedService 入口）
+    /// </summary>
+    private async Task RunOnceAsync(CancellationToken stoppingToken)
+    {
+        using var scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<DormDbContext>();
+        try
+        {
+            await RunOnceAsync(db, _logger, stoppingToken);
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "[Meter占位自动补全] 单次执行异常（已吞掉，明天 0:01 重试）");
+        }
+    }
+}
+
+/// <summary>
+/// 手动触发一次的执行结果（v2.13.128 — API 返回用）
+/// </summary>
+public class MonthlyAutoFillResult
+{
+    public bool Success { get; set; }
+    public string? Error { get; set; }
+    public string ReadMonth { get; set; } = string.Empty;
+    public int ActiveDormCount { get; set; }
+    public int ExistingDormCount { get; set; }
+    public int MissingDormCount { get; set; }
+    public int InsertedCount { get; set; }
+    public List<string> InsertedDormCodes { get; set; } = new();
 }

@@ -3,6 +3,7 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Models;
 using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
+using DormManage.Api.HostedServices;
 
 namespace DormManage.Api.Controllers.Meter;
 
@@ -584,6 +585,40 @@ public class MeterController : ControllerBase
 
         var fileName = $"智能抄表_{DateTime.Now:yyyyMMddHHmmss}.csv";
         return File(bytes, "text/csv; charset=utf-8", fileName);
+    }
+
+    /// <summary>
+    /// v2.13.129：手动触发「当月占位记录自动补全」（无需等待 0:01 HostedService）
+    /// 与 HostedService.RunOnceAsync 共享同一 static 方法，幂等可重复执行
+    /// </summary>
+    [HttpPost("trigger-monthly-autofill")]
+    public async Task<IActionResult> TriggerMonthlyAutoFill()
+    {
+        try
+        {
+            var logger = HttpContext.RequestServices.GetRequiredService<ILogger<MeterMonthlyAutoFillHostedService>>();
+            var result = await MeterMonthlyAutoFillHostedService.RunOnceAsync(_db, logger, HttpContext.RequestAborted);
+            return Ok(new
+            {
+                success = result.Success,
+                error = result.Error,
+                readMonth = result.ReadMonth,
+                activeDormCount = result.ActiveDormCount,
+                existingDormCount = result.ExistingDormCount,
+                missingDormCount = result.MissingDormCount,
+                insertedCount = result.InsertedCount,
+                insertedDormCodes = result.InsertedDormCodes,
+                message = result.Success
+                    ? (result.InsertedCount > 0
+                        ? $"✓ 已补全 {result.InsertedCount} 条占位记录（{result.ReadMonth}）"
+                        : $"✓ {result.ReadMonth} 全部 {result.ActiveDormCount} 间启用宿舍已有记录，无需补全")
+                    : $"✗ {result.Error}",
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, error = ex.Message, message = "✗ 触发异常" });
+        }
     }
 }
 
