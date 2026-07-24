@@ -66,9 +66,22 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             intervalSeconds: 5);
         _licenseMonitor.OnChanged += state =>
         {
-            _log.Info($"[LICENSE] 注册状态变化: RegInt={state.RegInt} LTDName={state.LTDName}");
+            // v2.13.143 状态切换日志（用户可观察）
+            var status = state.RegInt switch
+            {
+                1 => $"✅ 注册有效 至 {state.RegDate?.ToString("yyyy-MM-dd") ?? "?"}（LTD={state.LTDName}）",
+                0 => $"⚠️ 注册已过期 → 全局只读模式（RegDate={state.RegDate?.ToString("yyyy-MM-dd") ?? "?"}）",
+                _ => $"❌ 未注册（试用第 {state.UseTimes} 次 / {DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}）"
+            };
+            _log.Info($"[LICENSE] 状态切换: {status}");
         };
         _licenseMonitor.Start();
+
+        // v2.13.143 自动校验可见性：
+        // 1) 启动校验（一次性）：确认注册状态对用户可见
+        // 2) 周期性心跳（30 分钟）：证明后台持续自动校验中
+        // 用户视角：「注册码校验正确后，运行时不再需要任何手动操作」
+        StartAutomaticValidationLogging();
 
         // v2.13.19：订阅数据库配置变更事件，刷新 appsettings.json 中的 Database 段
         AppConfigManager.Instance.OnDatabaseConfigUpdated += OnDatabaseConfigUpdated;
@@ -173,6 +186,67 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     {
         var c = _config.Current;
         return (c.Tray.ApiPort, c.Tray.AdminPort);
+    }
+
+    /// <summary>
+    /// v2.13.143 自动校验可见性日志
+    ///
+    /// 设计原则：注册是一次性手动操作（LicenseForm），运行期校验是全自动过程（无需用户介入）。
+    /// 用户能看到的自动校验过程：
+    ///   1) 启动校验日志（一次性）：托盘启动时输出当前注册状态
+    ///   2) 周期性心跳日志（每 30 分钟）：证明后台 LicenseMonitor 在持续自动校验
+    ///   3) 状态切换日志（事件触发）：当 RegInt 变化时立即输出
+    ///
+    /// 用户视角：注册一次后，无需再手动操作任何校验按钮；程序会在后台持续校验并按结果自动
+    /// 切换「正常运行」或「全局只读」模式。
+    /// </summary>
+    private void StartAutomaticValidationLogging()
+    {
+        try
+        {
+            // 1) 启动校验日志（一次性）
+            var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+            string startupMsg;
+            if (reg.RegInt == 1 && reg.RegDate.HasValue && reg.RegDate.Value.Date >= DateTime.Today)
+            {
+                startupMsg = $"✅ 启动自动校验通过：注册有效 至 {reg.RegDate:yyyy-MM-dd}（LTD={reg.LTDName}）";
+            }
+            else if (reg.RegInt == -1)
+            {
+                startupMsg = $"⚠️ 启动自动校验：未注册（试用第 {reg.UseTimes} 次 / {DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}），启动 Api/Admin 仍可继续";
+            }
+            else
+            {
+                startupMsg = $"🚫 启动自动校验未通过：RegInt={reg.RegInt} RegDate={reg.RegDate?.ToString("yyyy-MM-dd") ?? "null"} → 全局只读模式";
+            }
+            _log.Info($"[AUTO-VALIDATE] {startupMsg}");
+
+            // 2) 周期性心跳日志（每 30 分钟）：证明后台 LicenseMonitor 在持续自动校验
+            // LicenseMonitor 已经在每 5s 周期内自动调 RegisterSdk.CheckReg()，这里只是「证据可见化」
+            var heartbeatTimer = new System.Threading.Timer(_ =>
+            {
+                try
+                {
+                    var cur = DormManage.Shared.Register.RegisterSdk.CheckReg();
+                    if (cur.RegInt == 1 && cur.RegDate.HasValue && cur.RegDate.Value.Date >= DateTime.Today)
+                    {
+                        _log.Info($"[AUTO-VALIDATE] 心跳 ✅：注册有效 至 {cur.RegDate:yyyy-MM-dd}（LTD={cur.LTDName}）— 自动校验中");
+                    }
+                    else
+                    {
+                        _log.Info($"[AUTO-VALIDATE] 心跳 🚫：RegInt={cur.RegInt} → 全局只读模式已生效");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Warn($"[AUTO-VALIDATE] 心跳异常：{ex.Message}");
+                }
+            }, null, dueTime: TimeSpan.FromMinutes(30), period: TimeSpan.FromMinutes(30));
+        }
+        catch (Exception ex)
+        {
+            _log.Warn($"[AUTO-VALIDATE] 启动日志输出失败：{ex.Message}");
+        }
     }
 
     private void OnServiceStateChanged(string name, ServiceState state)

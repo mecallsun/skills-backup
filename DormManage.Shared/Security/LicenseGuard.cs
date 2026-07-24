@@ -44,8 +44,9 @@ public static class LicenseGuard
 
     /// <summary>
     /// 是否进入全局只读模式
+    /// v2.13.143 防御深度：显式判断 RegDate（不依赖 RegisterSdk 内嵌规则）
     /// </summary>
-    /// <returns>true = 只读（注册失败/过期/托盘未运行/异常）；false = 注册有效</returns>
+    /// <returns>true = 只读（注册失败/过期/RegDate 缺失/托盘未运行/异常）；false = 注册有效</returns>
     public static bool IsReadOnly()
     {
         var state = GetCachedState();
@@ -54,7 +55,26 @@ public static class LicenseGuard
             // 托盘未运行 / IPC 失败 → 默认只读（最安全的默认）
             return true;
         }
-        return state.RegInt != 1;
+
+        // 第一道：注册状态枚举（v2.13.137 已具备）
+        if (state.RegInt != 1)
+        {
+            return true;  // 未注册 / 已过期（RegisterSdk 内嵌规则）
+        }
+
+        // 第二道 v2.13.143：显式日期校验（防御深度）
+        if (!state.RegDate.HasValue)
+        {
+            // RegInt=1 但 RegDate 缺失 → 数据异常 → 拒绝（默认只读更安全）
+            return true;
+        }
+        if (state.RegDate.Value.Date < DateTime.Today)
+        {
+            // 在期内检测失败 → 已过期 → 只读
+            return true;
+        }
+
+        return false;  // RegInt=1 且 RegDate >= today → 正常运行
     }
 
     /// <summary>

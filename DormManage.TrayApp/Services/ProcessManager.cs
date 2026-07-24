@@ -60,9 +60,9 @@ public class ProcessManager
     }
 
     /// <summary>
-    /// v2.13.137：校验当前注册状态是否允许启动服务
+    /// v2.13.137 + v2.13.143：校验当前注册状态是否允许启动服务
     /// 业务规则：
-    /// - RegInt == 1（已注册有效）→ 允许
+    /// - RegInt == 1（已注册有效）→ 允许；**v2.13.143 二次显式校验 RegDate 是否在期内**
     /// - RegInt == 0（已过期）→ 拒绝
     /// - RegInt == -1（未注册）+ UseTimes > TRIAL_LIMIT → 拒绝
     /// - RegInt == -1（未注册）+ UseTimes <= TRIAL_LIMIT → 允许试用
@@ -72,14 +72,33 @@ public class ProcessManager
         try
         {
             var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
-            if (reg.RegInt == 1) return true;
+            if (reg.RegInt == 1)
+            {
+                // v2.13.143 防御深度：显式二次校验 RegDate
+                // 即使 RegisterSdk.CheckReg 内嵌规则未来变动，这里也能独立判断
+                if (!reg.RegDate.HasValue)
+                {
+                    _log.Warn($"[LICENSE] RegInt=1 但 RegDate 缺失 → 拒绝启动");
+                    return false;
+                }
+                if (reg.RegDate.Value.Date < DateTime.Today)
+                {
+                    _log.Warn($"[LICENSE] 注册已过期：RegDate={reg.RegDate:yyyy-MM-dd} < Today={DateTime.Today:yyyy-MM-dd} → 拒绝启动");
+                    return false;
+                }
+                _log.Info($"[LICENSE] 注册有效：LTD={reg.LTDName}，有效期至 {reg.RegDate:yyyy-MM-dd}");
+                return true;
+            }
 
             // 试用模式：未注册但未超试用次数 → 允许
             if (reg.RegInt == -1 && reg.UseTimes < DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT)
+            {
+                _log.Info($"[LICENSE] 试用模式：UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
                 return true;
+            }
 
             // 已过期 或 超试用次数 → 拒绝
-            _log.Warn($"[LICENSE] RegInt={reg.RegInt} UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
+            _log.Warn($"[LICENSE] 启动拒绝：RegInt={reg.RegInt} UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
             return false;
         }
         catch (Exception ex)

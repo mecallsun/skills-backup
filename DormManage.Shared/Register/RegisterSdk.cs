@@ -55,6 +55,14 @@ public static class RegisterSdk
     public const int TRIAL_LIMIT = 30;
 
     /// <summary>
+    /// v2.13.143 license 文件二进制格式（DPAPI 加密）：
+    /// 结构 = magic(4) "JLDL" + version(1) 0x01 + DPAPI(LocalMachine) 加密密文
+    /// 普通用户用 type / 文本编辑器查看只能看到乱码（二进制）
+    /// </summary>
+    private static readonly byte[] LICENSE_FILE_MAGIC = { 0x4A, 0x4C, 0x44, 0x4C }; // "JLDL"
+    private const byte LICENSE_FILE_VERSION = 0x01;
+
+    /// <summary>
     /// 获取机器码（v2.13.94 修正版：完全对齐原 NPGS.Register 算法）
     /// 算法：Win32_Processor.ProcessorId (16 hex) + 磁盘卷序列号 VolumeSerialNumber (8 hex)
     ///       拼接成 24 字符大写 hex，**不经过 MD5**
@@ -400,18 +408,13 @@ public static class RegisterSdk
         }
         catch { }
 
-        // 3) 文件
+        // 3) 文件（v2.13.143 DPAPI 加密，向前兼容 v2.13.142 明文）
         try
         {
             if (System.IO.File.Exists(LICENSE_FILE))
             {
-                var lines = System.IO.File.ReadAllLines(LICENSE_FILE);
-                foreach (var line in lines)
-                {
-                    var idx = line.IndexOf('=');
-                    if (idx > 0 && line.Substring(0, idx) == name)
-                        return line.Substring(idx + 1);
-                }
+                var kv = ReadLicenseFile();
+                if (kv != null && kv.TryGetValue(name, out var v)) return v;
             }
         }
         catch { }
@@ -442,21 +445,97 @@ public static class RegisterSdk
         }
         catch { }
 
-        // 3) 文件
+        // 3) 文件（v2.13.143 DPAPI 加密）
         try
         {
-            var dir = System.IO.Path.GetDirectoryName(LICENSE_FILE);
-            if (!string.IsNullOrEmpty(dir)) System.IO.Directory.CreateDirectory(dir);
-            var existing = System.IO.File.Exists(LICENSE_FILE)
-                ? System.IO.File.ReadAllLines(LICENSE_FILE).ToList()
-                : new List<string>();
-            var idx = existing.FindIndex(l => l.StartsWith(name + "="));
-            var newLine = $"{name}={value}";
-            if (idx >= 0) existing[idx] = newLine;
-            else existing.Add(newLine);
-            System.IO.File.WriteAllLines(LICENSE_FILE, existing);
+            // 先读出已有 KV（自动解密或兼容明文）
+            var kv = ReadLicenseFile() ?? new Dictionary<string, string>();
+            kv[name] = value;
+            WriteLicenseFile(kv);
         }
         catch { }
+    }
+
+    /// <summary>
+    /// v2.13.143：读取 license 文件
+    /// 1) 检测 magic "JLDL" + version=0x01 → 新 DPAPI 加密格式
+    /// 2) 否则 → 向后兼容 v2.13.142 之前的明文 NAME=VALUE 行
+    /// 失败时返回 null（让上层走 HKLM/HKCU fallback）
+    /// </summary>
+    private static Dictionary<string, string>? ReadLicenseFile()
+    {
+        if (!System.IO.File.Exists(LICENSE_FILE)) return null;
+        try
+        {
+            var allBytes = System.IO.File.ReadAllBytes(LICENSE_FILE);
+            if (allBytes.Length < 5) return null;
+
+            // 检测 magic + version（新格式）
+            bool isNewFormat =
+                allBytes[0] == LICENSE_FILE_MAGIC[0] &&
+                allBytes[1] == LICENSE_FILE_MAGIC[1] &&
+                allBytes[2] == LICENSE_FILE_MAGIC[2] &&
+                allBytes[3] == LICENSE_FILE_MAGIC[3] &&
+                allBytes[4] == LICENSE_FILE_VERSION;
+
+            string[] lines;
+            if (isNewFormat)
+            {
+                // DPAPI 解密
+                var cipher = new byte[allBytes.Length - 5];
+                System.Buffer.BlockCopy(allBytes, 5, cipher, 0, cipher.Length);
+                var plain = ProtectedData.Unprotect(cipher, null, DataProtectionScope.LocalMachine);
+                lines = Encoding.UTF8.GetString(plain).Split('\n');
+            }
+            else
+            {
+                // 旧明文格式（v2.13.142 及之前），直接按行解析
+                lines = System.IO.File.ReadAllLines(LICENSE_FILE);
+            }
+
+            var dict = new Dictionary<string, string>();
+            foreach (var line in lines)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var idx = line.IndexOf('=');
+                if (idx > 0)
+                {
+                    var key = line.Substring(0, idx);
+                    var val = line.Substring(idx + 1);
+                    if (!string.IsNullOrEmpty(key)) dict[key] = val;
+                }
+            }
+            return dict.Count > 0 ? dict : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// v2.13.143：写入 license 文件（DPAPI 加密格式 magic=JLDL + version=0x01 + cipher）
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    private static void WriteLicenseFile(Dictionary<string, string> kv)
+    {
+        var dir = System.IO.Path.GetDirectoryName(LICENSE_FILE);
+        if (!string.IsNullOrEmpty(dir)) System.IO.Directory.CreateDirectory(dir);
+
+        // 序列化 NAME=VALUE 行
+        var plain = string.Join("\n", kv
+            .Where(p => !string.IsNullOrEmpty(p.Key))
+            .Select(p => $"{p.Key}={p.Value}"));
+        var plainBytes = Encoding.UTF8.GetBytes(plain);
+
+        // DPAPI LocalMachine 加密（同一台机器任何进程都可解密）
+        var cipher = ProtectedData.Protect(plainBytes, null, DataProtectionScope.LocalMachine);
+
+        // 写 magic + version + cipher
+        using var fs = System.IO.File.Create(LICENSE_FILE);
+        fs.Write(LICENSE_FILE_MAGIC, 0, LICENSE_FILE_MAGIC.Length);
+        fs.WriteByte(LICENSE_FILE_VERSION);
+        fs.Write(cipher, 0, cipher.Length);
     }
 
     private static void DeleteRegValue(string name)
