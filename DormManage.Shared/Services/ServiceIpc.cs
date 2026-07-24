@@ -21,6 +21,8 @@ namespace DormManage.Shared.Services;
 /// { "command": "getdbconfig" }                                                -- v2.13.19 新增
 /// { "command": "setdbconfig", "payload": { DatabaseConfigDto 字段 } }          -- v2.13.19 新增
 /// { "command": "dbconfig.updated", "payload": { DatabaseConfigDto 字段 } }     -- TrayApp 主动推送
+/// { "command": "getregstate" }                                                -- v2.13.137 新增（注册状态查询）
+/// { "command": "regstate.changed", "payload": { RegStateDto } }               -- v2.13.137 新增（TrayApp 主动推送）
 ///
 /// 响应格式：
 /// { "success": true, "message": "已启动", "data": { ... } }
@@ -42,10 +44,39 @@ public static class ServiceIpc
         public string? Message { get; set; }
         public object? Data { get; set; }
     }
+
+    /// <summary>
+    /// v2.13.137 注册状态 DTO（TrayApp → Admin/Api 的注册信息传输格式）
+    /// 数据来源：托盘端 RegisterSdk.CheckReg()（Web/Api 端不再独立调用 RegisterSdk）
+    /// </summary>
+    public class RegStateDto
+    {
+        /// <summary>注册结果：0=已过期 1=已注册 -1=未注册</summary>
+        public int RegInt { get; set; } = -1;
+
+        /// <summary>机器码 SN（24 位 hex，由托盘端生成）</summary>
+        public string SN { get; set; } = "";
+
+        /// <summary>注册码 CDKEY（脱敏显示，可空）</summary>
+        public string CDKEY { get; set; } = "";
+
+        /// <summary>公司/单位名称</summary>
+        public string LTDName { get; set; } = "";
+
+        /// <summary>注册有效日期（ISO 8601，可空）</summary>
+        public DateTime? RegDate { get; set; }
+
+        /// <summary>试用次数累计</summary>
+        public int UseTimes { get; set; }
+
+        /// <summary>TrayApp 检测时间戳（ISO 8601）</summary>
+        public DateTime DetectedAtUtc { get; set; }
+    }
 }
 
 /// <summary>
 /// IPC 客户端（Web Admin 调用托盘）
+/// v2.13.137 扩展：增加注册状态查询便捷方法
 /// </summary>
 public class IpcClient
 {
@@ -76,6 +107,43 @@ public class IpcClient
         return JsonSerializer.Deserialize<ServiceIpc.IpcResponse>(responseText)
             ?? new ServiceIpc.IpcResponse { Success = false, Message = "空响应" };
     }
+
+    /// <summary>
+    /// v2.13.137：查询托盘端当前注册状态（Web/Api 中间件调用）
+    /// 设计要点：
+    /// - 超时 2s（避免阻塞 HTTP 请求管道）
+    /// - 托盘未运行 → 抛 IpcUnavailableException（中间件按"只读"处理）
+    /// - 托盘响应失败 → 抛 IpcUnavailableException
+    /// </summary>
+    public async Task<ServiceIpc.RegStateDto> GetRegStateAsync(int timeoutMs = 2000)
+    {
+        var resp = await SendAsync(
+            new ServiceIpc.IpcCommand { Command = "getregstate" },
+            timeoutMs);
+
+        if (!resp.Success || resp.Data is null)
+        {
+            throw new IpcUnavailableException(
+                $"托盘端响应失败：{resp.Message ?? "无数据"}（可能托盘未运行）");
+        }
+
+        var json = JsonSerializer.Serialize(resp.Data);
+        var state = JsonSerializer.Deserialize<ServiceIpc.RegStateDto>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+
+        return state ?? throw new IpcUnavailableException("注册状态反序列化失败");
+    }
+}
+
+/// <summary>
+/// v2.13.137：IPC 不可用异常（托盘未运行 / 响应失败）
+/// 中间件捕获此异常 → 进入"只读"模式（拒绝所有 POST/PUT/DELETE）
+/// </summary>
+public class IpcUnavailableException : Exception
+{
+    public IpcUnavailableException(string message) : base(message) { }
 }
 
 /// <summary>

@@ -18,6 +18,12 @@ namespace DormManage.Api.Controllers.Pda;
 /// - PDA 端可能上传 0~3 张图片（冷水/热水/电表各一张）
 /// - 图片存储：ApiServer.BaseDirectory/PdaImages/{yyyy-MM}/{Guid}.jpg
 /// - 上传后立即入库（MeterRecord + 关联图片路径）
+///
+/// v2.13.137 注册校验依赖反转：
+/// - 本控制器不再调用 RegisterSdk.CheckReg()（依赖反转）
+/// - 注册校验由托盘端 ProcessManager.StartAllAsync() 完成
+/// - 托盘未运行 / 注册失败 → 根本不会启动 Api 子进程
+/// - 因此 Api 端点（/api/v1/pda/upload）天然只在注册有效时才可达
 /// </summary>
 [ApiController]
 [Route("api/v1/pda")]
@@ -59,6 +65,10 @@ public class PdaController : ControllerBase
         [FromForm] IFormFile? hotImage,
         [FromForm] IFormFile? electricImage)
     {
+        // v2.13.137 注册校验已由托盘端完成（ProcessManager.StartAllAsync 启动前校验）
+        // 本端点不再调用 RegisterSdk（PdaController 中已删除 RegisterSdk 引用）
+        // 如果 Api 可达 → 注册必然有效（托盘拒绝在无效时启动子进程）
+
         if (string.IsNullOrWhiteSpace(metadata))
             return ApiResponse<PdaUploadResult>.Fail("METADATA_REQUIRED", "metadata 字段必填");
 

@@ -45,10 +45,48 @@ public class ProcessManager
     /// <summary>启动所有服务（按顺序：先 Api 再 Admin）</summary>
     public async Task StartAllAsync()
     {
+        // v2.13.137 完全托管模式：托盘是注册校验唯一权威
+        // 启动 Admin/Api 子进程前必须先校验注册状态，未注册/已过期/超试用次数 → 拒绝启动
+        if (!IsLicenseValid())
+        {
+            _log.Error("[LICENSE] 注册校验未通过，拒绝启动 Api/Admin 子进程。请在托盘端「软件注册授权」菜单完成注册。");
+            throw new InvalidOperationException("注册校验未通过，禁止启动 Web 服务");
+        }
+
         _isStopping = false;
         await StartApiAsync();
         await Task.Delay(1000); // 错开启动避免端口瞬时竞争
         await StartAdminAsync();
+    }
+
+    /// <summary>
+    /// v2.13.137：校验当前注册状态是否允许启动服务
+    /// 业务规则：
+    /// - RegInt == 1（已注册有效）→ 允许
+    /// - RegInt == 0（已过期）→ 拒绝
+    /// - RegInt == -1（未注册）+ UseTimes > TRIAL_LIMIT → 拒绝
+    /// - RegInt == -1（未注册）+ UseTimes <= TRIAL_LIMIT → 允许试用
+    /// </summary>
+    private bool IsLicenseValid()
+    {
+        try
+        {
+            var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+            if (reg.RegInt == 1) return true;
+
+            // 试用模式：未注册但未超试用次数 → 允许
+            if (reg.RegInt == -1 && reg.UseTimes < DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT)
+                return true;
+
+            // 已过期 或 超试用次数 → 拒绝
+            _log.Warn($"[LICENSE] RegInt={reg.RegInt} UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _log.Error("[LICENSE] 注册校验异常，按拒绝处理", ex);
+            return false;
+        }
     }
 
     public async Task StartApiAsync()

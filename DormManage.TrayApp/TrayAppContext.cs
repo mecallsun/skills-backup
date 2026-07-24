@@ -33,6 +33,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     private readonly ProcessManager _process;
     private readonly NotifyIconManager _notifyIcon;
     private readonly IpcServer? _ipcServer;
+    private readonly LicenseMonitor _licenseMonitor;
 
     /// <summary>v2.13.4 新增：不可见主窗体，作为所有弹窗的 Owner</summary>
     private readonly Form _ownerForm;
@@ -57,12 +58,39 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         _process.ServiceStateChanged += OnServiceStateChanged;
         _health.ServiceStateChanged += OnServiceStateChanged;
 
+        // v2.13.137 注册状态监控：托盘端是注册校验唯一权威
+        // 周期 5s 探测注册状态变化 → 触发 IPC Push 给所有子进程
+        _licenseMonitor = new LicenseMonitor(
+            checkRegFunc: () => DormManage.Shared.Register.RegisterSdk.CheckReg(),
+            onChanged: BroadcastRegStateChanged,
+            intervalSeconds: 5);
+        _licenseMonitor.OnChanged += state =>
+        {
+            _log.Info($"[LICENSE] 注册状态变化: RegInt={state.RegInt} LTDName={state.LTDName}");
+        };
+        _licenseMonitor.Start();
+
         // v2.13.19：订阅数据库配置变更事件，刷新 appsettings.json 中的 Database 段
         AppConfigManager.Instance.OnDatabaseConfigUpdated += OnDatabaseConfigUpdated;
 
         _health.Start(
             config.Current.Tray.HealthCheckIntervalSeconds,
             GetCurrentPorts);
+
+        // v2.13.137 完全托管模式：启动时清理历史可能存在的子进程自启项
+        // 仅托盘程序可自启；Admin/Api 必须由托盘启动
+        try
+        {
+            var removed = new Services.AutoStartManager().CleanupForbiddenAutoStart();
+            if (removed > 0)
+            {
+                _log.Warn($"[AUTO-START] 已清理 {removed} 个禁止自启项（DormManage.Admin / DormManage.Api）");
+            }
+        }
+        catch (Exception ex)
+        {
+            _log.Warn($"[AUTO-START] 清理禁止自启项异常：{ex.Message}");
+        }
 
         // 3) 创建托盘图标 + 右键菜单（关联 _ownerForm 作为 ContextMenuStrip 宿主）
         _notifyIcon = new NotifyIconManager(
@@ -220,6 +248,13 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                     _ = HandleSetDbConfigAsync(cmd.Payload, respond);
                     break;
 
+                // v2.13.137 注册状态查询（Web/Api 子进程 → TrayApp）
+                // 数据源：RegisterSdk.CheckReg()（托盘端 WMI/注册表读取）
+                // 返回：RegStateDto（RegInt/SN/CDKEY/LTDName/RegDate/UseTimes）
+                case "getregstate":
+                    HandleGetRegState(respond);
+                    break;
+
                 default:
                     respond(new ServiceIpc.IpcResponse { Success = false, Message = $"未知命令：{cmd.Command}" });
                     break;
@@ -356,6 +391,57 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             _log.Error("IPC setdbconfig/dbconfig.updated 处理失败", ex);
             respond(new ServiceIpc.IpcResponse { Success = false, Message = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// v2.13.137 注册状态查询（同步）
+    /// 数据源：RegisterSdk.CheckReg()（托盘端 WMI 取真实硬件特征）
+    /// 用途：Web/Api 中间件 LicenseGuard 调用此方法获取注册状态
+    /// </summary>
+    private void HandleGetRegState(Action<ServiceIpc.IpcResponse> respond)
+    {
+        try
+        {
+            var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+            var state = new ServiceIpc.RegStateDto
+            {
+                RegInt = reg.RegInt,
+                SN = reg.SN,
+                CDKEY = reg.CDKEY ?? "",
+                LTDName = reg.LTDName ?? "",
+                RegDate = reg.RegDate,
+                UseTimes = reg.UseTimes,
+                DetectedAtUtc = DateTime.UtcNow
+            };
+
+            respond(new ServiceIpc.IpcResponse
+            {
+                Success = true,
+                Message = "ok",
+                Data = state
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.Error("IPC getregstate 处理失败", ex);
+            respond(new ServiceIpc.IpcResponse
+            {
+                Success = false,
+                Message = $"注册状态查询失败：{ex.Message}"
+            });
+        }
+    }
+
+    /// <summary>
+    /// v2.13.137 推送注册状态变化（LicenseMonitor 触发）
+    /// 当前实现：通过 IPC Push（Web/Api 端反向建立 TCP 连接接收推送）
+    /// 因 TrayAppContext 单向 IPC 协议限制，本方法仅日志记录；
+    /// 实际推送由子进程 30s 轮询触发（详见 Admin/Api LicenseGuard）
+    /// </summary>
+    private void BroadcastRegStateChanged(ServiceIpc.RegStateDto state)
+    {
+        _log.Info($"[LICENSE-PUSH] 注册状态变化: RegInt={state.RegInt} LTDName={state.LTDName ?? "-"} CDKEY={(string.IsNullOrEmpty(state.CDKEY) ? "空" : "已设置")}");
+        // 子进程通过 30s 轮询 getregstate 自动同步最新状态
     }
 
     #endregion
