@@ -78,18 +78,18 @@ public class AppConfigManager
     }
 
     /// <summary>
-    /// 硬编码兜底默认（v2.13.22 统一值；v2.13.109 起不再设置 SqlitePath）
+    /// 硬编码兜底默认（v2.13.145 改值：172.16.0.100 / user / 1234）
     /// </summary>
     private static DatabaseConfigDto BuildFallback()
     {
         return new DatabaseConfigDto
         {
             Provider = "SqlServer",
-            DbServer = "192.168.1.237",
+            DbServer = "172.16.0.100",
             DbPort = 1433,
             DbName = "WaterMeterDB",
-            DbUser = "__DB_USER__",
-            DbPassword = "__DB_PASSWORD__"
+            DbUser = "user",        // SQL 保留关键字 - 连接串 UID=user 无需方括号
+            DbPassword = "1234"
         };
     }
 

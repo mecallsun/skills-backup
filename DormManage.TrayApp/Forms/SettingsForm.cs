@@ -125,11 +125,11 @@ public sealed class SettingsForm : Form
         // v2.13.109: SQLite 已移除，ComboBox 仅保留 SqlServer 选项（设为只读）
         _cmbProvider.Items.AddRange(new object[] { "SqlServer" });
 
-        _txtDbServer = new TextBox { Text = "192.168.1.237" };
+        _txtDbServer = new TextBox { Text = "172.16.0.100" };      // v2.13.145
         _numDbPort = new NumericUpDown { Minimum = 1, Maximum = 65535, Value = 1433 };
         _txtDbName = new TextBox { Text = "WaterMeterDB" };
-        _txtDbUser = new TextBox { Text = "__DB_USER__" };
-        _txtDbPassword = new TextBox { Text = "__DB_PASSWORD__", PasswordChar = '*' };
+        _txtDbUser = new TextBox { Text = "user" };                // v2.13.145
+        _txtDbPassword = new TextBox { Text = "1234", PasswordChar = '*' };   // v2.13.145
         // v2.13.109: 移除 _txtSqlitePath / _btnSqliteBrowse 控件
 
         // v2.13.32-hotfix: 测试连接按钮（无破坏性，仅测试当前填写的字段，不保存任何东西）

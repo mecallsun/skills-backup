@@ -48,7 +48,7 @@ public class Program
         // 2. 连接数据库
         // 默认连接串（与 appsettings 保持一致；可通过环境变量覆盖）
         var connectionString = Environment.GetEnvironmentVariable("DormManage_DB_CONN")
-            ?? "Server=192.168.1.237;Database=WaterMeterDB;User Id=__DB_USER__;Password=__DB_PASSWORD__;TrustServerCertificate=True;";
+            ?? "Server=172.16.0.100;Database=WaterMeterDB;User Id=user;Password=1234;TrustServerCertificate=True;";
 
         var options = new DbContextOptionsBuilder<DormDbContext>()
             .UseSqlServer(connectionString)

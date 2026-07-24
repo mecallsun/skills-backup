@@ -11,7 +11,7 @@ namespace DormManage.Shared.Data.Interceptors;
 /// - 所有页面使用统一的连接日志便于追踪数据源切换
 ///
 /// 输出格式：
-///   [DB-CONN]  OPENED Server=192.168.1.237 Database=WaterMeterDB Duration=12ms
+///   [DB-CONN]  OPENED Server=172.16.0.100 Database=WaterMeterDB Duration=12ms
 ///   [DB-EXEC]  SELECT * FROM [DormBooking]... (35ms)
 ///   [DB-EXEC-SLOW] SELECT * FROM... (1523ms) Sql=...
 ///   [DB-CMD-FAIL] Server=... Database=... Duration=15ms Exception=...

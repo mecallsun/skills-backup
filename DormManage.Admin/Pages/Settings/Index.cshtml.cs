@@ -73,9 +73,9 @@ public partial class IndexModel : PageModel
     public string ImagePath { get; set; } = @"D:\MeterImages";
 
     /// <summary>
-    /// 数据库服务器
+    /// 数据库服务器（v2.13.145 默认值改 172.16.0.100）
     /// </summary>
-    public string DbServer { get; set; } = "192.168.1.237";
+    public string DbServer { get; set; } = "172.16.0.100";
 
     /// <summary>
     /// 数据库端口
@@ -88,14 +88,14 @@ public partial class IndexModel : PageModel
     public string DbName { get; set; } = "WaterMeterDB";
 
     /// <summary>
-    /// 数据库账号
+    /// 数据库账号（v2.13.145 默认值改 user - SQL 保留关键字，UI 输入层用方括号转义）
     /// </summary>
-    public string DbUser { get; set; } = "__DB_USER__";
+    public string DbUser { get; set; } = "user";
 
     /// <summary>
-    /// 数据库密码
+    /// 数据库密码（v2.13.145 默认值改 1234 - 部署前请改为强密码）
     /// </summary>
-    public string DbPassword { get; set; } = "__DB_PASSWORD__";
+    public string DbPassword { get; set; } = "1234";
 
     /// <summary>
     /// PDA App 版本列表

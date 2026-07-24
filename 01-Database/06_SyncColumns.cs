@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 
-var connStr = "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;";
+var connStr = "Server=172.16.0.100;Database=WaterMeterDB;UID=user;PWD=1234;TrustServerCertificate=True;";
 
 // 同步脚本：让 SQL 表的列与 EF 实体一致
 // EF 实体 AppVersion 期望：FileName/FileSize/IsEnabled/IsForceUpdate/IsLatest/Md5/MinCompatibleVersion/ReleaseDate/Version

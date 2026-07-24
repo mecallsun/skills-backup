@@ -1,7 +1,7 @@
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 
-var connStr = "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;";
+var connStr = "Server=172.16.0.100;Database=WaterMeterDB;UID=user;PWD=1234;TrustServerCertificate=True;";
 
 // C# 类型 → SQL Server 类型映射
 var typeMap = new Dictionary<string, string>

@@ -1,5 +1,5 @@
 using Microsoft.Data.SqlClient;
-var connStr = "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;";
+var connStr = "Server=172.16.0.100;Database=WaterMeterDB;UID=user;PWD=1234;TrustServerCertificate=True;";
 using var conn = new SqlConnection(connStr);
 conn.Open();
 Console.WriteLine($"✅ 已连接 {conn.DataSource}/{conn.Database}");

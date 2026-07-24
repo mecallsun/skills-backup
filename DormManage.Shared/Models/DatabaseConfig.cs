@@ -9,9 +9,9 @@ namespace DormManage.Shared.Models;
 /// </summary>
 public class DatabaseConfigDto
 {
-    /// <summary>数据库服务器（IP 或 域名）</summary>
+    /// <summary>数据库服务器（IP 或 域名，v2.13.145 默认 172.16.0.100）</summary>
     [JsonPropertyName("dbServer")]
-    public string DbServer { get; set; } = "192.168.1.237";
+    public string DbServer { get; set; } = "172.16.0.100";
 
     /// <summary>端口（默认 1433）</summary>
     [JsonPropertyName("dbPort")]
@@ -21,13 +21,13 @@ public class DatabaseConfigDto
     [JsonPropertyName("dbName")]
     public string DbName { get; set; } = "WaterMeterDB";
 
-    /// <summary>用户名</summary>
+    /// <summary>用户名（v2.13.145 默认 user - SQL Server 保留关键字；连接串 UID=user 无需方括号）</summary>
     [JsonPropertyName("dbUser")]
-    public string DbUser { get; set; } = "__DB_USER__";
+    public string DbUser { get; set; } = "user";
 
-    /// <summary>密码（AES-256 加密后存储，前端展示时脱敏）</summary>
+    /// <summary>密码（AES-256 加密后存储，前端展示时脱敏；v2.13.145 默认 1234 - 部署前请改强密码）</summary>
     [JsonPropertyName("dbPassword")]
-    public string? DbPassword { get; set; } = "__DB_PASSWORD__";
+    public string? DbPassword { get; set; } = "1234";
 
     /// <summary>提供程序：固定为 SqlServer（v2.13.109 起移除 SQLite 双 provider）</summary>
     [JsonPropertyName("provider")]

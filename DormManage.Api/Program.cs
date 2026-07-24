@@ -60,7 +60,7 @@ builder.Services.AddSwaggerGen();
 //   1. SysParameter 表（运行时真源 - 后续版本支持）
 //   2. db_setting.json（AES-256 字段式）
 //   3. appsettings.json ConnectionStrings.Default
-//   4. 硬编码默认 192.168.1.237/WaterMeterDB/__DB_USER__/__DB_PASSWORD__
+//   4. 硬编码默认 172.16.0.100/WaterMeterDB/user/1234
 //
 // 环境变量优先级仅作为冷启动兜底（首次启动 db_setting.json 不存在时）
 

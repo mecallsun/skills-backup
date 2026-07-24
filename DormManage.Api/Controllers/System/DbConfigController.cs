@@ -24,11 +24,11 @@ public class DbConfigController : ControllerBase
             // 默认回退：从 appsettings.json 读取当前环境配置
             return new DatabaseConfigDto
             {
-                DbServer = "192.168.1.237",
+                DbServer = "172.16.0.100",        // v2.13.145
                 DbPort = 1433,
                 DbName = "WaterMeterDB",
-                DbUser = "__DB_USER__",
-                DbPassword = "__DB_PASSWORD__",
+                DbUser = "user",                  // v2.13.145 - SQL 保留关键字
+                DbPassword = "1234",              // v2.13.145 - 部署前请改强密码
                 Provider = "SqlServer"
             };
         });

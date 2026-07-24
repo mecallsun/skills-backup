@@ -80,7 +80,7 @@ public sealed class AppConfigRuntime : IAppConfigRuntime
     /// 1. SysParameter 表（最高优先级，运行时真源）
     /// 2. db_setting.json（AES-256 加密字段式配置）
     /// 3. appsettings.json ConnectionStrings.Default（兜底默认）
-    /// 4. 硬编码默认 192.168.1.237/WaterMeterDB/__DB_USER__/__DB_PASSWORD__（灾难场景）
+    /// 4. 硬编码默认 172.16.0.100/WaterMeterDB/user/1234（v2.13.145 灾难场景）
     /// </summary>
     public void Reload()
     {
@@ -152,18 +152,18 @@ public sealed class AppConfigRuntime : IAppConfigRuntime
 
     /// <summary>
     /// 硬编码默认配置（灾难场景最终兜底）
-    /// 对齐 v2.13.22 默认值；v2.13.109 起 SQLite Provider 已移除，不再设置 SqlitePath
+    /// v2.13.145 默认值更新：172.16.0.100 / user / 1234
     /// </summary>
     private static DatabaseConfigDto BuildFallback()
     {
         return new DatabaseConfigDto
         {
             Provider = "SqlServer",
-            DbServer = "192.168.1.237",
+            DbServer = "172.16.0.100",
             DbPort = 1433,
             DbName = "WaterMeterDB",
-            DbUser = "__DB_USER__",
-            DbPassword = "__DB_PASSWORD__"
+            DbUser = "user",            // SQL 保留关键字 - 连接串 UID=user 无需方括号
+            DbPassword = "1234"
         };
     }
 }
