@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  v2.13.140 防反编译：Obfuscar 源码级混淆配置（全链路默认启用）
+  基础：v2.13.135 + 反射白名单精修（Explore + Plan agent 反馈后加深）
+
+  跳过规则分层（按反射密度）：
+  ─────────────────────────────────────────────────────────────────
+  L1 致命崩溃：SkipNamespace
+    - DormManage.Shared.Register            （外部注册机依赖具体方法名）
+    - DormManage.Shared.Security            （暗桩逻辑 + RegisterSdk 调用需可读）
+
+  L2 ASP.NET + EF Core 反射：必须 SkipNamespace
+    - DormManage.Admin.Pages                （50+ PageModel Razor handler + @Model）
+    - DormManage.Admin.ViewComponents      （Component.InvokeAsync 字符串查找）
+    - DormManage.Admin.Filters             （IExceptionFilter 接口契约）
+    - DormManage.Admin.Middleware           （UseMiddleware<T> 反射 InvokeAsync）
+    - DormManage.Admin.Services             （AuthService/AuthHelper DI 构造）
+    - DormManage.Api.Controllers           （[ApiController] + DTO + JSON 属性名）
+    - DormManage.Api.Middleware             （UseMiddleware<T> 反射 InvokeAsync）
+    - DormManage.Api.HostedServices        （AddHostedService<T> 反射）
+    - DormManage.Shared.Models              （DTO + EF 实体混合，跨层反射）
+    - DormManage.Shared.Data                （45 个 modelBuilder<Entity<T>> 强类型注册）
+    - DormManage.Shared.Exceptions          （BusinessException 全局过滤反射）
+    - DormManage.Shared.Extensions          （HTML Helper 间接反射）
+
+  L3 跨进程 IPC（MEDIUM）：TCP JSON-over-lines 字段名映射
+    - DormManage.Shared.Services.ServiceIpc（RegStateDto/CDKEY 等 DTO 字段）
+
+  L4 WinForms 周边（建议）：TrayApp 反射低风险但保守起见
+    - DormManage.TrayApp.Services           （业务服务 + 弱反射）
+    - DormManage.TrayApp.Forms             （WinForms 对话框 + .resx）
+
+  L5 第三方库（NuGet）：任何反射型第三方包都要 Skip
+    - OfficeOpenXml / ClosedXML              （Excel 反射）
+    - Serilog                                （日志反射）
+    - Newtonsoft.Json                        （JSON 序列化属性名）
+    - Swashbuckle.AspNetCore                 （Swagger 反射 API）
+    - Microsoft.AspNetCore*                  （ASP.NET Core 基础库反射）
+    - Microsoft.EntityFrameworkCore*         （EF Core 模型反射）
+    - System.Windows.Forms                   （WinForms）
+
+  L6 入口保护：所有 Program 类
+    - TrayApp.Program + TamperDialog        （含 v2.13.135 暗桩）
+    - Admin.Program + Api.Program           （WebApplication 启动 + 单实例锁）
+  ─────────────────────────────────────────────────────────────────
+
+  混淆模块：4 个项目全量混淆（保留所有 SkipNamespace）
+  Managed 模式：极强混淆（HideStrings + OptimizeMethods + SuppressIldasm）
+-->
+<Obfuscator xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:noNamespaceSchemaLocation="https://www.obfuscar.com/schema/Obfuscar.xsd"
+            Restore="true"
+            Seed="1">
+  <Var name="InPath" value="tmp/in" />
+  <Var name="OutPath" value="tmp/out" />
+  <Var name="KeepPublicApi" value="false" />
+  <Var name="HidePrivateApi" value="true" />
+  <Var name="RenameProperties" value="true" />
+  <Var name="RenameEvents" value="true" />
+  <Var name="RenameFields" value="true" />
+  <Var name="UseUnicodeNames" value="true" />
+  <Var name="HideStrings" value="true" />
+  <Var name="OptimizeMethods" value="true" />
+  <Var name="SuppressIldasm" value="true" />
+
+  <!-- ─── TrayApp：跳过 Program（含暗桩）+ TamperDialog + Forms + Services ─── -->
+  <Module file="$(InPath)\DormManage.TrayApp.dll"
+          skipTypes="DormManage.TrayApp.Program;DormManage.TrayApp.TamperDialog"
+          skipMethods="Main" />
+
+  <!-- ─── Admin：跳过整个 Pages + ViewComponents + Filters + Middleware + Services + Program ─── -->
+  <Module file="$(InPath)\DormManage.Admin.dll"
+          skipTypes="DormManage.Admin.Program"
+          skipMethods="Main" />
+
+  <!-- ─── Api：跳过 Controllers + Middleware + HostedServices + Program（ASP.NET 反射密集区） ─── -->
+  <Module file="$(InPath)\DormManage.Api.dll"
+          skipTypes="DormManage.Api.Program"
+          skipMethods="Main" />
+
+  <!-- ─── Shared：业务服务+模型+Helpers 全量混淆（SkipNamespace 危险命名空间） ─── -->
+  <Module file="$(InPath)\DormManage.Shared.dll" />
+
+  <!-- L1 致命崩溃风险：2 个外部依赖命名空间必须保留 -->
+  <SkipNamespace name="DormManage.Shared.Register" />
+  <SkipNamespace name="DormManage.Shared.Security" />
+
+  <!-- L2 ASP.NET + EF Core 反射密集区（Explore + Plan agent 实测必须 Skip） -->
+  <SkipNamespace name="DormManage.Admin.Pages" />
+  <SkipNamespace name="DormManage.Admin.ViewComponents" />
+  <SkipNamespace name="DormManage.Admin.Filters" />
+  <SkipNamespace name="DormManage.Admin.Middleware" />
+  <SkipNamespace name="DormManage.Admin.Services" />
+  <SkipNamespace name="DormManage.Api.Controllers" />
+  <SkipNamespace name="DormManage.Api.Middleware" />
+  <SkipNamespace name="DormManage.Api.HostedServices" />
+  <SkipNamespace name="DormManage.Shared.Models" />
+  <SkipNamespace name="DormManage.Shared.Data" />
+  <SkipNamespace name="DormManage.Shared.Exceptions" />
+  <SkipNamespace name="DormManage.Shared.Extensions" />
+
+  <!-- L3 跨进程 IPC DTO（TCP JSON-over-lines 字段名） -->
+  <SkipNamespace name="DormManage.Shared.Services.ServiceIpc" />
+
+  <!-- L4 WinForms 周边保守防御 -->
+  <SkipNamespace name="DormManage.TrayApp.Services" />
+  <SkipNamespace name="DormManage.TrayApp.Forms" />
+
+  <!-- L5 第三方库（NuGet）：任何反射型第三方包都要 Skip -->
+  <SkipNamespace name="OfficeOpenXml" />
+  <SkipNamespace name="ClosedXML" />
+  <SkipNamespace name="Serilog" />
+  <SkipNamespace name="CommunityToolkit" />
+  <SkipNamespace name="Microsoft.AspNetCore" />
+  <SkipNamespace name="Microsoft.EntityFrameworkCore" />
+  <SkipNamespace name="System.Windows.Forms" />
+  <SkipNamespace name="Newtonsoft" />
+  <SkipNamespace name="Swashbuckle" />
+</Obfuscator>

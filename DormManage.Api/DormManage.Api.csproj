@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <!-- v2.13.11 全局抑制次要警告：CS1998（async无await）/CS8602（可能空引用）/CS8629（可空值类型）/CS0618（已过时API兼容回退） -->
     <NoWarn>$(NoWarn);CS1998;CS8602;CS8629;CS0618</NoWarn>
+    <!-- v2.13.140：Release 构建启用 Obfuscar 源码级混淆 -->
+    <ObfuscateOnRelease>true</ObfuscateOnRelease>
   </PropertyGroup>
 
   <ItemGroup>

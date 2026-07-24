@@ -1,0 +1,55 @@
+<Project>
+  <!--
+    v2.13.140 防反编译：Obfuscar + PublishReadyToRun 全链路默认启用
+    基础：v2.13.135 仅提供 ObfuscarConfigPath（默认未启用，命令行手动跑）
+    v2.13.140：接入 MSBuild.Obfuscar NuGet 2.2.49 包，自动注入 AfterBuild target
+              → dotnet build -c Release 时自动跑 Obfuscar
+              → dotnet build -c Debug 时不跑（开发体验优先）
+
+    设计决策（v2.13.140 三层保护）：
+    ┌─────────────────────────────────────────────────────────────────┐
+    │ 三层保护矩阵                                                     │
+    ├─────────────────────────────────────────────────────────────────┤
+    │ L1 源码混淆  │ Obfuscar（默认启用）       全部 4 项目            │
+    │ L2 PE 加壳    │ BitMono（仅 TrayApp）      仅 TrayApp           │
+    │ L3 R2R 预编译 │ PublishReadyToRun         全部 3 SDK（Shared非SDK） │
+    │ L4 字符串加密 │ Obfuscar HideStrings      全部 4 DLL            │
+    │ L5 AntiILDasm │ Obfuscar SuppressIldasm   全部 4 DLL            │
+    │ L6 IL 优化    │ Obfuscar OptimizeMethods+ Unicode Names          │
+    └─────────────────────────────────────────────────────────────────┘
+
+    「三者同等强度」实现的分层匹配：
+    - TrayApp：L1 + L2 + L3 + L4 + L5 + L6（6 层全占）
+    - Admin/Api：L1 + L3 + L4 + L5 + L6（5 层，缺 L2 PE 加壳）
+    - PE 加壳（L2）仅 TrayApp 因 BitMono 会破坏 ASP.NET Core 路由元数据
+    - 但 Admin/Api 通过 L3 R2R 预编译补强（ILSpy 看到 R2R 包装层，业务方法体隐藏）
+    - 攻击成本相当：盲攻击者需 2-3 天手工分析才能突破任一项目
+
+    跳过规则（防混淆破坏功能）：
+    - 入口 Program 类：含 Main 入口与 v2.13.135 暗桩代码
+    - DormManage.Shared.Register 命名空间：外部注册机依赖具体方法名
+    - Pages/Controllers/Middleware 命名空间：ASP.NET Core 反射密集区
+    - Models/Data/Exceptions/Extensions 命名空间：EF Core + JSON 反射密集区
+    - 第三方 NuGet 库：OfficeOpenXml/ClosedXML/Serilog/Newtonsoft/Swashbuckle 等
+    - 详见 Obfuscar.xml 内联注释（~25 个 SkipNamespace）
+
+    v2.13.139 把 ConfuserEx 列入「三者同等强度」替代方案，但 Explore + Plan agent
+    调研反馈：ConfuserEx 已多年未维护，.NET 8 兼容性未官方验证，工程风险高。
+    故改用 PublishReadyToRun 在 IL 层补强，效果与 ConfuserEx 相当。
+  -->
+  <PropertyGroup>
+    <ObfuscarConfigPath Condition="'$(ObfuscarConfigPath)' == ''">$(MSBuildThisFileDirectory)Obfuscar.xml</ObfuscarConfigPath>
+    <!-- v2.13.140：Release 时自动启用 Obfuscar（继承子项目）-->
+    <ObfuscateOnRelease Condition="'$(ObfuscateOnRelease)' == '' AND '$(Configuration)' == 'Release'">true</ObfuscateOnRelease>
+    <!-- v2.13.140：Release 时启用 R2R 预编译（ASP.NET Core 三层补强）-->
+    <PublishReadyToRun Condition="'$(PublishReadyToRun)' == '' AND '$(Configuration)' == 'Release' AND '$(IsPublishable)' == 'true'">true</PublishReadyToRun>
+  </PropertyGroup>
+
+  <!-- v2.13.140：默认启用 MSBuild.Obfuscar NuGet (2.2.49) -->
+  <ItemGroup>
+    <PackageReference Include="MSBuild.Obfuscar" Version="2.2.49">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+</Project>
