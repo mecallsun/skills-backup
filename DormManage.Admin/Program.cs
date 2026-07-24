@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using DormManage.Api.Middleware;
 using DormManage.Admin.Filters;
+using DormManage.Admin.Middleware;
 using DormManage.Shared.Data;
+using DormManage.Shared.Security;
 using DormManage.Shared.Services;
 
 // v2.13.72 进程唯一性守卫（必须在 WebApplication.CreateBuilder 之前执行）
@@ -24,6 +26,22 @@ if (!adminCreatedNew)
     return;
 }
 Console.WriteLine("[SINGLE-INSTANCE] 进程唯一锁已获取: Global\\DormManage.Admin.SingleInstance.v1");
+
+// v2.13.135 暗桩校验：运行时限 + 过期返回 403 + 客户端 5-2-0 解锁（_Layout.cshtml 监听）
+// 设计来源：仓库物料汇总 FR-07；时间窗口与 v2.13.94 RegisterSdk 取较早
+var _adminExpiryDays = RuntimeWindowGuard.CheckExpiry();
+if (_adminExpiryDays.HasValue)
+{
+    if (_adminExpiryDays < 0)
+    {
+        // 早于起始日期：静默退出
+        Console.Error.WriteLine("[TAMPER-GUARD] 系统日期早于起始日期，进程退出。");
+        Thread.Sleep(2000);
+        return;
+    }
+    // 晚于截止日期：保留启动但返回 403；客户端 JS 弹伪装错误框 + 5-2-0 解锁后可访问
+    Console.Error.WriteLine($"[TAMPER-GUARD] 已过期 {_adminExpiryDays} 天，所有页面将返回 403 直至 5-2-0 解锁。");
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -205,11 +223,60 @@ else
 }
 
 app.UseStaticFiles();
+
+// v2.13.135 暗桩中间件：过期时阻断非静态资源请求（让 _Layout.cshtml 5-2-0 解锁 JS 可加载）
+if (_adminExpiryDays.HasValue && _adminExpiryDays >= 0)
+{
+    app.Use(async (context, next) =>
+    {
+        var path = context.Request.Path.Value ?? "";
+        // 允许：静态资源（CSS/JS/字体/图片）、解锁 API、Error 页
+        if (path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/lib")
+            || path.StartsWith("/images") || path.StartsWith("/favicon") || path.EndsWith(".css")
+            || path.EndsWith(".js") || path.EndsWith(".png") || path.EndsWith(".jpg")
+            || path.EndsWith(".svg") || path.EndsWith(".ico") || path.EndsWith(".woff")
+            || path.EndsWith(".woff2") || path.EndsWith(".ttf") || path == "/TamperUnlock"
+            || path == "/Error")
+        {
+            await next();
+            return;
+        }
+        // 其他请求：返回 503 + 过期横幅 HTML（前端 JS 5-2-0 解锁后会 reload）
+        context.Response.StatusCode = 503;
+        await context.Response.WriteAsync($@"<!DOCTYPE html>
+<html><head><meta charset='utf-8'><title>服务受限</title>
+<style>body{{font-family:'Microsoft YaHei UI',sans-serif;background:#1a1a1a;color:#eee;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}}
+.box{{background:#2a2a2a;padding:40px;border-radius:12px;text-align:center;max-width:500px;box-shadow:0 8px 24px rgba(0,0,0,.5)}}
+h1{{color:#d13438;font-size:20px;margin:0 0 16px}}p{{color:#999;font-size:14px;line-height:1.8}}
+</style></head>
+<body><div class='box'>
+<h1>⚠ 系统内存访问冲突</h1>
+<p>服务暂时不可用。代码: <code>0xC0000005</code></p>
+<p>如需技术支持，请联系信息科。</p>
+</div>
+<script>
+(function(){{
+  var buf=[];
+  document.addEventListener('keydown',function(e){{
+    if(e.key>='0'&&e.key<='9'){{buf.push(e.key.charCodeAt(0));if(buf.length>3)buf.shift();
+    if(buf.length===3&&buf[0]===53&&buf[1]===50&&buf[2]===48){{buf.length=0;location.reload();}}}}}}
+  }});
+}})();
+</script>
+</body></html>");
+    });
+}
+
 app.UseRouting();
 
 // v2.13.0: 认证中间件（必须在 Routing 之后、MapRazorPages 之前）
 app.UseAuthentication();
 app.UseAuthorization();
+
+// v2.13.136 全局只读中间件：注册失败/过期时所有 POST/PUT/DELETE → 403
+// 必须在 Authorization 之后、Razor Pages 之前；白名单含 /Account/* 登录页
+// 注意：DormManage.Api.Middleware 也有同名中间件（v2.13.136），此处必须用全限定名
+app.UseMiddleware<DormManage.Admin.Middleware.LicenseReadOnlyMiddleware>();
 
 app.MapRazorPages();
 app.MapControllers();  // v2.12.43: 启用进程内 API 控制器路由

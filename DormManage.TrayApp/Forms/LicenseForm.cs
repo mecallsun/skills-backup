@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using DormManage.Shared.Register;
+using DormManage.Shared.Security;
 
 namespace DormManage.TrayApp.Forms;
 
@@ -170,7 +171,10 @@ public sealed class LicenseForm : Form
             var r = MessageBox.Show("确认取消注册？取消后需重新输入注册码。", "取消注册确认", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
             if (r != DialogResult.Yes) return;
             if (RegisterSdk.DeleteRegItem())
+            {
+                LicenseGuard.ResetCache();  // v2.13.136 写入新状态后重置共享缓存
                 MessageBox.Show("注册信息已取消！", "提示");
+            }
             else
                 MessageBox.Show("取消失败（请以管理员身份运行）", "错误");
             LoadRegState();
@@ -211,7 +215,10 @@ public sealed class LicenseForm : Form
             RegInt = 1
         };
         if (RegisterSdk.WriteRegItem(reg))
+        {
+            LicenseGuard.ResetCache();  // v2.13.136 写入新状态后重置共享缓存
             MessageBox.Show($"🎉 注册成功！有效期至 {check.RegDate:yyyy年MM月dd日}", "注册成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
         else
             MessageBox.Show("注册验证通过，但写入失败（请以管理员身份运行）", "警告", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         LoadRegState();

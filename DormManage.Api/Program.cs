@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using DormManage.Api.HostedServices;
 using DormManage.Api.Middleware;
 using DormManage.Shared.Data;
+using DormManage.Shared.Security;
 using DormManage.Shared.Services;
 
 // v2.13.72 进程唯一性守卫（必须在 WebApplication.CreateBuilder 之前执行）
@@ -21,6 +22,22 @@ if (!apiCreatedNew)
     return;
 }
 Console.WriteLine("[SINGLE-INSTANCE] 进程唯一锁已获取: Global\\DormManage.Api.SingleInstance.v1");
+
+// v2.13.135 暗桩校验：Api 是无界面服务，过期或早于起始都直接静默退出（无 5-2-0 解锁）
+// 设计来源：仓库物料汇总 FR-07；时间窗口与 v2.13.94 RegisterSdk 取较早
+var _apiExpiryDays = RuntimeWindowGuard.CheckExpiry();
+if (_apiExpiryDays.HasValue)
+{
+    if (_apiExpiryDays < 0)
+    {
+        Console.Error.WriteLine("[TAMPER-GUARD] 系统日期早于起始日期，Api 进程退出。");
+        Thread.Sleep(2000);
+        return;
+    }
+    Console.Error.WriteLine($"[TAMPER-GUARD] Api 已过期 {_apiExpiryDays} 天，进程退出。");
+    Thread.Sleep(2000);
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -158,6 +175,11 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 // v2.12.42 BUGFIX: Swagger 在所有环境都启用（V1.0 测试需要）
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// v2.13.136 全局只读中间件：注册失败/过期时所有 POST/PUT/DELETE → 403 JSON
+// 必须在 MapControllers 之前；Api 端无 Razor Pages 故无需考虑登录页
+// 白名单：/api/v1/pda/*（PdaController 自带校验）+ 健康检查 + Swagger + AppVersion
+app.UseMiddleware<LicenseReadOnlyMiddleware>();
 
 app.MapControllers();
 
