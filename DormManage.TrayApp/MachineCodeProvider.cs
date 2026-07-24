@@ -7,11 +7,18 @@ using DormManage.Shared.Register;
 namespace DormManage.TrayApp;
 
 /// <summary>
-/// v2.13.94 软件注册授权 — TrayApp 端机器码提供者
+/// v2.13.142 软件注册授权 — TrayApp 端机器码提供者
 /// 用 WMI 取真实硬件特征（仅 Windows net8.0-windows 可用）：
 ///   1) Win32_Processor.ProcessorId → 16 字符大写 hex（Intel: BFEBFBFF000A06A4）
 ///   2) Win32 LogicalDisk VolumeSerialNumber → 8 字符大写 hex
 /// 完全对齐原 NPGS.Register Public.Core.SDK.GetCpu() / GetDiskVolumeSerialNumber() 算法
+///
+/// v2.13.142 机器码显示规则（用户原话 + NPGS 规范）：
+///   - 机器码 = 24 位连续 hex，**禁止任何分隔符**（无连字符 / 无空格 / 无下划线）
+///   - 反例：BFEBF-BFF00-0A06A-4AA2E-3B0E ❌
+///   - 正例：BFEBFBFF000A06A4AA2E3B0E ✅
+///   - Initialize() 返回 raw 24 hex（之前返回带连字符的 display 是错误实现）
+///   - 写入共享文件 + 环境变量也用 raw（业务层恒用 raw）
 ///
 /// 启动时调用 Initialize() 把真实机器码写入共享文件 + 环境变量，
 /// 供 DormManage.Admin / DormManage.Api（跨平台 .NET 8，无 WMI）读取。
@@ -19,16 +26,15 @@ namespace DormManage.TrayApp;
 public static class MachineCodeProvider
 {
     /// <summary>
-    /// 启动初始化：计算机器码 → 写入共享文件 + 设置环境变量
+    /// 启动初始化：计算机器码 → 写入共享文件 + 设置环境变量 → 返回 raw 24 hex
+    /// v2.13.142：去除任何格式化（之前 v2.13.138 错误地在此层做了 5-5-5-5-4 分组）
     /// </summary>
     public static string Initialize()
     {
         var raw = ComputeRawMachineCode();
-        // 格式化为带连字符的展示样式（5-5-5-5-4 = 28 字符 display）
-        var display = FormatDisplayStyle(raw);
-        // 写共享文件 + 环境变量
+        // 写共享文件 + 环境变量（用 raw，业务/存储/IPC 层恒用 raw）
         RegisterSdk.WriteMachineSN(raw);
-        return display;
+        return raw;  // v2.13.142：直接返回 raw 24 hex，禁止任何连字符
     }
 
     /// <summary>
@@ -94,14 +100,5 @@ public static class MachineCodeProvider
         }
         catch { }
         return "00000000";
-    }
-
-    /// <summary>
-    /// 格式化 24 字符为 5-5-5-5-4 显示样式（28 字符）
-    /// </summary>
-    private static string FormatDisplayStyle(string raw24)
-    {
-        if (raw24.Length != 24) raw24 = raw24.PadRight(24, '0').Substring(0, 24);
-        return $"{raw24.Substring(0, 5)}-{raw24.Substring(5, 5)}-{raw24.Substring(10, 5)}-{raw24.Substring(15, 5)}-{raw24.Substring(20, 4)}";
     }
 }

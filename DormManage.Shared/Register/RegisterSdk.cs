@@ -63,6 +63,12 @@ public static class RegisterSdk
     ///   1) 环境变量 DORM_MACHINE_SN（TrayApp 注入）
     ///   2) 共享文件 %ProgramData%\JINGE\DormManage\machine.dat（TrayApp 写入）
     ///   3) Web 端 fallback：MD5(MachineName + ProcessorCount + OSVersion) 取前 24 位
+    ///
+    /// v2.13.142 修正：返回值为原始 24 位 hex（无任何分隔符）
+    /// 历史 BUG（v2.13.137/v2.13.138）：旧版 GetSN 返回 28 字符带连字符的 display 形式（5-5-5-5-4）
+    ///   导致 LicenseForm 二次格式化产生错位
+    /// 修复后统一约定：**SN 字段恒为 raw 24 hex**（参考 NPGS.Register `textSN.Text = SN` 直接显示 raw）
+    /// 严禁任何展示层格式化（用户原话 2026-07-24「机器码显示没有连接符」）
     /// </summary>
     public static string GetSN()
     {
@@ -72,7 +78,7 @@ public static class RegisterSdk
             var fromEnv = Environment.GetEnvironmentVariable(ENV_MACHINE_SN);
             if (!string.IsNullOrEmpty(fromEnv) && IsValidMachineSN(fromEnv))
             {
-                return FormatCDKeyStyle(fromEnv);
+                return NormalizeRawSN(fromEnv);
             }
         }
         catch { }
@@ -85,14 +91,27 @@ public static class RegisterSdk
                 var fromFile = File.ReadAllText(MACHINE_FILE).Trim();
                 if (IsValidMachineSN(fromFile))
                 {
-                    return FormatCDKeyStyle(fromFile);
+                    return NormalizeRawSN(fromFile);
                 }
             }
         }
         catch { }
 
         // 3) Web 端 fallback（精度低但保证位数一致 — 24 hex）
-        return FormatCDKeyStyle(ComputeFallbackSN());
+        return NormalizeRawSN(ComputeFallbackSN());
+    }
+
+    /// <summary>
+    /// v2.13.142：规范化 SN 为 raw 24 位大写 hex
+    /// 历史 machine.dat 可能存 28 字符 display 形式（v2.13.138 之前 MachineCodeProvider 写入时
+    /// 错误格式化），新版必须先去连字符再返回 raw。
+    /// 新版 MachineCodeProvider.Initialize() 已直接返回 raw（v2.13.142），本函数保留用于兼容旧 machine.dat。
+    /// </summary>
+    private static string NormalizeRawSN(string input)
+    {
+        var raw = (input ?? "").Replace("-", "").Trim().ToUpperInvariant();
+        if (raw.Length >= 24) return raw.Substring(0, 24);
+        return raw.PadLeft(24, '0');
     }
 
     /// <summary>
@@ -479,11 +498,4 @@ public static class RegisterSdk
         return hex.Substring(0, 20);
     }
 
-    /// <summary>格式化机器码为带连字符的展示样式（5-5-5-5-4 = 24+4 = 28 字符）</summary>
-    /// <remarks>v2.13.94 修正：原 NPGS.Register 算法机器码为 24 字符纯 hex（如 BFEBFBFF000A06A4AA2E3B0E）；
-    /// 展示时按视觉分组为 5-5-5-5-4。CheckReg 时去除连字符比对。</remarks>
-    private static string FormatCDKeyStyle(string raw24)
-    {
-        return $"{raw24.Substring(0, 5)}-{raw24.Substring(5, 5)}-{raw24.Substring(10, 5)}-{raw24.Substring(15, 5)}-{raw24.Substring(20, 4)}";
     }
-}
