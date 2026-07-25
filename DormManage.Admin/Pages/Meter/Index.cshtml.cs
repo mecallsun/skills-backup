@@ -93,7 +93,19 @@ public class IndexModel : PaginatedPageModel
             query = query.Where(r => r.Operator.Contains(Operator));
 
         if (Status.HasValue && Status.Value >= 0)
-            query = query.Where(r => r.Status == Status.Value);
+        {
+            // v2.13.164 重定义 + v2.13.166 修正：状态筛选按值驱动 3 段
+            // Status 0=未抄表 / 1=抄表中 / 2=已抄表
+            // 在 SQL 侧翻译（不会先 Skip/Take 再过滤导致分页错位）
+            query = Status.Value switch
+            {
+                2 => query.Where(r => r.ColdMeter > 0 && r.HotMeter > 0 && r.ElectricMeter > 0),
+                1 => query.Where(r => (r.ColdMeter > 0 || r.HotMeter > 0 || r.ElectricMeter > 0)
+                                  && !(r.ColdMeter > 0 && r.HotMeter > 0 && r.ElectricMeter > 0)),
+                0 => query.Where(r => r.ColdMeter == 0 && r.HotMeter == 0 && r.ElectricMeter == 0),
+                _ => query
+            };
+        }
 
         if (!string.IsNullOrWhiteSpace(DormCode))
         {

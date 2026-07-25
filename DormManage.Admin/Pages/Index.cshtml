@@ -214,18 +214,19 @@
                 <div class="kpi-value" style="color: #2a78d6;" id="kpiMeter">@Model.Dashboard.Kpi.MeterReadCount/@Model.Dashboard.Kpi.MeterTotalCount<span class="fs-6 text-muted ms-1">(@Model.Dashboard.Kpi.MeterCoveragePercent%)</span></div>
                 <div class="kpi-label">本月抄表进度</div>
                 <div class="kpi-sub">
+                    @* v2.13.166：副标签简称 + 去空格 + 紧凑排列（抄中1间·未抄139间）*@
                     @if (Model.Dashboard.Kpi.MeterUnfinishedCount > 0)
                     {
-                        <span class="text-danger">抄表中 <strong>@Model.Dashboard.Kpi.MeterUnfinishedCount</strong> 间</span>
-                        <span class="mx-1">·</span>
+                        <span class="text-danger">抄中<strong>@Model.Dashboard.Kpi.MeterUnfinishedCount</strong>间</span>
+                        <span>·</span>
                     }
                     @if (Model.Dashboard.Kpi.MeterUncoveredCount > 0)
                     {
-                        <span class="text-warning">未抄表 <strong>@Model.Dashboard.Kpi.MeterUncoveredCount</strong> 间</span>
+                        <span class="text-warning">未抄<strong>@Model.Dashboard.Kpi.MeterUncoveredCount</strong>间</span>
                     }
                     @if (Model.Dashboard.Kpi.UnreadDormCodes.Any() && Model.Dashboard.Kpi.MeterUncoveredCount > 0 && Model.Dashboard.Kpi.MeterUncoveredCount <= 5)
                     {
-                        <span class="ms-1 text-muted">@string.Join(", ", Model.Dashboard.Kpi.UnreadDormCodes.Take(5))</span>
+                        <span class="text-muted">@string.Join(",", Model.Dashboard.Kpi.UnreadDormCodes.Take(5))</span>
                     }
                 </div>
             </div>
