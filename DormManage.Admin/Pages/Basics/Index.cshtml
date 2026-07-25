@@ -3,92 +3,57 @@
 @{
     ViewData["Title"] = "基础资料";
     Layout = "_Layout";
-    // v2.13.120 设备档案按钮权限（写入 JS 全局变量，避免 Razor @await 在 JS 模板里失效）
+    // v2.13.158 设备档案按钮权限
     var deviceCanEdit = (await Html.HasPermissionAsync("device:edit")).ToString().ToLower();
     var deviceCanDelete = (await Html.HasPermissionAsync("device:delete")).ToString().ToLower();
-    // v2.13.130 设备记录按钮权限
-    var equipmentReadingCanEdit = (await Html.HasPermissionAsync("equipment-reading:edit")).ToString().ToLower();
-    var equipmentReadingCanDelete = (await Html.HasPermissionAsync("equipment-reading:delete")).ToString().ToLower();
+    // v2.13.158 设备记录按钮权限
+    var erCanEdit = (await Html.HasPermissionAsync("equipment-reading:edit")).ToString().ToLower();
+    var erCanDelete = (await Html.HasPermissionAsync("equipment-reading:delete")).ToString().ToLower();
 }
 
 <div class="container-fluid">
-    <!-- 页头（v2.13.45 P2-1：与全站 page-header 规范一致） -->
+    <!-- 页头（v2.13.158 与 Personnel 页头规范一致） -->
     <div class="page-header">
         <h2>
             <i class="bi bi-database header-icon"></i> 基础资料
-            <span class="header-count">10 类数据字典</span>
+            <span class="header-count">@Model.CurrentTabTotalCount 条记录</span>
         </h2>
     </div>
 
-    <!-- 左侧纵向 pills 导航 + 右侧 tab 面板（v2.13.13 重构：与系统设置风格一致） -->
     <div style="display: flex; align-items: flex-start; gap: 12px;">
         <!-- 左侧导航（200px） -->
         <div style="flex-shrink: 0; width: 200px;">
             <div class="card">
                 <div class="card-body p-2">
                     <div class="nav flex-column nav-pills basics-nav" role="tablist">
-                        <button class="nav-link text-start @(Model.ActiveTab == "dept" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-dept"
-                                onclick="setActiveTab('dept')">
-                            <i class="bi bi-building"></i> 部门管理
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "building" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-building"
-                                onclick="setActiveTab('building')">
-                            <i class="bi bi-geo-alt"></i> 楼栋管理
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "floor" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-floor"
-                                onclick="setActiveTab('floor')">
-                            <i class="bi bi-layers"></i> 楼层管理
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "address" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-address"
-                                onclick="setActiveTab('address')">
-                            <i class="bi bi-pin-map"></i> 地址管理
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "emptype" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-emptype"
-                                onclick="setActiveTab('emptype')">
-                            <i class="bi bi-person-badge"></i> 员工类型
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "attendance" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-attendance"
-                                onclick="setActiveTab('attendance')">
-                            <i class="bi bi-clock-history"></i> 班次
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "team" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-team"
-                                onclick="setActiveTab('team')">
-                            <i class="bi bi-people-fill"></i> 员工班组
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "unit" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-unit"
-                                onclick="setActiveTab('unit')">
-                            <i class="bi bi-speedometer2"></i> 计量单位
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "residence" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-residence"
-                                onclick="setActiveTab('residence')">
-                            <i class="bi bi-house-door"></i> 住宿状态
-                        </button>
-                        <button class="nav-link text-start @(Model.ActiveTab == "employment" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-employment"
-                                onclick="setActiveTab('employment')">
-                            <i class="bi bi-person-check"></i> 在职状态
-                        </button>
-                        @* v2.13.120 新增：设备档案 *@
-                        <button class="nav-link text-start @(Model.ActiveTab == "device" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-device"
-                                onclick="setActiveTab('device')">
-                            <i class="bi bi-cpu"></i> 设备档案
-                        </button>
-                        @* v2.13.130 新增：设备记录（设备读数日志）— 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型 *@
-                        <button class="nav-link text-start @(Model.ActiveTab == "equipmentreading" ? "active" : "")"
-                                data-bs-toggle="pill" data-bs-target="#pane-equipmentreading"
-                                onclick="setActiveTab('equipmentreading')">
-                            <i class="bi bi-journal-text"></i> 设备记录
-                        </button>
+                        @{
+                            string[] tabs = { "dept", "building", "floor", "address", "emptype",
+                                "attendance", "team", "unit", "residence", "employment",
+                                "device", "equipmentreading" };
+                            var labels = new Dictionary<string, string> {
+                                {"dept","部门管理"},{"building","楼栋管理"},{"floor","楼层管理"},
+                                {"address","地址管理"},{"emptype","员工类型"},{"attendance","班次"},
+                                {"team","员工班组"},{"unit","计量单位"},{"residence","住宿状态"},
+                                {"employment","在职状态"},{"device","设备档案"},{"equipmentreading","设备记录"}
+                            };
+                            var icons = new Dictionary<string, string> {
+                                {"dept","bi-building"},{"building","bi-geo-alt"},{"floor","bi-layers"},
+                                {"address","bi-pin-map"},{"emptype","bi-person-badge"},{"attendance","bi-clock-history"},
+                                {"team","bi-people-fill"},{"unit","bi-speedometer2"},{"residence","bi-house-door"},
+                                {"employment","bi-person-check"},{"device","bi-cpu"},{"equipmentreading","bi-journal-text"}
+                            };
+                            string UrlWithTab(string t) => Url.Page("/Basics/Index", new {
+                                tab = t, page = 1, pageSize = Model.PageSize, kw = Model.Keyword,
+                                type = Model.EquipmentType, start = Model.StartTime, end = Model.EndTime
+                            });
+                        }
+                        @foreach (var t in tabs)
+                        {
+                            <a class="nav-link text-start @(Model.ActiveTab == t ? "active" : "")"
+                               href="@UrlWithTab(t)">
+                                <i class="bi @icons[t]"></i> @labels[t]
+                            </a>
+                        }
                     </div>
                 </div>
             </div>
@@ -96,441 +61,296 @@
 
         <!-- 右侧内容 -->
         <div style="flex: 1 1 0%;">
-            <div class="tab-content" id="basicsTabContent">
-
-                <!-- 部门管理 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "dept" ? "show active" : "")" id="pane-dept" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-building"></i> 部门列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('dept')">
-                                    <i class="bi bi-plus-lg"></i> 新增部门
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>部门编码</th>
-                                            <th>部门名称</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="deptTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
+            <!-- 部门管理（默认 tab） -->
+            @if (Model.ActiveTab == "dept")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-building"></i> 部门列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('dept')">
+                            <i class="bi bi-plus-lg"></i> 新增部门
+                        </button>
                     </div>
-                </div>
-
-                <!-- 楼栋管理 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "building" ? "show active" : "")" id="pane-building" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 楼栋列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('building')">
-                                    <i class="bi bi-plus-lg"></i> 新增楼栋
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>楼栋名称</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="buildingTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 楼层管理 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "floor" ? "show active" : "")" id="pane-floor" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-layers"></i> 楼层列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('floor')">
-                                    <i class="bi bi-plus-lg"></i> 新增楼层
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>楼层</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="floorTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 地址管理 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "address" ? "show active" : "")" id="pane-address" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-pin-map"></i> 地址列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('address')">
-                                    <i class="bi bi-plus-lg"></i> 新增地址
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>地址</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="addressTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 员工类型 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "emptype" ? "show active" : "")" id="pane-emptype" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-person-badge"></i> 员工类型列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('emptype')">
-                                    <i class="bi bi-plus-lg"></i> 新增类型
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>类型编码</th>
-                                            <th>类型名称</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="emptypeTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 班次 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "attendance" ? "show active" : "")" id="pane-attendance" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-clock-history"></i> 班次列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('attendance')">
-                                    <i class="bi bi-plus-lg"></i> 新增班次
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>类型编码</th>
-                                            <th>类型名称</th>
-                                            <th>工作时段</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="attendanceTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 员工班组（新增 v2.13.13） -->
-                <div class="tab-pane fade @(Model.ActiveTab == "team" ? "show active" : "")" id="pane-team" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-people-fill"></i> 员工班组列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('team')">
-                                    <i class="bi bi-plus-lg"></i> 新增班组
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>班组编码</th>
-                                            <th>班组名称</th>
-                                            <th>排序号</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="teamTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 计量单位 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "unit" ? "show active" : "")" id="pane-unit" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 计量单位列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('unit')">
-                                    <i class="bi bi-plus-lg"></i> 新增单位
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>单位编码</th>
-                                            <th>单位名称</th>
-                                            <th>显示单位</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="unitTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 住宿状态 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "residence" ? "show active" : "")" id="pane-residence" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-house-door"></i> 住宿状态列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('residence')">
-                                    <i class="bi bi-plus-lg"></i> 新增状态
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>状态编码</th>
-                                            <th>状态名称</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="residenceTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 在职状态 -->
-                <div class="tab-pane fade @(Model.ActiveTab == "employment" ? "show active" : "")" id="pane-employment" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-person-check"></i> 在职状态列表</h5>
-                                <button class="btn btn-success" onclick="showAddModal('employment')">
-                                    <i class="bi bi-plus-lg"></i> 新增状态
-                                </button>
-                            </div>
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>状态编码</th>
-                                            <th>状态名称</th>
-                                            <th>备注</th>
-                                            <th width="100">状态</th>
-                                            <th width="120">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="employmentTable"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                @* v2.13.120 设备档案（与 Dorm 1:1）*@
-                <div class="tab-pane fade @(Model.ActiveTab == "device" ? "show active" : "")" id="pane-device" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-cpu"></i> 设备档案列表</h5>
-                                @if (await Html.HasPermissionAsync("device:create"))
-                                {
-                                    <button class="btn btn-success" onclick="showDeviceAddModal()">
-                                        <i class="bi bi-plus-lg"></i> 新增设备档案
-                                    </button>
-                                }
-                            </div>
-
-                            @* 筛选区 *@
-                            <div class="row g-2 mb-3 align-items-end">
-                                <div class="col-auto">
-                                    <label class="form-label small text-muted mb-1">关键词</label>
-                                    <input type="text" id="deviceKeyword" class="form-control form-control-sm" placeholder="房号/电表ID/冷/热水表ID" style="min-width:260px;" />
-                                </div>
-                                <div class="col-auto">
-                                    <button class="btn btn-primary btn-sm" onclick="loadDeviceMeters()"><i class="bi bi-search"></i> 查询</button>
-                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetDeviceFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
-                                </div>
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>房号</th>
-                                            <th>楼栋</th>
-                                            <th>楼层</th>
-                                            <th>电表ID</th>
-                                            <th>冷水ID</th>
-                                            <th>热水ID</th>
-                                            <th>备注</th>
-                                            <th width="80">更新时间</th>
-                                            <th width="150">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="deviceTable"></tbody>
-                                </table>
-                            </div>
-
-                            @* 分页（v2.13.105 默认 10 / 20 / 50 / 100）*@
-                            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr><th width="60">序号</th><th>部门编码</th><th>部门名称</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr>
+                            </thead>
+                            <tbody>
+                            @for (int i = 0; i < Model.Departments.Count; i++)
                             {
-                                PageIndex = 1,
-                                PageSize = 10,
-                                TotalCount = 0
-                            })
+                                var it = Model.Departments[i];
+                                var status = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                                <tr>
+                                    <td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td>
+                                    <td><code>@it.Code</code></td>
+                                    <td>@it.Name</td>
+                                    <td>@(it.Remark ?? "-")</td>
+                                    <td>@Html.Raw(status)</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('dept', @it.Id)">编辑</button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('dept', @it.Id)">删除</button>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.DepartmentsCount
+                    })
+                </div></div>
+            }
+            @* 其它 11 个 tab 结构与部门管理完全一致，仅数据源不同；详见下方 Razor 块 *@
+            @if (Model.ActiveTab == "building")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt"></i> 楼栋列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('building')"><i class="bi bi-plus-lg"></i> 新增楼栋</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>楼栋名称</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.Buildings.Count; i++) { var it = Model.Buildings[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td>@it.Name</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('building', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('building', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.BuildingsCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "floor")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-layers"></i> 楼层列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('floor')"><i class="bi bi-plus-lg"></i> 新增楼层</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>楼层</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.Floors.Count; i++) { var it = Model.Floors[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td>@it.FloorNo 楼</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('floor', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('floor', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.FloorsCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "address")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-pin-map"></i> 地址列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('address')"><i class="bi bi-plus-lg"></i> 新增地址</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>地址</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.Addresses.Count; i++) { var it = Model.Addresses[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td>@it.AddressText</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('address', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('address', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.AddressesCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "emptype")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-person-badge"></i> 员工类型列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('emptype')"><i class="bi bi-plus-lg"></i> 新增类型</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>类型编码</th><th>类型名称</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.EmployeeTypes.Count; i++) { var it = Model.EmployeeTypes[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@it.Code</code></td><td>@it.Name</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('emptype', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('emptype', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.EmployeeTypesCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "attendance")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> 班次列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('attendance')"><i class="bi bi-plus-lg"></i> 新增班次</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>类型编码</th><th>类型名称</th><th>工作时段</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.AttendanceTypes.Count; i++) { var it = Model.AttendanceTypes[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@it.Code</code></td><td>@it.Name</td><td>@(it.WorkHours ?? "-")</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('attendance', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('attendance', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.AttendanceTypesCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "team")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-people-fill"></i> 员工班组列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('team')"><i class="bi bi-plus-lg"></i> 新增班组</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>班组编码</th><th>班组名称</th><th>排序号</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.Teams.Count; i++) { var it = Model.Teams[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@(it.Code ?? "-")</code></td><td>@it.Name</td><td>@it.SortOrder</td><td>—</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('team', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('team', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.TeamsCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "unit")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-speedometer2"></i> 计量单位列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('unit')"><i class="bi bi-plus-lg"></i> 新增单位</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>单位编码</th><th>单位名称</th><th>显示单位</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.MeterUnits.Count; i++) { var it = Model.MeterUnits[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@it.Code</code></td><td>@it.Name</td><td>@(it.Unit ?? "-")</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('unit', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('unit', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.MeterUnitsCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "residence")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-house-door"></i> 住宿状态列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('residence')"><i class="bi bi-plus-lg"></i> 新增状态</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>状态编码</th><th>状态名称</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.ResidenceStatuses.Count; i++) { var it = Model.ResidenceStatuses[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@it.Code</code></td><td>@it.Name</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('residence', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('residence', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.ResidenceStatusesCount
+                    })
+                </div></div>
+            }
+
+            @if (Model.ActiveTab == "employment")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-person-check"></i> 在职状态列表</h5>
+                        <button class="btn btn-success" onclick="showAddModal('employment')"><i class="bi bi-plus-lg"></i> 新增状态</button>
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>状态编码</th><th>状态名称</th><th>备注</th><th width="100">状态</th><th width="120">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.EmploymentStatuses.Count; i++) { var it = Model.EmploymentStatuses[i]; var st = it.IsActive ? "<span class='badge bg-success'>启用</span>" : "<span class='badge bg-secondary'>停用</span>";
+                            <tr><td>@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td><td><code>@it.Code</code></td><td>@it.Name</td><td>@(it.Remark ?? "-")</td><td>@Html.Raw(st)</td>
+                            <td><button class="btn btn-sm btn-outline-primary" onclick="editItem('employment', @it.Id)">编辑</button><button class="btn btn-sm btn-outline-danger" onclick="deleteItem('employment', @it.Id)">删除</button></td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.EmploymentStatusesCount
+                    })
+                </div></div>
+            }
+
+            <!-- ========== 设备档案（v2.13.120 起，第 11 个 tab）============= -->
+            @if (Model.ActiveTab == "device")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-cpu"></i> 设备档案列表</h5>
+                        @if (await Html.HasPermissionAsync("device:create"))
+                        {
+                            <button class="btn btn-success" onclick="showDeviceAddModal()"><i class="bi bi-plus-lg"></i> 新增设备档案</button>
+                        }
+                    </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>房号</th><th>楼栋</th><th>楼层</th><th>电表ID</th><th>冷水ID</th><th>热水ID</th><th>备注</th><th>更新时间</th><th width="150">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.DeviceMeters.Count; i++) { var it = Model.DeviceMeters[i];
+                            <tr><td class="text-muted">@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td>
+                            <td><strong>@it.DormCode</strong></td><td>@(it.BuildingName ?? "-")</td><td>@it.FloorNo 楼</td>
+                            <td>@(it.ElectricMeterId ?? "-")</td><td>@(it.ColdWaterMeterId ?? "-")</td><td>@(it.HotWaterMeterId ?? "-")</td>
+                            <td><small>@(it.Remark ?? "")</small></td>
+                            <td><small class="text-muted">@it.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="showDeviceEditModal(@it.Id)">修改</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteDeviceMeter(@it.Id, '@it.DormCode')">删除</button>
+                            </td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.DeviceMetersCount
+                    })
+                </div></div>
+            }
+
+            <!-- ========== 设备记录（v2.13.130 起，第 12 个 tab）============ -->
+            @if (Model.ActiveTab == "equipmentreading")
+            {
+                <div class="card"><div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-journal-text"></i> 设备记录列表</h5>
+                        <div class="d-flex gap-2">
+                            @if (await Html.HasPermissionAsync("equipment-reading:batch-delete")) { <button class="btn btn-warning" onclick="showBatchDeleteEquipmentReadingModal()"><i class="bi bi-trash3"></i> 批量删除</button> }
+                            @if (await Html.HasPermissionAsync("equipment-reading:create")) { <button class="btn btn-success" onclick="showAddEquipmentReadingModal()"><i class="bi bi-plus-lg"></i> 新增设备记录</button> }
                         </div>
                     </div>
-                </div>
-
-                @* v2.13.130 设备读数日志（设备记录 — 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型） *@
-                <div class="tab-pane fade @(Model.ActiveTab == "equipmentreading" ? "show active" : "")" id="pane-equipmentreading" role="tabpanel">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h5 class="mb-0"><i class="bi bi-journal-text"></i> 设备记录列表</h5>
-                                <div class="d-flex gap-2">
-                                    @if (await Html.HasPermissionAsync("equipment-reading:batch-delete"))
-                                    {
-                                        <button class="btn btn-warning" onclick="showBatchDeleteEquipmentReadingModal()">
-                                            <i class="bi bi-trash3"></i> 批量删除
-                                        </button>
-                                    }
-                                    @if (await Html.HasPermissionAsync("equipment-reading:create"))
-                                    {
-                                        <button class="btn btn-success" onclick="showAddEquipmentReadingModal()">
-                                            <i class="bi bi-plus-lg"></i> 新增设备记录
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-
-                            @* 筛选区（设备ID / 类型 / 时间区间） *@
-                            <div class="row g-2 mb-3 align-items-end">
-                                <div class="col-auto">
-                                    <label class="form-label small text-muted mb-1">设备ID</label>
-                                    <input type="text" id="eqReadingKeyword" class="form-control form-control-sm" placeholder="设备ID模糊搜索" style="min-width:200px;" />
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label small text-muted mb-1">设备类型</label>
-                                    <select id="eqReadingType" class="form-select form-select-sm" style="min-width:120px;">
-                                        <option value="">— 全部 —</option>
-                                        <option value="1">⚡ 电表</option>
-                                        <option value="2">💧 冷水</option>
-                                        <option value="3">♨️ 热水</option>
-                                    </select>
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label small text-muted mb-1">起始时间</label>
-                                    <input type="datetime-local" id="eqReadingStartTime" class="form-control form-control-sm" style="min-width:170px;" />
-                                </div>
-                                <div class="col-auto">
-                                    <label class="form-label small text-muted mb-1">结束时间</label>
-                                    <input type="datetime-local" id="eqReadingEndTime" class="form-control form-control-sm" style="min-width:170px;" />
-                                </div>
-                                <div class="col-auto">
-                                    <button class="btn btn-primary btn-sm" onclick="loadEquipmentReadings()"><i class="bi bi-search"></i> 查询</button>
-                                    <button class="btn btn-outline-secondary btn-sm" onclick="resetEquipmentReadingFilter()"><i class="bi bi-arrow-clockwise"></i> 重置</button>
-                                </div>
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-hover mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th width="60">序号</th>
-                                            <th>设备ID</th>
-                                            <th width="120">设备类型</th>
-                                            <th width="120">读数</th>
-                                            <th width="170">读取时间</th>
-                                            <th>备注</th>
-                                            <th width="100">创建人</th>
-                                            <th width="150">操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="equipmentReadingTable"></tbody>
-                                </table>
-                            </div>
-
-                            @* 分页（v2.13.105 默认 10 / 20 / 50 / 100）*@
-                            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
-                            {
-                                PageIndex = 1,
-                                PageSize = 10,
-                                TotalCount = 0
-                            })
-                        </div>
-                    </div>
-                </div>
-
-            </div>
+                    <div class="table-responsive"><table class="table table-hover mb-0">
+                        <thead class="table-light"><tr><th width="60">序号</th><th>设备ID</th><th>设备类型</th><th>读数</th><th>读取时间</th><th>备注</th><th>创建人</th><th width="150">操作</th></tr></thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.EquipmentReadings.Count; i++) { var r = Model.EquipmentReadings[i];
+                            var typeBadge = r.EquipmentType switch { 1 => "⚡ 电表", 2 => "💧 冷水", 3 => "♨️ 热水", _ => "未知" };
+                            <tr><td class="text-muted">@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td>
+                            <td><strong>@r.EquipmentId</strong></td>
+                            <td>@typeBadge</td>
+                            <td>@(r.Reading.ToString("0.00"))</td>
+                            <td><small>@(r.ReadTime.ToString("yyyy-MM-dd HH:mm"))</small></td>
+                            <td><small>@(r.Remark ?? "—")</small></td>
+                            <td><small>@(r.CreatedBy ?? "—")</small></td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-outline-primary" onclick="showEditEquipmentReadingModal(@r.Id)"><i class="bi bi-pencil"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteEquipmentReading(@r.Id)"><i class="bi bi-trash"></i></button>
+                            </td></tr>}
+                        </tbody></table></div>
+                    @await Html.PartialAsync("../Shared/_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel {
+                        PageIndex = Model.PageIndex, PageSize = Model.PageSize, TotalCount = Model.EquipmentReadingsCount
+                    })
+                </div></div>
+            }
         </div>
     </div>
 </div>
 
-<!-- 新增/编辑 Modal -->
+@* =================== 新增/编辑 Modal（保留 AJAX 行为） ================ *@
 <div class="modal fade" id="editModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -540,36 +360,11 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editId" />
-                <div class="mb-3" id="codeField" style="display:none;">
-                    <label class="form-label">编码</label>
-                    <input type="text" class="form-control" id="editCode" placeholder="如 CONTRACT" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label" id="nameLabel">名称</label>
-                    <input type="text" class="form-control" id="editName" placeholder="请输入名称" />
-                </div>
-                <div class="mb-3" id="sortField" style="display:none;">
-                    <label class="form-label">排序号</label>
-                    <input type="number" class="form-control" id="editSort" value="0" />
-                </div>
-                <div class="mb-3" id="hoursField" style="display:none;">
-                    <label class="form-label">工作时段</label>
-                    <input type="text" class="form-control" id="editHours" placeholder="如 09:00-18:00" />
-                </div>
-                <div class="mb-3" id="unitField" style="display:none;">
-                    <label class="form-label">显示单位</label>
-                    <input type="text" class="form-control" id="editUnit" placeholder="如 m³" />
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">备注</label>
-                    <textarea class="form-control" id="editRemark" rows="2" placeholder="可选"></textarea>
-                </div>
-                <div class="mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="editActive" checked />
-                        <label class="form-check-label" for="editActive">启用</label>
-                    </div>
-                </div>
+                <div class="mb-3" id="codeField" style="display:none;"><label class="form-label">编码</label><input type="text" class="form-control" id="editCode" /></div>
+                <div class="mb-3"><label class="form-label" id="nameLabel">名称</label><input type="text" class="form-control" id="editName" /></div>
+                <div class="mb-3" id="hoursField" style="display:none;"><label class="form-label">工作时段</label><input type="text" class="form-control" id="editHours" placeholder="如 09:00-18:00" /></div>
+                <div class="mb-3"><label class="form-label">备注</label><textarea class="form-control" id="editRemark" rows="2"></textarea></div>
+                <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="editActive" checked /><label class="form-check-label" for="editActive">启用</label></div></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -579,147 +374,75 @@
     </div>
 </div>
 
-<!-- v2.13.120 设备档案 新增/编辑 Modal -->
+@* ============ 设备档案 Modal ============ *@
 <div class="modal fade" id="deviceModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h5 class="modal-title" id="deviceModalTitle"><i class="bi bi-cpu text-success"></i> 新增设备档案</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header py-2"><h5 class="modal-title" id="deviceModalTitle"><i class="bi bi-cpu text-success"></i> 新增设备档案</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="deviceId" value="0" />
+            <div class="mb-3"><label class="form-label">房号 <span class="text-danger">*</span></label>
+                <select id="deviceDormId" class="form-select"><option value="">— 请选择房号 —</option>
+                @foreach (var d in Model.DormOptions) { var tag = d.HasDevice ? "（已配置）" : ""; <option value="@d.DormId">@d.BuildingName / @(d.FloorNo)楼 / @d.DormCode @tag</option> }
+                </select></div>
+            <div class="row g-2">
+                <div class="col-md-4"><label class="form-label">电表 ID</label><input type="text" id="deviceElectric" class="form-control" maxlength="64" /></div>
+                <div class="col-md-4"><label class="form-label">冷水表 ID</label><input type="text" id="deviceCold" class="form-control" maxlength="64" /></div>
+                <div class="col-md-4"><label class="form-label">热水表 ID</label><input type="text" id="deviceHot" class="form-control" maxlength="64" /></div>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="deviceId" value="0" />
-                <div class="mb-3">
-                    <label class="form-label">房号 <span class="text-danger">*</span></label>
-                    <select id="deviceDormId" class="form-select">
-                        <option value="">— 请选择房号 —</option>
-                    </select>
-                    <small class="text-muted">每间宿舍只能配置 1 条设备档案（1:1 约束）</small>
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <label class="form-label">电表 ID</label>
-                        <input type="text" id="deviceElectric" class="form-control" placeholder="现场电表编号" maxlength="64" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">冷水表 ID</label>
-                        <input type="text" id="deviceCold" class="form-control" placeholder="现场冷水表编号" maxlength="64" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">热水表 ID</label>
-                        <input type="text" id="deviceHot" class="form-control" placeholder="现场热水表编号" maxlength="64" />
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <label class="form-label">备注</label>
-                    <textarea id="deviceRemark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
-                </div>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveDeviceMeter()"><i class="bi bi-check-lg"></i> 保存</button>
-            </div>
+            <div class="mt-2"><label class="form-label">备注</label><textarea id="deviceRemark" class="form-control" rows="2" maxlength="500"></textarea></div>
         </div>
-    </div>
+        <div class="modal-footer py-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="saveDeviceMeter()"><i class="bi bi-check-lg"></i> 保存</button>
+        </div>
+    </div></div>
 </div>
 
-<!-- v2.13.130 设备记录 新增/编辑 Modal（独占模式：backdrop=static + keyboard=false） -->
+@* ============ 设备记录 Modal ============ *@
 <div class="modal fade" id="equipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header py-2">
-                <h5 class="modal-title" id="equipmentReadingModalTitle"><i class="bi bi-journal-text text-success"></i> 新增设备记录</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header py-2"><h5 class="modal-title" id="equipmentReadingModalTitle"><i class="bi bi-journal-text text-success"></i> 新增设备记录</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" id="eqReadingId" value="0" />
+            <div class="row g-2">
+                <div class="col-md-6"><label class="form-label">设备ID <span class="text-danger">*</span></label><input type="text" id="eqReadingEquipmentId" class="form-control" maxlength="64" placeholder="如 EL-001" /></div>
+                <div class="col-md-6"><label class="form-label">设备类型 <span class="text-danger">*</span></label><select id="eqReadingEquipmentType" class="form-select"><option value="1">⚡ 电表</option><option value="2">💧 冷水</option><option value="3">♨️ 热水</option></select></div>
             </div>
-            <div class="modal-body">
-                <input type="hidden" id="eqReadingId" value="0" />
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <label class="form-label">设备ID <span class="text-danger">*</span></label>
-                        <input type="text" id="eqReadingEquipmentId" class="form-control" placeholder="如 EL-001 / CW-101 / HW-201" maxlength="64" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">设备类型 <span class="text-danger">*</span></label>
-                        <select id="eqReadingEquipmentType" class="form-select">
-                            <option value="1">⚡ 电表</option>
-                            <option value="2">💧 冷水</option>
-                            <option value="3">♨️ 热水</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="row g-2 mt-1">
-                    <div class="col-md-6">
-                        <label class="form-label">读数 <span class="text-danger">*</span></label>
-                        <input type="number" id="eqReadingReading" class="form-control" placeholder="如 1234.56" step="0.01" min="0" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">读取时间 <span class="text-danger">*</span></label>
-                        <input type="datetime-local" id="eqReadingReadTime" class="form-control" />
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <label class="form-label">备注</label>
-                    <textarea id="eqReadingRemark" class="form-control" rows="2" maxlength="500" placeholder="可选"></textarea>
-                </div>
+            <div class="row g-2 mt-1">
+                <div class="col-md-6"><label class="form-label">读数 <span class="text-danger">*</span></label><input type="number" id="eqReadingReading" class="form-control" step="0.01" min="0" /></div>
+                <div class="col-md-6"><label class="form-label">读取时间 <span class="text-danger">*</span></label><input type="datetime-local" id="eqReadingReadTime" class="form-control" /></div>
             </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-primary" onclick="saveEquipmentReading()"><i class="bi bi-check-lg"></i> 保存</button>
-            </div>
+            <div class="mt-2"><label class="form-label">备注</label><textarea id="eqReadingRemark" class="form-control" rows="2" maxlength="500"></textarea></div>
         </div>
-    </div>
+        <div class="modal-footer py-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" onclick="saveEquipmentReading()"><i class="bi bi-check-lg"></i> 保存</button>
+        </div>
+    </div></div>
 </div>
 
-<!-- v2.13.130 设备记录 批量删除 Modal（独占模式：时间段 + 二次确认） -->
+@* ============ 设备记录批量删除 Modal ============ *@
 <div class="modal fade" id="batchDeleteEquipmentReadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header py-2 bg-warning text-dark">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> 批量删除设备记录</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header py-2 bg-warning text-dark"><h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> 批量删除设备记录</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="alert alert-warning py-2 mb-3"><i class="bi bi-exclamation-triangle-fill"></i> <strong>危险操作！</strong>将永久删除指定时间段内的<strong>所有</strong>设备记录，请谨慎使用。</div>
+            <div class="row g-2">
+                <div class="col-md-6"><label class="form-label">起始时间 <span class="text-danger">*</span></label><input type="datetime-local" id="batchDelStartTime" class="form-control" /></div>
+                <div class="col-md-6"><label class="form-label">结束时间 <span class="text-danger">*</span></label><input type="datetime-local" id="batchDelEndTime" class="form-control" /></div>
             </div>
-            <div class="modal-body">
-                <div class="alert alert-warning py-2 mb-3">
-                    <i class="bi bi-exclamation-triangle-fill"></i>
-                    <strong>危险操作！</strong>将永久删除指定时间段内的<strong>所有</strong>设备记录，请谨慎使用。
-                </div>
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <label class="form-label">起始时间 <span class="text-danger">*</span></label>
-                        <input type="datetime-local" id="batchDelStartTime" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">结束时间 <span class="text-danger">*</span></label>
-                        <input type="datetime-local" id="batchDelEndTime" class="form-control" />
-                    </div>
-                </div>
-                <div class="form-check mt-3">
-                    <input class="form-check-input" type="checkbox" id="batchDelConfirm" />
-                    <label class="form-check-label" for="batchDelConfirm">
-                        我已确认要删除该时间段的所有设备记录（此操作不可撤销）
-                    </label>
-                </div>
-                <div id="batchDeletePreview" class="alert alert-info mt-3 mb-0 py-2" style="display:none;">
-                    <i class="bi bi-info-circle"></i> <span id="batchDeletePreviewText">—</span>
-                </div>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" id="batchDeleteConfirmBtn" class="btn btn-danger" onclick="confirmBatchDeleteEquipmentReadings()" disabled>
-                    <i class="bi bi-trash3"></i> 确认删除
-                </button>
-            </div>
+            <div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="batchDelConfirm" /><label class="form-check-label" for="batchDelConfirm">我已确认要删除该时间段的所有设备记录（此操作不可撤销）</label></div>
         </div>
-    </div>
+        <div class="modal-footer py-2">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" id="batchDeleteConfirmBtn" class="btn btn-danger" onclick="confirmBatchDeleteEquipmentReadings()" disabled><i class="bi bi-trash3"></i> 确认删除</button>
+        </div>
+    </div></div>
 </div>
 
 @section Styles {
 <style>
-    .basics-nav .nav-link {
-        color: #37474f;
-        border-radius: 8px;
-        padding: 0.55rem 0.9rem;
-    }
+    .basics-nav .nav-link { color: #37474f; border-radius: 8px; padding: 0.55rem 0.9rem; }
     .basics-nav .nav-link.active { background: #1976d2; color: #fff; }
     .basics-nav .nav-link:not(.active):hover { background: #e9f1fb; }
 </style>
@@ -727,254 +450,38 @@
 
 @section Scripts {
 <script>
-    // API 配置
     const API_BASE = '/api/basics';
-
-    // 当前编辑类型和ID
-    let currentType = 'dept';
+    let currentType = '@Model.ActiveTab';
     let currentId = null;
+    const labelMap = { departments:'部门名称', buildings:'楼栋名称', floors:'楼层', addresses:'地址',
+        employeeTypes:'类型名称', attendanceTypes:'类型名称', teams:'班组名称', meterUnits:'单位名称',
+        residenceStatuses:'状态名称', employmentStatuses:'状态名称' };
+    const typeToApi = { dept:'departments', building:'buildings', floor:'floors', address:'addresses',
+        emptype:'employee-types', attendance:'attendance-types', team:'teams', unit:'meter-units',
+        residence:'residence-statuses', employment:'employment-statuses' };
 
-    // 标签映射
-    const labelMap = {
-        departments: '部门名称',
-        buildings: '楼栋名称',
-        floors: '楼层',
-        addresses: '地址',
-        employeeTypes: '类型名称',
-        attendanceTypes: '类型名称',
-        teams: '班组名称',
-        meterUnits: '单位名称',
-        residenceStatuses: '状态名称',
-        employmentStatuses: '状态名称'
-    };
+    function escapeHtml(s) { return s == null ? '' : String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
+    function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleString('zh-CN', { hour12: false }); }
 
-    // 类型到API的映射
-    const typeToApi = {
-        dept: 'departments',
-        building: 'buildings',
-        floor: 'floors',
-        address: 'addresses',
-        emptype: 'employee-types',
-        attendance: 'attendance-types',
-        team: 'teams',
-        unit: 'meter-units',
-        residence: 'residence-statuses',
-        employment: 'employment-statuses'
-    };
-
-    // 页面加载时根据 URL 参数或默认加载对应 tab
-    document.addEventListener('DOMContentLoaded', function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const tabParam = urlParams.get('tab');
-        const typeMap = {
-            'dept': 'dept', 'building': 'building', 'floor': 'floor',
-            'address': 'address', 'emptype': 'emptype', 'attendance': 'attendance',
-            'team': 'team', 'unit': 'unit', 'residence': 'residence', 'employment': 'employment',
-            'device': 'device', 'equipmentreading': 'equipmentreading'
-        };
-        const type = tabParam && typeMap[tabParam] ? typeMap[tabParam] : 'dept';
-        setActiveTab(type);
-        if (type === 'device') {
-            // 由下方 listener 统一加载
-        } else if (type === 'equipmentreading') {
-            // 由下方 listener 统一加载
-        } else {
-            loadData(type);
-        }
-    });
-
-    // 设置当前 tab 高亮（URL 参数持久化）
-    function setActiveTab(type) {
-        // 更新 URL 参数
-        const url = new URL(window.location);
-        url.searchParams.set('tab', type);
-        window.history.replaceState({}, '', url);
-
-        // 移除所有 active
-        document.querySelectorAll('.basics-nav .nav-link').forEach(el => el.classList.remove('active'));
-        // 激活当前
-        const btn = document.querySelector(`.basics-nav .nav-link[onclick="setActiveTab('${type}')"]`);
-        if (btn) btn.classList.add('active');
-
-        // 切换 tab pane
-        document.querySelectorAll('#basicsTabContent .tab-pane').forEach(el => {
-            el.classList.remove('show', 'active');
-        });
-        const target = document.getElementById('pane-' + type);
-        if (target) target.classList.add('show', 'active');
-
-        // 加载数据
-        loadData(type);
-    }
-
-    // 加载数据
-    async function loadData(type) {
-        currentType = type;
-        const apiType = typeToApi[type];
-        try {
-            const resp = await fetch(`${API_BASE}/${apiType}`);
-            const result = await resp.json();
-            if (result.success) {
-                renderTable(type, result.data.items);
-            }
-        } catch (err) {
-            console.error('加载数据失败:', err);
-        }
-    }
-
-    // 渲染表格
-    function renderTable(type, items) {
-        const tableId = getTableId(type);
-        let html = '';
-
-        items.forEach((item, idx) => {
-            const statusBadge = item.isActive
-                ? '<span class="badge bg-success">启用</span>'
-                : '<span class="badge bg-secondary">停用</span>';
-
-            if (type === 'dept') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'building' || type === 'address') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${item.name || item.addressText}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'floor') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${item.floorNo} 楼</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'emptype' || type === 'residence' || type === 'employment') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'attendance') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.workHours || '-'}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'team') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code || '-'}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.sortOrder ?? 0}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            } else if (type === 'unit') {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td><code>${item.code}</code></td>
-                    <td>${item.name}</td>
-                    <td>${item.unit || '-'}</td>
-                    <td>${item.remark || '-'}</td>
-                    <td>${statusBadge}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="editItem('${type}', ${item.id})">编辑</button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${type}', ${item.id})">删除</button>
-                    </td>
-                </tr>`;
-            }
-        });
-
-        document.getElementById(tableId).innerHTML = html || '<tr><td colspan="7" class="text-center text-muted py-4">暂无数据</td></tr>';
-    }
-
-    function getTableId(type) {
-        const map = {
-            dept: 'deptTable',
-            building: 'buildingTable',
-            floor: 'floorTable',
-            address: 'addressTable',
-            emptype: 'emptypeTable',
-            attendance: 'attendanceTable',
-            team: 'teamTable',
-            unit: 'unitTable',
-            residence: 'residenceTable',
-            employment: 'employmentTable'
-        };
-        return map[type] || '';
-    }
-
-    // 显示新增 Modal
     function showAddModal(type) {
-        currentType = type;
-        currentId = null;
+        currentType = type; currentId = null;
         document.getElementById('editModalTitle').textContent = '新增';
         document.getElementById('editId').value = '';
         document.getElementById('editCode').value = '';
         document.getElementById('editName').value = '';
         document.getElementById('editHours').value = '';
         document.getElementById('editRemark').value = '';
-        document.getElementById('editSort').value = '0';
-        document.getElementById('editUnit').value = '';
         document.getElementById('editActive').checked = true;
-
-        const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(type);
-        const showHours = type === 'attendance';
-        const showUnit = type === 'unit';
-        const showSort = type === 'team';
-
+        const showCode = ['dept','emptype','attendance','unit','residence','employment','team'].includes(type);
         document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
-        document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
-        document.getElementById('unitField').style.display = showUnit ? 'block' : 'none';
-        document.getElementById('sortField').style.display = showSort ? 'block' : 'none';
-
-        const apiType = typeToApi[type];
-        document.getElementById('nameLabel').textContent = labelMap[apiType] || '名称';
-
+        document.getElementById('hoursField').style.display = type === 'attendance' ? 'block' : 'none';
+        document.getElementById('nameLabel').textContent = labelMap[typeToApi[type]] || '名称';
         new bootstrap.Modal(document.getElementById('editModal')).show();
     }
 
-    // 编辑
     async function editItem(type, id) {
-        currentType = type;
-        currentId = id;
+        currentType = type; currentId = id;
         const apiType = typeToApi[type];
-
         try {
             const resp = await fetch(`${API_BASE}/${apiType}/${id}`);
             const result = await resp.json();
@@ -986,219 +493,46 @@
                 document.getElementById('editName').value = data.name || data.floorNo || data.addressText || '';
                 document.getElementById('editHours').value = data.workHours || '';
                 document.getElementById('editRemark').value = data.remark || '';
-                document.getElementById('editSort').value = data.sortOrder ?? 0;
-                document.getElementById('editUnit').value = data.unit || '';
                 document.getElementById('editActive').checked = data.isActive;
-
-                const showCode = ['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(type);
-                const showHours = type === 'attendance';
-                const showUnit = type === 'unit';
-                const showSort = type === 'team';
-
-                document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
-                document.getElementById('hoursField').style.display = showHours ? 'block' : 'none';
-                document.getElementById('unitField').style.display = showUnit ? 'block' : 'none';
-                document.getElementById('sortField').style.display = showSort ? 'block' : 'none';
-
-                const apiType2 = typeToApi[type];
-                document.getElementById('nameLabel').textContent = labelMap[apiType2] || '名称';
-
+                document.getElementById('codeField').style.display = ['dept','emptype','attendance','unit','residence','employment','team'].includes(type) ? 'block' : 'none';
+                document.getElementById('hoursField').style.display = type === 'attendance' ? 'block' : 'none';
+                document.getElementById('nameLabel').textContent = labelMap[typeToApi[type]] || '名称';
                 new bootstrap.Modal(document.getElementById('editModal')).show();
             }
-        } catch (err) {
-            console.error('获取数据失败:', err);
-        }
+        } catch (err) { console.error('获取数据失败:', err); }
     }
 
-    // 删除
     async function deleteItem(type, id) {
         if (!confirm('确定删除该记录吗？')) return;
-
-        const apiType = typeToApi[type];
         try {
-            const resp = await fetch(`${API_BASE}/${apiType}/${id}`, { method: 'DELETE' });
+            const resp = await fetch(`${API_BASE}/${typeToApi[type]}/${id}`, { method: 'DELETE' });
             const result = await resp.json();
-            if (result.success) {
-                alert('删除成功');
-                loadData(type);
-            } else {
-                alert(result.message || '删除失败');
-            }
-        } catch (err) {
-            console.error('删除失败:', err);
-        }
+            if (result.success) { alert('删除成功'); location.reload(); } else alert(result.message || '删除失败');
+        } catch (err) { console.error('删除失败:', err); }
     }
 
-    // 保存
     async function saveData() {
         const name = document.getElementById('editName').value.trim();
         if (!name) { alert('请输入名称'); return; }
-
         const apiType = typeToApi[currentType];
         const id = document.getElementById('editId').value;
-
         let payload = { name: name };
-        if (['dept', 'emptype', 'attendance', 'unit', 'residence', 'employment', 'team'].includes(currentType)) {
-            payload.code = document.getElementById('editCode').value.trim();
-        }
-        if (currentType === 'floor') {
-            payload.floorNo = parseInt(name);
-        } else if (currentType === 'address') {
-            payload.addressText = name;
-        }
+        if (['dept','emptype','attendance','unit','residence','employment','team'].includes(currentType)) payload.code = document.getElementById('editCode').value.trim();
+        if (currentType === 'floor') payload.floorNo = parseInt(name);
+        if (currentType === 'address') payload.addressText = name;
         payload.remark = document.getElementById('editRemark').value.trim();
         payload.isActive = document.getElementById('editActive').checked;
-        if (currentType === 'attendance') {
-            payload.workHours = document.getElementById('editHours').value.trim();
-        }
-        if (currentType === 'team') {
-            payload.sortOrder = parseInt(document.getElementById('editSort').value) || 0;
-        }
-        if (currentType === 'unit') {
-            payload.unit = document.getElementById('editUnit').value.trim();
-        }
-
+        if (currentType === 'attendance') payload.workHours = document.getElementById('editHours').value.trim();
         try {
-            let resp;
-            if (id) {
-                resp = await fetch(`${API_BASE}/${apiType}/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            } else {
-                resp = await fetch(`${API_BASE}/${apiType}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-            }
-
+            const resp = id
+                ? await fetch(`${API_BASE}/${apiType}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                : await fetch(`${API_BASE}/${apiType}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const result = await resp.json();
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-                alert('保存成功');
-                loadData(currentType);
-            } else {
-                alert(result.message || '保存失败');
-            }
-        } catch (err) {
-            console.error('保存失败:', err);
-        }
+            if (result.success) { bootstrap.Modal.getInstance(document.getElementById('editModal')).hide(); alert('保存成功'); location.reload(); } else alert(result.message || '保存失败');
+        } catch (err) { console.error('保存失败:', err); }
     }
 
-    // ========== v2.13.120 设备档案 ==========
-    let deviceDormOptions = [];
-
-    async function loadDeviceMeters(page = 1, pageSize = 10) {
-        const kw = document.getElementById('deviceKeyword')?.value?.trim() || '';
-        try {
-            const url = new URL('/api/basics/device-meters', window.location.origin);
-            url.searchParams.set('keyword', kw);
-            url.searchParams.set('page', page);
-            url.searchParams.set('pageSize', pageSize);
-            const resp = await fetch(url, { credentials: 'same-origin' });
-            const result = await resp.json();
-            if (!result.success) { alert(result.message || '加载失败'); return; }
-            renderDeviceTable(result.data.items, page, pageSize);
-            renderDevicePagination(result.data, page, pageSize);
-        } catch (err) {
-            console.error('加载设备档案失败:', err);
-        }
-    }
-
-    function renderDeviceTable(items, page, pageSize) {
-        const tbody = document.getElementById('deviceTable');
-        if (!items || items.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted py-4">暂无设备档案</td></tr>';
-            return;
-        }
-        const canEdit = window.__deviceCanEdit === true;
-        const canDelete = window.__deviceCanDelete === true;
-        tbody.innerHTML = items.map((it, idx) => {
-            const no = (page - 1) * pageSize + idx + 1;
-            return `
-                <tr>
-                    <td class="text-center text-muted">${no}</td>
-                    <td><strong>${escapeHtml(it.dormCode)}</strong></td>
-                    <td>${escapeHtml(it.buildingName || '-')}</td>
-                    <td>${it.floorNo} 楼</td>
-                    <td>${escapeHtml(it.electricMeterId || '-')}</td>
-                    <td>${escapeHtml(it.coldWaterMeterId || '-')}</td>
-                    <td>${escapeHtml(it.hotWaterMeterId || '-')}</td>
-                    <td><small>${escapeHtml(it.remark || '')}</small></td>
-                    <td><small class="text-muted">${formatDate(it.updatedAt)}</small></td>
-                    <td class="text-center">
-                        ${canEdit ? `<button class="btn btn-sm btn-outline-primary me-1" onclick="showDeviceEditModal(${it.id})">修改</button>` : ''}
-                        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteDeviceMeter(${it.id}, '${escapeHtml(it.dormCode)}')">删除</button>` : ''}
-                        ${!canEdit && !canDelete ? '<small class="text-muted">无操作权限</small>' : ''}
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    }
-
-    function renderDevicePagination(data, page, pageSize) {
-        // 复用 _PaginationPartial 但更新统计 + 分页器
-        const total = data.totalCount;
-        const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
-        const end = Math.min(page * pageSize, total);
-        const totalPages = Math.max(1, Math.ceil(total / pageSize));
-        const footer = document.querySelector('#pane-device .pagination-footer');
-        if (footer) {
-            footer.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="text-muted small">
-                        共 ${total} 条 · 第 ${start}-${end} 条 · 共 ${totalPages} 页
-                        <select class="form-select form-select-sm d-inline-block ms-2" style="width:90px;" onchange="loadDeviceMeters(1, this.value)">
-                            <option value="10" ${pageSize===10?'selected':''}>10 条/页</option>
-                            <option value="20" ${pageSize===20?'selected':''}>20 条/页</option>
-                            <option value="50" ${pageSize===50?'selected':''}>50 条/页</option>
-                            <option value="100" ${pageSize===100?'selected':''}>100 条/页</option>
-                        </select>
-                    </div>
-                    <nav><ul class="pagination pagination-sm mb-0"></ul></nav>
-                </div>
-            `;
-            const ul = footer.querySelector('.pagination');
-            ul.innerHTML = buildDevicePager(page, totalPages);
-        }
-    }
-
-    function buildDevicePager(page, totalPages) {
-        let html = `<li class="page-item ${page===1?'disabled':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${page-1}, 10)">«</a></li>`;
-        const win = 2;
-        let start = Math.max(1, page - win);
-        let end = Math.min(totalPages, page + win);
-        if (start > 1) { html += `<li class="page-item"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(1, 10)">1</a></li>`; if (start > 2) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; }
-        for (let i = start; i <= end; i++) html += `<li class="page-item ${i===page?'active':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${i}, 10)">${i}</a></li>`;
-        if (end < totalPages) { if (end < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">…</span></li>`; html += `<li class="page-item"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${totalPages}, 10)">${totalPages}</a></li>`; }
-        html += `<li class="page-item ${page===totalPages?'disabled':''}"><a class="page-link" href="javascript:;" onclick="loadDeviceMeters(${page+1}, 10)">»</a></li>`;
-        return html;
-    }
-
-    function resetDeviceFilter() {
-        document.getElementById('deviceKeyword').value = '';
-        loadDeviceMeters(1, 10);
-    }
-
-    async function loadDormOptionsForDevice(excludeDeviceId) {
-        try {
-            const resp = await fetch('/api/basics/dorms-for-device', { credentials: 'same-origin' });
-            const result = await resp.json();
-            if (!result.success) return;
-            deviceDormOptions = result.data || [];
-            const sel = document.getElementById('deviceDormId');
-            const cur = sel.value;
-            sel.innerHTML = '<option value="">— 请选择房号 —</option>' +
-                deviceDormOptions.map(d => {
-                    const tag = d.hasDevice ? '（已配置）' : '';
-                    return `<option value="${d.dormId}">${escapeHtml(d.buildingName)} / ${d.floorNo}楼 / ${escapeHtml(d.dormCode)} ${tag}</option>`;
-                }).join('');
-            if (cur) sel.value = cur;
-        } catch (err) { console.error('加载房号选项失败:', err); }
-    }
-
+    // 设备档案
     async function showDeviceAddModal() {
         document.getElementById('deviceId').value = '0';
         document.getElementById('deviceDormId').value = '';
@@ -1207,18 +541,15 @@
         document.getElementById('deviceHot').value = '';
         document.getElementById('deviceRemark').value = '';
         document.getElementById('deviceModalTitle').innerHTML = '<i class="bi bi-cpu text-success"></i> 新增设备档案';
-        await loadDormOptionsForDevice();
         new bootstrap.Modal(document.getElementById('deviceModal')).show();
     }
-
     async function showDeviceEditModal(id) {
         try {
-            const resp = await fetch(`/api/basics/device-meters/${id}`, { credentials: 'same-origin' });
+            const resp = await fetch(`/api/basics/device-meters/${id}`);
             const result = await resp.json();
             if (!result.success) { alert(result.message || '加载失败'); return; }
             const it = result.data;
             document.getElementById('deviceId').value = it.id;
-            await loadDormOptionsForDevice(id);
             document.getElementById('deviceDormId').value = it.dormId;
             document.getElementById('deviceElectric').value = it.electricMeterId || '';
             document.getElementById('deviceCold').value = it.coldWaterMeterId || '';
@@ -1228,149 +559,48 @@
             new bootstrap.Modal(document.getElementById('deviceModal')).show();
         } catch (err) { console.error('加载失败:', err); }
     }
-
     async function saveDeviceMeter() {
         const id = parseInt(document.getElementById('deviceId').value || '0');
         const dormId = parseInt(document.getElementById('deviceDormId').value || '0');
         if (!dormId) { alert('请选择房号'); return; }
-        const payload = {
-            id: id,
-            dormId: dormId,
+        const payload = { id, dormId,
             electricMeterId: document.getElementById('deviceElectric').value.trim(),
             coldWaterMeterId: document.getElementById('deviceCold').value.trim(),
             hotWaterMeterId: document.getElementById('deviceHot').value.trim(),
-            remark: document.getElementById('deviceRemark').value.trim()
-        };
+            remark: document.getElementById('deviceRemark').value.trim() };
         try {
             const url = id > 0 ? `/api/basics/device-meters/${id}` : '/api/basics/device-meters';
             const method = id > 0 ? 'PUT' : 'POST';
-            const resp = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify(payload)
-            });
+            const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const result = await resp.json();
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('deviceModal')).hide();
-                loadDeviceMeters();
-            } else {
-                alert(result.message || '保存失败');
-            }
-        } catch (err) { console.error('保存失败:', err); alert('保存失败：' + err.message); }
+            if (result.success) { bootstrap.Modal.getInstance(document.getElementById('deviceModal')).hide(); location.reload(); } else alert(result.message || '保存失败');
+        } catch (err) { alert('保存失败：' + err.message); }
     }
-
     async function deleteDeviceMeter(id, code) {
         if (!confirm(`确定删除设备档案「${code}」吗？此操作不可恢复。`)) return;
         try {
-            const resp = await fetch(`/api/basics/device-meters/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            const resp = await fetch(`/api/basics/device-meters/${id}`, { method: 'DELETE' });
             const result = await resp.json();
-            if (result.success) loadDeviceMeters();
-            else alert(result.message || '删除失败');
-        } catch (err) { console.error('删除失败:', err); alert('删除失败：' + err.message); }
+            if (result.success) location.reload(); else alert(result.message || '删除失败');
+        } catch (err) { alert('删除失败：' + err.message); }
     }
 
-    function escapeHtml(s) { return s == null ? '' : String(s).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c])); }
-    function formatDate(d) { if (!d) return '-'; const x = new Date(d); return x.toLocaleString('zh-CN', { hour12: false }); }
-
-    // 设备档案自动加载（如果 tab=device）
-    document.addEventListener('DOMContentLoaded', function () {
-        if ('@Model.ActiveTab' === 'device') loadDeviceMeters();
-        if ('@Model.ActiveTab' === 'equipmentreading') loadEquipmentReadings();
-    });
-
-    // ========== v2.13.130 设备读数日志（设备记录） ==========
-    const EQUIPMENT_TYPE_MAP = {
-        1: { name: '电表',   badge: 'bg-warning text-dark', icon: 'bi-lightning-charge-fill' },
-        2: { name: '冷水',   badge: 'bg-info text-dark',    icon: 'bi-droplet-fill' },
-        3: { name: '热水',   badge: 'bg-danger',            icon: 'bi-droplet-half' }
-    };
-
-    function getEquipmentTypeBadge(type) {
-        const meta = EQUIPMENT_TYPE_MAP[type] || { name: '未知', badge: 'bg-secondary', icon: 'bi-question-circle' };
-        return `<span class="badge ${meta.badge}"><i class="bi ${meta.icon}"></i> ${meta.name}</span>`;
-    }
-
-    // 列表加载（filter + paging，参数从 URL/筛选区读取）
-    async function loadEquipmentReadings(page = 1, pageSize = 10) {
-        const tbody = document.getElementById('equipmentReadingTable');
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">加载中…</td></tr>';
-        try {
-            const url = new URL('/api/basics/equipment-readings', window.location.origin);
-            const kw = document.getElementById('eqReadingKeyword')?.value?.trim();
-            if (kw) url.searchParams.set('equipmentId', kw);
-            const type = document.getElementById('eqReadingType')?.value;
-            if (type) url.searchParams.set('equipmentType', type);
-            const start = document.getElementById('eqReadingStartTime')?.value;
-            if (start) url.searchParams.set('startTime', new Date(start).toISOString());
-            const end = document.getElementById('eqReadingEndTime')?.value;
-            if (end) url.searchParams.set('endTime', new Date(end).toISOString());
-            url.searchParams.set('page', page);
-            url.searchParams.set('pageSize', pageSize);
-
-            const resp = await fetch(url, { credentials: 'same-origin' });
-            const result = await resp.json();
-            if (!result.success) {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${escapeHtml(result.message || '加载失败')}</td></tr>`;
-                return;
-            }
-            const data = result.data || { items: [], totalCount: 0 };
-            const items = data.items || [];
-            if (items.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">暂无设备记录</td></tr>';
-                updatePagination('equipmentreading', page, pageSize, 0, () => loadEquipmentReadings());
-                return;
-            }
-            const canEdit = window.__equipmentReadingCanEdit === true;
-            const canDelete = window.__equipmentReadingCanDelete === true;
-            tbody.innerHTML = items.map((r, i) => {
-                const seq = (page - 1) * pageSize + i + 1;
-                return `<tr>
-                    <td class="text-muted">${seq}</td>
-                    <td><strong>${escapeHtml(r.equipmentId)}</strong></td>
-                    <td>${getEquipmentTypeBadge(r.equipmentType)}</td>
-                    <td>${(r.reading || 0).toFixed(2)}</td>
-                    <td><small>${formatDate(r.readTime)}</small></td>
-                    <td><small class="text-muted">${escapeHtml(r.remark || '—')}</small></td>
-                    <td><small class="text-muted">${escapeHtml(r.createdBy || '—')}</small></td>
-                    <td>
-                        ${canEdit ? `<button class="btn btn-sm btn-outline-primary" onclick="showEditEquipmentReadingModal(${r.id})" title="编辑"><i class="bi bi-pencil"></i></button> ` : ''}
-                        ${canDelete ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteEquipmentReading(${r.id})" title="删除"><i class="bi bi-trash"></i></button>` : ''}
-                    </td>
-                </tr>`;
-            }).join('');
-            updatePagination('equipmentreading', page, pageSize, data.totalCount, () => loadEquipmentReadings());
-        } catch (err) {
-            console.error('加载设备记录失败:', err);
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">加载失败，请刷新重试</td></tr>';
-        }
-    }
-
-    function resetEquipmentReadingFilter() {
-        document.getElementById('eqReadingKeyword').value = '';
-        document.getElementById('eqReadingType').value = '';
-        document.getElementById('eqReadingStartTime').value = '';
-        document.getElementById('eqReadingEndTime').value = '';
-        loadEquipmentReadings();
-    }
-
+    // 设备记录
     function showAddEquipmentReadingModal() {
         document.getElementById('equipmentReadingModalTitle').innerHTML = '<i class="bi bi-journal-text text-success"></i> 新增设备记录';
         document.getElementById('eqReadingId').value = '0';
         document.getElementById('eqReadingEquipmentId').value = '';
         document.getElementById('eqReadingEquipmentType').value = '1';
         document.getElementById('eqReadingReading').value = '';
-        // 默认读取时间为当前本地时间（datetime-local 需要 yyyy-MM-ddTHH:mm 格式）
         const now = new Date();
         const localISO = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
         document.getElementById('eqReadingReadTime').value = localISO;
         document.getElementById('eqReadingRemark').value = '';
         new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
     }
-
     async function showEditEquipmentReadingModal(id) {
         try {
-            const resp = await fetch(`/api/basics/equipment-readings/${id}`, { credentials: 'same-origin' });
+            const resp = await fetch(`/api/basics/equipment-readings/${id}`);
             const result = await resp.json();
             if (!result.success) { alert(result.message || '加载失败'); return; }
             const r = result.data;
@@ -1379,15 +609,12 @@
             document.getElementById('eqReadingEquipmentId').value = r.equipmentId || '';
             document.getElementById('eqReadingEquipmentType').value = r.equipmentType;
             document.getElementById('eqReadingReading').value = r.reading;
-            // ReadTime 转 datetime-local 格式（去掉秒和时区）
             const rt = new Date(r.readTime);
-            const localISO = new Date(rt.getTime() - rt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-            document.getElementById('eqReadingReadTime').value = localISO;
+            document.getElementById('eqReadingReadTime').value = new Date(rt.getTime() - rt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
             document.getElementById('eqReadingRemark').value = r.remark || '';
             new bootstrap.Modal(document.getElementById('equipmentReadingModal')).show();
-        } catch (err) { console.error('加载设备记录失败:', err); alert('加载失败：' + err.message); }
+        } catch (err) { alert('加载失败：' + err.message); }
     }
-
     async function saveEquipmentReading() {
         const id = parseInt(document.getElementById('eqReadingId').value || '0');
         const equipmentId = document.getElementById('eqReadingEquipmentId').value.trim();
@@ -1395,74 +622,42 @@
         const reading = parseFloat(document.getElementById('eqReadingReading').value);
         const readTimeStr = document.getElementById('eqReadingReadTime').value;
         const remark = document.getElementById('eqReadingRemark').value.trim();
-
         if (!equipmentId) { alert('设备ID不能为空'); return; }
         if (!equipmentType) { alert('请选择设备类型'); return; }
         if (isNaN(reading) || reading < 0) { alert('请输入有效的读数（≥ 0）'); return; }
         if (!readTimeStr) { alert('请选择读取时间'); return; }
-
-        const payload = {
-            id: id,
-            equipmentId: equipmentId,
-            equipmentType: equipmentType,
-            reading: reading,
-            readTime: new Date(readTimeStr).toISOString(),
-            remark: remark
-        };
-
+        const payload = { id, equipmentId, equipmentType, reading, readTime: new Date(readTimeStr).toISOString(), remark };
         const method = id > 0 ? 'PUT' : 'POST';
         const url = id > 0 ? `/api/basics/equipment-readings/${id}` : '/api/basics/equipment-readings';
         try {
-            const resp = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify(payload)
-            });
+            const resp = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             const result = await resp.json();
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('equipmentReadingModal')).hide();
-                loadEquipmentReadings();
-            } else {
-                alert(result.message || '保存失败');
-            }
-        } catch (err) { console.error('保存设备记录失败:', err); alert('保存失败：' + err.message); }
+            if (result.success) { bootstrap.Modal.getInstance(document.getElementById('equipmentReadingModal')).hide(); location.reload(); } else alert(result.message || '保存失败');
+        } catch (err) { alert('保存失败：' + err.message); }
     }
-
     async function deleteEquipmentReading(id) {
         if (!confirm('确认删除该设备记录？此操作不可撤销。')) return;
         try {
-            const resp = await fetch(`/api/basics/equipment-readings/${id}`, { method: 'DELETE', credentials: 'same-origin' });
+            const resp = await fetch(`/api/basics/equipment-readings/${id}`, { method: 'DELETE' });
             const result = await resp.json();
-            if (result.success) loadEquipmentReadings();
-            else alert(result.message || '删除失败');
-        } catch (err) { console.error('删除设备记录失败:', err); alert('删除失败：' + err.message); }
+            if (result.success) location.reload(); else alert(result.message || '删除失败');
+        } catch (err) { alert('删除失败：' + err.message); }
     }
-
-    // ========== v2.13.130 批量删除（独占 Modal + 时间段 + 二次确认） ==========
     function showBatchDeleteEquipmentReadingModal() {
         document.getElementById('batchDelStartTime').value = '';
         document.getElementById('batchDelEndTime').value = '';
         document.getElementById('batchDelConfirm').checked = false;
         document.getElementById('batchDeleteConfirmBtn').disabled = true;
-        document.getElementById('batchDeletePreview').style.display = 'none';
         new bootstrap.Modal(document.getElementById('batchDeleteEquipmentReadingModal')).show();
     }
-
-    // 启用/禁用确认按钮（需勾选 + 时间段合法）
-    document.addEventListener('change', function (e) {
-        if (e.target.id === 'batchDelConfirm' || e.target.id === 'batchDelStartTime' || e.target.id === 'batchDelEndTime') {
-            updateBatchDeleteButtonState();
+    document.addEventListener('change', e => {
+        if (['batchDelConfirm','batchDelStartTime','batchDelEndTime'].includes(e.target.id)) {
+            const start = document.getElementById('batchDelStartTime').value;
+            const end = document.getElementById('batchDelEndTime').value;
+            const confirmed = document.getElementById('batchDelConfirm').checked;
+            document.getElementById('batchDeleteConfirmBtn').disabled = !(start && end && confirmed);
         }
     });
-    function updateBatchDeleteButtonState() {
-        const start = document.getElementById('batchDelStartTime').value;
-        const end = document.getElementById('batchDelEndTime').value;
-        const confirmed = document.getElementById('batchDelConfirm').checked;
-        const btn = document.getElementById('batchDeleteConfirmBtn');
-        btn.disabled = !(start && end && confirmed);
-    }
-
     async function confirmBatchDeleteEquipmentReadings() {
         const start = document.getElementById('batchDelStartTime').value;
         const end = document.getElementById('batchDelEndTime').value;
@@ -1470,29 +665,12 @@
         if (new Date(start) > new Date(end)) { alert('起始时间必须早于或等于结束时间'); return; }
         try {
             const resp = await fetch('/api/basics/equipment-readings/batch-delete', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ startTime: new Date(start).toISOString(), endTime: new Date(end).toISOString() })
             });
             const result = await resp.json();
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('batchDeleteEquipmentReadingModal')).hide();
-                alert(result.message || `批量删除成功，共删除 ${result.data || 0} 条记录`);
-                loadEquipmentReadings();
-            } else {
-                alert(result.message || '批量删除失败');
-            }
-        } catch (err) { console.error('批量删除失败:', err); alert('批量删除失败：' + err.message); }
+            if (result.success) { bootstrap.Modal.getInstance(document.getElementById('batchDeleteEquipmentReadingModal')).hide(); alert(result.message || `批量删除成功，共删除 ${result.data || 0} 条记录`); location.reload(); } else alert(result.message || '批量删除失败');
+        } catch (err) { alert('批量删除失败：' + err.message); }
     }
-</script>
-
-<script>
-    // v2.13.120 注入设备档案按钮权限到全局（避免 Razor at-符 在 JS 注释中误解析）
-    window.__deviceCanEdit = @deviceCanEdit;
-    window.__deviceCanDelete = @deviceCanDelete;
-    // v2.13.130 注入设备记录按钮权限到全局
-    window.__equipmentReadingCanEdit = @equipmentReadingCanEdit;
-    window.__equipmentReadingCanDelete = @equipmentReadingCanDelete;
 </script>
 }
