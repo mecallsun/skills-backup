@@ -9,6 +9,21 @@ using DormManage.Shared.Data;
 using DormManage.Shared.Security;
 using DormManage.Shared.Services;
 
+// v2.13.155 托盘托管守卫（必须在所有启动逻辑之前执行）
+// 需求：所有 Web/Api 程序必须由 DormManage.TrayApp 托盘程序拉起，禁止独立双击运行。
+// 仅在 Release 生产构建强制（Debug 开发用 dotnet run 不拦截，便于调试）。
+#if !DEBUG
+if (!DormManage.Shared.Security.TrayLaunchGuard.VerifyLaunchedByTray(
+        DormManage.Shared.Security.TrayLaunchGuard.ChildAdmin, out var _trayGuardReason))
+{
+    Console.Error.WriteLine($"[TRAY-GUARD] 本程序必须由「金戈宿舍管理系统托盘程序」启动，禁止独立运行。原因：{_trayGuardReason}");
+    Console.Error.WriteLine("[TRAY-GUARD] 请运行 DormManage.TrayApp.exe，由其统一拉起 Web/Api 服务。本次启动将在 2 秒后终止...");
+    Thread.Sleep(2000);
+    return;
+}
+Console.WriteLine("[TRAY-GUARD] 托盘托管校验通过。");
+#endif
+
 // v2.13.72 进程唯一性守卫（必须在 WebApplication.CreateBuilder 之前执行）
 // 使用全局命名 Mutex 防止 DormManage.Admin 重复启动：
 //   - 若已被占用 → 记录 WARN + 等待 2s 让用户看到控制台消息 + 自动终止（return 退出 Main）

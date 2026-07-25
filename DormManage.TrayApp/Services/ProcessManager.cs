@@ -277,8 +277,15 @@ public class ProcessManager
         await Task.Delay(5000);
         if (_isStopping) return;
 
+        // v2.13.157 自愈：若上次启动失败为「配置路径无效」，先重新加载配置触发 AutoHeal
+        // （每次重启都会触发 ConfigService.Load(), Load() 内部自动修复失效路径）
         try
         {
+            // 重新加载配置以便触发 AutoHealPathsIfInvalid
+            // 注：ConfigService.Load 在 TrayAppContext 启动时已执行一次；
+            // 若用户外部编辑了配置但未重启托盘，这里手动 reload 以保证最新值
+            _config.Load();
+
             if (_apiProcess is null or { HasExited: true })
                 await StartApiAsync();
             if (_adminProcess is null or { HasExited: true })
@@ -333,12 +340,45 @@ public class ProcessManager
         return _restartCountInWindow <= MaxRestartInWindow;
     }
 
+    /// <summary>
+    /// v2.13.157 多候选路径解析（与 ConfigService.TryFindExeUnderBase 单源真相）：
+    /// 1. 配置原始值（相对 BaseDirectory 或绝对路径）
+    /// 2. 相对 BaseDirectory 的候选路径：Api\xxx.exe、..\Api\xxx.exe（v2.13.142 旧默认）
+    /// 3. 相对 BaseDirectory 父目录的候选（developer 模式把 Api/Admin 放在 publish-final 根）
+    /// 4. 兜底：当前工作目录下的 Api\xxx.exe
+    /// 优先返回最先匹配成功的路径。
+    /// </summary>
     private static bool TryResolveExePath(string relativeOrAbsolute, out string fullPath)
     {
-        fullPath = Path.IsPathRooted(relativeOrAbsolute)
-            ? relativeOrAbsolute
-            : Path.Combine(AppContext.BaseDirectory, relativeOrAbsolute);
-        return File.Exists(fullPath);
+        var exeName = Path.GetFileName(string.IsNullOrWhiteSpace(relativeOrAbsolute)
+            ? "DormManage.Unknown.exe"
+            : relativeOrAbsolute);
+
+        // 用 ConfigService 的共享候选探测（单源真相）
+        var resolved = ConfigService.TryFindExeUnderBase(exeName);
+        if (resolved != null)
+        {
+            // 如果用户配置是相对路径且已被覆盖为绝对路径，正常返回（下游用绝对路径即可）
+            // 反哺逻辑在 ConfigService.AutoHealPathsIfInvalid 完成（启动时已自动修复到配置文件）
+            fullPath = resolved;
+            return true;
+        }
+
+        // 配置指向的绝对/相对路径作为最后的诚实返回（让错误日志能看到真实配置值）
+        if (!string.IsNullOrWhiteSpace(relativeOrAbsolute))
+        {
+            var direct = Path.IsPathRooted(relativeOrAbsolute)
+                ? relativeOrAbsolute
+                : Path.Combine(AppContext.BaseDirectory, relativeOrAbsolute);
+            if (File.Exists(direct))
+            {
+                fullPath = direct;
+                return true;
+            }
+        }
+
+        fullPath = relativeOrAbsolute;
+        return false;
     }
 
     private static ProcessStartInfo BuildStartInfo(string exePath, AppConfig cfg, bool isApi)
@@ -356,6 +396,14 @@ public class ProcessManager
 
         var port = isApi ? cfg.Tray.ApiPort : cfg.Tray.AdminPort;
         psi.EnvironmentVariables["DormManage_KESTREL_PORT"] = port.ToString();
+
+        // v2.13.155 托盘托管守卫：注入签名握手令牌，子进程 (Admin/Api) 启动时校验，
+        // 未由托盘拉起（无令牌 / 令牌非法 / 父进程非托盘）则拒绝启动，实现「禁止独立使用」。
+        var childKey = isApi
+            ? DormManage.Shared.Security.TrayLaunchGuard.ChildApi
+            : DormManage.Shared.Security.TrayLaunchGuard.ChildAdmin;
+        psi.EnvironmentVariables[DormManage.Shared.Security.TrayLaunchGuard.HandshakeEnvVar] =
+            DormManage.Shared.Security.TrayLaunchGuard.CreateHandshakeToken(childKey);
 
         // v2.13.28: 数据库连接环境变量注入（优先级最高，覆盖 appsettings.json）
         // v2.13.109: SQLite 已移除，仅注入 DormManage_DB_CONN
