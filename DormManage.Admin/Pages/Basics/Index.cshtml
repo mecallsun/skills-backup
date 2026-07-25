@@ -320,21 +320,28 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="bi bi-journal-text"></i> 设备记录列表</h5>
                         <div class="d-flex gap-2">
+                            <button class="btn btn-outline-secondary" onclick="location.reload()" title="刷新当前列表">
+                                <i class="bi bi-arrow-clockwise"></i> 刷新
+                            </button>
                             @if (await Html.HasPermissionAsync("equipment-reading:batch-delete")) { <button class="btn btn-warning" onclick="showBatchDeleteEquipmentReadingModal()"><i class="bi bi-trash3"></i> 批量删除</button> }
                             @if (await Html.HasPermissionAsync("equipment-reading:create")) { <button class="btn btn-success" onclick="showAddEquipmentReadingModal()"><i class="bi bi-plus-lg"></i> 新增设备记录</button> }
                         </div>
                     </div>
                     <div class="table-responsive"><table class="table table-hover mb-0">
-                        <thead class="table-light"><tr><th width="60">序号</th><th>设备ID</th><th>设备类型</th><th>读数</th><th>读取时间</th><th>备注</th><th>创建人</th><th width="150">操作</th></tr></thead>
+                        <thead class="table-light"><tr><th width="60">序号</th><th>设备ID</th><th>设备</th><th>读数</th><th>读取时间</th><th>备注</th><th>创建人</th><th width="150">操作</th></tr></thead>
                         <tbody>
                         @for (int i = 0; i < Model.EquipmentReadings.Count; i++) { var r = Model.EquipmentReadings[i];
-                            var typeBadge = r.EquipmentType switch { 1 => "⚡ 电表", 2 => "💧 冷水", 3 => "♨️ 热水", _ => "未知" };
+                            var typeBadge = r.EquipmentType switch { 1 => "⚡电表", 2 => "💧冷水", 3 => "♨️热水", _ => "未知" };
+                            // v2.13.162：备注按字符截断（1 字符 ≈ 12px 宽），超过 24 字截为 24 字 + ……
+                            var remarkText = r.Remark ?? "—";
+                            var remarkDisplay = string.IsNullOrWhiteSpace(r.Remark) ? "—" : (r.Remark.Length > 24 ? r.Remark.Substring(0, 24) + "……" : r.Remark);
+                            var remarkTitle = string.IsNullOrWhiteSpace(r.Remark) ? "" : r.Remark;
                             <tr><td class="text-muted">@((Model.PageIndex - 1) * Model.PageSize + i + 1)</td>
                             <td><strong>@r.EquipmentId</strong></td>
-                            <td>@typeBadge</td>
+                            <td class="cell-nowrap">@typeBadge</td>
                             <td>@(r.Reading.ToString("0.00"))</td>
                             <td><small>@(r.ReadTime.ToString("yyyy-MM-dd HH:mm"))</small></td>
-                            <td><small>@(r.Remark ?? "—")</small></td>
+                            <td class="remark-cell" title="@remarkTitle" data-bs-toggle="tooltip" data-bs-placement="top">@remarkDisplay</td>
                             <td><small>@(r.CreatedBy ?? "—")</small></td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary" onclick="showEditEquipmentReadingModal(@r.Id)"><i class="bi bi-pencil"></i></button>
@@ -446,6 +453,9 @@
     .basics-nav .nav-link { color: #37474f; border-radius: 8px; padding: 0.55rem 0.9rem; }
     .basics-nav .nav-link.active { background: #1976d2; color: #fff; }
     .basics-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+    /* v2.13.162 设备记录列表：紧凑 + 备注单行省略号 + tooltip */
+    .cell-nowrap { white-space: nowrap; }                                    /* 设备列 badge 不换行 */
+    .remark-cell { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: help; } /* 备注列：单行省略 + 鼠标手型 */
 </style>
 }
 
@@ -684,5 +694,10 @@
             if (result.success) { bootstrap.Modal.getInstance(document.getElementById('batchDeleteEquipmentReadingModal')).hide(); alert(result.message || `批量删除成功，共删除 ${result.data || 0} 条记录`); location.reload(); } else alert(result.message || '批量删除失败');
         } catch (err) { alert('批量删除失败：' + err.message); }
     }
+    // v2.13.162 设备记录：初始化 Bootstrap tooltip（鼠标悬停显示完整备注）
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.forEach(function (el) { new bootstrap.Tooltip(el); });
+    });
 </script>
 }

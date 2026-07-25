@@ -176,6 +176,9 @@ public class DormDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // v2.13.162：BaseEntity.IsActive 对 EquipmentReading 表必须 Ignore（其 DB 表无该列）
+        modelBuilder.Entity<EquipmentReading>().Ignore(e => e.IsActive);
+
         // Department
         modelBuilder.Entity<Department>(entity =>
         {

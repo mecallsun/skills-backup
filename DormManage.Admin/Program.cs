@@ -61,6 +61,7 @@ if (_adminExpiryDays.HasValue)
 var builder = WebApplication.CreateBuilder(args);
 
 // 添加 Razor Pages 服务
+// v2.13.162：启用 Razor 运行时编译，确保 .cshtml 改动下次访问即生效（不需全量重发布）
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/");                          // 所有页面默认需要认证
