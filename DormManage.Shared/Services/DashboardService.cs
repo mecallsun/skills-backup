@@ -105,18 +105,37 @@ public class DashboardService : IDashboardService
         var abnormalC = await _db.DormBookings
             .CountAsync(b => b.Status == BookingStatus.Reserved && b.BookingDate < today);
 
-        // === KPI 5: 本月抄表覆盖 ===
-        var meterReadCount = await _db.MeterRecords
-            .Where(r => r.ReadMonth == monthStr && r.Status != (byte)MeterRecordStatus.Voided)
-            .Select(r => r.DormCode)
-            .Distinct()
-            .CountAsync();
+        // === KPI 5: 本月抄表覆盖（v2.13.133 3 段拆分明细，与 Meter/Index.cshtml 完全一致）===
+        // 业务规则（与 Meter/Index.cshtml line 168-183 对齐）：
+        //   - 已抄 = Status IN (Normal=1, Corrected=2)
+        //   - 未完成 = 存在 Status=Incomplete(0) 占位记录（已建立但数据不全）
+        //   - 未覆盖 = Dorm 表存在但本月无任何 MeterRecord
         var meterTotalDorms = await _db.Dorms.CountAsync();
         var readDormCodes = await _db.MeterRecords
-            .Where(r => r.ReadMonth == monthStr && r.Status != (byte)MeterRecordStatus.Voided)
+            .Where(r => r.ReadMonth == monthStr
+                     && (r.Status == (byte)MeterRecordStatus.Normal || r.Status == (byte)MeterRecordStatus.Corrected))
             .Select(r => r.DormCode)
             .Distinct()
             .ToListAsync();
+        var meterReadCount = readDormCodes.Count;
+
+        // 未完成：状态=Incomplete(0) 的占位记录数（按 DormCode 去重，避免一房多占位重复计数）
+        var unfinishedDormCodes = await _db.MeterRecords
+            .Where(r => r.ReadMonth == monthStr && r.Status == (byte)MeterRecordStatus.Incomplete)
+            .Select(r => r.DormCode)
+            .Distinct()
+            .CountAsync();
+
+        // 未覆盖：Dorm 表存在但本月无任何 MeterRecord 记录（含任何状态）
+        var allMeterDormCodes = await _db.MeterRecords
+            .Where(r => r.ReadMonth == monthStr)
+            .Select(r => r.DormCode)
+            .Distinct()
+            .ToListAsync();
+        var uncoveredDorms = await _db.Dorms
+            .Where(d => !allMeterDormCodes.Contains(d.DormCode))
+            .CountAsync();
+
         var unreadDormCodes = await _db.Dorms
             .Where(d => !readDormCodes.Contains(d.DormCode))
             .OrderBy(d => d.DormCode)
@@ -153,6 +172,9 @@ public class DashboardService : IDashboardService
             AbnormalC = abnormalC,
             MeterReadCount = meterReadCount,
             MeterTotalCount = meterTotalDorms,
+            // v2.13.133 新增：3 段拆分明细字段
+            MeterUnfinishedCount = unfinishedDormCodes,
+            MeterUncoveredCount = uncoveredDorms,
             UnreadDormCodes = unreadDormCodes,
             AvgFee = avgFee,
             TotalFee = totalFee,
@@ -333,20 +355,38 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// 图表 8：本月抄表覆盖（环形图：已抄 vs 未抄）— 真实 MeterRecords 表
+    /// 图表 8：本月抄表覆盖（环形图：已抄 vs 未完成 vs 未覆盖）— v2.13.133 与 KPI 5 完全一致
+    ///   已抄 = Status IN (Normal=1, Corrected=2) 的 DormCode 去重数
+    ///   未完成 = Status=Incomplete(0) 的 DormCode 去重数
+    ///   未覆盖 = Dorm 表存在但本月无任何 MeterRecord 的数量
     /// </summary>
     private async Task<List<DistributionItem>> BuildMeterCoverageAsync(string monthStr)
     {
         var total = await _db.Dorms.CountAsync();
         var read = await _db.MeterRecords
-            .Where(r => r.ReadMonth == monthStr && r.Status != (byte)MeterRecordStatus.Voided)
+            .Where(r => r.ReadMonth == monthStr
+                     && (r.Status == (byte)MeterRecordStatus.Normal || r.Status == (byte)MeterRecordStatus.Corrected))
             .Select(r => r.DormCode)
             .Distinct()
+            .CountAsync();
+        var unfinished = await _db.MeterRecords
+            .Where(r => r.ReadMonth == monthStr && r.Status == (byte)MeterRecordStatus.Incomplete)
+            .Select(r => r.DormCode)
+            .Distinct()
+            .CountAsync();
+        var allMeterCodes = await _db.MeterRecords
+            .Where(r => r.ReadMonth == monthStr)
+            .Select(r => r.DormCode)
+            .Distinct()
+            .ToListAsync();
+        var uncovered = await _db.Dorms
+            .Where(d => !allMeterCodes.Contains(d.DormCode))
             .CountAsync();
         return new List<DistributionItem>
         {
             new() { Label = "已抄", Value = read },
-            new() { Label = "未抄", Value = Math.Max(0, total - read) }
+            new() { Label = "未完成", Value = unfinished },
+            new() { Label = "未覆盖", Value = Math.Max(0, uncovered) }
         };
     }
 
@@ -422,11 +462,22 @@ public class DashboardKpi
     /// <summary>异常 C：超期未办</summary>
     public int AbnormalC { get; set; }
 
-    /// <summary>本月已抄宿舍数</summary>
+    /// <summary>本月已抄宿舍数（v2.13.133：Status=Normal=1 或 Corrected=2 的 DormCode 去重数）</summary>
     public int MeterReadCount { get; set; }
 
     /// <summary>总宿舍数</summary>
     public int MeterTotalCount { get; set; }
+
+    /// <summary>v2.13.133 新增：未完成宿舍数（存在 Status=Incomplete(0) 占位记录的 DormCode 去重数）</summary>
+    public int MeterUnfinishedCount { get; set; }
+
+    /// <summary>v2.13.133 新增：未覆盖宿舍数（Dorm 表存在但本月无任何 MeterRecord）</summary>
+    public int MeterUncoveredCount { get; set; }
+
+    /// <summary>v2.13.133 新增：抄表覆盖率百分比（0~100）</summary>
+    public decimal MeterCoveragePercent => MeterTotalCount > 0
+        ? Math.Round((decimal)MeterReadCount / MeterTotalCount * 100, 1)
+        : 0;
 
     /// <summary>未抄宿舍代码（前 5 个）</summary>
     public List<string> UnreadDormCodes { get; set; } = new();

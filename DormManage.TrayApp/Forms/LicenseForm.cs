@@ -39,7 +39,7 @@ public sealed class LicenseForm : Form
     private TextBox textLTD = null!;          // 公司名称值
     private Label label_Trial = null!;        // 试用次数
     private Button btnReg = null!;            // 注册/取消注册
-    private Button btnClear = null!;          // 清理
+    // v2.13.149：删除 btnClear「清理」按钮（一次性历史版本按钮，保留字段以避免编译错误）
     private Button btnClose = null!;          // 关闭
 
     /// <summary>v2.13.142：缓存 raw 24 hex 机器码（用于 RegisterSdk.CheckRegCDKey 校验 + 复制按钮）</summary>
@@ -60,12 +60,15 @@ public sealed class LicenseForm : Form
         this.StartPosition = FormStartPosition.CenterScreen;
         this.Font = new Font("Microsoft YaHei UI", 9F);
 
-        int x = 50, y = 20, w = 460, h = 25, gap = 38;
+        // v2.13.149 UI 优化：标签列宽统一为 70px，输入框起点 x+75，避免任何标签覆盖输入框
+        int x = 30, y = 20, w = 480, h = 25, gap = 38;
+        int labelWidth = 70;       // 所有标签统一宽度
+        int inputStartX = x + labelWidth + 5;  // 输入框起点
 
-        // 1) 机器码（v2.13.142：24 位连续 hex 禁止任何分隔符）
-        label1 = new Label { Text = "机器码（24 位）:", Location = new Point(x, y + 3), AutoSize = true };
-        textSN = new TextBox { Location = new Point(x + 90, y), Size = new Size(w, h), ReadOnly = true, Font = new Font("Consolas", 9F) };
-        var btnCopy = new Button { Text = "📋 复制", Location = new Point(x + 90 + w + 8, y - 1), Size = new Size(56, h + 4) };
+        // 1) 机器码（v2.13.149：标签「机器码」简洁化，统一宽度避免覆盖输入框；24 位 hex 在 tooltip/copy 提示中说明）
+        label1 = new Label { Text = "机器码：", Location = new Point(x, y + 3), Size = new Size(labelWidth, h), TextAlign = ContentAlignment.MiddleLeft };
+        textSN = new TextBox { Location = new Point(inputStartX, y), Size = new Size(w, h), ReadOnly = true, Font = new Font("Consolas", 9F) };
+        var btnCopy = new Button { Text = "📋 复制", Location = new Point(inputStartX + w + 8, y - 1), Size = new Size(56, h + 4) };
         btnCopy.Click += (_, _) =>
         {
             try
@@ -79,36 +82,33 @@ public sealed class LicenseForm : Form
         y += gap;
 
         // 2) 公司名称
-        label3 = new Label { Text = "公司名称：", Location = new Point(x, y + 3), AutoSize = true };
-        textLTD = new TextBox { Location = new Point(x + 90, y), Size = new Size(w, h), MaxLength = 100 };
+        label3 = new Label { Text = "公司名称：", Location = new Point(x, y + 3), Size = new Size(labelWidth, h), TextAlign = ContentAlignment.MiddleLeft };
+        textLTD = new TextBox { Location = new Point(inputStartX, y), Size = new Size(w, h), MaxLength = 100 };
         y += gap;
 
         // 3) 注册码（25 位 hex + 自动 5-5-5-5-5 视觉分组 → 实际可输入 29 字符含分隔符）
-        label_CDKEY = new Label { Text = "注册码：", Location = new Point(x, y + 3), AutoSize = true };
-        text_CDKEY = new TextBox { Location = new Point(x + 90, y), Size = new Size(w, h), MaxLength = 29, CharacterCasing = CharacterCasing.Upper, Font = new Font("Consolas", 9F) };
+        label_CDKEY = new Label { Text = "注册码：", Location = new Point(x, y + 3), Size = new Size(labelWidth, h), TextAlign = ContentAlignment.MiddleLeft };
+        text_CDKEY = new TextBox { Location = new Point(inputStartX, y), Size = new Size(w, h), MaxLength = 29, CharacterCasing = CharacterCasing.Upper, Font = new Font("Consolas", 9F) };
         text_CDKEY.KeyPress += Text_CDKEY_KeyPress;
         y += gap;
 
-        // 4) 有效期
-        label_Date = new Label { Text = "有效日期：", Location = new Point(x, y + 3), AutoSize = true };
+        // 4) 有效期（v2.13.150：标签「有效日期」→「有效期」简化，与「公司名称：」「注册码：」「机器码：」对齐）
+        label_Date = new Label { Text = "有效期：", Location = new Point(x, y + 3), Size = new Size(labelWidth, h), TextAlign = ContentAlignment.MiddleLeft };
         label_DateValue = new Label { Text = "—", Location = new Point(x + 60, y + 3), AutoSize = true, ForeColor = Color.Green, Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
         y += gap;
 
         // 5) 注册状态
-        labRegInfo = new Label { Text = "未注册", Location = new Point(x + 60, y + 3), AutoSize = true, ForeColor = Color.Red, Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold) };
+        labRegInfo = new Label { Text = "未注册", Location = new Point(x, y + 3), AutoSize = true, ForeColor = Color.Red, Font = new Font("Microsoft YaHei UI", 9F, FontStyle.Bold) };
 
         // 6) 试用次数
         label_Trial = new Label { Text = "", Location = new Point(x + 200, y + 3), AutoSize = true, ForeColor = Color.Gray };
 
-        // 按钮
-        btnReg = new Button { Text = "注册", Location = new Point(80, 240), Size = new Size(95, 32), BackColor = Color.FromArgb(25, 118, 210), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+        // 按钮（v2.13.149：删除「清理」按钮，仅保留「注册/取消注册」+「关闭」）
+        btnReg = new Button { Text = "注册", Location = new Point(170, 240), Size = new Size(120, 32), BackColor = Color.FromArgb(25, 118, 210), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
         btnReg.FlatAppearance.BorderSize = 0;
         btnReg.Click += BtnReg_Click;
 
-        btnClear = new Button { Text = "清理", Location = new Point(245, 240), Size = new Size(95, 32) };
-        btnClear.Click += BtnClear_Click;
-
-        btnClose = new Button { Text = "关闭", Location = new Point(410, 240), Size = new Size(95, 32) };
+        btnClose = new Button { Text = "关闭", Location = new Point(360, 240), Size = new Size(95, 32) };
         btnClose.Click += (_, _) => this.Close();
 
         // 控制
@@ -124,7 +124,7 @@ public sealed class LicenseForm : Form
         this.Controls.Add(labRegInfo);
         this.Controls.Add(label_Trial);
         this.Controls.Add(btnReg);
-        this.Controls.Add(btnClear);
+        // v2.13.149：删除 btnClear 注册（保留 btnClear 字段定义避免编译错误，但不加入 Controls）
         this.Controls.Add(btnClose);
     }
 
@@ -140,7 +140,12 @@ public sealed class LicenseForm : Form
         }
     }
 
-    /// <summary>注册码 raw 25 位校验（提取用户输入的 25 位 hex，校验格式：20+5 = 25 位大写 hex）</summary>
+    /// <summary>注册码 raw 25 位校验（提取用户输入的 25 位字符，校验格式：20+5 = 25 位大写 [0-9A-Z]）
+    /// v2.13.146 修复：原 v2.13.142 仅允许 [0-9A-F]（纯 hex），但 NPGS 算法 A 的 CDKEY 含
+    /// A-Z 全部字母（如 `3B55C-A8LE9-3865B-FBE56-C1DC0` 中的 `L` 是 36 进制日期位的合法字符）。
+    /// 字符集收紧导致所有基于公司名（GBK）+ 有效期的 NPGS CDKEY 被拒绝 → 报错"注册码包含非法字符"。
+    /// 修复：放宽容许字符集到 [0-9A-Z]，与 NPGS.Register 原版 Register.cs:359 `GetCDKey` 一致。
+    /// </summary>
     private static bool TryNormalizeCDKey(string input, out string raw25, out string err)
     {
         raw25 = "";
@@ -148,14 +153,15 @@ public sealed class LicenseForm : Form
         var cleaned = (input ?? "").Replace("-", "").Trim().ToUpperInvariant();
         if (cleaned.Length != 25)
         {
-            err = $"注册码长度错误（应有 25 位 hex 实际 {cleaned.Length} 位）";
+            err = $"注册码长度错误（应有 25 位 实际 {cleaned.Length} 位）";
             return false;
         }
         foreach (var c in cleaned)
         {
-            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F')))
+            // v2.13.146：NPGS 算法字符集 [0-9A-Z]（36 进制），不再限制为 hex
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z')))
             {
-                err = $"注册码包含非法字符 '{c}'（仅允许 0-9 A-F）";
+                err = $"注册码包含非法字符 '{c}'（仅允许 0-9 A-Z，NPGS 36 进制字符集）";
                 return false;
             }
         }
@@ -274,13 +280,5 @@ public sealed class LicenseForm : Form
         LoadRegState();
     }
 
-    /// <summary>清理所有注册信息（含试用次数）</summary>
-    private void BtnClear_Click(object? sender, EventArgs e)
-    {
-        var r = MessageBox.Show("确认清除所有注册信息（含试用次数）？此操作不可恢复！", "清理确认", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-        if (r != DialogResult.Yes) return;
-        RegisterSdk.DeleteRegAll();
-        MessageBox.Show("注册信息已清除", "提示");
-        LoadRegState();
-    }
+    // v2.13.149：删除 BtnClear_Click 处理方法（按钮已移除，功能已废弃）
 }

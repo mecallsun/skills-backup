@@ -1,5 +1,6 @@
 using System.Reflection;
 using DormManage.Shared.Models;
+using DormManage.Shared.Security;
 using DormManage.Shared.Services;
 using DormManage.TrayApp.Services;
 
@@ -37,6 +38,29 @@ internal static class Program
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
             return;
+        }
+
+        // v2.13.135 暗桩校验：运行时限 + 过期伪装错误框 + 5-2-0 解锁
+        // 设计来源：仓库物料汇总 FR-07；时间窗口与 v2.13.94 RegisterSdk 取较早
+        var expiryDays = RuntimeWindowGuard.CheckExpiry();
+        if (expiryDays.HasValue)
+        {
+            if (expiryDays < 0)
+            {
+                // 早于起始日期：静默退出（不弹任何窗口/日志）
+                _singleInstance.ReleaseMutex();
+                _singleInstance.Dispose();
+                _singleInstance = null;
+                return;
+            }
+            // 晚于截止日期：弹伪装错误框；解锁成功继续，否则退出
+            if (!TamperDialog.Show())
+            {
+                _singleInstance.ReleaseMutex();
+                _singleInstance.Dispose();
+                _singleInstance = null;
+                return;
+            }
         }
 
         // 2) WinForms 基础设置

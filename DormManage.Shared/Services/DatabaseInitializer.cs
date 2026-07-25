@@ -621,98 +621,92 @@ public static class DatabaseInitializer
             //      必须先 SET IDENTITY_INSERT ON 才能显式 INSERT 指定 Id，否则报"Cannot insert explicit value
             //      for identity column"错误，所有 Id=37/38/39/40 一直未落地！按钮永久不显示。
             //    v2.13.109 起移除 SQLite 分支；保留 SQL Server 语法不变
+            //    v2.13.131 全量重写：去掉所有 IDENTITY_INSERT + 硬编码 Id（v2.13.130 教训）
+            //      改用 WHERE PermissionCode 唯一性判断 + 让 Id 自动分配（v2.13.114 模式）
+            //      即使生产 DB 已有同名 PermissionCode（不同 Id）也能正确幂等跳过
             var permInserts = new[]
             {
-                // v2.13.108 SQL Server：IDENTITY_INSERT 必须显式开启
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 37)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                  VALUES (37, N'settings:fields', N'字段权限', 1, 18, N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 38)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                  VALUES (38, N'fieldpermission:edit', N'编辑字段权限', 2, 37, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 39)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                  VALUES (39, N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                // v2.13.97 P0 BUG 修复：personnel:add
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 40)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (40, N'personnel:add', N'新增人员', 2, 9, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                // v2.13.110 P0 BUG 修复：billingstandard:add（费用标准「新增标准」按钮权限独立）
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 41)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (41, N'billingstandard:add', N'新增费用标准', 2, 11, N'/BillingStandard/Create', N'bi-plus-lg', 5, 1, 0, '2026-07-22');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                // v2.13.120 新增：设备档案（基础资料二级菜单：device:view + 3 个子权限）
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 42)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (42, N'device:view', N'查看设备档案', 1, 10, N'/Basics?tab=device', N'bi-cpu', 31, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 43)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (43, N'device:create', N'新增设备档案', 2, 42, N'', N'', 32, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 44)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (44, N'device:edit', N'修改设备档案', 2, 42, N'', N'', 33, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 45)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (45, N'device:delete', N'删除设备档案', 2, 42, N'', N'', 34, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                // v2.13.130 新增：设备记录（基础资料二级菜单：equipment-reading:view + 4 个子权限：create/edit/delete/batch-delete）
-                // 三层数据模型：设备档案(DormMeter v2.13.120) → 设备读数日志(EquipmentReading v2.13.130) → 智能抄表(MeterRecord)
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 46)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (46, N'equipment-reading:view', N'查看设备记录', 1, 10, N'/Basics?tab=equipmentreading', N'bi-journal-text', 41, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 47)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (47, N'equipment-reading:create', N'新增设备记录', 2, 46, N'', N'', 42, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 48)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (48, N'equipment-reading:edit', N'修改设备记录', 2, 46, N'', N'', 43, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 49)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (49, N'equipment-reading:delete', N'删除设备记录', 2, 46, N'', N'', 44, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;",
-                @"SET IDENTITY_INSERT [dbo].[SysPermission] ON;
-                  IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE Id = 50)
-                  INSERT INTO [dbo].[SysPermission] ([Id],[PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
-                  VALUES (50, N'equipment-reading:batch-delete', N'批量删除设备记录', 2, 46, N'', N'', 45, 1, 0, '2026-07-23');
-                  SET IDENTITY_INSERT [dbo].[SysPermission] OFF;"
+                // v2.13.131 SQL Server：按 PermissionCode 唯一性判断（v2.13.114 模式）+ 不指定 Id（IDENTITY 自动）
+                //    原硬编码 ParentId=18 → 改用 ISNULL 子查询 fallback 到 0（schema 限制 ParentId NOT NULL）
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'settings:fields')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  SELECT N'settings:fields', N'字段权限', 1, ISNULL((SELECT TOP 1 Id FROM [dbo].[SysPermission] WHERE PermissionCode = N'settings'), 0), N'/Settings?tab=fields', N'bi-shield-check', 28, 1, 1, N'管理敏感字段清单', '2026-07-22';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'fieldpermission:edit')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  SELECT N'fieldpermission:edit', N'编辑字段权限', 2, Id, N'', N'', 29, 1, 1, N'勾选/取消勾选敏感字段', '2026-07-22'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'settings:fields';",
+                // privacy:field:enable 原 ParentId=0（顶级权限，不依赖任何父节点），保留不变
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'privacy:field:enable')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
+                  VALUES (N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');",
+                // v2.13.131 修订：personnel:add（ParentId=9 来自 personnel:view 菜单 — v2.13.97 派生查询）
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'personnel:add')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'personnel:add', N'新增人员', 2, Id, N'/Personnel/Create', N'bi-plus-lg', 7, 1, 0, '2026-07-22'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'personnel:view';",
+                // v2.13.131 修订：billingstandard:add（ParentId=11 → 用 ISNULL fallback 防 billingstandard:view 不存在）
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'billingstandard:add')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'billingstandard:add', N'新增费用标准', 2, ISNULL((SELECT TOP 1 Id FROM [dbo].[SysPermission] WHERE PermissionCode = N'billingstandard:view'), 11), N'/BillingStandard/Create', N'bi-plus-lg', 5, 1, 0, '2026-07-22';",
+                // v2.13.131 修订：device:view / device:create / device:edit / device:delete（4 个权限码）
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:view')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  VALUES (N'device:view', N'查看设备档案', 1, 10, N'/Basics?tab=device', N'bi-cpu', 31, 1, 0, '2026-07-23');",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:create')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'device:create', N'新增设备档案', 2, Id, N'', N'', 32, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:view';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:edit')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'device:edit', N'修改设备档案', 2, Id, N'', N'', 33, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:view';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:delete')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'device:delete', N'删除设备档案', 2, Id, N'', N'', 34, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'device:view';",
+                // v2.13.131 P0 修复：v2.13.130 用硬编码 Id=46-50 + WHERE Id 判定，但 SysPermission.Id 是 IDENTITY 列
+                //   当用户通过手动 SQL（不指定 Id）先 seed 过同名 PermissionCode 后，启动迁移 SQL 会误判「Id 不存在」
+                //   然后尝试 INSERT (Id=46, code='equipment-reading:view') → 触发 UQ_SysPermission_Code UNIQUE 约束冲突
+                // v2.13.131 修复：去掉 IDENTITY_INSERT（让 Id 自动分配）+ 改用 WHERE PermissionCode 唯一性判断（v2.13.114 模式）
+                //   ParentId=10 原为「基础资料」菜单。改用 basics:view 子查询 fallback（更安全）
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:view')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'equipment-reading:view', N'查看设备记录', 1, ISNULL((SELECT TOP 1 Id FROM [dbo].[SysPermission] WHERE PermissionCode = N'basics:view'), 10), N'/Basics?tab=equipmentreading', N'bi-journal-text', 41, 1, 0, '2026-07-23';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:create')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'equipment-reading:create', N'新增设备记录', 2, Id, N'', N'', 42, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:view';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:edit')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'equipment-reading:edit', N'修改设备记录', 2, Id, N'', N'', 43, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:view';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:delete')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'equipment-reading:delete', N'删除设备记录', 2, Id, N'', N'', 44, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:view';",
+                @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:batch-delete')
+                  INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
+                  SELECT N'equipment-reading:batch-delete', N'批量删除设备记录', 2, Id, N'', N'', 45, 1, 0, '2026-07-23'
+                  FROM [dbo].[SysPermission] WHERE PermissionCode = N'equipment-reading:view';"
             };
 
-            var permTargetIds = new[] { 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50 };
+            // v2.13.131 P0 修复：v2.13.130 用硬编码 Id=46-50 + WHERE Id 判定，但 SysPermission.Id 是 IDENTITY 列
+            //   当用户通过手动 SQL（不指定 Id）先 seed 过同名 PermissionCode 后，启动迁移 SQL 会误判「Id 不存在」
+            //   然后尝试 INSERT (Id=46, code='equipment-reading:view') → 触发 UQ_SysPermission_Code UNIQUE 约束冲突
+            // v2.13.131 修复：去掉 IDENTITY_INSERT（让 Id 自动分配）+ 改用 WHERE PermissionCode 唯一性判断（v2.13.114 模式）
+            //   日志同时改为按 PermissionCode 显示（更稳定可靠）
+            var permTargetCodes = new[] { "settings:fields", "fieldpermission:edit", "privacy:field:enable", "personnel:add", "billingstandard:add", "device:view", "device:create", "device:edit", "device:delete", "equipment-reading:view", "equipment-reading:create", "equipment-reading:edit", "equipment-reading:delete", "equipment-reading:batch-delete" };
             for (int i = 0; i < permInserts.Length; i++)
             {
                 try
                 {
                     await db.Database.ExecuteSqlRawAsync(permInserts[i], ct);
-                    result.PermSteps.Add($"Id={permTargetIds[i]} ✓");
+                    result.PermSteps.Add($"{permTargetCodes[i]} ✓");
                 }
                 catch (Exception ex)
                 {
-                    result.PermSteps.Add($"Id={permTargetIds[i]} ✗ {ex.GetType().Name}: {ex.Message}");
-                    logger.LogWarning(ex, "[v2.13.103] SysPermission Id={Id} INSERT 失败（继续执行）", permTargetIds[i]);
+                    result.PermSteps.Add($"{permTargetCodes[i]} ✗ {ex.GetType().Name}: {ex.Message}");
+                    logger.LogWarning(ex, "[v2.13.131] SysPermission {Code} INSERT 失败（继续执行）", permTargetCodes[i]);
                     result.AllSucceeded = false;
                 }
             }

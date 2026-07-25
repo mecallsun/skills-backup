@@ -30,6 +30,20 @@ namespace DormManage.Shared.Register;
 /// </summary>
 public static class RegisterSdk
 {
+    /// <summary>
+    /// v2.13.146 关键修复：.NET 8 默认不带 GBK codepage provider（CodePage 936）
+    /// NPGS 算法 GetLtdSerialNum 用 Encoding.Default（中文 Windows = GBK）字节转 hex
+    /// 没注册会抛 NotSupportedException，导致 RegisterSdk.CheckRegCDKey 算法 A 全部失败
+    /// </summary>
+    static RegisterSdk()
+    {
+        try
+        {
+            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
+        }
+        catch { /* 已注册过 */ }
+    }
+
     /// <summary>固定密钥（与"注册机"端共享；实际部署可改为公司专属密钥）</summary>
     private const string SECRET_KEY = "JINGE-DORM-MANAGE-2026-LICENSE";
 
@@ -178,6 +192,8 @@ public static class RegisterSdk
 
     /// <summary>
     /// 获取当前注册状态（等价 CheckReg）
+    /// v2.13.146 修复：移除了硬性 `Length != 29` 检查，归一化逻辑下沉到 CheckRegCDKey。
+    /// 兼容旧注册表里存了 25 字符 raw CDKEY 的场景（如 v2.13.142-v2.13.145 时期）。
     /// </summary>
     public static RegItem CheckReg()
     {
@@ -198,8 +214,8 @@ public static class RegisterSdk
             return reg;
         }
 
-        // 校验 CDKEY 格式 + 解码日期
-        if (cdkey.Length != 29)
+        // v2.13.146：长度检查放宽到 25 字符（raw）或 29 字符（dashed），归一化由 CheckRegCDKey 内部完成
+        if (cdkey.Replace("-", "").Length != 25)
         {
             reg.RegInt = 0;  // 已过期（无效）
             return reg;
@@ -216,6 +232,13 @@ public static class RegisterSdk
             return reg;
         }
 
+        // v2.13.146：归一化回写（如果读出 25 字符 raw，自动升级到 29 字符 dashed 存储）
+        if (checkResult.CDKEY != cdkey && !string.IsNullOrEmpty(checkResult.CDKEY))
+        {
+            reg.CDKEY = checkResult.CDKEY;
+            try { WriteRegValue("CDKEY", checkResult.CDKEY); } catch { }
+        }
+
         if (regDate < DateTime.Today)
         {
             reg.RegInt = 0;  // 已过期
@@ -227,10 +250,27 @@ public static class RegisterSdk
     }
 
     /// <summary>
-    /// 校验 CDKEY（等价 CheckRegCDKey）
-    /// 算法：取 CDKEY 末段（日期编码 5 位）+ 前 20 位验证段
-    /// 验证段 = MD5(SN + LTDName + 密钥) 的前 20 位大写 hex
-    /// v2.13.94 修正：SN 长度从 25 改为 24（与新机器码算法一致）
+    /// 校验 CDKEY（v2.13.146 双算法兼容）
+    ///
+    /// 算法 A（NPGS.Register 原始算法 — Kingdee.NPGS.Core.Register.cs 1:1 等价层）：
+    ///   - 公司名编码：Encoding.Default（GBK）字节 → 大写 hex 拼接
+    ///   - 验证段生成：MD5(SN) 或 MD5(LTDName_GBK_hex) → 25 hex uppercase 5-5-5-5-5
+    ///   - 日期嵌入：在 base CDKEY 的第 [2,8,14,20] 位插入 ConvertInt10To36(yyMMdd)
+    ///   - 末 5 位：MD5(yyyyMMdd).ToUpper().Substring(0, 5)
+    ///   - CDKEY 校验：GetRegCDKey(GetSnCDKey(SN), VDate) == 用户CDKEY
+    ///               或 GetRegCDKey(GetLtdCDKey(LTDName), VDate) == 用户CDKEY
+    ///   - 字符集：[0-9A-Z]（A-Z 合法，不止 hex 的 a-f）
+    ///
+    /// 算法 B（v2.13.94 本项目原生算法 — 向后兼容）：
+    ///   - 验证段 = MD5(SN + "|" + LTDName + "|" + SECRET_KEY).Substring(0, 20).ToUpper()
+    ///   - 末 5 位 = HEX(YYYY-MM-DD)
+    ///
+    /// v2.13.146 修复：原 v2.13.94 仅算法 B，导致 NPGS 风格 CDKEY 验证失败。
+    /// 改为先试算法 A（SN 路径 + LTDName 路径），失败再试算法 B，任一通过 RegInt=1。
+    ///
+    /// v2.13.146 二次修复：硬性 `Length != 29` 检查导致 25 字符 raw 输入直接拒绝。
+    /// LicenseForm.TryNormalizeCDKey 剥离连字符后传 25 字符，验证窗口立刻返回 RegInt=0。
+    /// 改为统一归一化：接受 25 字符 raw 或 29 字符 dashed，内部统一转 dashed 后比较。
     /// </summary>
     public static RegItem CheckRegCDKey(RegItem input)
     {
@@ -241,58 +281,115 @@ public static class RegisterSdk
             LTDName = input.LTDName
         };
 
-        if (string.IsNullOrEmpty(input.CDKEY) || input.CDKEY.Length != 29)
+        if (string.IsNullOrEmpty(input.CDKEY))
         {
             result.RegInt = 0;
             return result;
         }
 
-        var cdkeyRaw = input.CDKEY.Replace("-", "").ToUpperInvariant();
-        if (cdkeyRaw.Length != 25)
+        // v2.13.146 二次修复：归一化为「29 字符 dashed 形式」，与 GetRegCDKey 输出严格对齐
+        var cdkeyDashed = NormalizeCDKeyToDashed(input.CDKEY);
+        if (cdkeyDashed == null)
         {
             result.RegInt = 0;
             return result;
         }
+        var cdkeyRaw = cdkeyDashed.Replace("-", "").ToUpperInvariant();
 
-        // 去除 SN 的连字符用于校验
         var snRaw = (input.SN ?? "").Replace("-", "").ToUpperInvariant();
+        var ltdRaw = input.LTDName ?? "";
+
+        // === 算法 A：NPGS.Register 原始算法 ===
+        // Step 1: 先用 NPGS 算法解日期（GetDateByRegCDKey）— 已支持 25/29 字符两种形式
+        var npgsExpDate = GetDateByRegCDKey(cdkeyDashed);
+        if (npgsExpDate > DateTime.MinValue)
+        {
+            // Step 2: SN 路径
+            if (snRaw.Length == 24)
+            {
+                var snBase = GetCDKey(snRaw);  // MD5(SN) → 29 字符串 (含连字符)
+                var snFull = GetRegCDKey(snBase, npgsExpDate);
+                if (string.Equals(snFull, cdkeyDashed, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.RegInt = 1;
+                    result.RegDate = npgsExpDate;
+                    result.CDKEY = cdkeyDashed;  // 回写归一化形式
+                    return result;
+                }
+            }
+
+            // Step 3: LTDName 路径（GBK 编码字节 → hex 拼接 → MD5）
+            if (!string.IsNullOrEmpty(ltdRaw))
+            {
+                var ltdBase = GetCDKey(GetLtdSerialNum(ltdRaw));  // 29 字符串
+                var ltdFull = GetRegCDKey(ltdBase, npgsExpDate);
+                if (string.Equals(ltdFull, cdkeyDashed, StringComparison.OrdinalIgnoreCase))
+                {
+                    result.RegInt = 1;
+                    result.RegDate = npgsExpDate;
+                    result.CDKEY = cdkeyDashed;
+                    return result;
+                }
+            }
+        }
+
+        // === 算法 B：v2.13.94 本项目原生算法（向后兼容） ===
         if (snRaw.Length != 24)
         {
             result.RegInt = 0;
             return result;
         }
 
-        var dateStr = cdkeyRaw.Substring(20, 5);  // 末段 5 位（编码到期日）
-        var verifyStr = cdkeyRaw.Substring(0, 20);  // 前 20 位（验证段）
-
-        // 校验验证段（用纯 hex SN，不用 display 格式）
-        var expected = ComputeVerifyString(snRaw, input.LTDName ?? "");
-        if (verifyStr != expected)
+        var dateStr = cdkeyRaw.Substring(20, 5);
+        var verifyStr = cdkeyRaw.Substring(0, 20);
+        var expected = ComputeVerifyString(snRaw, ltdRaw);
+        if (verifyStr == expected)
         {
-            result.RegInt = 0;
-            return result;
+            try
+            {
+                var year = 2000 + Convert.ToInt32(dateStr.Substring(0, 2), 16);
+                var month = Convert.ToInt32(dateStr.Substring(2, 1), 16) + 1;
+                var day = Convert.ToInt32(dateStr.Substring(3, 2), 16);
+                result.RegDate = new DateTime(year, Math.Max(1, month), Math.Max(1, Math.Min(day, 28)));
+                result.RegInt = 1;
+                result.CDKEY = cdkeyDashed;
+                return result;
+            }
+            catch { }
         }
 
-        // 解码日期
-        try
-        {
-            var year = 2000 + Convert.ToInt32(dateStr.Substring(0, 2), 16);
-            var month = Convert.ToInt32(dateStr.Substring(2, 1), 16) + 1;  // 0-based + 1
-            var day = Convert.ToInt32(dateStr.Substring(3, 2), 16);
-            result.RegDate = new DateTime(year, Math.Max(1, month), Math.Max(1, Math.Min(day, 28)));
-        }
-        catch
-        {
-            result.RegInt = 0;
-            return result;
-        }
-
-        result.RegInt = 1;  // CDKEY 有效
+        result.RegInt = 0;
         return result;
     }
 
     /// <summary>
-    /// 解码 CDKEY 得到注册到期日（等价 GetDateByRegCDKey）
+    /// v2.13.146 二次修复：CDKEY 归一化为 29 字符 dashed 形式 (5-5-5-5-5)
+    /// 接受两种输入：25 字符 raw（LicenseForm TryNormalizeCDKey 剥离连字符后）
+    ///             或 29 字符 dashed（用户手动输入或 ReadRegValue 读取）
+    /// 任何不合规输入返回 null（上层判定为 RegInt=0）
+    /// </summary>
+    private static string? NormalizeCDKeyToDashed(string? input)
+    {
+        if (string.IsNullOrEmpty(input)) return null;
+        var cleaned = input.Replace("-", "").Trim().ToUpperInvariant();
+        if (cleaned.Length != 25) return null;
+
+        // 字符集校验：[0-9A-Z]（NPGS 36 进制，A-Z 全大写字母合法）
+        foreach (var c in cleaned)
+        {
+            if (!((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z'))) return null;
+        }
+
+        // 重新插入连字符：5-5-5-5-5 = 29 字符
+        return $"{cleaned.Substring(0, 5)}-{cleaned.Substring(5, 5)}-{cleaned.Substring(10, 5)}-{cleaned.Substring(15, 5)}-{cleaned.Substring(20, 5)}";
+    }
+
+    /// <summary>
+    /// 解码 CDKEY 得到注册到期日（v2.13.146 双算法兼容）
+    /// 算法 A：NPGS 36 进制日期编码（位置 [2,8,14,20] 在**含连字符的 CDKEY** 中）+ 末 5 位 MD5(yyyyMMdd) 校验
+    ///        关键：NPGS 用的是 RegCDKey.Substring(2,1) 等 — 即原始 29 字符串上的索引，不是 raw 去连字符后的索引
+    /// 算法 B：v2.13.94 末 5 位 HEX(YYYY-MM-DD)
+    /// 任一解析成功即返回日期；都失败返回 DateTime.MinValue
     /// </summary>
     public static DateTime GetDateByRegCDKey(string cdkey)
     {
@@ -300,6 +397,33 @@ public static class RegisterSdk
         var raw = cdkey.Replace("-", "").ToUpperInvariant();
         if (raw.Length < 25) return DateTime.MinValue;
 
+        // === 算法 A：NPGS 36 进制日期解码 ===
+        // 关键：必须在**含连字符**的 CDKEY（29 位）上取索引，不是 raw
+        // 1) 如果用户传入 29 位（含连字符）→ 直接用
+        // 2) 如果用户传入 25 位（raw）→ 重新插入连字符恢复原 29 位
+        var original = cdkey.Length == 29 ? cdkey : (raw.Substring(0, 5) + "-" + raw.Substring(5, 5) + "-" + raw.Substring(10, 5) + "-" + raw.Substring(15, 5) + "-" + raw.Substring(20, 5));
+        try
+        {
+            // NPGS 原始代码: RegCDKey.Substring(2, 1) + RegCDKey.Substring(8, 1) + RegCDKey.Substring(14, 1) + RegCDKey.Substring(20, 1)
+            var text36 = original.Substring(2, 1) + original.Substring(8, 1) + original.Substring(14, 1) + original.Substring(20, 1);
+            var decimalVal = Convert36ToInt10(text36);
+            var decimalStr = decimalVal.ToString().PadLeft(6, '0');
+            if (decimalStr.Length >= 6)
+            {
+                var dateStr = "20" + decimalStr.Substring(0, 2) + "-" + decimalStr.Substring(2, 2) + "-" + decimalStr.Substring(4, 2);
+                var expDate = DateTime.ParseExact(dateStr, "yyyy-MM-dd", null);
+
+                // 验证末 5 位 = MD5(yyyyMMdd).ToUpper().Substring(0, 5)
+                var desDate = ComputeMD5AsciiUpper(expDate.ToString("yyyyMMdd")).Substring(0, 5);
+                if (desDate == raw.Substring(20, 5))
+                {
+                    return expDate;
+                }
+            }
+        }
+        catch { }
+
+        // === 算法 B：v2.13.94 末 5 位 HEX 日期（向后兼容） ===
         try
         {
             var year = 2000 + Convert.ToInt32(raw.Substring(20, 2), 16);
@@ -313,14 +437,162 @@ public static class RegisterSdk
         }
     }
 
+    // ============================================================
+    // v2.13.146 NPGS 算法 1:1 等价层（Public.Core.SDK.Register）
+    // ============================================================
+
+    /// <summary>
+    /// NPGS 公司名序列号：Encoding.Default.GetBytes(ltdName) → 每个字节大写 hex 拼接
+    /// Encoding.Default 在中文 Windows = GBK 编码（关键！与 UTF-8 不同）
+    /// </summary>
+    private static string GetLtdSerialNum(string ltdName)
+    {
+        // NPGS 原始：C# Encoding.Default.GetBytes(LtdName) → each byte.ToString("X")
+        // 中文 Windows 上 Encoding.Default = GBK
+        try
+        {
+            var gbk = Encoding.GetEncoding(936);  // GBK = code page 936
+            var bytes = gbk.GetBytes(ltdName ?? "");
+            return string.Concat(bytes.Select(b => b.ToString("X")));
+        }
+        catch
+        {
+            // 兜底用系统默认编码
+            var bytes = Encoding.Default.GetBytes(ltdName ?? "");
+            return string.Concat(bytes.Select(b => b.ToString("X")));
+        }
+    }
+
+    /// <summary>
+    /// NPGS CDKEY base 生成：MD5(isNum) → 25 hex uppercase → 5-5-5-5-5 格式
+    /// 与原 NPGS `GetCDKey` 等价（不含日期嵌入）
+    /// </summary>
+    private static string GetCDKey(string isNum)
+    {
+        var md5Hash = ComputeMD5Ascii(isNum ?? "");  // 32 hex lowercase
+        var raw25 = md5Hash.Substring(0, 25).ToUpperInvariant();
+        return raw25.Substring(0, 5) + "-" + raw25.Substring(5, 5) + "-" +
+               raw25.Substring(10, 5) + "-" + raw25.Substring(15, 5) + "-" +
+               raw25.Substring(20, 5);
+    }
+
+    /// <summary>
+    /// NPGS GetRegCDKey：在 base CDKEY 第 [2,8,14,20] 位嵌入日期字符 + 末尾追加 MD5(yyyyMMdd) 前 5 位
+    /// </summary>
+    private static string GetRegCDKey(string baseKey, DateTime vdate)
+    {
+        try
+        {
+            // Text = vdate.ToString("yyMMdd")（6 位数字字符串）
+            var text = vdate.ToString("yyMMdd");
+            var text36 = ConvertInt10To36(text);  // 36 进制 → [0-9A-Z]
+
+            if (text36.Length < 4) return baseKey;  // 安全兜底
+
+            var key = baseKey;
+            key = ChangeByChar(key, 2, text36[0].ToString());
+            key = ChangeByChar(key, 8, text36[1].ToString());
+            key = ChangeByChar(key, 14, text36[2].ToString());
+            key = ChangeByChar(key, 20, text36[3].ToString());
+
+            var desDate = ComputeMD5AsciiUpper(vdate.ToString("yyyyMMdd")).Substring(0, 5);
+            return key.Substring(0, 24) + desDate;
+        }
+        catch
+        {
+            return baseKey;
+        }
+    }
+
+    /// <summary>
+    /// NPGS ChangeByChar：把 key[where] 替换成 word
+    /// </summary>
+    private static string ChangeByChar(string key, int where, string word)
+    {
+        if (string.IsNullOrEmpty(key)) return word;
+        if (where == 0) return word + key.Substring(1);
+        if (where >= key.Length - 1) return key.Substring(0, key.Length - 1) + word;
+        var a = key.Substring(0, where);
+        var b = key.Substring(where + 1);
+        return a + word + b;
+    }
+
+    /// <summary>
+    /// NPGS ConvertInt10To36：10 进制数字字符串 → 36 进制字符 [0-9A-Z]
+    /// </summary>
+    private static string ConvertInt10To36(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return "";
+        if (!long.TryParse(input, out var i)) return "";
+
+        var sb = new StringBuilder();
+        while (i > 35)
+        {
+            var j = i % 36;
+            sb.Append(j <= 9 ? (char)('0' + j) : (char)('A' + j - 10));
+            i = i / 36;
+        }
+        sb.Append(i <= 9 ? (char)('0' + i) : (char)('A' + i - 10));
+
+        var chars = sb.ToString().ToCharArray();
+        Array.Reverse(chars);
+        return new string(chars);
+    }
+
+    /// <summary>
+    /// NPGS Convert36ToInt10：36 进制字符 [0-9A-Z] → 10 进制整数
+    /// </summary>
+    private static int Convert36ToInt10(string input)
+    {
+        if (string.IsNullOrEmpty(input)) return 0;
+        int result = 0;
+        int baseValue = 1;
+        for (int i = input.Length - 1; i >= 0; i--)
+        {
+            var c = input[i];
+            int digit;
+            if (c >= '0' && c <= '9') digit = c - '0';
+            else if (c >= 'A' && c <= 'Z') digit = c - 'A' + 10;
+            else if (c >= 'a' && c <= 'z') digit = c - 'a' + 10;  // 容错
+            else return 0;
+            result += digit * baseValue;
+            baseValue *= 36;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// NPGS MD5：Encoding.ASCII.GetBytes + MD5 + hex lowercase
+    /// </summary>
+    private static string ComputeMD5Ascii(string input)
+    {
+        var bytes = Encoding.ASCII.GetBytes(input ?? "");
+        var hash = MD5.HashData(bytes);
+        var sb = new StringBuilder(hash.Length * 2);
+        foreach (var b in hash) sb.Append(b.ToString("x2"));
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// NPGS MD5：Encoding.ASCII.GetBytes + MD5 + hex UPPERCASE
+    /// </summary>
+    private static string ComputeMD5AsciiUpper(string input)
+    {
+        return ComputeMD5Ascii(input).ToUpperInvariant();
+    }
+
     /// <summary>
     /// 写入注册信息（HKLM 优先 → HKCU 回退 → 文件兜底）
+    /// v2.13.146 修复：CDKEY 统一归一化为 29 字符 dashed 形式，避免下次 CheckReg() 读出
+    /// 25 字符 raw 又被「Length != 29」检查拒绝。
     /// </summary>
     public static bool WriteRegItem(RegItem reg)
     {
         try
         {
-            WriteRegValue("CDKEY", reg.CDKEY);
+            // v2.13.146：归一化为 dashed 形式，确保后续 CheckReg() 读回时长度/格式正确
+            var cdkeyDashed = NormalizeCDKeyToDashed(reg.CDKEY) ?? reg.CDKEY;
+            WriteRegValue("CDKEY", cdkeyDashed);
             WriteRegValue("LTDName", reg.LTDName);
             WriteRegValue("RegDate", reg.RegDate?.ToString("yyyy-MM-dd") ?? "");
             WriteRegValue("SN", reg.SN);

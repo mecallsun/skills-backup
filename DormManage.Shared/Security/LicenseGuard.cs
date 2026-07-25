@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DormManage.Shared.Register;
 using DormManage.Shared.Services;
 
 namespace DormManage.Shared.Security;
@@ -24,9 +26,36 @@ namespace DormManage.Shared.Security;
 /// - 启动：Web/Api 子进程启动后立即 IPC getregstate 一次（同步阻塞 ~50ms）
 /// - 运行期：30s 轮询 + 托盘注册状态变化时主动触发回调（LicenseMonitor）
 /// - 托盘重启：30s 轮询检测托盘重启，新状态自动生效
+///
+/// v2.13.150：试用模式分模块记录上限（替代 v2.13.149 统一 5 条）
+/// - 住宿登记（Booking）：最多 500 条
+/// - 宿舍档案（Dorms）：最多 5 条
+/// - 人员清单（Personnel）：最多 5 条
+/// - 当 RegInt=-1（未注册）+ UseTimes < TRIAL_LIMIT（试用中）→ 进入试用模式
+/// - 当前记录数 ≥ 模块上限时拦截 POST，提示「试用功能受限请联系信息科！」
+/// - 注册有效（RegInt=1）或全局只读时不进入此流程（已由 LicenseReadOnlyMiddleware 拦截）
 /// </summary>
 public static class LicenseGuard
 {
+
+    /// <summary>v2.13.150：试用受限错误码（统一供 Api 返回 + Razor Page 显示）</summary>
+    public const string TrialLimitErrorCode = "TRIAL_LIMIT_EXCEEDED";
+
+    /// <summary>v2.13.150：试用受限标准提示（用户原话，区别于 v2.13.149）</summary>
+    public const string TrialLimitMessage = "试用功能受限请联系信息科！";
+
+    /// <summary>v2.13.150：试用模式下各模块最大记录数（住宿登记/宿舍档案/人员清单）</summary>
+    public static readonly IReadOnlyDictionary<string, int> TrialMaxRecordsByModule = new Dictionary<string, int>
+    {
+        ["住宿登记"] = 500,
+        ["宿舍档案"] = 5,
+        ["人员清单"] = 5
+    };
+
+    /// <summary>v2.13.149：旧版统一 5 条上限（保留兼容，已被 TrialMaxRecordsByModule 取代）</summary>
+    [Obsolete("v2.13.149 单一 5 条上限已被 v2.13.150 分模块上限取代，请使用 TrialMaxRecordsByModule")]
+    public const int TrialMaxRecords = 5;
+
     /// <summary>进程内缓存：最近一次注册状态（null = 尚未查询）</summary>
     private static ServiceIpc.RegStateDto? _cachedState;
     private static DateTime _cacheExpiresAtUtc = DateTime.MinValue;
@@ -75,6 +104,65 @@ public static class LicenseGuard
         }
 
         return false;  // RegInt=1 且 RegDate >= today → 正常运行
+    }
+
+    /// <summary>
+    /// v2.13.149：是否处于试用模式
+    /// 业务规则：未注册（RegInt=-1）+ UseTimes < TRIAL_LIMIT → 试用模式
+    /// 与 IsReadOnly 区别：IsReadOnly=true 时请求被中间件拦截 → 不会到此检查
+    /// IsTrialMode=true 时只针对 3 模块的 Create 限制 5 条记录
+    /// </summary>
+    /// <returns>true = 试用模式（需检查 3 模块记录数）</returns>
+    public static bool IsTrialMode()
+    {
+        var state = GetCachedState();
+        if (state is null)
+        {
+            // 托盘未运行 → 默认只读（不放行任何试用检查）
+            return false;
+        }
+
+        // 已注册 → 不是试用模式
+        if (state.RegInt == 1)
+        {
+            return false;
+        }
+
+        // 未注册（RegInt=-1 或 0 过期）+ 在试用次数范围内 → 试用模式
+        // （RegInt=0 已过期的会被 IsReadOnly=true 拦截，先于此处生效）
+        return state.UseTimes < RegisterSdk.TRIAL_LIMIT;
+    }
+
+    /// <summary>
+    /// v2.13.150：试用模式下检查指定模块的当前记录数，分模块上限
+    /// 用于 Api Controller / Razor Page POST handler 在 Create 前调用
+    /// 设计：每个调用方传入当前记录数（避免在此方法内做 DB 查询，职责单一）
+    /// </summary>
+    /// <param name="moduleName">模块显示名（必须为「住宿登记」「宿舍档案」「人员清单」之一）</param>
+    /// <param name="currentCount">当前记录数</param>
+    /// <returns>(isAllowed, message) → isAllowed=true 放行；false 拦截并返回详细提示</returns>
+    public static (bool IsAllowed, string Message) CheckTrialRecordLimit(string moduleName, int currentCount)
+    {
+        if (!IsTrialMode())
+        {
+            // 已注册或非试用模式 → 不限制
+            return (true, "");
+        }
+
+        // v2.13.150：分模块上限（住宿登记 500 / 宿舍档案 5 / 人员清单 5）
+        if (!TrialMaxRecordsByModule.TryGetValue(moduleName, out var maxRecords))
+        {
+            // 未知模块名 → 默认按 5 条限制（保守安全）
+            maxRecords = 5;
+        }
+
+        if (currentCount >= maxRecords)
+        {
+            // 超过分模块上限 → 拦截（v2.13.150 用户原话新提示）
+            return (false, $"试用功能受限请联系信息科！\n\n当前『{moduleName}』已有 {currentCount} 条记录，超出试用上限 {maxRecords} 条。\n\n请联系信息科进行正式注册后即可继续使用。");
+        }
+
+        return (true, $"试用模式：当前『{moduleName}』{currentCount}/{maxRecords} 条");
     }
 
     /// <summary>

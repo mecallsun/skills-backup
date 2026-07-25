@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using DormManage.Shared.Data;
 using DormManage.Shared.Extensions;
 using DormManage.Shared.Models;
+using DormManage.Shared.Security;
 using DormManage.Shared.Services;
 
 namespace DormManage.Api.Controllers.Booking;
@@ -62,6 +63,15 @@ public class BookingController : ControllerBase
     [HttpPost("check-in")]
     public async Task<ApiResponse<DormBooking>> CheckIn([FromBody] CheckInRequest request)
     {
+        // v2.13.149 试用模式限制：未注册时 住宿登记/宿舍档案/人员清单 最多 5 条记录
+        var trialCheck = LicenseGuard.CheckTrialRecordLimit(
+            "住宿登记",
+            await _db.DormBookings.CountAsync());
+        if (!trialCheck.IsAllowed)
+        {
+            return ApiResponse<DormBooking>.Fail(LicenseGuard.TrialLimitErrorCode, trialCheck.Message);
+        }
+
         // v2.13.29: 从登录会话/请求头获取真实用户名（替换原 TODO 兜底 admin）
         var registrar = HttpContext.GetCurrentUserName();
         // v2.13.89: 同时获取 UserId 用于 FK 关联（用户需求：表存 FK，页面显示姓名）

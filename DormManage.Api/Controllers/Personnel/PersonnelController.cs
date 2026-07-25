@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using DormManage.Shared.Data;
 using DormManage.Shared.Services;
 using DormManage.Shared.Models;
 using DormManage.Shared.Extensions;
+using DormManage.Shared.Security;
 using SysEmployeeModel = DormManage.Shared.Models.SysEmployee;
 
 namespace DormManage.Api.Controllers.Personnel;
@@ -17,15 +20,17 @@ public class PersonnelController : ControllerBase
     private readonly IPersonnelService _service;
     private readonly IPermissionService _perm;
     private readonly ILogger<PersonnelController> _logger;
+    private readonly DormDbContext _db;
 
     /// <summary>v2.13.106 新增人员所需权限码（与 PageHeader primaryAction.PermissionCode 一致）</summary>
     public const string RequiredPermissionCode = "personnel:add";
 
-    public PersonnelController(IPersonnelService service, IPermissionService perm, ILogger<PersonnelController> logger)
+    public PersonnelController(IPersonnelService service, IPermissionService perm, ILogger<PersonnelController> logger, DormDbContext db)
     {
         _service = service;
         _perm = perm;
         _logger = logger;
+        _db = db;
     }
 
     [HttpGet]
@@ -79,6 +84,15 @@ public class PersonnelController : ControllerBase
             _logger.LogWarning("[v2.13.106 RBAC] 用户 {User} 尝试 POST /api/v1/personnel 但缺少 {Code} 权限",
                 HttpContext.GetCurrentUserName(), RequiredPermissionCode);
             return ApiResponse<int>.Fail("PERMISSION_DENIED", $"无 {RequiredPermissionCode} 权限，无法新增人员");
+        }
+
+        // v2.13.149 试用模式限制：未注册时 人员清单最多 5 条记录
+        var trialCheck = LicenseGuard.CheckTrialRecordLimit(
+            "人员清单",
+            await _db.Employees.CountAsync());
+        if (!trialCheck.IsAllowed)
+        {
+            return ApiResponse<int>.Fail(LicenseGuard.TrialLimitErrorCode, trialCheck.Message);
         }
 
         var (ok, msg, id) = await _service.CreateAsync(dto);

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using DormManage.Shared.Data;
+using DormManage.Shared.Security;
 using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using Microsoft.EntityFrameworkCore;
@@ -167,6 +168,15 @@ public class DormsController : ControllerBase
     [HttpPost]
     public async Task<ApiResponse<DormDto>> CreateDorm([FromBody] DormCreateRequest request)
     {
+        // v2.13.149 试用模式限制：未注册时 宿舍档案最多 5 条记录
+        var trialCheck = LicenseGuard.CheckTrialRecordLimit(
+            "宿舍档案",
+            await _db.Dorms.CountAsync());
+        if (!trialCheck.IsAllowed)
+        {
+            return ApiResponse<DormDto>.Fail(LicenseGuard.TrialLimitErrorCode, trialCheck.Message);
+        }
+
         if (string.IsNullOrWhiteSpace(request.DormCode))
             return ApiResponse<DormDto>.Fail("CODE_REQUIRED", "宿舍号不能为空");
 

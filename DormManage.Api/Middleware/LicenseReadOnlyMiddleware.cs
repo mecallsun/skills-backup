@@ -28,7 +28,9 @@ public class LicenseReadOnlyMiddleware
     {
         // 1) 检测注册状态
         var isReadOnly = LicenseGuard.IsReadOnly();
+        var isTrialMode = LicenseGuard.IsTrialMode();  // v2.13.149 试用模式
         context.Items["__LICENSE_READONLY__"] = isReadOnly;
+        context.Items["__LICENSE_TRIAL_MODE__"] = isTrialMode;
 
         if (!isReadOnly)
         {
@@ -47,15 +49,25 @@ public class LicenseReadOnlyMiddleware
             return;
         }
 
-        // 3) 放行白名单路径
         var path = context.Request.Path.Value ?? "";
+
+        // 3) 放行白名单路径
         if (IsApiWhitelisted(path))
         {
             await _next(context);
             return;
         }
 
-        // 4) 拒绝写入请求 → 统一 403 JSON
+        // 4) v2.13.149 试用模式特殊放行：
+        //    未注册 + 试用次数范围内 → 放行 Booking/Dorms/Personnel 的 POST
+        //    后续 Create 方法内 LicenseGuard.CheckTrialRecordLimit 做 5 条记录校验
+        if (isTrialMode && IsApiTrialModuleAllowed(method, path))
+        {
+            await _next(context);
+            return;
+        }
+
+        // 5) 拒绝写入请求 → 统一 403 JSON
         await RejectWrite(context);
     }
 
@@ -111,5 +123,24 @@ public class LicenseReadOnlyMiddleware
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// v2.13.149 试用模式下放行的写入路径（住宿登记/宿舍档案/人员清单）
+    /// 业务规则：未注册但试用次数范围内 → 3 模块允许 POST，内部 CheckTrialRecordLimit 做 5 条限制
+    /// </summary>
+    private static bool IsApiTrialModuleAllowed(string method, string path)
+    {
+        if (!string.Equals(method, "POST", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+        // 同时支持 /api/v1/* 与 /api/* 两种前缀（兼容 Dorms 控制器 [Route("api/dorms")]）
+        return path.StartsWith("/api/v1/bookings", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/bookings", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/v1/dorms", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/dorms", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/v1/personnel", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/api/personnel", StringComparison.OrdinalIgnoreCase);
     }
 }
