@@ -1,0 +1,13 @@
+{
+  "_comment": "v2.13.135 BitMono 加壳配置（仅 TrayApp）。复用仓库物料汇总 FR-07 验证通过的 6 项稳定保护。",
+  "_reference": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\仓库物料汇总\\Jinge.MaterialSummary.App\\protections.json",
+  "_stability": "仅启用经生产验证与 WPF/WinForms .NET 8 兼容的 6 项保护；StringsEncryption/FullRenamer/NoNamespaces/BillionNops/DotNetHook/CallToCalli/BitMethodDotnet 会导致反射或单文件发布失败",
+  "Protections": [
+    { "Name": "AntiILdasm",          "Enabled": true },
+    { "Name": "AntiDe4dot",          "Enabled": true },
+    { "Name": "AntiDecompiler",      "Enabled": true },
+    { "Name": "AntiDebugBreakpoints","Enabled": true },
+    { "Name": "BitDotNet",           "Enabled": true },
+    { "Name": "BitMono",             "Enabled": true }
+  ]
+}
