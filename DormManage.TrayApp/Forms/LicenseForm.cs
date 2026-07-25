@@ -94,7 +94,7 @@ public sealed class LicenseForm : Form
 
         // 4) 有效期（v2.13.150：标签「有效日期」→「有效期」简化，与「公司名称：」「注册码：」「机器码：」对齐）
         label_Date = new Label { Text = "有效期：", Location = new Point(x, y + 3), Size = new Size(labelWidth, h), TextAlign = ContentAlignment.MiddleLeft };
-        label_DateValue = new Label { Text = "—", Location = new Point(x + 60, y + 3), AutoSize = true, ForeColor = Color.Green, Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
+        label_DateValue = new Label { Text = "—", Location = new Point(x + 110, y + 3), AutoSize = true, ForeColor = Color.Green, Font = new Font("Microsoft YaHei UI", 10F, FontStyle.Bold) };
         y += gap;
 
         // 5) 注册状态
@@ -181,7 +181,10 @@ public sealed class LicenseForm : Form
         textSN.Text = _rawSN;  // raw 24 位连续大写 hex，无连字符
         text_CDKEY.Text = reg.CDKEY;
         textLTD.Text = reg.LTDName;
-        label_Trial.Text = $"试用次数：{reg.UseTimes} / {RegisterSdk.TRIAL_LIMIT}";
+
+        // v2.13.167 用户规则：仅当「系统无任何注册信息痕迹」（RegInt=-1 即未注册）时显示试用次数。
+        // 已注册（RegInt=1）或已过期（RegInt=0）时隐藏 trial 计数，避免与正式注册信息混淆。
+        label_Trial.Text = "";
 
         switch (reg.RegInt)
         {
@@ -192,8 +195,6 @@ public sealed class LicenseForm : Form
                 text_CDKEY.ReadOnly = true;
                 textLTD.ReadOnly = true;
                 label_DateValue.Text = reg.RegDate?.ToString("yyyy年MM月dd日") ?? "—";
-                if (reg.RegDate.HasValue)
-                    label_Trial.Text += $"（剩 {(reg.RegDate.Value.Date - DateTime.Today).Days} 天）";
                 break;
             case 0:
                 labRegInfo.Text = "⚠️ 许可已过期";
@@ -210,6 +211,8 @@ public sealed class LicenseForm : Form
                 text_CDKEY.ReadOnly = false;
                 textLTD.ReadOnly = false;
                 label_DateValue.Text = "—";
+                // v2.13.167：仅「未注册」分支显示试用次数
+                label_Trial.Text = $"试用次数：{reg.UseTimes} / {RegisterSdk.TRIAL_LIMIT}";
                 break;
         }
     }
