@@ -15,17 +15,6 @@
         primaryAction = new PageAction { Label = "新增标准", Url = "/BillingStandard/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "billingstandard:add" }
     })
 
-    <!-- 当前有效标准 -->
-    @if (Model.ActiveStandard != null)
-    {
-        <div class="alert alert-success mb-3">
-            <strong><i class="bi bi-check-circle"></i> 当前生效：</strong>
-            @Model.ActiveStandard.StandardName
-            （@Model.ActiveStandard.EffectiveFrom:yyyy-MM-dd ~ @(Model.ActiveStandard.EffectiveTo?.ToString("yyyy-MM-dd") ?? "永久")）
-            水 @Model.ActiveStandard.ColdWaterUnitPrice 元/m³ | 热 @Model.ActiveStandard.HotWaterUnitPrice 元/m³ | 电 @Model.ActiveStandard.ElectricUnitPrice 元/kWh | 补贴 @Model.ActiveStandard.SubsidyAmount 元/月/人
-        </div>
-    }
-
     <!-- 筛选区（v2.13.20 统一结构与样式） -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="billingStandard">
         <div class="card-body py-2">
