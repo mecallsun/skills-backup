@@ -7,4 +7,6 @@ public class Team
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; }
+    /// <summary>v2.13.161：DB Schema NOT NULL，需要 EF 模型有该字段以避免 NULL INSERT</summary>
+    public DateTime UpdatedAt { get; set; }
 }

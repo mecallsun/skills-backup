@@ -23,7 +23,7 @@ public class DormDbContext : DbContext
             if (entry.State == EntityState.Added)
             {
                 if (entry.Entity.CreatedAt == default) entry.Entity.CreatedAt = now;
-                entry.Entity.UpdatedAt ??= now; // 真实表 UpdatedAt NOT NULL，避免写入 NULL
+                entry.Entity.UpdatedAt = now; // v2.13.161：BaseEntity.UpdatedAt 已非空
             }
             else if (entry.State == EntityState.Modified)
             {
@@ -181,6 +181,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("Department");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();  // v2.13.161：实际 DB NON-IDENTITY
             entity.Property(e => e.Code).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Remark).HasMaxLength(200);
@@ -221,6 +222,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("EmployeeType");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();  // v2.13.161：实际 DB NON-IDENTITY
             entity.Property(e => e.Code).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.SortOrder).HasDefaultValue(0);  // v2.13.61 补充 EF 映射
@@ -233,6 +235,7 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("AttendanceType");
             entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).ValueGeneratedNever();  // v2.13.161：实际 DB NON-IDENTITY
             entity.Property(e => e.Code).HasMaxLength(20).IsRequired();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.WorkHours).HasMaxLength(50);
@@ -420,8 +423,12 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("Team");
             entity.HasKey(e => e.Id);
+            // v2.13.161：实际 DB Team.Id NON-IDENTITY（seed via EF HasData 用 1-11 显式 Id 注入）
+            // 显式声明客户端提供，禁止 EF 试图用 IDENTITY 默认
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Name).HasMaxLength(50).IsRequired();
             entity.Property(e => e.Code).HasMaxLength(20);
+            // v2.13.161：Note — DB Team 表有 Remark 列但 EF Team 模型无该属性（已知遗留问题；不在本次修复）
         });
 
         // ===== v2.13.120 设备档案（与 Dorm 1:1） =====

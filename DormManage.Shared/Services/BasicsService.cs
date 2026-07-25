@@ -168,6 +168,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<Department>.Fail("NAME_EXISTS", "部门名称已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.Departments.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<Department>.Ok(model, "创建成功");
@@ -193,6 +194,7 @@ public class BasicsService : IBasicsService
         entity.IsActive = model.IsActive;
         entity.SortOrder = model.SortOrder;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<Department>.Ok(entity, "更新成功");
     }
@@ -234,6 +236,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<Building>.Fail("NAME_EXISTS", "楼栋名称已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.Buildings.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<Building>.Ok(model, "创建成功");
@@ -252,6 +255,7 @@ public class BasicsService : IBasicsService
         entity.IsActive = model.IsActive;
         entity.SortOrder = model.SortOrder;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<Building>.Ok(entity, "更新成功");
     }
@@ -293,6 +297,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<Floor>.Fail("FLOOR_EXISTS", "楼层号已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.Floors.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<Floor>.Ok(model, "创建成功");
@@ -310,6 +315,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<Floor>.Ok(entity, "更新成功");
     }
@@ -351,6 +357,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<Address>.Fail("ADDRESS_EXISTS", "地址已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.Addresses.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<Address>.Ok(model, "创建成功");
@@ -368,6 +375,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<Address>.Ok(entity, "更新成功");
     }
@@ -409,6 +417,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<EmployeeType>.Fail("CODE_EXISTS", "类型编码已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.EmployeeTypes.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<EmployeeType>.Ok(model, "创建成功");
@@ -427,6 +436,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<EmployeeType>.Ok(entity, "更新成功");
     }
@@ -468,6 +478,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<AttendanceType>.Fail("CODE_EXISTS", "类型编码已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.AttendanceTypes.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<AttendanceType>.Ok(model, "创建成功");
@@ -487,6 +498,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<AttendanceType>.Ok(entity, "更新成功");
     }
@@ -528,6 +540,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<MeterUnit>.Fail("CODE_EXISTS", "单位编码已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.MeterUnits.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<MeterUnit>.Ok(model, "创建成功");
@@ -547,6 +560,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<MeterUnit>.Ok(entity, "更新成功");
     }
@@ -585,6 +599,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<ResidenceStatus>.Fail("CODE_EXISTS", "状态编码已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.ResidenceStatuses.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<ResidenceStatus>.Ok(model, "创建成功");
@@ -603,6 +618,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<ResidenceStatus>.Ok(entity, "更新成功");
     }
@@ -641,6 +657,7 @@ public class BasicsService : IBasicsService
             return ApiResponse<EmploymentStatus>.Fail("CODE_EXISTS", "状态编码已存在");
 
         model.CreatedAt = DateTime.Now;
+        model.UpdatedAt = DateTime.Now;  // v2.13.161
         _db.EmploymentStatuses.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<EmploymentStatus>.Ok(model, "创建成功");
@@ -659,6 +676,7 @@ public class BasicsService : IBasicsService
         entity.Remark = model.Remark;
         entity.IsActive = model.IsActive;
         entity.UpdatedAt = DateTime.Now;
+
         await _db.SaveChangesAsync();
         return ApiResponse<EmploymentStatus>.Ok(entity, "更新成功");
     }
@@ -692,7 +710,14 @@ public class BasicsService : IBasicsService
 
     public async Task<ApiResponse<Team>> CreateTeamAsync(Team model)
     {
-        model.CreatedAt = DateTime.Now;
+        var now = DateTime.Now;
+        model.CreatedAt = now;
+        model.UpdatedAt = now;  // v2.13.161：DB Schema 要求 UpdatedAt NOT NULL
+        if (model.Id == 0) {
+            // v2.13.161：实际 DB Team.Id NON-IDENTITY，必须显式分配 Id（≥ 已存在最大值 + 1）
+            var maxId = await _db.Teams.MaxAsync(t => (int?)t.Id) ?? 0;
+            model.Id = maxId + 1;
+        }
         _db.Teams.Add(model);
         await _db.SaveChangesAsync();
         return ApiResponse<Team>.Ok(model, "创建成功");
@@ -707,6 +732,7 @@ public class BasicsService : IBasicsService
         entity.Code = model.Code;
         entity.SortOrder = model.SortOrder;
         entity.IsActive = model.IsActive;
+        entity.UpdatedAt = DateTime.Now;  // v2.13.161
         await _db.SaveChangesAsync();
         return ApiResponse<Team>.Ok(entity, "更新成功");
     }
@@ -758,7 +784,7 @@ public class BasicsService : IBasicsService
                 HotWaterMeterId = m.HotWaterMeterId,
                 Remark = m.Remark,
                 CreatedAt = m.CreatedAt,
-                UpdatedAt = m.UpdatedAt ?? DateTime.MinValue
+                UpdatedAt = m.UpdatedAt
             }).ToListAsync();
 
         return new PagedResult<DormMeterDto>
@@ -784,7 +810,7 @@ public class BasicsService : IBasicsService
             HotWaterMeterId = m.HotWaterMeterId,
             Remark = m.Remark,
             CreatedAt = m.CreatedAt,
-            UpdatedAt = m.UpdatedAt ?? DateTime.MinValue
+            UpdatedAt = m.UpdatedAt
         };
     }
 
@@ -833,6 +859,7 @@ public class BasicsService : IBasicsService
         entity.HotWaterMeterId = string.IsNullOrWhiteSpace(model.HotWaterMeterId) ? null : model.HotWaterMeterId.Trim();
         entity.Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim();
         entity.UpdatedAt = DateTime.Now;
+
 
         await _db.SaveChangesAsync();
         var dto = await GetDeviceMeterByIdAsync(id);
@@ -913,7 +940,7 @@ public class BasicsService : IBasicsService
                 Remark = x.Remark,
                 CreatedBy = x.CreatedBy,
                 CreatedAt = x.CreatedAt,
-                UpdatedAt = x.UpdatedAt ?? DateTime.MinValue
+                UpdatedAt = x.UpdatedAt
             })
             .ToListAsync();
 
@@ -940,7 +967,7 @@ public class BasicsService : IBasicsService
             Remark = x.Remark,
             CreatedBy = x.CreatedBy,
             CreatedAt = x.CreatedAt,
-            UpdatedAt = x.UpdatedAt ?? DateTime.MinValue
+            UpdatedAt = x.UpdatedAt
         };
     }
 
@@ -1001,6 +1028,7 @@ public class BasicsService : IBasicsService
         entity.ReadTime = model.ReadTime;
         entity.Remark = string.IsNullOrWhiteSpace(model.Remark) ? null : model.Remark.Trim();
         entity.UpdatedAt = DateTime.Now;
+
 
         await _db.SaveChangesAsync();
 

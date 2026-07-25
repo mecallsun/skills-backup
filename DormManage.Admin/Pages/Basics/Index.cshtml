@@ -363,6 +363,7 @@
                 <div class="mb-3" id="codeField" style="display:none;"><label class="form-label">编码</label><input type="text" class="form-control" id="editCode" /></div>
                 <div class="mb-3"><label class="form-label" id="nameLabel">名称</label><input type="text" class="form-control" id="editName" /></div>
                 <div class="mb-3" id="hoursField" style="display:none;"><label class="form-label">工作时段</label><input type="text" class="form-control" id="editHours" placeholder="如 09:00-18:00" /></div>
+                <div class="mb-3" id="sortField" style="display:none;"><label class="form-label">排序号</label><input type="number" class="form-control" id="editSort" value="0" min="0" step="1" /><small class="form-text text-muted">数字越小越靠前（默认 0 = 末尾）</small></div>
                 <div class="mb-3"><label class="form-label">备注</label><textarea class="form-control" id="editRemark" rows="2"></textarea></div>
                 <div class="mb-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="editActive" checked /><label class="form-check-label" for="editActive">启用</label></div></div>
             </div>
@@ -470,11 +471,14 @@
         document.getElementById('editCode').value = '';
         document.getElementById('editName').value = '';
         document.getElementById('editHours').value = '';
+        document.getElementById('editSort').value = '0';   // v2.13.161 默认 0
         document.getElementById('editRemark').value = '';
         document.getElementById('editActive').checked = true;
         const showCode = ['dept','emptype','attendance','unit','residence','employment','team'].includes(type);
         document.getElementById('codeField').style.display = showCode ? 'block' : 'none';
         document.getElementById('hoursField').style.display = type === 'attendance' ? 'block' : 'none';
+        // v2.13.161：员工班组编辑/新增显示排序号输入框
+        document.getElementById('sortField').style.display = type === 'team' ? 'block' : 'none';
         document.getElementById('nameLabel').textContent = labelMap[typeToApi[type]] || '名称';
         new bootstrap.Modal(document.getElementById('editModal')).show();
     }
@@ -492,10 +496,13 @@
                 document.getElementById('editCode').value = data.code || '';
                 document.getElementById('editName').value = data.name || data.floorNo || data.addressText || '';
                 document.getElementById('editHours').value = data.workHours || '';
+                // v2.13.161：编辑班组时回显排序号
+                document.getElementById('editSort').value = data.sortOrder ?? 0;
                 document.getElementById('editRemark').value = data.remark || '';
                 document.getElementById('editActive').checked = data.isActive;
                 document.getElementById('codeField').style.display = ['dept','emptype','attendance','unit','residence','employment','team'].includes(type) ? 'block' : 'none';
                 document.getElementById('hoursField').style.display = type === 'attendance' ? 'block' : 'none';
+                document.getElementById('sortField').style.display = type === 'team' ? 'block' : 'none';
                 document.getElementById('nameLabel').textContent = labelMap[typeToApi[type]] || '名称';
                 new bootstrap.Modal(document.getElementById('editModal')).show();
             }
@@ -523,6 +530,11 @@
         payload.remark = document.getElementById('editRemark').value.trim();
         payload.isActive = document.getElementById('editActive').checked;
         if (currentType === 'attendance') payload.workHours = document.getElementById('editHours').value.trim();
+        // v2.13.161：员工班组保存时携带 sortOrder
+        if (currentType === 'team') {
+            const sortVal = parseInt(document.getElementById('editSort').value);
+            payload.sortOrder = isNaN(sortVal) ? 0 : sortVal;
+        }
         try {
             const resp = id
                 ? await fetch(`${API_BASE}/${apiType}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
