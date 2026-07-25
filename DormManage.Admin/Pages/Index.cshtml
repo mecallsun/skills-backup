@@ -207,21 +207,21 @@
         </div>
     </div>
 
-    <!-- KPI 5: 本月抄表覆盖（v2.13.133：3 段拆分明细，参照 Meter/Index.cshtml 抄表进度 alert 文案） -->
+    <!-- KPI 5: 本月抄表进度（v2.13.164：值驱动 3 段拆分明细 — 已抄表/抄表中/未抄表） -->
     <div class="kpi-card">
         <div class="d-flex align-items-start justify-content-between">
             <div>
                 <div class="kpi-value" style="color: #2a78d6;" id="kpiMeter">@Model.Dashboard.Kpi.MeterReadCount/@Model.Dashboard.Kpi.MeterTotalCount<span class="fs-6 text-muted ms-1">(@Model.Dashboard.Kpi.MeterCoveragePercent%)</span></div>
-                <div class="kpi-label">本月抄表覆盖</div>
+                <div class="kpi-label">本月抄表进度</div>
                 <div class="kpi-sub">
                     @if (Model.Dashboard.Kpi.MeterUnfinishedCount > 0)
                     {
-                        <span class="text-danger">未完成 <strong>@Model.Dashboard.Kpi.MeterUnfinishedCount</strong> 间</span>
+                        <span class="text-danger">抄表中 <strong>@Model.Dashboard.Kpi.MeterUnfinishedCount</strong> 间</span>
                         <span class="mx-1">·</span>
                     }
                     @if (Model.Dashboard.Kpi.MeterUncoveredCount > 0)
                     {
-                        <span class="text-warning">未覆盖 <strong>@Model.Dashboard.Kpi.MeterUncoveredCount</strong> 间</span>
+                        <span class="text-warning">未抄表 <strong>@Model.Dashboard.Kpi.MeterUncoveredCount</strong> 间</span>
                     }
                     @if (Model.Dashboard.Kpi.UnreadDormCodes.Any() && Model.Dashboard.Kpi.MeterUncoveredCount > 0 && Model.Dashboard.Kpi.MeterUncoveredCount <= 5)
                     {
@@ -376,7 +376,7 @@
         <div class="viz-card" style="height: var(--chart-height);">
             <div class="card-header">
                 <i class="bi bi-clipboard-check"></i>
-                <span>本月抄表覆盖</span>
+                <span>本月抄表进度</span>
             </div>
             <div class="card-body">
                 <canvas id="chartMeterCov"></canvas>
