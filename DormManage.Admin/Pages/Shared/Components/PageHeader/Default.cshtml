@@ -30,12 +30,12 @@
                 <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
             }
         </h2>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 page-header-actions flex-nowrap">
             @if (Model.PrimaryAction is not null && HasPerm(Model.PrimaryAction.PermissionCode))
             {
                 @if (!string.IsNullOrEmpty(Model.PrimaryAction.Url))
                 {
-                    <a href="@Model.PrimaryAction.Url" class="btn @btnClass btn-sm">
+                    <a href="@Model.PrimaryAction.Url" class="btn @btnClass btn-sm text-nowrap">
                         @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
                         {
                             <i class="bi @Model.PrimaryAction.Icon"></i>
@@ -45,7 +45,7 @@
                 }
                 else if (!string.IsNullOrEmpty(Model.PrimaryAction.OnClick))
                 {
-                    <button class="btn @btnClass btn-sm" onclick="@Model.PrimaryAction.OnClick">
+                    <button class="btn @btnClass btn-sm text-nowrap" onclick="@Model.PrimaryAction.OnClick">
                         @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
                         {
                             <i class="bi @Model.PrimaryAction.Icon"></i>
@@ -70,7 +70,7 @@
                 @* v2.13.38: actions 同时支持 Url 和 OnClick 渲染（之前 OnClick 按钮不显示） *@
                 @if (!string.IsNullOrEmpty(action.Url))
                 {
-                    <a href="@action.Url" class="btn @styleClass btn-sm">
+                    <a href="@action.Url" class="btn @styleClass btn-sm text-nowrap">
                         @if (!string.IsNullOrEmpty(action.Icon))
                         {
                             <i class="bi @action.Icon"></i>
@@ -80,7 +80,7 @@
                 }
                 else if (!string.IsNullOrEmpty(action.OnClick))
                 {
-                    <button type="button" class="btn @styleClass btn-sm" onclick="@action.OnClick">
+                    <button type="button" class="btn @styleClass btn-sm text-nowrap" onclick="@action.OnClick">
                         @if (!string.IsNullOrEmpty(action.Icon))
                         {
                             <i class="bi @action.Icon"></i>

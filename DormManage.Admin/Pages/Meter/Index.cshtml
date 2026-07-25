@@ -89,9 +89,9 @@
                     <label class="form-label mb-1">状态</label>
                     <select name="Status" class="form-select">
                         <option value="">全部</option>
-                        <option value="0" selected="@(Model.Status == 0)">未完成</option>
-                        <option value="1" selected="@(Model.Status == 1)">正常</option>
-                        <option value="2" selected="@(Model.Status == 2)">已修正</option>
+                        <option value="2" selected="@(Model.Status == 2)">已抄表</option>
+                        <option value="1" selected="@(Model.Status == 1)">抄表中</option>
+                        <option value="0" selected="@(Model.Status == 0)">未抄表</option>
                     </select>
                 </div>
                 <div class="col-auto filter-item">
@@ -151,7 +151,7 @@
                             var index = startIndex;
                             foreach (var item in Model.Result.Items)
                             {
-                                <tr class="@(item.Status == 0 ? "table-warning" : "")">
+                                <tr class="@(item.ColdMeter == 0 && item.HotMeter == 0 && item.ElectricMeter == 0 ? "table-warning" : "")">
                                     <td class="text-center text-muted">@index</td>
                                     <td><strong>@item.DormCode</strong></td>
                                     <td>@item.ReadMonth</td>
@@ -177,11 +177,22 @@
                                     <td><small class="text-muted">@(item.DeviceSn == "-" ? "-" : item.DeviceSn)</small></td>
                                     <td><small class="text-muted">@item.ServerCreatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
                                     <td>
-                                        @switch (item.Status)
+                                        @* v2.13.164 重定义：状态列按值驱动 3 段（已抄表/抄表中/未抄表）— 与 MeterRecordStatus 枚举解耦 *@
+                                        @{
+                                            var allRead = item.ColdMeter > 0 && item.HotMeter > 0 && item.ElectricMeter > 0;
+                                            var anyRead = item.ColdMeter > 0 || item.HotMeter > 0 || item.ElectricMeter > 0;
+                                        }
+                                        @if (allRead)
                                         {
-                                            case 0: <span class="badge bg-secondary">未完成</span>; break;
-                                            case 1: <span class="badge bg-success">正常</span>; break;
-                                            case 2: <span class="badge bg-warning text-dark">已修正</span>; break;
+                                            <span class="badge bg-success">已抄表</span>
+                                        }
+                                        else if (anyRead)
+                                        {
+                                            <span class="badge bg-danger">抄表中</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">未抄表</span>
                                         }
                                     </td>
                                     <td class="text-center">
@@ -689,10 +700,13 @@ async function viewRecord(id) {
             document.getElementById('viewHotMeter').textContent = data.hotMeter.toFixed(2) + ' m³';
             document.getElementById('viewElectricMeter').textContent = data.electricMeter.toFixed(2) + ' 度';
             var statusHtml = '';
-            switch (data.status) {
-                case 0: statusHtml = '<span class="badge bg-secondary">未完成</span>'; break;
-                case 1: statusHtml = '<span class="badge bg-success">正常</span>'; break;
-                case 2: statusHtml = '<span class="badge bg-warning text-dark">已修正</span>'; break;
+            // v2.13.164：JS 详情视图同步用值驱动 3 段
+            if (data.coldMeter > 0 && data.hotMeter > 0 && data.electricMeter > 0) {
+                statusHtml = '<span class="badge bg-success">已抄表</span>';
+            } else if (data.coldMeter > 0 || data.hotMeter > 0 || data.electricMeter > 0) {
+                statusHtml = '<span class="badge bg-danger">抄表中</span>';
+            } else {
+                statusHtml = '<span class="badge bg-warning text-dark">未抄表</span>';
             }
             document.getElementById('viewStatus').innerHTML = statusHtml;
             document.getElementById('viewOperator').textContent = data.operator;
