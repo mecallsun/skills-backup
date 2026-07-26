@@ -491,6 +491,43 @@ public static class DatabaseInitializer
                 logger.LogWarning(exDormMeter, "[v2.13.120 Migrate] DormMeter 表检测/创建异常（继续后续迁移）");
             }
 
+            // 0.55 v2.13.168 设备ID 过滤唯一索引（三层防御第 3 层 —— DB 兜底）
+            //     电表/冷水/热水 3 列各建 filtered unique index（仅约束非空值，同列内唯一），
+            //     防止绕过 Service 直连 DB 写入产生同列重复；跨列全局唯一仍由 Service 保证。
+            //     每列建索引前双重 guard：① 该列无重复值；② 索引不存在。存在重复则跳过（不阻断启动）。
+            try
+            {
+                var uniqueIndexCols = new[]
+                {
+                    ("ElectricMeterId", "UX_DormMeter_ElectricMeterId"),
+                    ("ColdWaterMeterId", "UX_DormMeter_ColdWaterMeterId"),
+                    ("HotWaterMeterId",  "UX_DormMeter_HotWaterMeterId")
+                };
+                foreach (var (col, idxName) in uniqueIndexCols)
+                {
+                    var createIdxSql = $@"
+                        IF EXISTS (SELECT [{col}] FROM dbo.DormMeter
+                                   WHERE [{col}] IS NOT NULL
+                                   GROUP BY [{col}] HAVING COUNT(*) > 1)
+                        BEGIN
+                            PRINT N'⚠ {idxName} 跳过：{col} 存在重复值，请先清理';
+                        END
+                        ELSE IF NOT EXISTS (SELECT 1 FROM sys.indexes
+                                            WHERE name = '{idxName}' AND object_id = OBJECT_ID('dbo.DormMeter'))
+                        BEGIN
+                            CREATE UNIQUE INDEX [{idxName}]
+                                ON dbo.DormMeter([{col}])
+                                WHERE [{col}] IS NOT NULL;
+                        END";
+                    await db.Database.ExecuteSqlRawAsync(createIdxSql, ct);
+                }
+                logger.LogInformation("[v2.13.168 Migrate] DormMeter 设备ID 过滤唯一索引检测/创建完成（3 列）");
+            }
+            catch (Exception exDeviceIdIdx)
+            {
+                logger.LogWarning(exDeviceIdIdx, "[v2.13.168 Migrate] 设备ID 唯一索引创建异常（继续后续迁移）");
+            }
+
             // 0.6 v2.13.130 检测 EquipmentReading 表是否存在（设备读数日志 — 与 DormMeter 配置层 + MeterRecord 聚合层解耦）
             //    独立日志表，不 FK 到 DormMeter（PDA 原始上传流水可能没经过设备档案配置）
             //    若不存在则自动创建（无需手动执行 init_schema.sql，避免部署遗漏）

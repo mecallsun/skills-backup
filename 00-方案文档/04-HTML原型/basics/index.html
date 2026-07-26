@@ -348,6 +348,10 @@
             </div>
 
             <!-- v2.13.120 设备档案（与 Dorm 1:1，含 dormCode/building/floor/电/冷/热/备注） -->
+            <!-- v2.13.168 业务硬约束：电表ID/冷水表ID/热水表ID 全局唯一 —— 禁止多个记录填入相同设备ID，
+                 ① 同一记录内 3 个 ID 互斥 ② 跨记录任一 ID 不与其它记录任一字段重复（空值不计）；
+                 重复时后端返回 DEVICE_ID_DUPLICATE 拒绝写入并弹窗提示（三层防御 UI+Service+DB filtered unique index）。
+                 详见 00-方案文档/209-设备档案设备ID唯一性校验-v2.13.168.md -->
             <div class="tab-pane fade" id="pane-device" role="tabpanel">
                 <div class="card">
                     <div class="card-body">

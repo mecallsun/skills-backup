@@ -439,6 +439,9 @@ public class DormDbContext : DbContext
         {
             entity.ToTable("DormMeter");
             entity.HasKey(e => e.Id);
+            // v2.13.168：实际 DB DormMeterId NON-IDENTITY（seed 通过 HasData 用 Id=1 显式插入），
+            // 禁止 EF 试图用 IDENTITY 默认（与 Team/Dict 修复同根因）
+            entity.Property(e => e.Id).ValueGeneratedNever();
             entity.Property(e => e.Id).HasColumnName("DormMeterId");
             entity.Property(e => e.DormId).IsRequired();
             // v2.13.120 关键：DormId UNIQUE 约束，强制 1:1 关系

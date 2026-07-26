@@ -358,6 +358,17 @@ BEGIN
 END;
 GO
 
+-- v2.13.168 设备ID 过滤唯一索引（3 列各建，仅约束非空值 —— 同列内唯一）
+-- 跨列全局唯一由 Service 层 CheckDeviceIdUniqueAsync 保证；此处为「同列重复」DB 兜底
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_DormMeter_ElectricMeterId' AND object_id = OBJECT_ID('dbo.DormMeter'))
+    CREATE UNIQUE INDEX UX_DormMeter_ElectricMeterId  ON dbo.DormMeter(ElectricMeterId)  WHERE ElectricMeterId  IS NOT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_DormMeter_ColdWaterMeterId' AND object_id = OBJECT_ID('dbo.DormMeter'))
+    CREATE UNIQUE INDEX UX_DormMeter_ColdWaterMeterId ON dbo.DormMeter(ColdWaterMeterId) WHERE ColdWaterMeterId IS NOT NULL;
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_DormMeter_HotWaterMeterId' AND object_id = OBJECT_ID('dbo.DormMeter'))
+    CREATE UNIQUE INDEX UX_DormMeter_HotWaterMeterId  ON dbo.DormMeter(HotWaterMeterId)  WHERE HotWaterMeterId  IS NOT NULL;
+PRINT '✓ dbo.DormMeter 设备ID 过滤唯一索引已创建（v2.13.168）';
+GO
+
 -- ============================================================
 -- v2.13.130 设备读数日志（EquipmentReading）— 与 DormMeter 配置层 + MeterRecord 聚合层构成三层数据模型
 -- 设计：不 FK 到 DormMeter（PDA 原始上传流水可能没经过设备档案配置），独立日志表

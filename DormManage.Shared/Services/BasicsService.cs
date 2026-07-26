@@ -824,8 +824,15 @@ public class BasicsService : IBasicsService
         var exists = await _db.DormMeters.AnyAsync(x => x.DormId == model.DormId);
         if (exists) return ApiResponse<DormMeterDto>.Fail("DORM_ALREADY_HAS_DEVICE", $"房号 {dorm.DormCode} 已有设备档案，请先删除原记录");
 
+        // v2.13.168：3 个设备 ID 在全表内必须唯一（同一设备 ID 不允许被多个 DormMeter 记录共用）
+        var dup = await CheckDeviceIdUniqueAsync(model.ElectricMeterId, model.ColdWaterMeterId, model.HotWaterMeterId);
+        if (dup != null) return ApiResponse<DormMeterDto>.Fail("DEVICE_ID_DUPLICATE", dup);
+
         var entity = new DormMeter
         {
+            // v2.13.168：实际 DB DormMeterId NON-IDENTITY（与 Team/Dict 同根因），
+            // 必须由 Service 显式分配 max(Id)+1，避免 NULL INSERT 失败
+            Id = (await _db.DormMeters.MaxAsync(m => (int?)m.Id) ?? 0) + 1,
             DormId = model.DormId,
             ElectricMeterId = string.IsNullOrWhiteSpace(model.ElectricMeterId) ? null : model.ElectricMeterId.Trim(),
             ColdWaterMeterId = string.IsNullOrWhiteSpace(model.ColdWaterMeterId) ? null : model.ColdWaterMeterId.Trim(),
@@ -854,6 +861,11 @@ public class BasicsService : IBasicsService
             entity.DormId = model.DormId;
         }
 
+        // v2.13.168：3 个设备 ID 在全表内必须唯一（更新时排除当前记录）
+        var dup = await CheckDeviceIdUniqueAsync(
+            model.ElectricMeterId, model.ColdWaterMeterId, model.HotWaterMeterId, excludeId: id);
+        if (dup != null) return ApiResponse<DormMeterDto>.Fail("DEVICE_ID_DUPLICATE", dup);
+
         entity.ElectricMeterId = string.IsNullOrWhiteSpace(model.ElectricMeterId) ? null : model.ElectricMeterId.Trim();
         entity.ColdWaterMeterId = string.IsNullOrWhiteSpace(model.ColdWaterMeterId) ? null : model.ColdWaterMeterId.Trim();
         entity.HotWaterMeterId = string.IsNullOrWhiteSpace(model.HotWaterMeterId) ? null : model.HotWaterMeterId.Trim();
@@ -864,6 +876,45 @@ public class BasicsService : IBasicsService
         await _db.SaveChangesAsync();
         var dto = await GetDeviceMeterByIdAsync(id);
         return ApiResponse<DormMeterDto>.Ok(dto!, "更新成功");
+    }
+
+    /// <summary>
+    /// v2.13.168：检查 3 个设备 ID（电表/冷水/热水）在全 DormMeter 表内是否唯一。
+    /// 同表内：3 个字段值互不重复（电表 ≠ 冷水 ≠ 热水）；
+    /// 跨表：不与任何其他 DormMeter 记录的任一字段重复。
+    /// 返回 null = 无重复；返回 string = 重复说明（含字段名 + 已用 DormCode + 设备 ID）。
+    /// </summary>
+    private async Task<string?> CheckDeviceIdUniqueAsync(
+        string? electricId, string? coldId, string? hotId, int? excludeId = null)
+    {
+        // 同表内互查：3 个 ID 互相不能重复
+        var idsInRecord = new[] {
+            (label: "电表ID", val: electricId?.Trim()),
+            (label: "冷水表ID", val: coldId?.Trim()),
+            (label: "热水表ID", val: hotId?.Trim())
+        }.Where(x => !string.IsNullOrEmpty(x.val)).ToList();
+        var groups = idsInRecord.GroupBy(x => x.val!.ToLowerInvariant());
+        foreach (var g in groups.Where(g => g.Count() > 1))
+        {
+            return $"同一记录内设备 ID 重复：{string.Join(" 和 ", g.Select(x => x.label))} 都为 '{g.Key}'";
+        }
+
+        // 跨表互查：与表中其他记录的任一字段不重复
+        foreach (var (label, val) in idsInRecord)
+        {
+            var query = _db.DormMeters.Where(m =>
+                (m.ElectricMeterId == val) ||
+                (m.ColdWaterMeterId == val) ||
+                (m.HotWaterMeterId == val));
+            if (excludeId.HasValue) query = query.Where(m => m.Id != excludeId.Value);
+            var conflict = await query.Include(m => m.Dorm).FirstOrDefaultAsync();
+            if (conflict != null)
+            {
+                var dormCode = conflict.Dorm?.DormCode ?? $"Id={conflict.DormId}";
+                return $"{label} '{val}' 已被房号 {dormCode} 占用（设备档案 #{conflict.Id}）";
+            }
+        }
+        return null;
     }
 
     public async Task<ApiResponse> DeleteDeviceMeterAsync(int id)
