@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "GtZWvRWZ0hA=",
+  "success": true,
+  "projectFilePath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLicense\\DiagLicense.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Mecall\\.nuget\\packages\\msbuild.obfuscar\\2.2.49\\msbuild.obfuscar.2.2.49.nupkg.sha512",
+    "C:\\Users\\Mecall\\.nuget\\packages\\obfuscar\\2.2.49\\obfuscar.2.2.49.nupkg.sha512"
+  ],
+  "logs": []
+}

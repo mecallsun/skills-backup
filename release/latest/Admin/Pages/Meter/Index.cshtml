@@ -1,0 +1,827 @@
+@page
+@model DormManage.Admin.Pages.Meter.IndexModel
+@{
+    ViewData["Title"] = "智能抄表";
+    Layout = "_Layout";
+
+    var currentPage = Model.PageIndex;
+    var pageSize = Model.PageSize;
+    var totalCount = Model.Result?.TotalCount ?? 0;
+    var totalPages = totalCount > 0 ? (int)Math.Ceiling(totalCount / (double)pageSize) : 0;
+    var startIndex = (currentPage - 1) * pageSize + 1;
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+@{
+    var antiforgery = PageAntiforgery.GetAndStoreTokens(HttpContext);
+}
+
+<div class="container-fluid">
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @await Component.InvokeAsync("PageHeader", new {
+        icon = "bi-clipboard-data-fill",
+        title = "智能抄表",
+        count = Model.Total,
+        countLabel = "条",
+        // v2.13.81 1:1 原型对齐：移除「新增记录」按钮（原型只有「手动补录」Modal + 「批量导入」链接 + 「导出Excel」函数）
+        // 手动补录 → 调起大弹窗（modal-xl 900px，弹窗独占模式）
+        // 批量导入 → 跳转到独立 /Meter/Import 页面
+        // 导出 Excel → 后端 API 端点
+        actions = new List<PageAction> {
+            new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "success", PermissionCode = "meter:entry" },
+            new() { Label = "批量导入", Url = "/Meter/Import", Icon = "bi-upload", Style = "primary", PermissionCode = "meter:import" },
+            new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "outline-secondary", PermissionCode = "meter:export" }
+        }
+    })
+
+    @* v2.13.41 100% 原型对齐：抄表覆盖率进度 alert *@
+    <div class="alert alert-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger") d-flex justify-content-between align-items-center mb-3" role="alert">
+        <div>
+            <i class="bi bi-pie-chart-fill"></i>
+            <strong>@Model.Coverage.TargetMonth</strong> 抄表进度：
+            已抄 <strong class="fs-5">@Model.Coverage.ReadDorms</strong> / <strong>@Model.Coverage.TotalDorms</strong> 间
+            （<strong>@Model.Coverage.Percentage%</strong>）
+            @if (Model.Coverage.UnfinishedDorms > 0)
+            {
+                <span class="ms-2">· 未完成 <strong class="text-danger">@Model.Coverage.UnfinishedDorms</strong> 间</span>
+            }
+            @if (Model.Coverage.UncoveredDorms > 0)
+            {
+                <span class="ms-2">· 未覆盖 <strong class="text-warning">@Model.Coverage.UncoveredDorms</strong> 间</span>
+            }
+        </div>
+        <div class="progress" style="width: 200px; height: 12px;">
+            <div class="progress-bar bg-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger")"
+                 role="progressbar" style="width: @Model.Coverage.Percentage%"
+                 aria-valuenow="@Model.Coverage.Percentage" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+    </div>
+
+    <!-- 筛选条件区域（一行排列，响应式） -->
+    <form method="get" class="card mb-3 filter-card" data-filter-form="meter">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">抄表月份</label>
+                    <select name="ReadMonth" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var month in Model.Months)
+                        {
+                            <option value="@month" selected="@(Model.ReadMonth == month)">@month</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼栋</label>
+                    <select name="BuildingId" class="form-select">
+                        <option value="">全部</option>
+                        @foreach (var b in Model.Buildings)
+                        {
+                            <option value="@b.Id" selected="@(Model.BuildingId == b.Id)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">抄表员</label>
+                    <input type="text" name="Operator" value="@Model.Operator" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="Status" class="form-select">
+                        <option value="">全部</option>
+                        <option value="2" selected="@(Model.Status == 2)">已抄表</option>
+                        <option value="1" selected="@(Model.Status == 1)">抄表中</option>
+                        <option value="0" selected="@(Model.Status == 0)">未抄表</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item filter-item-dorm">
+                    <label class="form-label mb-1">房号</label>
+                    <input list="dormList" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="如 D-001">
+                    <datalist id="dormList">
+                        @foreach (var code in Model.DormCodes)
+                        {
+                            <option value="@code"></option>
+                        }
+                    </datalist>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">地址/备注</label>
+                    <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="模糊查询">
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <div class="filter-item-btn-group">
+                        <button type="submit" class="btn btn-primary filter-btn">
+                            <i class="bi bi-search"></i> 查询
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('meter')">
+                            <i class="bi bi-arrow-clockwise"></i> 重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>房号</th>
+                            <th>月份</th>
+                            <th class="text-end">冷水读数</th>
+                            <th class="text-end">热水读数</th>
+                            <th class="text-end">电表读数</th>
+                            <th class="text-end">冷水用量</th>
+                            <th class="text-end">热水用量</th>
+                            <th class="text-end">电表用量</th>
+                            <th>抄表员</th>
+                            <th>设备</th>
+                            <th>抄表时间</th>
+                            <th>状态</th>
+                            <th width="150" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Result?.Items.Count > 0)
+                        {
+                            var index = startIndex;
+                            foreach (var item in Model.Result.Items)
+                            {
+                                <tr class="@(item.ColdMeter == 0 && item.HotMeter == 0 && item.ElectricMeter == 0 ? "table-warning" : "")">
+                                    <td class="text-center text-muted">@index</td>
+                                    <td><strong>@item.DormCode</strong></td>
+                                    <td>@item.ReadMonth</td>
+                                    <td class="text-end">
+                                        <span class="@(item.ColdMeter == 0 ? "badge bg-info text-dark" : "")">@item.ColdMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.HotMeter == 0 ? "badge bg-info text-dark" : "")">@item.HotMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.ElectricMeter == 0 ? "badge bg-info text-dark" : "")">@item.ElectricMeter.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.ColdUsage == 0 ? "badge bg-info text-dark" : "")">@item.ColdUsage.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.HotUsage == 0 ? "badge bg-info text-dark" : "")">@item.HotUsage.ToString("N2")</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="@(item.ElectricUsage == 0 ? "badge bg-info text-dark" : "")">@item.ElectricUsage.ToString("N2")</span>
+                                    </td>
+                                    <td><small class="text-muted">@item.OperatorDisplayName</small></td>
+                                    <td><small class="text-muted">@(item.DeviceSn == "-" ? "-" : item.DeviceSn)</small></td>
+                                    <td><small class="text-muted">@item.ServerCreatedAt.ToString("yyyy-MM-dd HH:mm")</small></td>
+                                    <td>
+                                        @* v2.13.164 重定义：状态列按值驱动 3 段（已抄表/抄表中/未抄表）— 与 MeterRecordStatus 枚举解耦 *@
+                                        @{
+                                            var allRead = item.ColdMeter > 0 && item.HotMeter > 0 && item.ElectricMeter > 0;
+                                            var anyRead = item.ColdMeter > 0 || item.HotMeter > 0 || item.ElectricMeter > 0;
+                                        }
+                                        @if (allRead)
+                                        {
+                                            <span class="badge bg-success">已抄表</span>
+                                        }
+                                        else if (anyRead)
+                                        {
+                                            <span class="badge bg-danger">抄表中</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning text-dark">未抄表</span>
+                                        }
+                                    </td>
+                                    <td class="text-center">
+                                        @* v2.13.88 RBAC：详情 → meter:view / 修正 → meter:edit / 删除 → meter:delete *@
+                                        @if (await Html.HasPermissionAsync("meter:view"))
+                                        {
+                                            <a href="/Meter/Detail?id=@item.Id" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                        }
+                                        @if (item.Status == 1 && await Html.HasPermissionAsync("meter:edit"))
+                                        {
+                                            <button class="btn btn-sm btn-outline-primary" onclick="correctRecord(@item.Id)">修正</button>
+                                        }
+                                        @if (item.Status == 0 && await Html.HasPermissionAsync("meter:delete"))
+                                        {
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteRecord(@item.Id)">删除</button>
+                                        }
+                                        @if (!await Html.HasPermissionAsync("meter:view") && (item.Status != 1 || !await Html.HasPermissionAsync("meter:edit")) && (item.Status != 0 || !await Html.HasPermissionAsync("meter:delete")))
+                                        {
+                                            <small class="text-muted"><i class="bi bi-lock"></i> 无操作权限</small>
+                                        }
+                                    </td>
+                                </tr>
+                                index++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="14" class="text-center text-muted py-4">暂无智能抄表</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页（v2.13.71 100% 原型对齐） -->
+            @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+            {
+                PageIndex = currentPage,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            })
+        </div>
+    </div>
+</div>
+
+<!-- v2.13.81 1:1 原型对齐：手动补录 Modal（弹窗独占模式 modal-xl 900px） -->
+<div class="modal fade" id="modalManualEntry" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="modalManualEntryLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 900px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="modalManualEntryLabel">
+                    <i class="bi bi-pencil-square text-success"></i> 手动补录抄表
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 区块 1：基本信息（宿舍 + 月份 + 抄表员） -->
+                <div class="form-section">
+                    <div class="form-section-title">基本信息</div>
+                    <div class="row g-2">
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">宿舍<span class="required">*</span></label>
+                            <select id="me_dorm" class="form-select">
+                                <option value="">请选择宿舍</option>
+                                @foreach (var code in Model.DormCodes)
+                                {
+                                    <option value="@code">@code</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">抄表月份<span class="required">*</span></label>
+                            <input type="month" id="me_month" class="form-control" value="@DateTime.Now.ToString("yyyy-MM")">
+                        </div>
+                        <div class="col-md-4 form-field">
+                            <label class="form-label">抄表员</label>
+                            <input type="text" id="me_operator" class="form-control" value="admin（后台补录）" disabled>
+                        </div>
+                    </div>
+                    <div id="me_dupWarn" class="alert alert-danger mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
+                    <div id="me_lastRef" class="alert alert-secondary mt-2 mb-0 py-1" style="display:none; font-size: 0.85rem;"></div>
+                </div>
+
+                <!-- 区块 2：三表读数（紧凑三列卡片） -->
+                <div class="form-section">
+                    <div class="form-section-title">三表读数</div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #1976d2 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-primary mb-1"><i class="bi bi-droplet"></i> 冷水</h6>
+                                    <input type="number" step="0.01" min="0" id="me_cold" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_cold">用量：—</small>
+                                    <input type="file" id="me_photo_cold" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('cold', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_cold" onclick="document.getElementById('me_photo_cold').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_cold">上传冷水照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #0dcaf0 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-info mb-1"><i class="bi bi-steam"></i> 热水</h6>
+                                    <input type="number" step="0.01" min="0" id="me_hot" class="form-control form-control-sm" placeholder="读数（m³）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_hot">用量：—</small>
+                                    <input type="file" id="me_photo_hot" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('hot', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_hot" onclick="document.getElementById('me_photo_hot').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_hot">上传热水照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card meter-card border-0 shadow-sm" style="border-left: 3px solid #ffc107 !important;">
+                                <div class="card-body py-2">
+                                    <h6 class="text-warning mb-1"><i class="bi bi-lightning"></i> 电</h6>
+                                    <input type="number" step="0.01" min="0" id="me_electric" class="form-control form-control-sm" placeholder="度数（度）" oninput="onMeterReading()">
+                                    <small class="text-muted d-block" id="me_hint_electric">用量：—</small>
+                                    <input type="file" id="me_photo_electric" accept="image/*" capture="environment" class="d-none" onchange="onMePhotoSelected('electric', this)">
+                                    <div class="upload-ph mt-1" id="me_upload_electric" onclick="document.getElementById('me_photo_electric').click()">
+                                        <i class="bi bi-camera"></i>&nbsp;<span id="me_label_electric">上传电表照片</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 区块 3：备注 -->
+                <div class="form-section">
+                    <div class="form-section-title">备注</div>
+                    <textarea id="me_remark" class="form-control form-control-sm" rows="2" placeholder="异常说明（如：PDA 未上传、读数修正原因等）"></textarea>
+                </div>
+
+                <!-- 区块 4：用量预览（实时计算） -->
+                <div id="me_usagePreview" class="alert alert-light border mt-2 mb-0 py-2" style="font-size: 0.85rem;">
+                    <strong><i class="bi bi-calculator"></i> 本月用量预览</strong>
+                    <p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x"></i> 取消</button>
+                <button type="button" class="btn btn-primary" id="meSubmitBtn" onclick="meSubmit()"><i class="bi bi-check-lg"></i> 提交</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 详情 Modal -->
+<div class="modal fade" id="viewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">智能抄表详情</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">宿舍号</dt>
+                            <dd class="fw-bold" id="viewDormCode">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">抄表月份</dt>
+                            <dd class="fw-bold" id="viewReadMonth">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">冷水表读数</dt>
+                            <dd class="fw-bold text-primary" id="viewColdMeter">- m³</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">热水表读数</dt>
+                            <dd class="fw-bold text-danger" id="viewHotMeter">- m³</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-4">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">电表读数</dt>
+                            <dd class="fw-bold text-warning" id="viewElectricMeter">- 度</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">状态</dt>
+                            <dd id="viewStatus">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">操作员</dt>
+                            <dd class="text-muted" id="viewOperator">-</dd>
+                        </dl>
+                    </div>
+                    <div class="col-12">
+                        <dl class="mb-0">
+                            <dt class="text-muted small">备注</dt>
+                            <dd id="viewRemark" class="text-break">-</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 修正 Modal -->
+<div class="modal fade" id="correctModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">修正记录</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="correctId" />
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 修正后将标记为"已修正"状态，不可再次修改。
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">修正说明</label>
+                    <textarea class="form-control" id="correctRemark" rows="3" placeholder="请输入修正原因"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="submitCorrect()">确认修正</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/meter/records';
+const CSRF_TOKEN = '@antiforgery.RequestToken';
+
+// ========== v2.13.81 1:1 原型对齐：手动补录 Modal 逻辑 ==========
+var mePrevCold = null, mePrevHot = null, mePrevElectric = null;
+var meHasPrev = false;
+var meCurrentStatus = -1, meCurrentRecordId = 0;
+var meSelectColdFile = null, meSelectHotFile = null, meSelectElectricFile = null;
+
+// 打开手动补录 Modal（弹窗独占模式）
+function showManualEntryModal() {
+    // 重置字段
+    document.getElementById('me_dorm').value = '';
+    document.getElementById('me_month').value = new Date().toISOString().slice(0, 7);
+    document.getElementById('me_cold').value = '';
+    document.getElementById('me_hot').value = '';
+    document.getElementById('me_electric').value = '';
+    document.getElementById('me_remark').value = '';
+    document.getElementById('me_dupWarn').style.display = 'none';
+    document.getElementById('me_lastRef').style.display = 'none';
+    mePrevCold = mePrevHot = mePrevElectric = null;
+    meHasPrev = false;
+    meCurrentStatus = -1;
+    // 清空照片
+    clearMePhoto('cold'); clearMePhoto('hot'); clearMePhoto('electric');
+    // 显示 Modal（弹窗独占模式：modal-xl 900px + static backdrop + no keyboard ESC）
+    var modalEl = document.getElementById('modalManualEntry');
+    var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+    onMeterReading();
+}
+
+// 当宿舍/月份变更时，加载上月读数 + 检测已存在记录
+function onMeDormMonthChange() {
+    var dormCode = document.getElementById('me_dorm').value;
+    var readMonth = document.getElementById('me_month').value;
+    if (!dormCode || !readMonth) return;
+
+    fetch('/Meter/Index?handler=LoadReadings&dormCode=' + encodeURIComponent(dormCode) + '&readMonth=' + encodeURIComponent(readMonth))
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            mePrevCold = data.prevCold;
+            mePrevHot = data.prevHot;
+            mePrevElectric = data.prevElectric;
+            meHasPrev = data.hasPrev;
+            meCurrentStatus = data.currentStatus;
+            meCurrentRecordId = data.currentRecordId;
+
+            // 显示重复警告
+            var dupWarn = document.getElementById('me_dupWarn');
+            if (data.currentStatus >= 0) {
+                var statusNames = ['未完成', '正常', '已修正', '未完成(PDA)', '已作废'];
+                var statusName = statusNames[data.currentStatus] || '未知';
+                if (data.isEffective) {
+                    // status=1/2 已生效 → 红色警告
+                    dupWarn.className = 'alert alert-warning mt-2 mb-0 py-1';
+                    dupWarn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ⚠️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。';
+                } else {
+                    // status=0 占位 → 蓝色提示
+                    dupWarn.className = 'alert alert-info mt-2 mb-0 py-1';
+                    dupWarn.innerHTML = '<i class="bi bi-info-circle"></i> ℹ️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。';
+                }
+                dupWarn.style.display = 'block';
+            } else {
+                dupWarn.style.display = 'none';
+            }
+
+            // 显示上月读数参考
+            var lastRef = document.getElementById('me_lastRef');
+            if (data.hasPrev) {
+                lastRef.innerHTML = '<i class="bi bi-clock-history"></i> 📄 上月读数（' + data.prevReadMonth + '）：冷水 <strong>' + data.prevCold.toFixed(2) + '</strong> · 热水 <strong>' + data.prevHot.toFixed(2) + '</strong> · 电表 <strong>' + data.prevElectric.toFixed(2) + '</strong>';
+                lastRef.style.display = 'block';
+            } else {
+                lastRef.style.display = 'none';
+            }
+            onMeterReading();
+        })
+        .catch(function(err) { console.error('[v2.13.81] 加载读数失败：', err); });
+}
+
+// 实时用量预览 + 校验
+function onMeterReading() {
+    var cold = parseFloat(document.getElementById('me_cold').value);
+    var hot = parseFloat(document.getElementById('me_hot').value);
+    var electric = parseFloat(document.getElementById('me_electric').value);
+
+    var coldUsage = (!isNaN(cold) && meHasPrev && mePrevCold !== null) ? Math.max(0, cold - mePrevCold) : 0;
+    var hotUsage = (!isNaN(hot) && meHasPrev && mePrevHot !== null) ? Math.max(0, hot - mePrevHot) : 0;
+    var electricUsage = (!isNaN(electric) && meHasPrev && mePrevElectric !== null) ? Math.max(0, electric - mePrevElectric) : 0;
+
+    function renderHint(elId, current, prev, usage, unit) {
+        var el = document.getElementById(elId);
+        if (isNaN(current) || current === 0) {
+            el.className = 'text-muted d-block';
+            el.textContent = '用量：—';
+            return;
+        }
+        if (!meHasPrev || prev === null) {
+            el.className = 'text-info d-block';
+            el.innerHTML = '<i class="bi bi-info-circle"></i> 首次抄表（无上月）';
+            return;
+        }
+        if (current < prev) {
+            el.className = 'text-danger d-block';
+            el.innerHTML = '<i class="bi bi-x-circle-fill"></i> ✗ 必须大于上月 ' + prev.toFixed(2);
+            return;
+        }
+        el.className = 'text-success d-block';
+        el.innerHTML = '<i class="bi bi-check-circle"></i> 用量：+ ' + usage.toFixed(2) + ' ' + unit + '（上月 ' + prev.toFixed(2) + ' → 本月 ' + current.toFixed(2) + '）';
+    }
+
+    renderHint('me_hint_cold', cold, mePrevCold, coldUsage, 'm³');
+    renderHint('me_hint_hot', hot, mePrevHot, hotUsage, 'm³');
+    renderHint('me_hint_electric', electric, mePrevElectric, electricUsage, '度');
+
+    // 用量预览
+    var preview = document.getElementById('me_usagePreview');
+    var total = coldUsage + hotUsage + electricUsage;
+    if (coldUsage > 0 || hotUsage > 0 || electricUsage > 0) {
+        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><div class="row g-1 mt-1">' +
+            '<div class="col-4">冷水：<span class="fw-bold text-primary">' + coldUsage.toFixed(2) + ' m³</span></div>' +
+            '<div class="col-4">热水：<span class="fw-bold text-info">' + hotUsage.toFixed(2) + ' m³</span></div>' +
+            '<div class="col-4">电：<span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span></div></div>' +
+            '<hr class="my-1"><div class="d-flex justify-content-between"><span class="fw-bold">合计</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span></div>';
+    } else {
+        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>';
+    }
+
+    // 校验：禁用提交按钮如果任一表读数 < 上月
+    var submitBtn = document.getElementById('meSubmitBtn');
+    if (submitBtn) {
+        var hasError = (!isNaN(cold) && meHasPrev && mePrevCold !== null && cold < mePrevCold) ||
+                       (!isNaN(hot) && meHasPrev && mePrevHot !== null && hot < mePrevHot) ||
+                       (!isNaN(electric) && meHasPrev && mePrevElectric !== null && electric < mePrevElectric);
+        submitBtn.disabled = hasError;
+    }
+}
+
+// 照片选择
+function onMePhotoSelected(meterType, input) {
+    var file = input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        if (meterType === 'cold') meSelectColdFile = file;
+        else if (meterType === 'hot') meSelectHotFile = file;
+        else meSelectElectricFile = file;
+
+        var ph = document.getElementById('me_upload_' + meterType);
+        var typeNames = { cold: '冷水', hot: '热水', electric: '电表' };
+        ph.classList.add('has-file');
+        ph.innerHTML = '<img class="upload-thumb" src="' + dataUrl + '"><span id="me_label_' + meterType + '" class="small">已选 ' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB）<i class="bi bi-x-circle ms-1" onclick="clearMePhoto(\'' + meterType + '\', event)"></i></span>';
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearMePhoto(meterType, ev) {
+    if (ev) ev.stopPropagation();
+    document.getElementById('me_photo_' + meterType).value = '';
+    var ph = document.getElementById('me_upload_' + meterType);
+    ph.classList.remove('has-file');
+    var labels = { cold: '上传冷水照片', hot: '上传热水照片', electric: '上传电表照片' };
+    ph.innerHTML = '<i class="bi bi-camera"></i>&nbsp;<span id="me_label_' + meterType + '">' + labels[meterType] + '</span>';
+    if (meterType === 'cold') meSelectColdFile = null;
+    else if (meterType === 'hot') meSelectHotFile = null;
+    else meSelectElectricFile = null;
+}
+
+// 提交手动补录
+async function meSubmit() {
+    var submitBtn = document.getElementById('meSubmitBtn');
+    if (submitBtn.disabled) return;
+    submitBtn.disabled = true;
+    var originalHtml = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> 保存中...';
+
+    var dormCode = document.getElementById('me_dorm').value;
+    var readMonth = document.getElementById('me_month').value;
+    var cold = document.getElementById('me_cold').value;
+    var hot = document.getElementById('me_hot').value;
+    var electric = document.getElementById('me_electric').value;
+    var remark = document.getElementById('me_remark').value;
+
+    if (!dormCode) { alert('请选择宿舍'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+    if (!readMonth) { alert('请选择抄表月份'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+    if (!cold || !hot || !electric) { alert('请录入三表读数'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+
+    // Step 1: 保存读数
+    var fd = new FormData();
+    fd.append('DormCode', dormCode);
+    fd.append('ReadMonth', readMonth);
+    fd.append('ColdMeter', cold);
+    fd.append('HotMeter', hot);
+    fd.append('ElectricMeter', electric);
+    fd.append('Operator', 'admin（后台补录）');
+    fd.append('Remark', remark || '');
+
+    try {
+        var resp = await fetch('/api/meter/manual-entry', {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': CSRF_TOKEN },
+            body: fd
+        });
+        var data = await resp.json();
+        if (!data.success) {
+            alert('❌ ' + (data.message || '保存失败'));
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalHtml;
+            return;
+        }
+
+        var recordId = data.data ? data.data.id : data.recordId;
+        var photoCount = 0, photoOk = 0;
+        var photos = [['cold', meSelectColdFile], ['hot', meSelectHotFile], ['electric', meSelectElectricFile]];
+
+        // Step 2: 依次上传每个照片
+        for (var i = 0; i < photos.length; i++) {
+            var mt = photos[i][0], file = photos[i][1];
+            if (!file) continue;
+            photoCount++;
+            var imgFd = new FormData();
+            imgFd.append('image', file);
+            try {
+                var r = await fetch('/api/v1/pda/image/upload?recordId=' + recordId + '&meterType=' + mt, {
+                    method: 'POST',
+                    headers: { 'RequestVerificationToken': CSRF_TOKEN },
+                    body: imgFd
+                });
+                var j = await r.json();
+                if (j.success) photoOk++;
+                else console.warn('[v2.13.81] ' + mt + ' 上传失败：', j.message);
+            } catch (err) {
+                console.error('[v2.13.81] ' + mt + ' 上传错误：', err);
+            }
+        }
+
+        var msg = (data.message || '操作成功') + (photoCount > 0 ? ('\n📷 上传照片：' + photoOk + '/' + photoCount + ' 成功') : '');
+        alert('✅ ' + msg);
+        bootstrap.Modal.getInstance(document.getElementById('modalManualEntry')).hide();
+        location.reload();
+    } catch (err) {
+        alert('❌ 网络错误：' + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalHtml;
+    }
+}
+
+// 详情 Modal
+async function viewRecord(id) {
+    try {
+        var resp = await fetch(API_BASE + '/' + id);
+        var result = await resp.json();
+        if (result.success) {
+            var data = result.data;
+            document.getElementById('viewDormCode').textContent = data.dormCode;
+            document.getElementById('viewReadMonth').textContent = data.readMonth;
+            document.getElementById('viewColdMeter').textContent = data.coldMeter.toFixed(2) + ' m³';
+            document.getElementById('viewHotMeter').textContent = data.hotMeter.toFixed(2) + ' m³';
+            document.getElementById('viewElectricMeter').textContent = data.electricMeter.toFixed(2) + ' 度';
+            var statusHtml = '';
+            // v2.13.164：JS 详情视图同步用值驱动 3 段
+            if (data.coldMeter > 0 && data.hotMeter > 0 && data.electricMeter > 0) {
+                statusHtml = '<span class="badge bg-success">已抄表</span>';
+            } else if (data.coldMeter > 0 || data.hotMeter > 0 || data.electricMeter > 0) {
+                statusHtml = '<span class="badge bg-danger">抄表中</span>';
+            } else {
+                statusHtml = '<span class="badge bg-warning text-dark">未抄表</span>';
+            }
+            document.getElementById('viewStatus').innerHTML = statusHtml;
+            document.getElementById('viewOperator').textContent = data.operator;
+            document.getElementById('viewRemark').textContent = data.remark || '-';
+            new bootstrap.Modal(document.getElementById('viewModal')).show();
+        }
+    } catch (err) {
+        alert('获取详情失败');
+    }
+}
+
+// 修正 Modal
+function correctRecord(id) {
+    document.getElementById('correctId').value = id;
+    document.getElementById('correctRemark').value = '';
+    new bootstrap.Modal(document.getElementById('correctModal')).show();
+}
+
+async function submitCorrect() {
+    var id = document.getElementById('correctId').value;
+    var remark = document.getElementById('correctRemark').value;
+    try {
+        var resp = await fetch(API_BASE + '/' + id + '/correct', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json; charset=utf-8', 'RequestVerificationToken': CSRF_TOKEN },
+            body: JSON.stringify({ remark: remark })
+        });
+        var result = await resp.json();
+        if (result.success) {
+            bootstrap.Modal.getInstance(document.getElementById('correctModal')).hide();
+            alert('✅ 修正成功');
+            location.reload();
+        } else {
+            alert('❌ ' + (result.message || '修正失败'));
+        }
+    } catch (err) {
+        alert('修正失败');
+    }
+}
+
+async function deleteRecord(id) {
+    if (!confirm('确定删除该记录吗？')) return;
+    try {
+        var resp = await fetch(API_BASE + '/' + id, { method: 'DELETE' });
+        var result = await resp.json();
+        if (result.success) {
+            alert('✅ 删除成功');
+            location.reload();
+        } else {
+            alert('❌ ' + (result.message || '删除失败'));
+        }
+    } catch (err) {
+        alert('删除失败');
+    }
+}
+
+// 绑定宿舍/月份变更事件
+document.addEventListener('DOMContentLoaded', function() {
+    var dormEl = document.getElementById('me_dorm');
+    var monthEl = document.getElementById('me_month');
+    if (dormEl) dormEl.addEventListener('change', onMeDormMonthChange);
+    if (monthEl) monthEl.addEventListener('change', onMeDormMonthChange);
+});
+</script>
+}
+
+<style>
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+
+    /* 未完成行高亮 */
+    .table-warning {
+        background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+
+    /* v2.13.81 1:1 原型对齐：手动补录 Modal 紧凑样式 */
+    .modal-body .form-section { margin-bottom: 0.6rem; }
+    .modal-body .form-section-title { font-size: 0.85rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.4rem; }
+    .modal-body .form-field { margin-bottom: 0.5rem; }
+    .modal-body .form-label { font-size: 0.85rem; font-weight: 500; color: #495057; margin-bottom: 0.2rem; }
+    .modal-body .form-label .required { color: #dc3545; margin-left: 2px; }
+    .modal-body .form-control, .modal-body .form-select { border-radius: 6px; padding: 0.375rem 0.75rem; font-size: 0.9rem; }
+    .meter-card { border-left: 3px solid #1976d2; }
+    .upload-ph {
+        height: 50px;
+        border: 2px dashed #cfd8dc;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #90a4ae;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+    .upload-ph:hover { border-color: #1976d2; color: #1976d2; }
+    .upload-ph.has-file { border-color: #198754; color: #198754; border-style: solid; }
+    .upload-ph img.upload-thumb { max-width: 36px; max-height: 36px; border-radius: 4px; object-fit: cover; margin-right: 6px; }
+</style>

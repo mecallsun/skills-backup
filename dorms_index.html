@@ -1,0 +1,1083 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x5BBF;&#x820D;&#x7BA1;&#x7406; - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* ===== 全局样式 ===== */
+        body {
+            font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        /* v2.13.165：所有列表页按键区（page-header-actions）靠右 + 强制一行排列 + 按钮不换行 */
+        .page-header-actions { flex-wrap: nowrap; overflow-x: auto; }
+        .page-header-actions .btn { white-space: nowrap; flex-shrink: 0; }
+        .page-header h2 { flex-shrink: 1; min-width: 0; }
+
+        /* ===== Tier 1: 顶部品牌栏 (48px) ===== */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            height: 48px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+        }
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+        .top-bar .brand-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .brand-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .top-bar .brand-version {
+            font-size: 0.7rem;
+            color: #9e9e9e;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .top-bar .user-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .top-bar .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 24px;
+            background: #f5f7fa;
+            color: #333;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .top-bar .user-pill:hover { background: #e8eaed; }
+        .top-bar .user-pill i { color: #1976d2; }
+        .top-bar .logout-btn {
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            color: #666;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .top-bar .logout-btn:hover { border-color: #e53935; color: #e53935; }
+
+        /* ===== Tier 2: Tab 页签栏 (45px) ===== */
+        .tab-bar {
+            height: 45px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c0c0c0 transparent;
+        }
+        .tab-bar::-webkit-scrollbar { height: 4px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #c0c0c0; height: 4px; border-radius: 2px; }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            min-width: 100px;
+            max-width: 240px;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-item:hover {
+            background: rgba(25,118,210,0.04);
+            color: #1976d2;
+        }
+        .tab-item .tab-icon { font-size: 1.15rem; flex-shrink: 0; }
+        .tab-item.active {
+            font-weight: 600;
+            background: #fff;
+            z-index: 1;
+        }
+        .tab-item[data-module="booking"].active,
+        .tab-item[data-module="dorms"].active { color: #1976d2; border-bottom-color: #1976d2; }
+        .tab-item[data-module="personnel"].active { color: #2e7d32; border-bottom-color: #2e7d32; }
+        .tab-item[data-module="billing"].active,
+        .tab-item[data-module="dorm-bills"].active,
+        .tab-item[data-module="employee-bills"].active { color: #e65100; border-bottom-color: #e65100; }
+        .tab-item[data-module="meter"].active { color: #00838f; border-bottom-color: #00838f; }
+        .tab-item[data-module="basics"].active,
+        .tab-item[data-module="settings"].active { color: #546e7a; border-bottom-color: #546e7a; }
+
+        /* ===== Tier 3: 页面内容区 ===== */
+        .page-content {
+            padding: 1rem 1.25rem;
+            min-height: calc(100vh - 48px - 45px);
+            background: #f5f7fa;
+        }
+
+        /* ===== 页面页头 ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-header h2 .header-icon { font-size: 1.4rem; color: #1976d2; }
+        .page-header .header-count { font-size: 0.85rem; color: #6c757d; font-weight: 400; }
+
+        /* ===== 筛选区 ===== */
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .filter-item { flex-shrink: 0; }
+        .filter-item:first-child { min-width: 180px; }
+        .filter-item:not(:first-child) { min-width: 120px; }
+        .filter-item label.form-label { font-size: 0.78rem; color: #607d8b; margin-bottom: 0.15rem; }
+        .filter-item .form-control,
+        .filter-item .form-select {
+            height: 34px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .filter-btn {
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            cursor: pointer !important;
+        }
+        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+        .btn-primary.filter-btn,
+        .btn-primary.filter-btn:hover,
+        .btn-primary.filter-btn:focus,
+        button.btn-primary.filter-btn {
+            background: #1976d2 !important;
+            border-color: #1976d2 !important;
+            color: #fff !important;
+        }
+        .btn-primary.filter-btn:hover,
+        button.btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn,
+        .btn-outline-secondary.filter-btn:hover,
+        .btn-outline-secondary.filter-btn:focus,
+        button.btn-outline-secondary.filter-btn,
+        a.btn-outline-secondary.filter-btn {
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background: #fff !important;
+        }
+        .btn-outline-secondary.filter-btn:hover,
+        button.btn-outline-secondary.filter-btn:hover,
+        a.btn-outline-secondary.filter-btn:hover {
+            background: #f8f9fa !important;
+            color: #495057 !important;
+            border-color: #ced4da !important;
+        }
+
+        /* ===== 筛选区：统计/班组/按钮容器 ===== */
+        .filter-card .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+        .filter-card .filter-item-team {
+            min-width: 108px !important;
+            max-width: 120px !important;
+        }
+        .filter-card .filter-item-btn {
+            display: flex !important;
+            align-items: flex-end !important;
+            min-height: 60px !important;
+        }
+        .filter-card .filter-row {
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+
+        /* ===== 列表卡片 ===== */
+        .content-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .content-card .table {
+            margin-bottom: 0;
+        }
+        .content-card .table thead th {
+            background: #f8f9fa;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e8eaed;
+            padding: 0.65rem 0.75rem;
+        }
+        .content-card .table tbody td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.75rem;
+        }
+        .content-card .table-hover tbody tr:hover { background: #f8f9ff; }
+
+        /* ===== 分页页尾 ===== */
+        .pagination-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #e8eaed;
+            background: #fafbfc;
+            border-radius: 0 0 8px 8px;
+        }
+        .pagination-footer .page-info {
+            font-size: 0.82rem;
+            color: #6c757d;
+        }
+        .pagination-footer .page-info strong { color: #333; }
+
+        /* ===== Badge 样式 ===== */
+        .badge {
+            font-size: 0.75em;
+            padding: 0.35em 0.65em;
+            line-height: 1;
+            border-radius: 0.375rem;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .top-bar { padding: 0 0.75rem; }
+            .top-bar .brand-text { font-size: 1rem; }
+            .tab-item { min-width: 80px; padding: 0.65rem 0.85rem; font-size: 0.82rem; }
+            .filter-row { flex-wrap: wrap; }
+            .filter-item,
+            .filter-item-stats,
+            .filter-item-team { min-width: calc(50% - 8px) !important; max-width: none !important; }
+            .filter-item:first-child { min-width: 100% !important; }
+            .page-content { padding: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tier 1: 顶部品牌栏 -->
+    <div b-7qkhyzkv64 class="top-bar">
+        <a b-7qkhyzkv64 href="/" class="brand">
+            <i b-7qkhyzkv64 class="bi bi-droplet-half brand-icon"></i>
+            <span b-7qkhyzkv64 class="brand-text">金戈宿舍管理系统</span>
+            <span b-7qkhyzkv64 class="brand-version">v2.13.71</span>
+        </a>
+        <div b-7qkhyzkv64 class="user-area">
+            <!-- v2.13.32：连接健康徽章（每 30s 轮询 runtime-info） -->
+            <span b-7qkhyzkv64 id="dbIndicator" class="badge bg-info" title="点击刷新数据库连接信息" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                <i b-7qkhyzkv64 class="bi bi-database"></i> <span b-7qkhyzkv64 id="dbIndicatorText">加载中...</span>
+            </span>
+            <a b-7qkhyzkv64 href="/Account/Profile" class="user-pill">
+                <i b-7qkhyzkv64 class="bi bi-person-circle"></i>
+                &#x7CFB;&#x7EDF;&#x7BA1;&#x7406;&#x5458;
+            </a>
+            <a b-7qkhyzkv64 href="/Account/Logout" class="logout-btn">
+                <i b-7qkhyzkv64 class="bi bi-box-arrow-right"></i> 退出
+            </a>
+        </div>
+    </div>
+
+    <!-- Tier 2: Tab 页签栏（v2.13.76 RBAC 三级权限控制：按当前用户权限过滤） -->
+    <div b-7qkhyzkv64 class="tab-bar" role="tablist">
+        
+        <a class="tab-item active"
+           data-tab-id="tab-home-view"
+           data-module="home:view"
+           data-url="/"
+           href="/"
+           data-permission="home:view"
+           title="&#x9996;&#x9875;&#x770B;&#x677F;">
+            <i class="bi bi-speedometer2 tab-icon"></i> &#x9996;&#x9875;&#x770B;&#x677F;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-booking-view"
+           data-module="booking:view"
+           data-url="/Booking"
+           href="/Booking"
+           data-permission="booking:view"
+           title="&#x529E;&#x7406;&#x767B;&#x8BB0;">
+            <i class="bi bi-clipboard-check tab-icon"></i> &#x529E;&#x7406;&#x767B;&#x8BB0;
+        </a>
+        <a class="tab-item active"
+           data-tab-id="tab-dorm-view"
+           data-module="dorm:view"
+           data-url="/Dorms"
+           href="/Dorms"
+           data-permission="dorm:view"
+           title="&#x5BBF;&#x820D;&#x7BA1;&#x7406;">
+            <i class="bi bi-building tab-icon"></i> &#x5BBF;&#x820D;&#x7BA1;&#x7406;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-personnel-view"
+           data-module="personnel:view"
+           data-url="/Personnel"
+           href="/Personnel"
+           data-permission="personnel:view"
+           title="&#x4EBA;&#x5458;&#x6E05;&#x5355;">
+            <i class="bi bi-people tab-icon"></i> &#x4EBA;&#x5458;&#x6E05;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-billing-view"
+           data-module="billing:view"
+           data-url="/BillingStandard"
+           href="/BillingStandard"
+           data-permission="billing:view"
+           title="&#x8D39;&#x7528;&#x6807;&#x51C6;">
+            <i class="bi bi-currency-dollar tab-icon"></i> &#x8D39;&#x7528;&#x6807;&#x51C6;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dormbilling-view"
+           data-module="dormbilling:view"
+           data-url="/DormBilling"
+           href="/DormBilling"
+           data-permission="dormbilling:view"
+           title="&#x5BBF;&#x820D;&#x8D26;&#x5355;">
+            <i class="bi bi-receipt tab-icon"></i> &#x5BBF;&#x820D;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-employeebilling-view"
+           data-module="employeebilling:view"
+           data-url="/EmployeeBilling"
+           href="/EmployeeBilling"
+           data-permission="employeebilling:view"
+           title="&#x5458;&#x5DE5;&#x8D26;&#x5355;">
+            <i class="bi bi-wallet2 tab-icon"></i> &#x5458;&#x5DE5;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-meter-view"
+           data-module="meter:view"
+           data-url="/Meter"
+           href="/Meter"
+           data-permission="meter:view"
+           title="&#x667A;&#x80FD;&#x6284;&#x8868;">
+            <i class="bi bi-gauge tab-icon"></i> &#x667A;&#x80FD;&#x6284;&#x8868;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-basics-view"
+           data-module="basics:view"
+           data-url="/Basics"
+           href="/Basics"
+           data-permission="basics:view"
+           title="&#x57FA;&#x7840;&#x8D44;&#x6599;">
+            <i class="bi bi-database tab-icon"></i> &#x57FA;&#x7840;&#x8D44;&#x6599;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-settings-view"
+           data-module="settings:view"
+           data-url="/Settings"
+           href="/Settings"
+           data-permission="settings:view"
+           title="&#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;">
+            <i class="bi bi-gear tab-icon"></i> &#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;
+        </a>
+
+    </div>
+
+    <!-- Tier 3: 页面内容区 -->
+    <div b-7qkhyzkv64 class="page-content">
+        
+<div class="container-fluid">
+    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    
+<!-- 共用页头（P2-1）：图标 + 标题 + 总数 + 操作按钮 + 可选 Tab -->
+<div class="page-header mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0 d-flex align-items-center">
+                <i class="bi bi-building me-2"></i>
+            <span>&#x5BBF;&#x820D;&#x6863;&#x6848;</span>
+                <span class="badge bg-secondary ms-2">140 &#x95F4;</span>
+        </h2>
+        <div class="d-flex align-items-center gap-2 page-header-actions flex-nowrap">
+                    <a href="/Dorms/Create" class="btn btn-success btn-sm text-nowrap">
+                            <i class="bi bi-plus-lg"></i>
+                        &#x65B0;&#x589E;&#x5BBF;&#x820D;
+                    </a>
+        </div>
+    </div>
+
+</div>
+
+    <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->
+    <form method="get" class="card mb-3 filter-card" data-filter-form="dorms">
+        <div class="card-body py-2">
+            <div class="row g-2 align-items-end flex-nowrap filter-row">
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼栋</label>
+                    <select name="BuildingId" class="form-select">
+                        <option value="">全部</option>
+                            <option value="1">A&#x680B;</option>
+                            <option value="2">B&#x680B;</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">楼层</label>
+                    <input type="number" name="FloorNo" class="form-control" placeholder="如：3" min="1" max="99">
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">状态</label>
+                    <select name="IsActive" class="form-select">
+                        <option value="">全部</option>
+                        <option value="true">启用</option>
+                        <option value="false">停用</option>
+                    </select>
+                </div>
+                <div class="col-auto filter-item">
+                    <label class="form-label mb-1">关键词</label>
+                    <input type="text" name="Keyword" class="form-control" placeholder="房号/地址">
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                </div>
+                <div class="col-auto filter-item filter-item-btn">
+                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('dorms')">
+                        <i class="bi bi-arrow-clockwise"></i> 重置
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- 列表 -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">序号</th>
+                            <th>房号</th>
+                            <th>楼栋</th>
+                            <th>楼层</th>
+                            <th>地址</th>
+                            <th class="text-center">性别</th>
+                            <th class="text-center">房间数</th>
+                            <th class="text-center d-none">容量</th>
+                            <th class="text-center d-none">在住人数</th>
+                            <th class="text-center" style="min-width:140px">班次</th>
+                            <th class="text-center" style="min-width:120px">班组</th>
+                            <th class="text-center" style="min-width:120px">使用率</th>
+                            <th class="text-center">状态</th>
+                            <th width="220" class="text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                                <tr>
+                                    <td class="text-center text-muted">1</td>
+                                    <td><strong>A101</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-danger" title="女 2 人">女</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">B</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=1" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=1" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(1)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">2</td>
+                                    <td><strong>A102</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 2 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">D</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=2" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=2" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(2)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">3</td>
+                                    <td><strong>A103</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">-</span>
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">-</span>
+                                                <span class="badge bg-primary me-1">D</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=3" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=3" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(3)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">4</td>
+                                    <td><strong>A104</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">B</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=4" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=4" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(4)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">5</td>
+                                    <td><strong>A105</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">C</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=5" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=5" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(5)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">6</td>
+                                    <td><strong>A106</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x65E9;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">A</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=6" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=6" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(6)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">7</td>
+                                    <td><strong>A107</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x65E9;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">A</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=7" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=7" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(7)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">8</td>
+                                    <td><strong>A108</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x665A;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">J</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=8" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=8" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(8)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">9</td>
+                                    <td><strong>A109</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">C</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=9" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=9" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(9)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center text-muted">10</td>
+                                    <td><strong>A110</strong></td>
+                                    <td>A&#x680B;</td>
+                                    <td>1 楼</td>
+                                    <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                                    <td class="text-center">
+                                            <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                    </td>
+                                    <td class="text-center">1</td>
+                                    <td class="text-center d-none">***</td>
+                                    <td class="text-center d-none">
+                                            <span>***</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-info text-dark me-1">&#x4E2D;</span>
+                                    </td>
+                                    <td class="text-center">
+                                                <span class="badge bg-primary me-1">C</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="progress" style="height: 18px; min-width: 80px;">
+                                            <div class="progress-bar bg-danger" style="width: 100%">100%</div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                            <span class="badge bg-success">启用</span>
+                                    </td>
+                                    <td class="text-center">
+                                            <a href="/Dorms/Details?id=10" class="btn btn-sm btn-outline-info" data-return-list>详情</a>
+                                            <a href="/Dorms/Edit?id=10" class="btn btn-sm btn-outline-primary" data-return-list>修改</a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dormModal" onclick="openDormModal(10)" title="在弹窗中编辑">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                    </td>
+                                </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 页尾分页（v2.13.71 100% 原型对齐） -->
+            
+    <div class="card-footer d-flex justify-content-between align-items-center pagination-footer" style="background: #f8f9fa; border-top: 1px solid #e9ecef; padding: 8px 16px;">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                <i class="bi bi-list-ol"></i> 共 <strong>140</strong> 条 ·
+                第 <strong>1-10</strong> 条 ·
+                共 <strong>14</strong> 页
+            </span>
+            <span class="text-muted small ms-2">|</span>
+            <span class="text-muted small">每页</span>
+            <select class="form-select form-select-sm page-size-select" style="width: 70px;" onchange="changePageSize(this.value)">
+                <option value="10" selected="selected">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <span class="text-muted small">条</span>
+        </div>
+
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+
+                            <li class="page-item active">
+                                <a class="page-link" href="/Dorms?pageIndex=1">1</a>
+                            </li>
+                            <li class="page-item ">
+                                <a class="page-link" href="/Dorms?pageIndex=2">2</a>
+                            </li>
+                            <li class="page-item ">
+                                <a class="page-link" href="/Dorms?pageIndex=3">3</a>
+                            </li>
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                            <li class="page-item ">
+                                <a class="page-link" href="/Dorms?pageIndex=14">14</a>
+                            </li>
+
+                        <li class="page-item">
+                            <a class="page-link" href="/Dorms?pageIndex=2" aria-label="下一页">&raquo;</a>
+                        </li>
+                </ul>
+            </nav>
+    </div>
+    <script>
+        (function () {
+            var moduleKey = (location.pathname || '').split('/').filter(Boolean).pop() || 'list';
+
+            // v2.13.99 BUG 修复：移除 JS 启动回退逻辑
+            // v2.13.104 二次修复：移除 localStorage 写入（v2.13.99 后不再读取，写入是冗余）
+            // 用户主动选择 pageSize → URL 跳转（?pageSize=N），PageModel 绑定即生效
+            window.changePageSize = function (newSize) {
+                var url = new URL(location.href);
+                url.searchParams.set('pageSize', newSize);
+                url.searchParams.set('pageIndex', '1');
+                location.href = url.toString();
+            };
+        })();
+    </script>
+
+        </div>
+    </div>
+</div>
+
+
+<!-- v2.13.11 宿舍新增/编辑 Modal 弹窗（iframe 复用独立页面，避免表单代码重复） -->
+<div class="modal fade" id="dormModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
+        <div class="modal-content">
+            <div class="modal-header py-2">
+                <h5 class="modal-title" id="dormModalTitle"><i class="bi bi-plus-circle text-success"></i> 新增宿舍</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="dormModalFrame" src="" style="width: 100%; height: 70vh; border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* 表格样式优化 */
+    .table th {
+        white-space: nowrap;
+        font-weight: 500;
+    }
+
+    .table td {
+        vertical-align: middle;
+    }
+
+    /* 分页样式 */
+    .pagination-footer {
+        background: transparent;
+        border: none;
+        padding: 0.75rem 0 0 0;
+    }
+
+    .pagination .page-link {
+        min-width: 32px;
+        text-align: center;
+    }
+</style>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- v2.13.11 全局筛选条件持久化（localStorage） -->
+    <script src="/js/filter-persistence.js"></script>
+    <!-- v2.13.88 列表 → 详情/编辑 返回路径记忆（全局） -->
+    <script src="/js/return-url.js"></script>
+    
+<script>
+    function deleteDorm(id, code) {
+        if (!confirm('确定删除宿舍 "' + code + '" 吗？此操作不可恢复。')) return;
+        const f = document.createElement('form');
+        f.method = 'post';
+        f.action = '/Dorms?handler=Delete&id=' + id;
+        const t = document.querySelector('input[name="__RequestVerificationToken"]');
+        if (t) f.appendChild(t.cloneNode());
+        document.body.appendChild(f);
+        f.submit();
+    }
+    // v2.13.117 「新增宿舍」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
+    //   原 Modal 弹窗 + iframe 模式保留给行内「编辑」按钮使用（OPT-1 优化项，行 179-181）
+    function openDormModal(id) {
+        var url = id > 0 ? '/Dorms/Edit?id=' + id + '&inModal=1' : '/Dorms/Create?inModal=1';
+        var frame = document.getElementById('dormModalFrame');
+        frame.src = url;
+        var title = document.getElementById('dormModalTitle');
+        title.innerHTML = id > 0
+            ? '<i class="bi bi-pencil-square text-primary"></i> 编辑宿舍'
+            : '<i class="bi bi-plus-circle text-success"></i> 新增宿舍';
+    }
+    // 监听 iframe 提交完成事件（Create/Edit 页面保存后跳转到 /Dorms，弹窗需关闭）
+    var modalEl = document.getElementById('dormModal');
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        // 关闭后刷新当前页（保留筛选状态）
+        var f = document.querySelector('[data-filter-form="dorms"]');
+        if (f) f.submit();
+    });
+</script>
+
+    <script>
+        // Tab 激活态键盘快捷键（Ctrl+1~9 切换 Tab 1~9, Ctrl+0 切换 Tab 10）
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.altKey) {
+                var num = parseInt(e.key);
+                if (num >= 0 && num <= 9) {
+                    var idx = num === 0 ? 9 : num - 1;
+                    var tabs = document.querySelectorAll('.tab-item');
+                    if (tabs[idx]) tabs[idx].click();
+                }
+            }
+        });
+
+        // v2.13.32：连接健康徽章轮询 + 点击刷新
+        (function() {
+            var elText = document.getElementById('dbIndicatorText');
+            var elBadge = document.getElementById('dbIndicator');
+            if (!elText || !elBadge) return;
+            function loadRuntimeInfo() {
+                fetch('/api/v1/system/dbconfig/runtime-info')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(j) {
+                        if (j && j.success && j.data) {
+                            elText.textContent = (j.data.server || '?') + '/' + (j.data.database || '?');
+                            elBadge.title = 'Provider: ' + j.data.provider + '\n最后重载: ' + new Date(j.data.lastReloadedAt).toLocaleString();
+                        } else {
+                            elText.textContent = '离线';
+                        }
+                    })
+                    .catch(function() { elText.textContent = '离线'; });
+            }
+            loadRuntimeInfo();
+            setInterval(loadRuntimeInfo, 30000);
+            elBadge.addEventListener('click', loadRuntimeInfo);
+            window.refreshDbIndicator = loadRuntimeInfo;
+        })();
+    </script>
+</body>
+</html>

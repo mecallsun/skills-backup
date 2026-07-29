@@ -52,4 +52,13 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
   </ItemGroup>
+
+  <!-- v2.13.25：版本号集中定义（强制递增规范） -->
+  <PropertyGroup>
+    <Version>2.13.25</Version>
+    <AssemblyVersion>2.13.25</AssemblyVersion>
+    <FileVersion>2.13.25</FileVersion>
+    <InformationalVersion>v2.13.25</InformationalVersion>
+  </PropertyGroup>
+
 </Project>

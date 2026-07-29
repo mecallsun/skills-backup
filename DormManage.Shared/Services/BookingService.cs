@@ -1179,7 +1179,7 @@ public class BookingService : IBookingService
                 AttendanceTypeCode = x.AttendanceType != null ? x.AttendanceType.Code : null,
                 Gender = x.Gender,
                 // v2.13.113: 班组 FK 关联（SysEmployee.TeamId → Team.Name）
-                TeamId = x.TeamId,
+                TeamId = x.TeamId ?? 0,
                 TeamName = x.Team != null ? x.Team.Name : null
             })
             .ToListAsync();
@@ -1195,7 +1195,7 @@ public class BookingService : IBookingService
             .FirstOrDefaultAsync();
         if (employee == null) return new List<DormOption>();
         int empGender = employee.Gender;
-        int empTeamId = employee.TeamId;
+        int empTeamId = employee.TeamId ?? 0;
         int? empAttId = employee.AttendanceTypeId;
 
         // v2.13.84 性别分布：JOIN DormBookings(Status=2) → SysEmployee 拿在宿人员 Gender 分布

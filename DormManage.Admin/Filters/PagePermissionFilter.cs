@@ -54,25 +54,35 @@ public class PagePermissionFilter : IAsyncPageFilter
         var userId = context.HttpContext.GetCurrentUserId();
         if (userId <= 0) return next();  // 未登录交给 [Authorize] 跳转
 
-        // 首页允许任何登录用户访问（home:view 是 admin 默认权限，但 finance/pda/viewer 角色可能未授予）
-        // 我们做软降级：若当前用户没有任何菜单权限，跳到登录页 + 提示
-        if (path == "/" || path == "")
+        // v2.13.198 修复：try-catch 兜底，防止权限查询异常导致整个页面 Error
+        try
         {
-            if (!_perm.CurrentUserHasCode(_http, "home:view"))
+            // 首页允许任何登录用户访问（v2.13.199：始终放行，不检查 home:view）
+            // 修复：避免 admin 登录后被错误地 DenyAccess 重定向到 Login（可能引发"无可见菜单"循环）
+            if (path == "/" || path == "")
+            {
+                // 即使没有 home:view 权限，也允许已登录用户访问首页
+                // 用户可手动在设置中分配权限
+                return next();
+            }
+
+            // 路由守卫：取首段作为模块 key
+            var moduleKey = path.TrimStart('/').Split('/', 2)[0];
+            var requiredPermission = ModulePermissionMap.GetValueOrDefault(moduleKey);
+            if (requiredPermission == null)
+                return next(); // 未知模块（/Account/* 等已白名单放过）
+
+            if (!_perm.CurrentUserHasRoute(_http, $"/{moduleKey}"))
+            {
                 DenyAccess(context);
-            return next();
+                return Task.CompletedTask; // 拒绝后不再调用 next（context.Result 已设置）
+            }
         }
-
-        // 路由守卫：取首段作为模块 key
-        var moduleKey = path.TrimStart('/').Split('/', 2)[0];
-        var requiredPermission = ModulePermissionMap.GetValueOrDefault(moduleKey);
-        if (requiredPermission == null)
-            return next(); // 未知模块（/Account/* 等已白名单放过）
-
-        if (!_perm.CurrentUserHasRoute(_http, $"/{moduleKey}"))
+        catch (Exception ex)
         {
-            DenyAccess(context);
-            return Task.CompletedTask; // 拒绝后不再调用 next（context.Result 已设置）
+            // 权限查询异常时记录日志并放行（避免整个页面崩溃）
+            var logger = context.HttpContext.RequestServices.GetService<ILoggerFactory>()?.CreateLogger("PagePermissionFilter");
+            logger?.LogWarning(ex, "[RBAC] 权限检查异常，放行访问 {Path}", path);
         }
 
         return next();

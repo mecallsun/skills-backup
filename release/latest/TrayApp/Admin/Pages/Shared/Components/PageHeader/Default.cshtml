@@ -1,0 +1,122 @@
+@model DormManage.Admin.ViewComponents.PageHeaderModel
+@using DormManage.Admin.Extensions
+@inject DormManage.Shared.Services.IPermissionService PermService
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
+@{
+    var btnClass = (Model.PrimaryAction?.Style) switch
+    {
+        "primary" => "btn-primary",
+        "success" => "btn-success",
+        "danger" => "btn-danger",
+        "warning" => "btn-warning",
+        _ => "btn-primary"
+    };
+
+    // v2.13.76 RBAC：检查 PageAction.PermissionCode（空 = 不限制，始终显示）
+    bool HasPerm(string? code) => string.IsNullOrEmpty(code) || PermService.CurrentUserHasCode(HttpAccessor, code);
+}
+
+<!-- 共用页头（P2-1）：图标 + 标题 + 总数 + 操作按钮 + 可选 Tab -->
+<div class="page-header mb-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0 d-flex align-items-center">
+            @if (!string.IsNullOrEmpty(Model.Icon))
+            {
+                <i class="bi @Model.Icon me-2"></i>
+            }
+            <span>@Model.Title</span>
+            @if (Model.Count.HasValue)
+            {
+                <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
+            }
+        </h2>
+        <div class="d-flex align-items-center gap-2 page-header-actions flex-nowrap">
+            @if (Model.PrimaryAction is not null && HasPerm(Model.PrimaryAction.PermissionCode))
+            {
+                @if (!string.IsNullOrEmpty(Model.PrimaryAction.Url))
+                {
+                    <a href="@Model.PrimaryAction.Url" class="btn @btnClass btn-sm text-nowrap">
+                        @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
+                        {
+                            <i class="bi @Model.PrimaryAction.Icon"></i>
+                        }
+                        @Model.PrimaryAction.Label
+                    </a>
+                }
+                else if (!string.IsNullOrEmpty(Model.PrimaryAction.OnClick))
+                {
+                    <button class="btn @btnClass btn-sm text-nowrap" onclick="@Model.PrimaryAction.OnClick">
+                        @if (!string.IsNullOrEmpty(Model.PrimaryAction.Icon))
+                        {
+                            <i class="bi @Model.PrimaryAction.Icon"></i>
+                        }
+                        @Model.PrimaryAction.Label
+                    </button>
+                }
+            }
+            @foreach (var action in Model.Actions.Where(a => HasPerm(a.PermissionCode)))
+            {
+                var styleClass = action.Style switch
+                {
+                    "primary" => "btn-outline-primary",
+                    "success" => "btn-outline-success",
+                    "danger" => "btn-outline-danger",
+                    "warning" => "btn-outline-warning",
+                    @* v2.13.40 修复：actions 增加 info 样式支持（导入按钮等使用，避免回退为灰色） *@
+                    "info" => "btn-info text-white",
+                    "secondary" => "btn-outline-secondary",
+                    _ => "btn-outline-secondary"
+                };
+                @* v2.13.38: actions 同时支持 Url 和 OnClick 渲染（之前 OnClick 按钮不显示） *@
+                @if (!string.IsNullOrEmpty(action.Url))
+                {
+                    <a href="@action.Url" class="btn @styleClass btn-sm text-nowrap">
+                        @if (!string.IsNullOrEmpty(action.Icon))
+                        {
+                            <i class="bi @action.Icon"></i>
+                        }
+                        @action.Label
+                    </a>
+                }
+                else if (!string.IsNullOrEmpty(action.OnClick))
+                {
+                    <button type="button" class="btn @styleClass btn-sm text-nowrap" onclick="@action.OnClick">
+                        @if (!string.IsNullOrEmpty(action.Icon))
+                        {
+                            <i class="bi @action.Icon"></i>
+                        }
+                        @action.Label
+                    </button>
+                }
+            }
+            @if (!string.IsNullOrEmpty(Model.Subtitle))
+            {
+                <small class="text-muted">@Model.Subtitle</small>
+            }
+        </div>
+    </div>
+
+    @if (Model.Tabs.Any())
+    {
+        <ul class="nav nav-tabs mt-3">
+            @foreach (var tab in Model.Tabs)
+            {
+                var isActive = Model.ActiveTab == tab.Key || (string.IsNullOrEmpty(Model.ActiveTab) && Model.Tabs.IndexOf(tab) == 0);
+                <li class="nav-item">
+                    <a class="nav-link @(isActive ? "active" : "")"
+                       href="?tab=@tab.Key">
+                        @if (!string.IsNullOrEmpty(tab.Icon))
+                        {
+                            <i class="bi @tab.Icon"></i>
+                        }
+                        @tab.Label
+                        @if (!string.IsNullOrEmpty(tab.Badge))
+                        {
+                            <span class="badge @(tab.BadgeColor == 1 ? "bg-warning" : tab.BadgeColor == 2 ? "bg-danger" : tab.BadgeColor == 3 ? "bg-info" : "bg-secondary") ms-1">@tab.Badge</span>
+                        }
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</div>

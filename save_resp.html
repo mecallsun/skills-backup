@@ -1,0 +1,2192 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E; - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        .settings-nav .nav-link {
+            color: #37474f;
+            border-radius: 8px;
+            padding: 0.55rem 0.9rem;
+        }
+        .settings-nav .nav-link.active { background: #1976d2; color: #fff; }
+        .settings-nav .nav-link:not(.active):hover { background: #e9f1fb; }
+        .form-label.small { color: #607d8b; }
+        .status-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+        .dot-run { background: #28a745; }
+        .dot-stop { background: #dc3545; }
+        .step-line { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .db-test-step { opacity: 0; transition: opacity 0.3s; }
+        .db-test-step.visible { opacity: 1; }
+    </style>
+
+    <style>
+        /* ===== 全局样式 ===== */
+        body {
+            font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        /* v2.13.165：所有列表页按键区（page-header-actions）靠右 + 强制一行排列 + 按钮不换行 */
+        .page-header-actions { flex-wrap: nowrap; overflow-x: auto; }
+        .page-header-actions .btn { white-space: nowrap; flex-shrink: 0; }
+        .page-header h2 { flex-shrink: 1; min-width: 0; }
+
+        /* ===== Tier 1: 顶部品牌栏 (48px) ===== */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            height: 48px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+        }
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+        .top-bar .brand-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .brand-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .top-bar .brand-version {
+            font-size: 0.7rem;
+            color: #9e9e9e;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .top-bar .user-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .top-bar .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 24px;
+            background: #f5f7fa;
+            color: #333;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .top-bar .user-pill:hover { background: #e8eaed; }
+        .top-bar .user-pill i { color: #1976d2; }
+        .top-bar .logout-btn {
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            color: #666;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .top-bar .logout-btn:hover { border-color: #e53935; color: #e53935; }
+
+        /* ===== Tier 2: Tab 页签栏 (45px) ===== */
+        .tab-bar {
+            height: 45px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c0c0c0 transparent;
+        }
+        .tab-bar::-webkit-scrollbar { height: 4px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #c0c0c0; height: 4px; border-radius: 2px; }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            min-width: 100px;
+            max-width: 240px;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-item:hover {
+            background: rgba(25,118,210,0.04);
+            color: #1976d2;
+        }
+        .tab-item .tab-icon { font-size: 1.15rem; flex-shrink: 0; }
+        .tab-item.active {
+            font-weight: 600;
+            background: #fff;
+            z-index: 1;
+        }
+        .tab-item[data-module="booking"].active,
+        .tab-item[data-module="dorms"].active { color: #1976d2; border-bottom-color: #1976d2; }
+        .tab-item[data-module="personnel"].active { color: #2e7d32; border-bottom-color: #2e7d32; }
+        .tab-item[data-module="billing"].active,
+        .tab-item[data-module="dorm-bills"].active,
+        .tab-item[data-module="employee-bills"].active { color: #e65100; border-bottom-color: #e65100; }
+        .tab-item[data-module="meter"].active { color: #00838f; border-bottom-color: #00838f; }
+        .tab-item[data-module="basics"].active,
+        .tab-item[data-module="settings"].active { color: #546e7a; border-bottom-color: #546e7a; }
+
+        /* ===== Tier 3: 页面内容区 ===== */
+        .page-content {
+            padding: 1rem 1.25rem;
+            min-height: calc(100vh - 48px - 45px);
+            background: #f5f7fa;
+        }
+
+        /* ===== 页面页头 ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-header h2 .header-icon { font-size: 1.4rem; color: #1976d2; }
+        .page-header .header-count { font-size: 0.85rem; color: #6c757d; font-weight: 400; }
+
+        /* ===== 筛选区 ===== */
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .filter-item { flex-shrink: 0; }
+        .filter-item:first-child { min-width: 180px; }
+        .filter-item:not(:first-child) { min-width: 120px; }
+        .filter-item label.form-label { font-size: 0.78rem; color: #607d8b; margin-bottom: 0.15rem; }
+        .filter-item .form-control,
+        .filter-item .form-select {
+            height: 34px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .filter-btn {
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            cursor: pointer !important;
+        }
+        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+        .btn-primary.filter-btn,
+        .btn-primary.filter-btn:hover,
+        .btn-primary.filter-btn:focus,
+        button.btn-primary.filter-btn {
+            background: #1976d2 !important;
+            border-color: #1976d2 !important;
+            color: #fff !important;
+        }
+        .btn-primary.filter-btn:hover,
+        button.btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn,
+        .btn-outline-secondary.filter-btn:hover,
+        .btn-outline-secondary.filter-btn:focus,
+        button.btn-outline-secondary.filter-btn,
+        a.btn-outline-secondary.filter-btn {
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background: #fff !important;
+        }
+        .btn-outline-secondary.filter-btn:hover,
+        button.btn-outline-secondary.filter-btn:hover,
+        a.btn-outline-secondary.filter-btn:hover {
+            background: #f8f9fa !important;
+            color: #495057 !important;
+            border-color: #ced4da !important;
+        }
+
+        /* ===== 筛选区：统计/班组/按钮容器 ===== */
+        .filter-card .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+        .filter-card .filter-item-team {
+            min-width: 108px !important;
+            max-width: 120px !important;
+        }
+        .filter-card .filter-item-btn {
+            display: flex !important;
+            align-items: flex-end !important;
+            min-height: 60px !important;
+        }
+        .filter-card .filter-row {
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+
+        /* ===== 列表卡片 ===== */
+        .content-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .content-card .table {
+            margin-bottom: 0;
+        }
+        .content-card .table thead th {
+            background: #f8f9fa;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e8eaed;
+            padding: 0.65rem 0.75rem;
+        }
+        .content-card .table tbody td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.75rem;
+        }
+        .content-card .table-hover tbody tr:hover { background: #f8f9ff; }
+
+        /* ===== 分页页尾 ===== */
+        .pagination-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #e8eaed;
+            background: #fafbfc;
+            border-radius: 0 0 8px 8px;
+        }
+        .pagination-footer .page-info {
+            font-size: 0.82rem;
+            color: #6c757d;
+        }
+        .pagination-footer .page-info strong { color: #333; }
+
+        /* ===== Badge 样式 ===== */
+        .badge {
+            font-size: 0.75em;
+            padding: 0.35em 0.65em;
+            line-height: 1;
+            border-radius: 0.375rem;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .top-bar { padding: 0 0.75rem; }
+            .top-bar .brand-text { font-size: 1rem; }
+            .tab-item { min-width: 80px; padding: 0.65rem 0.85rem; font-size: 0.82rem; }
+            .filter-row { flex-wrap: wrap; }
+            .filter-item,
+            .filter-item-stats,
+            .filter-item-team { min-width: calc(50% - 8px) !important; max-width: none !important; }
+            .filter-item:first-child { min-width: 100% !important; }
+            .page-content { padding: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tier 1: 顶部品牌栏 -->
+    <div b-7qkhyzkv64 class="top-bar">
+        <a b-7qkhyzkv64 href="/" class="brand">
+            <i b-7qkhyzkv64 class="bi bi-droplet-half brand-icon"></i>
+            <span b-7qkhyzkv64 class="brand-text">金戈宿舍管理系统</span>
+            <span b-7qkhyzkv64 class="brand-version">v2.13.71</span>
+        </a>
+        <div b-7qkhyzkv64 class="user-area">
+            <!-- v2.13.32：连接健康徽章（每 30s 轮询 runtime-info） -->
+            <span b-7qkhyzkv64 id="dbIndicator" class="badge bg-info" title="点击刷新数据库连接信息" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                <i b-7qkhyzkv64 class="bi bi-database"></i> <span b-7qkhyzkv64 id="dbIndicatorText">加载中...</span>
+            </span>
+            <a b-7qkhyzkv64 href="/Account/Profile" class="user-pill">
+                <i b-7qkhyzkv64 class="bi bi-person-circle"></i>
+                &#x7CFB;&#x7EDF;&#x7BA1;&#x7406;&#x5458;
+            </a>
+            <a b-7qkhyzkv64 href="/Account/Logout" class="logout-btn">
+                <i b-7qkhyzkv64 class="bi bi-box-arrow-right"></i> 退出
+            </a>
+        </div>
+    </div>
+
+    <!-- Tier 2: Tab 页签栏（v2.13.76 RBAC 三级权限控制：按当前用户权限过滤） -->
+    <div b-7qkhyzkv64 class="tab-bar" role="tablist">
+        
+        <a class="tab-item active"
+           data-tab-id="tab-home-view"
+           data-module="home:view"
+           data-url="/"
+           href="/"
+           data-permission="home:view"
+           title="&#x9996;&#x9875;&#x770B;&#x677F;">
+            <i class="bi bi-speedometer2 tab-icon"></i> &#x9996;&#x9875;&#x770B;&#x677F;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-booking-view"
+           data-module="booking:view"
+           data-url="/Booking"
+           href="/Booking"
+           data-permission="booking:view"
+           title="&#x529E;&#x7406;&#x767B;&#x8BB0;">
+            <i class="bi bi-clipboard-check tab-icon"></i> &#x529E;&#x7406;&#x767B;&#x8BB0;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dorm-view"
+           data-module="dorm:view"
+           data-url="/Dorms"
+           href="/Dorms"
+           data-permission="dorm:view"
+           title="&#x5BBF;&#x820D;&#x7BA1;&#x7406;">
+            <i class="bi bi-building tab-icon"></i> &#x5BBF;&#x820D;&#x7BA1;&#x7406;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-personnel-view"
+           data-module="personnel:view"
+           data-url="/Personnel"
+           href="/Personnel"
+           data-permission="personnel:view"
+           title="&#x4EBA;&#x5458;&#x6E05;&#x5355;">
+            <i class="bi bi-people tab-icon"></i> &#x4EBA;&#x5458;&#x6E05;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-billing-view"
+           data-module="billing:view"
+           data-url="/BillingStandard"
+           href="/BillingStandard"
+           data-permission="billing:view"
+           title="&#x8D39;&#x7528;&#x6807;&#x51C6;">
+            <i class="bi bi-currency-dollar tab-icon"></i> &#x8D39;&#x7528;&#x6807;&#x51C6;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dormbilling-view"
+           data-module="dormbilling:view"
+           data-url="/DormBilling"
+           href="/DormBilling"
+           data-permission="dormbilling:view"
+           title="&#x5BBF;&#x820D;&#x8D26;&#x5355;">
+            <i class="bi bi-receipt tab-icon"></i> &#x5BBF;&#x820D;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-employeebilling-view"
+           data-module="employeebilling:view"
+           data-url="/EmployeeBilling"
+           href="/EmployeeBilling"
+           data-permission="employeebilling:view"
+           title="&#x5458;&#x5DE5;&#x8D26;&#x5355;">
+            <i class="bi bi-wallet2 tab-icon"></i> &#x5458;&#x5DE5;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-meter-view"
+           data-module="meter:view"
+           data-url="/Meter"
+           href="/Meter"
+           data-permission="meter:view"
+           title="&#x667A;&#x80FD;&#x6284;&#x8868;">
+            <i class="bi bi-gauge tab-icon"></i> &#x667A;&#x80FD;&#x6284;&#x8868;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-basics-view"
+           data-module="basics:view"
+           data-url="/Basics"
+           href="/Basics"
+           data-permission="basics:view"
+           title="&#x57FA;&#x7840;&#x8D44;&#x6599;">
+            <i class="bi bi-database tab-icon"></i> &#x57FA;&#x7840;&#x8D44;&#x6599;
+        </a>
+        <a class="tab-item active"
+           data-tab-id="tab-settings-view"
+           data-module="settings:view"
+           data-url="/Settings"
+           href="/Settings"
+           data-permission="settings:view"
+           title="&#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;">
+            <i class="bi bi-gear tab-icon"></i> &#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;
+        </a>
+
+    </div>
+
+    <!-- Tier 3: 页面内容区 -->
+    <div b-7qkhyzkv64 class="page-content">
+        
+
+<div class="container-fluid">
+    <!-- v2.13.67：页面级 antiforgery token（User + Role 面板的 AJAX form 需要此 token） -->
+    <input type="hidden" id="pageAntiforgeryToken" name="__RequestVerificationToken" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" />
+
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-gear"></i> 系统设置
+            <span class="badge bg-warning text-dark ms-2">v2.13.92</span>
+        </h2>
+    </div>
+
+    <div class="alert alert-info py-2 mb-3">
+        <i class="bi bi-info-circle"></i>
+        后台系统配置中心，与托盘管理程序（TrayApp）为<strong>同一份配置的双 UI 入口</strong>，涵盖服务端口、数据库、PDA 版本、用户权限、备份恢复。
+    </div>
+
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <!-- 左侧导航 -->
+        <div style="flex-shrink: 0; width: 200px;">
+            <div class="card">
+                <div class="card-body p-2">
+                    <div class="nav flex-column nav-pills settings-nav" role="tablist">
+                        <button class="nav-link active text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-service"
+                                onclick="setActiveTab('service')">
+                            <i class="bi bi-hdd-network"></i> 服务与端口
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-db"
+                                onclick="setActiveTab('db')">
+                            <i class="bi bi-database"></i> 数据库连接
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-app"
+                                onclick="setActiveTab('app')">
+                            <i class="bi bi-phone"></i> PDA App 版本
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-users"
+                                onclick="setActiveTab('users')">
+                            <i class="bi bi-person-badge"></i> 用户管理
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-roles"
+                                onclick="setActiveTab('roles')">
+                            <i class="bi bi-shield-lock"></i> 角色与权限
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-fields"
+                                onclick="setActiveTab('fields')">
+                            <i class="bi bi-shield-check"></i> 字段权限
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-backup"
+                                onclick="setActiveTab('backup')">
+                            <i class="bi bi-hdd-stack"></i> 备份与恢复
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-integration"
+                                onclick="setActiveTab('integration')">
+                            <i class="bi bi-plug"></i> 系统集成
+                        </button>
+                        <button class="nav-link  text-start"
+                                data-bs-toggle="pill" data-bs-target="#tab-about"
+                                onclick="setActiveTab('about')">
+                            <i class="bi bi-info-circle"></i> 关于系统
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧内容 -->
+        <div style="flex: 1 1 0%;">
+            <div class="tab-content">
+
+                <!-- 服务与端口 -->
+                <div class="tab-pane fade show active" id="tab-service">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-hdd-network"></i> 服务与端口</strong>
+                        </div>
+                        <div class="card-body">
+
+                            <!-- 托盘状态 -->
+                            <div class="alert alert-warning py-2 mb-3">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>托盘状态：</strong>
+未连接（请先启动托盘程序 DormManage.TrayApp.exe）                                <form method="post" class="d-inline ms-2" action="/Settings?handler=PingTray">
+                                    <button type="submit" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-arrow-repeat"></i> 测试连接
+                                    </button>
+                                <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                            </div>
+
+                            <form method="post" action="/Settings?handler=SaveService">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small">PDA 服务端口</label>
+                                        <input type="number" name="PdaPort" value="5100" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end gap-2">
+                                        <span class="me-2">
+<span class="status-dot dot-stop"></span>Unknown                                        </span>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="start">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" disabled>启动</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="stop">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" disabled>停止</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="api">
+                                            <input type="hidden" name="action" value="restart">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" disabled>重启</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">Web 服务端口</label>
+                                        <input type="number" name="WebPort" value="5001" class="form-control" min="1" max="65535">
+                                    </div>
+                                    <div class="col-md-4 d-flex align-items-end gap-2">
+                                        <span class="me-2">
+<span class="status-dot dot-stop"></span>Unknown                                        </span>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="start">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" disabled>启动</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="stop">
+                                            <button type="submit" class="btn btn-sm btn-outline-success" style="display:none">_</button>
+                                            <button type="submit" class="btn btn-sm btn-outline-warning" disabled>停止</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                        <form method="post" class="d-inline" action="/Settings?handler=ControlService">
+                                            <input type="hidden" name="service" value="admin">
+                                            <input type="hidden" name="action" value="restart">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" disabled>重启</button>
+                                        <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">服务器域名 / IP（PDA 访问用）</label>
+                                        <input type="text" name="ServerDomain" value="localhost" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small">图片保存路径</label>
+                                        <input type="text" name="ImagePath" value="D:\MeterImages" class="form-control">
+                                        <div class="form-text">必须为绝对路径且目录可写，如 D:\MeterImages</div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> 保存并提示重启
+                                </button>
+                            <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据库连接（v2.13.19 双 UI 双向同步；v2.13.109 起仅 SQL Server） -->
+                <div class="tab-pane fade " id="tab-db">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-database"></i> 数据库连接</strong>
+                            <span class="badge bg-info text-dark">v2.13.109 仅 SQL Server</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="dbConfigResult" class="mb-2"></div>
+
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label small">数据库提供程序</label>
+                                    <!-- v2.13.109: SQLite 已移除，下拉仅 SqlServer -->
+                                    <select id="dbProvider" class="form-select" disabled>
+                                        <option value="SqlServer" selected>SQL Server</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">数据库服务器</label>
+                                    <input type="text" id="dbServer" class="form-control" placeholder="192.168.1.237">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">端口号</label>
+                                    <input type="number" id="dbPort" class="form-control" value="1433" min="1" max="65535">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">数据库名称</label>
+                                    <input type="text" id="dbName" class="form-control" placeholder="WaterMeterDB">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">账号 <i class="bi bi-person-circle"></i></label>
+                                    <input type="text" id="dbUser" class="form-control" placeholder="__DB_USER__">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small">密码（留空保持不变）<i class="bi bi-lock"></i></label>
+                                    <input type="password" id="dbPassword" class="form-control" placeholder="******">
+                                </div>
+                                <!-- v2.13.109: 移除 SQLite 数据库文件路径输入框 -->
+                            </div>
+
+                            <div class="mt-3 d-flex gap-2 align-items-center">
+                                <button type="button" class="btn btn-outline-info" id="btnDbTest">
+                                    <i class="bi bi-plug"></i> 测试连接
+                                </button>
+                                <button type="button" class="btn btn-primary" id="btnDbSave">
+                                    <i class="bi bi-save"></i> 保存
+                                </button>
+                                <span class="text-muted ms-2 small" id="dbConfigHint">保存后会自动写入 db_setting.json 并写入 SQL Server SysParameter 表</span>
+                            </div>
+                            <div id="dbTestResult" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDA App 版本管理 -->
+                <div class="tab-pane fade " id="tab-app">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-phone"></i> PDA App 版本管理</strong>
+                            <button class="btn btn-sm btn-success" onclick="publishNewAppVersion()">
+                                <i class="bi bi-cloud-upload"></i> 发布新版本
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>版本号</th>
+                                        <th>大小</th>
+                                        <th>发布日期</th>
+                                        <th>更新说明</th>
+                                        <th>状态</th>
+                                        <th width="160">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                        <tr>
+                                            <td>
+                                                <strong>1.0.3</strong>
+                                                    <span class="badge bg-success ms-1">最新</span>
+                                            </td>
+                                            <td>12.5 MB</td>
+                                            <td>2026-07-10</td>
+                                            <td><small class="text-muted">&#x4FEE;&#x590D;&#x6284;&#x8868;&#x4E0A;&#x4F20;&#x5076;&#x53D1;&#x8D85;&#x65F6;</small></td>
+                                            <td>
+                                                    <span class="badge bg-success">启用</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                <button class="btn btn-sm btn-outline-danger">删除</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>1.0.2</strong>
+                                            </td>
+                                            <td>12.3 MB</td>
+                                            <td>2026-06-15</td>
+                                            <td><small class="text-muted">&#x4F18;&#x5316;&#x62CD;&#x7167;&#x6C34;&#x5370;&#x529F;&#x80FD;</small></td>
+                                            <td>
+                                                    <span class="badge bg-secondary">禁用</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                <button class="btn btn-sm btn-outline-danger">删除</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <strong>1.0.1</strong>
+                                            </td>
+                                            <td>11.8 MB</td>
+                                            <td>2026-05-20</td>
+                                            <td><small class="text-muted">&#x521D;&#x59CB;&#x7248;&#x672C;</small></td>
+                                            <td>
+                                                    <span class="badge bg-secondary">禁用</span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-primary">编辑</button>
+                                                <button class="btn btn-sm btn-outline-danger">删除</button>
+                                            </td>
+                                        </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="card-footer text-muted small">
+                            <i class="bi bi-link-45deg"></i> PDA 下载地址：
+                            <code>http://localhost:5001/app/download</code>
+                            · 抄表员用 PDA 浏览器访问即可安装最新版
+                        </div>
+                    </div>
+                </div>
+
+                <!-- v2.13.67 用户管理子 Tab — 完整 CRUD 嵌入（之前为引导到独立页面 /Settings/User） -->
+                <div class="tab-pane fade " id="tab-users">
+                    
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-person-badge"></i> 用户管理</strong>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">共 <strong>0</strong> 人</span>
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+                <i class="bi bi-plus-lg"></i> 新增用户
+            </button>
+        </div>
+    </div>
+    <div class="card-body pb-0">
+
+        <!-- 筛选区 -->
+        <div class="filter-card mb-3">
+            <form method="get" class="filter-row">
+                <input type="hidden" name="tab" value="users" />
+                <div class="filter-item">
+                    <label class="form-label">搜索</label>
+                    <input type="text" name="uSearch" class="form-control" placeholder="用户名 / 姓名" />
+                </div>
+                <div class="filter-item">
+                    <label class="form-label">角色</label>
+                    <select name="uRoleId" class="form-select">
+                        <option value="">全部</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="form-label">状态</label>
+                    <select name="uStatus" class="form-select">
+                            <option value="" selected="selected">全部</option>
+                            <option value="active">启用</option>
+                            <option value="disabled">禁用</option>
+                            <option value="locked">已锁定</option>
+                    </select>
+                </div>
+                <div class="filter-item filter-item-btn">
+                    <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                </div>
+                <div class="filter-item filter-item-btn">
+                    <a href="/Settings?tab=users" class="btn btn-outline-secondary filter-btn"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th width="60">序号</th>
+                        <th class="text-truncate">用户名</th>
+                        <th class="text-truncate">姓名</th>
+                        <th class="text-truncate">角色</th>
+                        <th class="text-truncate">联系方式</th>
+                        <th class="text-truncate">最后时间</th>
+                        <th class="text-truncate">登录IP</th>
+                        <th style="width:140px">有效期至</th>
+                        <th width="120" class="text-center">状态</th>
+                        <th width="280">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        <tr><td colspan="9" class="text-center py-4 text-muted">暂无数据</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- 新增用户 Modal — v2.13.65+v2.13.67 URL 改为 /Settings?handler=UserCreate -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="createUserForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus"></i> 新增用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="createUserFeedback" class="alert d-none mb-3"></div>
+                    <div class="mb-3">
+                        <label class="form-label">用户名 <span class="text-danger">*</span></label>
+                        <input type="text" name="UserName" class="form-control" required maxlength="50" pattern="[A-Za-z0-9_-]+" placeholder="英文字母/数字/下划线" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="DisplayName" class="form-control" required maxlength="50" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">初始密码 <span class="text-danger">*</span></label>
+                        <input type="password" name="Password" class="form-control" required minlength="6" />
+                        <div class="form-text">至少 6 位，建议首次登录后修改</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" name="Email" class="form-control" />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">电话</label>
+                            <input type="text" name="Phone" class="form-control" />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">有效期至</label>
+                        <input type="datetime-local" name="ExpiresAt" class="form-control" />
+                        <div class="form-text">留空 = 永久有效；登录日期大于此值将拒绝登录</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="createUserSubmit"><i class="bi bi-check-lg"></i> 创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑用户 Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="editUserForm">
+                <input type="hidden" name="Id" id="editId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> 编辑用户</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editUserFeedback" class="alert d-none mb-3"></div>
+                    <div class="mb-3">
+                        <label class="form-label">用户名</label>
+                        <input type="text" id="editUserName" class="form-control" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">姓名 <span class="text-danger">*</span></label>
+                        <input type="text" name="DisplayName" id="editDisplayName" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">邮箱</label>
+                            <input type="email" name="Email" id="editEmail" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">电话</label>
+                            <input type="text" name="Phone" id="editPhone" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">有效期至</label>
+                        <input type="datetime-local" name="ExpiresAt" id="editExpiresAt" class="form-control" />
+                        <div class="form-text">留空 = 永久有效；登录日期大于此值将拒绝登录</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check pb-2">
+                            <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editIsActive">
+                            <label class="form-check-label" for="editIsActive">启用账号</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色</label>
+                        <div id="editRolesContainer">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="editUserSubmit"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 重置密码 Modal -->
+<div class="modal fade" id="resetPwdModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form id="resetPwdForm">
+                <input type="hidden" name="Id" id="pwdId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-key"></i> 重置密码</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resetPwdFeedback" class="alert d-none mb-3"></div>
+                    <p>为用户 <strong id="pwdUserName"></strong> 设置新密码：</p>
+                    <input type="password" name="NewPassword" id="pwdNewPassword" class="form-control" required minlength="6">
+                    <div class="form-text">至少 6 位</div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-warning" id="resetPwdSubmit"><i class="bi bi-key"></i> 重置</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认 Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form id="deleteForm">
+                <input type="hidden" name="Id" id="deleteId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger"></i> 删除确认</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteFeedback" class="alert d-none mb-3"></div>
+                    <p>确定要删除用户 <strong id="deleteUserNameDisplay"></strong> 吗？</p>
+                    <p class="text-muted small mb-0">此操作不可撤销。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger" id="deleteSubmit"><i class="bi bi-trash"></i> 确认删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                </div>
+
+                <!-- v2.13.67 角色管理子 Tab — 完整 CRUD 嵌入（之前为引导到独立页面 /Settings/Role） -->
+                <div class="tab-pane fade " id="tab-roles">
+                    
+<div class="card mb-3">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-shield-lock"></i> 角色管理</strong>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createRoleModal">
+            <i class="bi bi-plus-lg"></i> 新增角色
+        </button>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th width="60">序号</th>
+                    <th>角色编码</th>
+                    <th>角色名称</th>
+                    <th>说明</th>
+                    <th width="80" class="text-center">排序</th>
+                    <th width="80" class="text-center">用户数</th>
+                    <th width="100" class="text-center">权限数</th>
+                    <th width="100" class="text-center">状态</th>
+                    <th width="280">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 权限矩阵总览（只读） -->
+<div class="card">
+    <div class="card-header bg-light">
+        <strong><i class="bi bi-grid-3x3-gap"></i> 权限矩阵总览</strong>
+        <small class="text-muted ms-2">（按角色 × 顶级模块展示，✔ 表示已分配）</small>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered mb-0 align-middle text-center">
+            <thead class="table-light">
+                <tr>
+                    <th class="text-start">模块</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 新增角色 Modal -->
+<div class="modal fade" id="createRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="createRoleForm">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-lg"></i> 新增角色</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="createRoleFeedback" class="alert d-none mb-3"></div>
+                    <div class="mb-3">
+                        <label class="form-label">角色编码 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleCode" class="form-control" required maxlength="50" pattern="[a-z_]+">
+                        <div class="form-text">仅小写字母与下划线，例如：custom_role</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleName" class="form-control" required maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">说明</label>
+                        <textarea name="Description" class="form-control" rows="2" maxlength="200"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input type="number" name="SortOrder" class="form-control" value="99" min="0" max="999">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="createRoleSubmit"><i class="bi bi-check-lg"></i> 创建</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑角色 Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editRoleForm">
+                <input type="hidden" name="Id" id="editRoleId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-pencil"></i> 编辑角色</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editRoleFeedback" class="alert d-none mb-3"></div>
+                    <div class="mb-3">
+                        <label class="form-label">角色编码</label>
+                        <input type="text" id="editRoleCode" class="form-control" disabled>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">角色名称 <span class="text-danger">*</span></label>
+                        <input type="text" name="RoleName" id="editRoleName" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">说明</label>
+                        <textarea name="Description" id="editRoleDesc" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">排序</label>
+                        <input type="number" name="SortOrder" id="editRoleSort" class="form-control" min="0" max="999">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editRoleActive">
+                        <input type="hidden" name="IsActive" value="false">
+                        <label class="form-check-label" for="editRoleActive">启用角色</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="editRoleSubmit"><i class="bi bi-check-lg"></i> 保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 权限矩阵编辑 Modal -->
+<div class="modal fade" id="permMatrixModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="permMatrixForm">
+                <input type="hidden" name="RoleId" id="permRoleId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-grid-3x3"></i> 权限分配 - <span id="permRoleName"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="permMatrixFeedback" class="alert d-none mb-3"></div>
+
+                        <div class="alert alert-secondary py-2 mb-3 small" id="seedIntegrityBanner">
+                            <i class="bi bi-question-circle"></i> 完整性检查未运行（数据库连接异常）
+                        </div>
+
+                    <div class="card mb-3 border-info">
+                        <div class="card-header py-2 bg-info bg-opacity-10">
+                            <strong><i class="bi bi-shield-check"></i> 隐私字段权限（数据权限）</strong>
+                        </div>
+                        <div class="card-body py-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="PrivacyFieldEnabled" value="true" id="perm_privacy_field"
+                                       >
+                                <label class="form-check-label" for="perm_privacy_field">
+                                    <strong>启用隐私字段保护</strong>
+                                    <small class="text-muted d-block ms-4">
+                                        勾选后，该角色将看不到「字段权限」清单中所有敏感字段（如姓名、手机号、工号等）。
+                                        配置清单请到 <a href="#" onclick="setActiveTab('fields'); return false;">字段权限</a> 标签。
+                                    </small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" onclick="selectAllPerms(true)">全选</button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="selectAllPerms(false)">全不选</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary" id="permMatrixSubmit"><i class="bi bi-check-lg"></i> 保存权限</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 删除确认 Modal — v2.13.67 改用 Bootstrap modal（v2.13.65 Role 版用 confirm()，现已统一） -->
+<div class="modal fade" id="deleteRoleConfirmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <form id="deleteRoleForm">
+                <input type="hidden" name="Id" id="deleteRoleId">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-danger"></i> 删除角色</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="deleteRoleFeedback" class="alert d-none mb-3"></div>
+                    <p>确定要删除角色 <strong id="deleteRoleNameDisplay"></strong> 吗？</p>
+                    <p class="text-muted small mb-0">此操作不可撤销。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-danger" id="deleteRoleSubmit"><i class="bi bi-trash"></i> 确认删除</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+                </div>
+
+                <!-- v2.13.92 字段权限子 Tab — SysFieldPermission CRUD（与角色权限同级并排） -->
+                <div class="tab-pane fade " id="tab-fields">
+                    
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <strong><i class="bi bi-shield-check"></i> 字段权限管理</strong>
+        <span class="badge bg-info text-dark" title="v2.13.92 新增：数据权限 PermissionType=3 落地">RBAC 四级权限</span>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info py-2 mb-3">
+            <i class="bi bi-info-circle"></i>
+            <strong>字段权限</strong>用于保护系统中的<strong>敏感/可识别个人信息（PII）</strong>字段。
+            在此勾选的字段，将被加入「隐私字段保护清单」；
+            当某个角色的<strong>「启用隐私字段保护」</strong>权限被勾选时，该角色在所有页面都看不到这些字段（整列不渲染）。
+        </div>
+
+        <div id="fieldPermissionFeedback" class="alert d-none mb-3"></div>
+
+        <form id="fieldPermissionForm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="60" class="text-center">勾选</th>
+                            <th>模块</th>
+                            <th>字段名</th>
+                            <th>字段键</th>
+                            <th width="100" class="text-center">敏感等级</th>
+                            <th width="80" class="text-center">排序</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(true)">
+                        <i class="bi bi-check-all"></i> 全选
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAllFields(false)">
+                        <i class="bi bi-x-lg"></i> 全不选
+                    </button>
+                </div>
+                <button type="submit" class="btn btn-primary" id="fieldPermissionSubmit">
+                    <i class="bi bi-check-lg"></i> 保存设置
+                </button>
+            </div>
+        </form>
+
+        <hr>
+        <div class="text-muted small">
+            <i class="bi bi-lightbulb"></i> <strong>使用方式：</strong>
+            勾选字段后，请到「<a href="#" onclick="setActiveTab('roles'); return false;">角色与权限</a>」标签页打开对应角色的权限矩阵，
+            勾选 <span class="badge bg-info text-dark">启用隐私字段保护</span> 即可让该角色看不到上述字段。
+        </div>
+    </div>
+</div>
+
+<script>
+    // v2.13.92 字段权限 JS
+    function selectAllFields(checked) {
+        document.querySelectorAll('.fp-cb').forEach(cb => cb.checked = checked);
+    }
+
+    function wireFieldPermissionPanel() {
+        const form = document.getElementById('fieldPermissionForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideFeedback('fieldPermissionFeedback');
+            const updates = [];
+            document.querySelectorAll('.fp-cb').forEach(cb => {
+                const id = parseInt(cb.dataset.id, 10);
+                const isActive = cb.checked;
+                const sortInput = document.querySelector('.fp-sort[name="SortOrder[' + id + ']"]');
+                const sortOrder = sortInput ? parseInt(sortInput.value, 10) || 0 : 0;
+                updates.push({ id, isActive, sortOrder });
+            });
+
+            const btn = document.getElementById('fieldPermissionSubmit');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+
+            try {
+                const resp = await fetch('/api/v1/system/field-permissions', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    body: JSON.stringify({ updates: updates })
+                });
+                const j = await resp.json();
+                if (resp.ok && j.success) {
+                    showFeedback('fieldPermissionFeedback', 'success', '✓ 字段权限已保存！共更新 ' + updates.length + ' 个字段');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showFeedback('fieldPermissionFeedback', 'danger', '✗ 保存失败：' + (j?.message || 'HTTP ' + resp.status));
+                }
+            } catch (err) {
+                showFeedback('fieldPermissionFeedback', 'danger', '✗ 请求失败：' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = orig;
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', wireFieldPermissionPanel);
+</script>
+                </div>
+
+                <!-- 备份与恢复 -->
+                <div class="tab-pane fade " id="tab-backup">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-hdd-stack"></i> 备份与恢复</strong>
+                            <button class="btn btn-sm btn-success" onclick="executeBackup()">
+                                <i class="bi bi-download"></i> 立即备份
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-secondary py-2 mb-3">
+                                <i class="bi bi-clock"></i> 自动备份策略：每日 <strong>02:00</strong> 全量备份，保留最近 <strong>30</strong> 天；图片目录随文件系统单独备份。
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>备份文件</th>
+                                            <th>大小</th>
+                                            <th>时间</th>
+                                            <th>类型</th>
+                                            <th width="160">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                            <tr>
+                                                <td><i class="bi bi-file-earmark-zip"></i> dorm_backup_20260713_020000.bak</td>
+                                                <td>2.3 MB</td>
+                                                <td>2026-07-13 02:00</td>
+                                                <td>
+                                                        <span class="badge bg-info">自动</span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">恢复</button>
+                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><i class="bi bi-file-earmark-zip"></i> dorm_backup_20260712_020000.bak</td>
+                                                <td>2.2 MB</td>
+                                                <td>2026-07-12 02:00</td>
+                                                <td>
+                                                        <span class="badge bg-info">自动</span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">恢复</button>
+                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><i class="bi bi-file-earmark-zip"></i> dorm_manual_20260710_153000.bak</td>
+                                                <td>2.1 MB</td>
+                                                <td>2026-07-10 15:30</td>
+                                                <td>
+                                                        <span class="badge bg-success">手动</span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary">恢复</button>
+                                                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                                                </td>
+                                            </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统集成 -->
+                <div class="tab-pane fade " id="tab-integration">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-plug"></i> 系统集成配置</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info py-2 mb-3">
+                                <i class="bi bi-info-circle"></i> 配置与外部系统（HR / K3ERP）的连接参数。配置后系统可自动同步员工花名册、在职状态等数据。
+                            </div>
+                            <form method="post" action="/Settings?handler=SaveIntegration">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-3 align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="100">系统编码</th>
+                                                <th width="160">系统名称</th>
+                                                <th>服务器地址</th>
+                                                <th width="140">账号</th>
+                                                <th width="140">密码</th>
+                                                <th width="100" class="text-center">启用</th>
+                                                <th width="180">操作</th>
+                                                <th width="140" class="text-center">连接状态</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                                <tr>
+                                                    <td><strong>HR</strong></td>
+                                                    <td>HR &#x7CFB;&#x7EDF;</td>
+                                                    <td><input type="text" name="Integration[1].ServerAddress" value="http://hr.company.com/api" class="form-control form-control-sm"></td>
+                                                    <td><input type="text" name="Integration[1].Account" value="sync_user" class="form-control form-control-sm"></td>
+                                                    <td><input type="password" name="Integration[1].Password" value="******" class="form-control form-control-sm"></td>
+                                                    <td class="text-center">
+                                                        <div class="form-check form-switch d-inline-block">
+                                                            <input type="checkbox" name="Integration[1].IsEnabled" value="true" class="form-check-input" checked>
+                                                            <input type="hidden" name="Integration[1].IsEnabled" value="false">
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="testConnection(1)">
+                                                            <i class="bi bi-plug"></i> 测试
+                                                        </button>
+                                                    </td>
+                                                    <td class="text-center">
+                                                            <span class="badge bg-success">正常</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>K3ERP</strong></td>
+                                                    <td>K3 ERP</td>
+                                                    <td><input type="text" name="Integration[2].ServerAddress" value="http://erp.company.com/service" class="form-control form-control-sm"></td>
+                                                    <td><input type="text" name="Integration[2].Account" value="erp_sync" class="form-control form-control-sm"></td>
+                                                    <td><input type="password" name="Integration[2].Password" value="******" class="form-control form-control-sm"></td>
+                                                    <td class="text-center">
+                                                        <div class="form-check form-switch d-inline-block">
+                                                            <input type="checkbox" name="Integration[2].IsEnabled" value="true" class="form-check-input" >
+                                                            <input type="hidden" name="Integration[2].IsEnabled" value="false">
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-outline-info" onclick="testConnection(2)">
+                                                            <i class="bi bi-plug"></i> 测试
+                                                        </button>
+                                                    </td>
+                                                    <td class="text-center">
+                                                            <span class="badge bg-danger">失败</span>
+                                                    </td>
+                                                </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <hr>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save"></i> 保存参数
+                                    </button>
+                                </div>
+                            <input name="__RequestVerificationToken" type="hidden" value="CfDJ8Kkcwe36fSxBvZSECg60n06QtRCRSVT_iZ7b3TzLscU6sQgqyZP0kCI8EQkKy8tN9t9sfKfHNH_egQxYelWU6FvjSFrqFRXtwfOHCPEgkIm1vvajOIoIs4Rqgh3ot4rXJtJHbyqsdYtOP-NKw2bDmyOtqZYuJdLy0m0C0_e6hY5MpVvvQb-8mI8GyeoWKgWBVw" /></form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 关于系统 -->
+                <div class="tab-pane fade " id="tab-about">
+                    <div class="alert alert-success d-flex align-items-center mb-3" id="card-license">
+                        <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                            <span><strong>✅ 软件已注册</strong>，所有功能正常使用。</span>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-info-circle"></i> 关于系统</strong>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr>
+                                    <th width="120" class="text-muted">系统名称</th>
+                                    <td>金戈宿舍管理系统</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">当前版本</th>
+                                    <td>v2.13.94</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">技术栈</th>
+                                    <td>.NET 8 + Razor Pages + Bootstrap 5 + EF Core</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">部署方式</th>
+                                    <td>EXE 自托管 + 托盘守护进程</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">数据库</th>
+                                    <td>SQLite（开发）/ SQL Server（生产）</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">设计规模</th>
+                                    <td>800 人 / 200+ 宿舍 / 500+ 入住</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- v2.13.11 全局筛选条件持久化（localStorage） -->
+    <script src="/js/filter-persistence.js"></script>
+    <!-- v2.13.88 列表 → 详情/编辑 返回路径记忆（全局） -->
+    <script src="/js/return-url.js"></script>
+    
+    <script>
+        // v2.13.19: 数据库连接双 UI 双向同步 JS
+        const DB_API = '/api/v1/system/dbconfig';
+
+        function setActiveTab(tab) {
+            const url = new URL(window.location);
+            url.searchParams.set('tab', tab);
+            window.history.replaceState({}, '', url);
+        }
+
+        // v2.13.19：封装对 Tray 的 IPC 通知，实际通过后端 API 转发到底层 TCP 端口 5099
+        async function fetchTrayIpc(command, payload) {
+            try {
+                const res = await fetch('/api/v1/system/ipc/tray', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command, payload })
+                });
+                return await res.json();
+            } catch (e) {
+                console.warn('fetchTrayIpc 失败:', e);
+                return { success: false, message: e.message };
+            }
+        }
+
+        // 加载当前数据库配置
+        function loadDbConfig() {
+            fetch(DB_API).then(r => r.json()).then(res => {
+                if (!res.success) return;
+                const c = res.data;
+                document.getElementById('dbProvider').value = c.provider || 'SqlServer';
+                document.getElementById('dbServer').value = c.dbServer || '';
+                document.getElementById('dbPort').value = c.dbPort || 1433;
+                document.getElementById('dbName').value = c.dbName || '';
+                document.getElementById('dbUser').value = c.dbUser || '';
+                document.getElementById('dbPassword').value = '';
+                // v2.13.109: SQLite 字段已移除，无需 toggleProviderUI
+            });
+        }
+
+        // 切换 SqlServer / Sqlite 字段可见性
+        // v2.13.109: SQLite 已移除，函数体保留为空操作以兼容旧调用
+        function toggleProviderUI() {
+            /* no-op: 仅 SqlServer 字段 */
+        }
+
+        // 测试连接（真实 HTTP 调用）
+        async function runDbTest() {
+            const box = document.getElementById('dbTestResult');
+            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在测试连接...</div>';
+
+            // v2.13.109: 强制 provider=SqlServer，移除 sqlitePath 字段
+            const payload = {
+                provider: 'SqlServer',
+                dbServer: document.getElementById('dbServer').value,
+                dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
+                dbName: document.getElementById('dbName').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged'
+            };
+
+            try {
+                const res = await fetch(DB_API + '/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    box.innerHTML = `<div class="alert alert-success mb-0"><strong><i class="bi bi-check2-all"></i> ${json.message}</strong></div>`;
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;
+                }
+            } catch (e) {
+                box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> 测试失败: ${e.message}</div>`;
+            }
+        }
+
+        // 保存配置（真实 HTTP 调用 → 触发双 UI 广播）
+        // v2.13.32 热加载：保存成功后自动调用 /runtime-reload，连接立即切换无需重启
+        async function saveDbConfig() {
+            const box = document.getElementById('dbConfigResult');
+            box.innerHTML = '<div class="text-muted small"><span class="spinner-border spinner-border-sm"></span> 正在保存并热加载...</div>';
+
+            // v2.13.109: 强制 provider=SqlServer，移除 sqlitePath 字段
+            const payload = {
+                provider: 'SqlServer',
+                dbServer: document.getElementById('dbServer').value,
+                dbPort: parseInt(document.getElementById('dbPort').value) || 1433,
+                dbName: document.getElementById('dbName').value,
+                dbUser: document.getElementById('dbUser').value,
+                dbPassword: document.getElementById('dbPassword').value || 'unchanged'
+            };
+
+            try {
+                const res = await fetch(DB_API + '/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const json = await res.json();
+                if (json.success) {
+                    // v2.13.32：保存成功 → 触发 runtime-reload（确保整个 Api/Admin 进程立即切换）
+                    try {
+                        await fetch(DB_API + '/runtime-reload', { method: 'POST' });
+                    } catch (e) { /* 失败不影响主流程 */ }
+                    // v2.13.32：刷新顶部连接健康徽章
+                    if (typeof refreshDbIndicator === 'function') refreshDbIndicator();
+                    box.innerHTML = `<div class="alert alert-success mb-0"><i class="bi bi-lightning-charge-fill"></i> <strong>${json.message}</strong><br/><small class="text-muted">所有页面下次刷新自动使用新连接，无需重启服务。</small></div>`;
+                    // 触发 TrayApp IPC 同步广播（兼容托盘端 SettingsForm）
+                    fetchTrayIpc('dbconfig.updated', payload);
+                } else {
+                    box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> ${json.message}</div>`;
+                }
+            } catch (e) {
+                box.innerHTML = `<div class="alert alert-danger mb-0"><i class="bi bi-x-octagon"></i> 保存失败: ${e.message}</div>`;
+            }
+        }
+
+        // DOM Ready 初始化：数据库配置区域始终可用（v2.13.28 修复：不再依赖 URL ?tab=db 参数）
+        document.addEventListener('DOMContentLoaded', function () {
+            loadDbConfig();
+            var providerEl = document.getElementById('dbProvider');
+            if (providerEl) providerEl.addEventListener('change', toggleProviderUI);
+            var testEl = document.getElementById('btnDbTest');
+            if (testEl) testEl.addEventListener('click', runDbTest);
+            var saveEl = document.getElementById('btnDbSave');
+            if (saveEl) saveEl.addEventListener('click', saveDbConfig);
+        });
+
+        // v2.13.65 修复：服务状态切换接入 IPC 接口（托盘 127.0.0.1:5099 JSON-over-lines）
+        function toggleService(which) {
+            const action = which === 'pda' ? 'restart-api' : 'restart-admin';
+            if (!confirm(`确定重启 ${which === 'pda' ? 'API' : 'Web Admin'} 服务吗？`)) return;
+            fetch('/api/v1/system/service-control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: action })
+            })
+            .then(r => r.json())
+            .then(j => {
+                if (j.success) {
+                    alert(`✓ ${which === 'pda' ? 'PDA' : 'Web'} 服务重启指令已发送`);
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    alert('操作失败：' + (j.message || '未知错误'));
+                }
+            })
+            .catch(err => alert('请求失败：' + err.message));
+        }
+
+        function testConnection(id) {
+            // v2.13.46 P0 修复：接通 IntegrationController API
+            fetch(`/api/v1/system/integration/${id}/test`, { method: 'POST' })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '连接测试成功');
+                    } else {
+                        showToast('danger', j.message || '连接测试失败');
+                    }
+                })
+                .catch(err => showToast('danger', '连接测试请求失败：' + err.message));
+        }
+
+        // v2.13.46 P0 修复：接通 BackupController 真实 API
+        function executeBackup() {
+            if (!confirm('确定要立即执行数据库备份吗？')) return;
+            showToast('info', '正在执行备份，请稍候...');
+            fetch('/api/v1/system/backup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trigger: 'manual' })
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '备份成功');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('danger', j.message || '备份失败');
+                    }
+                })
+                .catch(err => showToast('danger', '备份请求失败：' + err.message));
+        }
+
+        // v2.13.46 P0 修复：接通 AppVersionController 真实 API
+        function publishNewAppVersion() {
+            var version = prompt('请输入新版本号（如 v2.14.0）：');
+            if (!version) return;
+            var notes = prompt('更新说明：');
+            if (notes === null) return;
+            fetch('/api/v1/appversion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ version: version, releaseNotes: notes, isCurrent: true })
+            })
+                .then(r => r.json())
+                .then(j => {
+                    if (j.success) {
+                        showToast('success', j.message || '发布成功');
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showToast('danger', j.message || '发布失败');
+                    }
+                })
+                .catch(err => showToast('danger', '发布请求失败：' + err.message));
+        }
+
+        // v2.13.46 P1 增强：Toast 提示组件（替换 alert 占位）
+        function showToast(type, message) {
+            var bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[type] || 'bg-info';
+            var html = '<div class="toast align-items-center text-white ' + bg + ' border-0 show" role="alert" style="position:fixed;top:80px;right:24px;z-index:9999;min-width:280px;">' +
+                '<div class="d-flex"><div class="toast-body">' + message + '</div>' +
+                '<button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button>' +
+                '</div></div>';
+            var wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            document.body.appendChild(wrapper.firstChild);
+            setTimeout(function (el) { if (el && el.parentElement) el.remove(); }, 4000, document.querySelector('.toast:last-of-type'));
+        }
+
+        // ====================== v2.13.67 用户管理子 Tab JS ======================
+        const antiforgeryToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+
+        function showFeedback(elId, type, message) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.className = 'alert mb-3 alert-' + type;
+            el.textContent = message;
+            el.classList.remove('d-none');
+        }
+        function hideFeedback(elId) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            el.classList.add('d-none');
+        }
+
+        // 通用 AJAX POST helper — v2.13.67：URL 改为 /Settings?handler=UserXxx
+        async function postPanelAction(url, data, feedbackElId) {
+            try {
+                const formData = new URLSearchParams();
+                for (const [key, value] of data.entries()) {
+                    if (Array.isArray(value)) {
+                        for (const v of value) formData.append(key, v);
+                    } else if (value !== null && value !== undefined) {
+                        formData.append(key, value);
+                    }
+                }
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'RequestVerificationToken': antiforgeryToken
+                    },
+                    body: formData.toString()
+                });
+                let j = null;
+                try { j = await resp.json(); } catch (e) {}
+                if (resp.ok && (j === null || j.success !== false)) {
+                    return { ok: true, data: j };
+                } else {
+                    const msg = j?.message || ('HTTP ' + resp.status);
+                    if (feedbackElId) showFeedback(feedbackElId, 'danger', '操作失败：' + msg);
+                    return { ok: false, message: msg };
+                }
+            } catch (e) {
+                if (feedbackElId) showFeedback(feedbackElId, 'danger', '请求失败：' + e.message);
+                return { ok: false, message: e.message };
+            }
+        }
+
+        // 启停用户（直接调 API 端点）
+        window.toggleUserStatus = async function(id, enable) {
+            if (!confirm(enable ? '确定启用该用户？' : '确定停用该用户？')) return;
+            const url = '/api/v1/auth/users/' + id + '/' + (enable ? 'enable' : 'disable');
+            const resp = await fetch(url, { method: 'POST' });
+            const j = await resp.json().catch(() => null);
+            if (resp.ok && j?.success) {
+                alert(enable ? '已启用' : '已停用');
+                location.reload();
+            } else {
+                alert('操作失败：' + (j?.message || '未知错误'));
+            }
+        };
+
+        // ============== 用户管理 Modal 事件 ==============
+        function wireUserPanel() {
+            const createModal = document.getElementById('createUserModal');
+            const editModal = document.getElementById('editUserModal');
+            const pwdModal = document.getElementById('resetPwdModal');
+            const delModal = document.getElementById('deleteConfirmModal');
+            if (!createModal) return; // 当前 tab 不是 users，跳过
+
+            // Create
+            createModal.addEventListener('show.bs.modal', function() {
+                hideFeedback('createUserFeedback');
+                document.getElementById('createUserForm').reset();
+            });
+            document.getElementById('createUserForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('createUserFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('createUserSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=UserCreate', data, 'createUserFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('createUserFeedback', 'success', '✓ 创建成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Edit
+            editModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('editUserFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                const id = btn.getAttribute('data-user-id');
+                const userName = btn.getAttribute('data-user-name');
+                const displayName = btn.getAttribute('data-display-name') || '';
+                const email = btn.getAttribute('data-email') || '';
+                const phone = btn.getAttribute('data-phone') || '';
+                const isActive = btn.getAttribute('data-is-active') === 'true';
+                const roleIds = (btn.getAttribute('data-role-ids') || '').split(',').filter(s => s);
+                // v2.13.93 新增：有效期至回显（datetime-local 接受 yyyy-MM-ddTHH:mm 格式）
+                const expiresAt = btn.getAttribute('data-expires-at') || '';
+                document.getElementById('editId').value = id;
+                document.getElementById('editUserName').value = userName;
+                document.getElementById('editDisplayName').value = displayName;
+                document.getElementById('editEmail').value = email;
+                document.getElementById('editPhone').value = phone;
+                document.getElementById('editIsActive').checked = isActive;
+                document.getElementById('editExpiresAt').value = expiresAt;
+                document.querySelectorAll('#editRolesContainer input[type=checkbox]').forEach(cb => {
+                    cb.checked = roleIds.includes(cb.value);
+                });
+            });
+            document.getElementById('editUserForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('editUserFeedback');
+                const data = new FormData(this);
+                if (!document.getElementById('editIsActive').checked) data.set('IsActive', 'false');
+                else data.set('IsActive', 'true');
+                const btn = document.getElementById('editUserSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=UserUpdate', data, 'editUserFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('editUserFeedback', 'success', '✓ 更新成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Reset Password
+            pwdModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('resetPwdFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('pwdId').value = btn.getAttribute('data-user-id');
+                document.getElementById('pwdUserName').textContent = btn.getAttribute('data-user-name');
+                document.getElementById('pwdNewPassword').value = '';
+            });
+            document.getElementById('resetPwdForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('resetPwdFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('resetPwdSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>重置中...';
+                const result = await postPanelAction('/Settings?handler=UserResetPassword', data, 'resetPwdFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('resetPwdFeedback', 'success', '✓ 密码已重置！即将关闭...');
+                    setTimeout(() => bootstrap.Modal.getInstance(pwdModal)?.hide(), 600);
+                }
+            });
+
+            // Delete
+            delModal.addEventListener('show.bs.modal', function(event) {
+                hideFeedback('deleteFeedback');
+                const btn = event.relatedTarget;
+                if (!btn) return;
+                document.getElementById('deleteId').value = btn.getAttribute('data-user-id');
+                document.getElementById('deleteUserNameDisplay').textContent = btn.getAttribute('data-user-name');
+            });
+            document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('deleteFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('deleteSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>删除中...';
+                const result = await postPanelAction('/Settings?handler=UserDelete', data, 'deleteFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('deleteFeedback', 'success', '✓ 删除成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+        }
+
+        // ====================== v2.13.67 角色管理子 Tab JS ======================
+        function openEditModal(id, name, desc, sort, isActive) {
+            document.getElementById('editRoleId').value = id;
+            document.getElementById('editRoleCode').value = id;
+            document.getElementById('editRoleName').value = name;
+            document.getElementById('editRoleDesc').value = desc || '';
+            document.getElementById('editRoleSort').value = sort;
+            document.getElementById('editRoleActive').checked = isActive === 'true';
+            new bootstrap.Modal(document.getElementById('editRoleModal')).show();
+        }
+
+        function openPermMatrixModal(roleId, roleName) {
+            document.getElementById('permRoleId').value = roleId;
+            document.getElementById('permRoleName').textContent = roleName;
+            document.querySelectorAll('.perm-cb').forEach(cb => { cb.checked = false; cb.dataset.roleId = roleId; });
+            const rolePermsJson = {};
+            const permIds = rolePermsJson[roleId] || [];
+            permIds.forEach(pid => {
+                const cb = document.getElementById('perm_' + pid);
+                if (cb) cb.checked = true;
+            });
+            // v2.13.92 字段权限：根据当前角色权限集合设置「启用隐私字段保护」checkbox
+            const privacyPermId = 0;
+            const privacyFieldEnabled = privacyPermId > 0 && permIds.includes(privacyPermId);
+            document.getElementById('perm_privacy_field').checked = privacyFieldEnabled;
+            // v2.13.76 RBAC：挂载子→父级联（按钮任一勾选 → 上级菜单必须勾选；父菜单反选时若子全未选也可反选）
+            wirePermMatrixCascade();
+            new bootstrap.Modal(document.getElementById('permMatrixModal')).show();
+        }
+
+        // v2.13.76 RBAC 自动级联：父菜单（PermissionType=1 / data-parent-id=0）保持其状态；
+        // 子权限（PermissionType=2 / data-parent-id > 0）任一被勾选时，其父菜单必须勾选；
+        // 父菜单反选时，其下子权限应自动取消（一致性）。
+        function wirePermMatrixCascade() {
+            document.querySelectorAll('.perm-cb').forEach(cb => {
+                if (cb.dataset.cascadeWired === '1') return;
+                cb.dataset.cascadeWired = '1';
+                cb.addEventListener('change', onPermCbChange);
+            });
+        }
+
+        function onPermCbChange(e) {
+            const cb = e.currentTarget;
+            const permType = parseInt(cb.dataset.permType || '0', 10);
+            const parentId = parseInt(cb.dataset.parentId || '0', 10);
+            // 子权限（按钮/数据）勾选 → 上级菜单（ParentId）必须勾选
+            if (cb.checked && parentId > 0) {
+                const parentCb = document.querySelector('.perm-cb[data-parent-id="0"][value="' + parentId + '"]')
+                    || document.getElementById('perm_' + parentId);
+                if (parentCb && !parentCb.checked) parentCb.checked = true;
+            }
+            // 父菜单反选 → 其下所有子权限自动取消（避免父无权但子有权的不一致状态）
+            if (!cb.checked && permType === 1 && parentId === 0) {
+                const myValue = cb.value;
+                document.querySelectorAll('.perm-cb[data-parent-id="' + myValue + '"]').forEach(child => {
+                    child.checked = false;
+                });
+            }
+            // 父菜单勾选 → 不级联子（子独立授权，避免越权默认开启）
+        }
+
+        function selectAllPerms(checked) {
+            document.querySelectorAll('.perm-cb').forEach(cb => cb.checked = checked);
+        }
+
+        function confirmDelete(id, name) {
+            document.getElementById('deleteRoleId').value = id;
+            document.getElementById('deleteRoleNameDisplay').textContent = name;
+            new bootstrap.Modal(document.getElementById('deleteRoleConfirmModal')).show();
+        }
+
+        function wireRolePanel() {
+            const createModal = document.getElementById('createRoleModal');
+            if (!createModal) return;
+
+            // Create
+            createModal.addEventListener('show.bs.modal', function() {
+                hideFeedback('createRoleFeedback');
+                document.getElementById('createRoleForm').reset();
+            });
+            document.getElementById('createRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('createRoleFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('createRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>创建中...';
+                const result = await postPanelAction('/Settings?handler=RoleCreate', data, 'createRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('createRoleFeedback', 'success', '✓ 创建成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Edit
+            const editModal = document.getElementById('editRoleModal');
+            editModal.addEventListener('show.bs.modal', function() { hideFeedback('editRoleFeedback'); });
+            document.getElementById('editRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('editRoleFeedback');
+                const data = new FormData(this);
+                if (!document.getElementById('editRoleActive').checked) data.set('IsActive', 'false');
+                else data.set('IsActive', 'true');
+                const btn = document.getElementById('editRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=RoleUpdate', data, 'editRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('editRoleFeedback', 'success', '✓ 更新成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+
+            // Permission Matrix
+            const permModal = document.getElementById('permMatrixModal');
+            permModal.addEventListener('show.bs.modal', function() { hideFeedback('permMatrixFeedback'); });
+            document.getElementById('permMatrixForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('permMatrixFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('permMatrixSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>保存中...';
+                const result = await postPanelAction('/Settings?handler=RoleSavePermissions', data, 'permMatrixFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('permMatrixFeedback', 'success', '✓ 权限已保存！即将关闭...');
+                    setTimeout(() => bootstrap.Modal.getInstance(permModal)?.hide(), 600);
+                    setTimeout(() => location.reload(), 1200);
+                }
+            });
+
+            // Delete
+            const delModal = document.getElementById('deleteRoleConfirmModal');
+            delModal.addEventListener('show.bs.modal', function() { hideFeedback('deleteRoleFeedback'); });
+            document.getElementById('deleteRoleForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                hideFeedback('deleteRoleFeedback');
+                const data = new FormData(this);
+                const btn = document.getElementById('deleteRoleSubmit');
+                const orig = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>删除中...';
+                const result = await postPanelAction('/Settings?handler=RoleDelete', data, 'deleteRoleFeedback');
+                btn.disabled = false;
+                btn.innerHTML = orig;
+                if (result.ok) {
+                    showFeedback('deleteRoleFeedback', 'success', '✓ 删除成功！即将刷新...');
+                    setTimeout(() => location.reload(), 800);
+                }
+            });
+        }
+
+        // v2.13.67：DOM Ready 时挂载两个面板的事件监听（避免在非激活 tab 时找不到元素）
+        document.addEventListener('DOMContentLoaded', function() {
+            wireUserPanel();
+            wireRolePanel();
+        });
+    </script>
+
+    <script>
+        // v2.13.102：banner 重新检查（GET /Settings?handler=RoleSeedIntegrity）
+        window.refreshSeedIntegrityBanner = async function () {
+            const banner = document.getElementById('seedIntegrityBanner');
+            if (!banner) return;
+            try {
+                const res = await fetch('/Settings?handler=RoleSeedIntegrity', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    location.reload();
+                } else {
+                    showToast('重新检查失败：HTTP ' + res.status, 'danger');
+                }
+            } catch (ex) {
+                console.error('refreshSeedIntegrityBanner failed', ex);
+                showToast('重新检查异常：' + ex.message, 'danger');
+            }
+        };
+
+        // v2.13.102：banner 一键修复（POST /Settings?handler=RoleSeedRepair）
+        window.runSeedIntegrityRepair = async function () {
+            if (!confirm('将立即执行 seed 完整性修复（idempotent INSERT），无需重启 Admin。\n确认执行？')) return;
+            const token = document.getElementById('pageAntiforgeryToken')?.value || '';
+            try {
+                const res = await fetch('/Settings?handler=RoleSeedRepair', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'RequestVerificationToken': token
+                    },
+                    credentials: 'include'
+                });
+                const json = await res.json().catch(() => ({ success: false, message: '响应解析失败' }));
+                if (json.success) {
+                    showToast(json.message || '修复成功', 'success');
+                    setTimeout(() => location.reload(), 800);
+                } else {
+                    showToast(json.message || '修复失败', 'danger');
+                }
+            } catch (ex) {
+                console.error('runSeedIntegrityRepair failed', ex);
+                showToast('修复异常：' + ex.message, 'danger');
+            }
+        };
+    </script>
+
+    <script>
+        // Tab 激活态键盘快捷键（Ctrl+1~9 切换 Tab 1~9, Ctrl+0 切换 Tab 10）
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.altKey) {
+                var num = parseInt(e.key);
+                if (num >= 0 && num <= 9) {
+                    var idx = num === 0 ? 9 : num - 1;
+                    var tabs = document.querySelectorAll('.tab-item');
+                    if (tabs[idx]) tabs[idx].click();
+                }
+            }
+        });
+
+        // v2.13.32：连接健康徽章轮询 + 点击刷新
+        (function() {
+            var elText = document.getElementById('dbIndicatorText');
+            var elBadge = document.getElementById('dbIndicator');
+            if (!elText || !elBadge) return;
+            function loadRuntimeInfo() {
+                fetch('/api/v1/system/dbconfig/runtime-info')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(j) {
+                        if (j && j.success && j.data) {
+                            elText.textContent = (j.data.server || '?') + '/' + (j.data.database || '?');
+                            elBadge.title = 'Provider: ' + j.data.provider + '\n最后重载: ' + new Date(j.data.lastReloadedAt).toLocaleString();
+                        } else {
+                            elText.textContent = '离线';
+                        }
+                    })
+                    .catch(function() { elText.textContent = '离线'; });
+            }
+            loadRuntimeInfo();
+            setInterval(loadRuntimeInfo, 30000);
+            elBadge.addEventListener('click', loadRuntimeInfo);
+            window.refreshDbIndicator = loadRuntimeInfo;
+        })();
+    </script>
+</body>
+</html>

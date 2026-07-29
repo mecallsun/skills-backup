@@ -14,13 +14,13 @@ namespace DormManage.Admin.Middleware;
 /// - GET / HEAD（只读查看保持可用）
 /// - 静态资源（/css, /js, /lib, /wwwroot, *.css, *.js, *.png 等）
 /// - 登录/退出/错误页（/Account/*, /Error, /Privacy）
-/// - 暗桩 503 页面（/TamperUnlock）
 ///
 /// 设计原则：
 /// - 中间件层（不是 ActionFilter / PageModel）—— 一处生效全栈覆盖
 /// - Razor Page POST 重定向到 /Error?code=LICENSE_READONLY
 /// - API 端点 + XHR 返回 403 JSON
 /// - 进程内缓存由 LicenseGuard 提供，避免每次请求都查注册表
+/// - 对于 AJAX 请求，在响应头中添加注册状态详情，便于前端显示精确提示
 /// </summary>
 public class LicenseReadOnlyMiddleware
 {
@@ -50,7 +50,7 @@ public class LicenseReadOnlyMiddleware
             return;
         }
 
-        // 3) 放行白名单路径（登录页 / 静态资源 / 错误页 / 暗桩）
+        // 3) 放行白名单路径（登录页 / 静态资源 / 错误页）
         var path = context.Request.Path.Value ?? "";
         if (IsWhitelisted(path))
         {
@@ -62,36 +62,56 @@ public class LicenseReadOnlyMiddleware
         await RejectWrite(context, path);
     }
 
-    /// <summary>
-    /// 拒绝写入请求（统一 403 + JSON 或重定向）
-    /// </summary>
     private static async Task RejectWrite(HttpContext context, string path)
     {
         context.Response.StatusCode = 403;
+
+        // 获取注册状态详情用于响应头（供前端读取）
+        var state = LicenseGuard.GetCachedState();
+        var (code, message, level) = LicenseGuard.GetLicenseBanner();
+
+        // 对于 AJAX/XHR 请求，在响应头中添加注册状态详情
+        if (IsAjaxRequest(context))
+        {
+            context.Response.Headers.Add("X-License-Status", code.ToString());
+            context.Response.Headers.Add("X-License-Message", message);
+            context.Response.Headers.Add("X-License-ReadOnly", "true");
+        }
 
         // API 端点 / AJAX 请求 → 返回 JSON
         var isAjax = string.Equals(
             context.Request.Headers["X-Requested-With"],
             "XMLHttpRequest",
-            StringComparison.OrdinalIgnoreCase);
+            StringComparison.OrdinalIgnoreCase) || path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase);
 
-        if (path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) || isAjax)
+        if (isAjax)
         {
             context.Response.ContentType = "application/json; charset=utf-8";
             var payload = new
             {
                 success = false,
                 code = "LICENSE_READONLY",
-                message = "软件未注册或注册已过期，所有修改类操作已禁用。请联系信息科进行注册。"
+                // 使用更详细的注册过期消息
+                message = !string.IsNullOrEmpty(message) ? message : "软件注册已过期，所有修改类操作已禁用。请联系信息科进行续期。"
             };
             await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
             return;
         }
 
-        // Razor Page POST → 重定向到错误页
+        // Razor Page POST → 重定向到错误页（带消息参数）
+        var redirectMessage = !string.IsNullOrEmpty(message) ? message : "软件注册已过期，所有修改类操作已禁用。请联系信息科进行续期。";
         context.Response.Redirect(
             "/Error?code=LICENSE_READONLY&msg=" +
-            Uri.EscapeDataString("注册未通过，禁止修改类操作。请联系信息科进行注册。"));
+            Uri.EscapeDataString(redirectMessage));
+    }
+
+    private static bool IsAjaxRequest(HttpContext context)
+    {
+        return string.Equals(
+            context.Request.Headers["X-Requested-With"],
+            "XMLHttpRequest",
+            StringComparison.OrdinalIgnoreCase) ||
+               context.Request.Headers["Accept"].ToString().Contains("application/json");
     }
 
     /// <summary>
@@ -131,12 +151,6 @@ public class LicenseReadOnlyMiddleware
         if (path.StartsWith("/Account", StringComparison.OrdinalIgnoreCase) ||
             path.Equals("/Error", StringComparison.OrdinalIgnoreCase) ||
             path.Equals("/Privacy", StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        // 暗桩 503 页面（与全局只读机制并存 —— 暗桩优先）
-        if (path.Equals("/TamperUnlock", StringComparison.OrdinalIgnoreCase))
         {
             return true;
         }

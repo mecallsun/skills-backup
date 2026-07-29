@@ -2,6 +2,94 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## ⚠️ 系统级永久规范 - 修改流程与发布准则
+
+> **重要**：本规范为 **系统级标准**，对所有未来任务生效。所有修改和需求变更必须严格遵守本节规范。
+
+### 1. 原型优先规范（强约束）
+
+✅ **所有修改和需求变更，都必须优先进行项目相关的原型界面同步修改完成**
+
+#### 实施步骤
+
+1. **第一步：原型同步**
+   - 在修改任何业务逻辑前，**先修改 `00-方案文档/04-HTML原型/` 下的相关 HTML 原型**
+   - 使用现有原型（`mock-data.js` + `_shared/`）作为参考
+   - 原型必须保持与最终实现 1:1 一致（含字段、Badge、按钮、交互）
+
+2. **第二步：业务代码实现**
+   - 完成原型同步后，再修改对应的 Razor Page、PageModel、Service、Controller 代码
+   - 实现必须与原型**视觉与交互保持字节级对齐**
+
+3. **第三步：文档同步**
+   - 修改业务代码后，同步更新受影响的开发方案文档（`00-方案文档/`）
+   - 包括需求文档、设计规范、流程图、Changelog 等
+
+4. **第四步：质量门控**
+   - 全局 grep `alert('原型演示\|placeholder\|TODO\|待实现\|原型演示：\|演示：` 必须 = 0 命中
+   - 原型演示占位符 / 未实现功能 → 立即补全或主动告知用户降级范围
+
+#### 原型路径与结构
+
+- **位置**：`00-方案文档/04-HTML原型/`
+- **共享资源**：`00-方案文档/04-HTML原型/_shared/`（含 `mock-data.js`、`storage-keys.js` 等）
+- **每个模块独立子目录**：basics/、booking/、dorms/、personnel/、meter/、settings/、billing/ 等
+- **修改规则**：每个组件的字段名、Bash 颜色、排序、状态值必须与代码中的实现完全一致
+
+#### 强制规则
+
+- ❌ **不允许**直接修改业务代码而不更新原型
+- ❌ **不允许**原型与代码不一致
+- ✅ **必须**在原型中体现真实的字段、按钮、状态、消息提示
+- ✅ **必须**遵守 100% 1:1 对齐原则（v2.13.68 已确立的"原型功能完整性强制规则"）
+
+---
+
+### 2. 发布与编译准则
+
+> **重要**：本规范为 **系统级标准**，对所有未来任务生效。除非任务内容明确包含发布类关键词，否则 **不得** 自动执行编译、发布、归档包等操作。
+
+#### 触发条件（必须满足关键词之一）
+
+✅ **以下关键词之一出现时**，才执行 **编译 + 发布 + 归档**：
+- `生成程序包`
+- `发布新版程序`
+- `生成新版程序包`
+- `发布程序包`
+- `打包发布`
+- `打包成 zip`
+- `发布归档`
+- `输出最新包`
+- `部署新版`
+- 等同义表达
+
+### 不触发的场景
+
+❌ **以下任务类型不触发发布流程**（默认仅做代码或文档修改）：
+- BUG 修复（如 "修复 XXX 错误"）
+- 功能优化（如 "优化 UI 显示"）
+- 文档清理（如 "清理文档中不一致描述"）
+- 代码规范变更
+- 数据库迁移脚本编写
+- 测试代码调整
+
+### 严格行为准则
+
+1. **不主动编译**：除非用户明确要求发布，否则**不执行** `dotnet build`
+2. **不自动发布**：**不执行** `dotnet publish`，即使代码已被修改
+3. **不主动打包**：**不执行** `Compress-Archive` 创建归档包
+4. **不主动归档**：每次代码修改后**不自动**将发布物压缩到 `_archive/`
+5. **响应即默认**：用户没有明确发布要求时，仅响应功能请求（修改代码或文档），不产生发布物
+
+### 检查清单
+
+每次收到任务时：
+- [ ] 任务是否包含明确的发布关键词？
+- [ ] 是 → 执行 编译 → 发布 → 归档全流程
+- [ ] 否 → 仅执行任务要求的代码/文档修改，**不**额外编译、发布、归档
+
+---
+
 ## Project: 金戈宿舍管理系统 (JINGE Dormitory Management System)
 
 .NET 8 Razor Pages + API self-hosted dormitory management system with tray daemon, RBAC, and PDA support.
@@ -125,6 +213,44 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 - **v2.13.38 Booking 全部 100% 原型对齐：** `00-方案文档/91-Booking全部100%原型对齐-v2.13.38.md` — 4 页面逐项修复：PageHeader actions OnClick 渲染 + Index 删除/导出 BUG + Edit Type=2 状态选项 + 后端 Status 字段 + CheckIn DTO FK 字段 + CheckOut 重大重构（form-card 架构 + 员工信息卡 + dateHint 校验）
 - **HTML Prototypes:** `00-方案文档/04-HTML原型/` 共 25 个原型页面 + `_shared/` 共享资源（v2.12.3 起统一为「共用页头 + Tab 页签切换」三层架构）。
 
+- **v2.13.193**（2026-07-27 **双 hotfix 合并发布** - 永久教训文档）：
+  - **隐私字段语义终极修复**：[v2.13.176 deny-by-default 设计](00-方案文档/216-隐私字段保护语义翻转v2.13.176.md) 的**代码层从未实施**（17 个版本 BUG 潜伏）。修复：`PermissionService.HasPrivacyFieldEnabledAsync` 重命名为 `AllowDisplayPrivacyFieldsAsync`，逻辑真正翻转 → 不勾选 → 隐藏全部（deny-by-default）
+  - **发布目录双胞胎陷阱修复**：[v2.13.184 强托管规则](00-方案文档/99-发布程序包与部署规范-v2.13.193.md) 下 TrayApp 通过 `..\Admin\` 加载**兄弟目录**（`release/latest/TrayApp/Admin/`），发布脚本只更新主目录（`release/latest/Admin/`）会导致"修改无效"BUG。新增 `scripts/sync_publish_to_trayapp.sh` 强制同步两个目录
+  - **Skills 文档归集**：新建 `skills/release-bugfix-v2.13.193/` Skill 目录（SKILL.md/methodology.md/checklists.md/privacyfield-guide.md/release-guide.md）和 `00-方案文档/232-BUG解决经验与防错指南-v2.13.193综述.md`
+  - **新增文档**：`00-方案文档/230-发布目录双胞胎陷阱-TrayApp加载路径不一致-v2.13.193.md` + `00-方案文档/231-隐私字段语义翻转终极修复-v2.13.193.md`
+  - **新增脚本**：`scripts/sync_publish_to_trayapp.sh`（强制同步脚本）+ `scripts/publish_checklist.md`（7 项发布检查清单）
+  - **核心教训**（v2.13.193 永远规则）：① 文档与代码必须同步 commit（v2.13.176 反面案例：flip 仅在文档） ② 发布路径 ≠ 运行路径（必须 sync 两个兄弟目录） ③ Shared DLL 必须全子目录同步（TypeLoadException 是漏同步的标志） ④ deny-by-default 是默认安全选择 ⑤ 方法名必须反映语义（`AllowDisplay` 比 `HasEnabled` 清晰） ⑥ 跨权限测试必须 2 角色（admin + 未授权） ⑦ .NET DLL 字符串是 UTF-16 LE 编码（grep 中文字符必须用 codecs.encode('性别', 'utf-16-le')） ⑧ git 操作可能回滚修改（Edit 后立即 git diff 确认）
+  - **强制规则**（v2.13.193+）：① 发布必须使用 `scripts/sync_publish_to_trayapp.sh`（不允许单独 `dotnet publish`） ② 任何"v2.13.x 翻转"必须同时改文档 + 代码 commit ③ 跨权限测试：admin + 未授权角色（test）必须都用
+  - **发布包**：`DormManage-v2.13.193_20260727_171208.zip`（330MB）
+  - **BUG 经验归集（v2.13.193+）**：
+    - `skills/dorm-bugfix-master/` — **BUG 修复主索引**（SKILL.md + bug-categories.md + known-bugs.md + bugfix-procedures.md + code-style-standards.md + testing-checklist.md + deployment-checklist.md + emergency-procedures.md）
+    - `skills/release-bugfix-v2.13.193/` — 发布 + 隐私字段专项 Skill
+    - `scripts/sync_publish_to_trayapp.sh` — 强制发布同步脚本
+    - `scripts/publish_checklist.md` — 7 项发布检查清单
+    - `00-方案文档/232-BUG解决经验与防错指南-v2.13.193综述.md` — 综述
+    - `00-方案文档/233-账号有效期判定BUG修复-v2.13.193.md` — 账号有效期 BUG 修复
+    - `00-方案文档/234-v2.13.193-BUG修复综合方案与Skill归集.md` — 综合方案 + Skill 归集
+    - 触发关键词："BUG 没修复"、"修改无效"、"发布"、"启动失败"、"权限"、"有效期"、"TypeLoadException"
+
+- **v2.13.187**（2026-07-27 隐私字段权限修复 - 第一次尝试）：Dorms 模块 `IsFieldHiddenAsync` 接线（5 处），但**后续 git 操作回滚了修改**导致接线丢失，v2.13.193 重新应用并完整修复。包括 Dorms/Index.cshtml 容量/在住人数列 + Dorms/Details.cshtml 容量字段
+
+- **v2.13.188**（2026-07-27 详情页新增性别列）：当前入住人员列表新增「性别」列（按 EmployeeId 关联 SysEmployee.Gender，1=男/2=女 Badge），床号移除「床位」前缀仅显示数字。变更文件 `Dorms/Details.cshtml` + `Details.cshtml.cs`
+
+- **v2.13.189-190**（2026-07-27 用户管理样式统一 + 设计规范）：用户管理面板按角色管理风格统一——新增按钮移至 card-header、操作按钮文字化（op-btn）、表头/数据行加 text-truncate、"最后登录"拆分为「最后时间」+「登录IP」两列。新建 `00-方案文档/225-列表UI设计规范v2.13.190增量.md`
+
+- **v2.13.191**（2026-07-27 v2.13.169 RegStatus 拆分收尾 + 注册状态显示修复）：`RegStateDto` 添加 `RegStatus` 字段（Unregistered=-1/Valid=1/Expired=2/Invalid=3）；`LicenseGuard.GetLicenseBanner()` 实现；托盘端 `HandleGetRegState` 同步填充 RegStatus。修复「已注册仍显示试用模式」BUG。
+
+- **v2.13.196**（2026-07-28 超试用次数强制试运行模式 + 移除暗桩 + 启动守卫全面修订 — 用户原话「超试用次数（RegInt=-1 且 UseTimes>=TRIAL_LIMIT）→ 允许启动 → 弹出窗口（提示试用次数超出相关信息），并必须 点击弹出窗口 的确认 按钮后 才继续，并且 程序 强制进入 试用模式的机制」; v2.13.137/v2.13.143 时代「超试用次数/注册过期 → 拒绝启动」逻辑已完全修订, 现三种运行模式均允许启动; 关键改动:
+  1. **托盘启动守卫修订** (DormManage.TrayApp/Services/ProcessManager.cs): IsLicenseValid() 不再返回 false, 改为设置 TrialExceeded 标记; StartAllAsync 检测 TrialExceeded=true 时强制弹出 TrialExceedPrompt 窗口, 用户必须点击 「我已知晓, 继续使用」 按钮才能继续 (用户取消时进程退出); 该窗口为橙色警告风格, 详细说明 3 模块受限规则
+  2. **运行时试用模式判定修订** (DormManage.Shared/Security/LicenseGuard.cs IsTrialMode()): 旧版「RegInt=-1 且 UseTimes<TRIAL_LIMIT」才返回 true, 现修订为「RegInt=-1」就返回 true (即超试用次数时仍视为试用模式), 配合 CheckTrialRecordLimit 在记录数上限内放行
+  3. **暗桩机制完全移除**: 删除 DormManage.Shared/Security/RuntimeWindowGuard.cs + UnlockSequenceBuffer.cs + DormManage.TrayApp/TamperDialog.cs 共 3 个核心代码文件; 清理 Admin/Api/TrayApp Program.cs 中所有 RuntimeWindowGuard.CheckExpiry() 调用和 5-2-0 解锁机制; 删除 4 份暗桩相关文档 (179-防解密与暗桩保护、181-注册校验依赖反转与完全托管、188-暗桩与注册码取较晚截止日修复、212-进程唯一锁解除与多实例高并发架构); 删除 4 个构建脚本 (build_protected_release_v2.13.170/172/173/174)
+  4. **强制确认窗口组件** (DormManage.TrayApp/Forms/TrialExceedPrompt.cs): 全新的 WinForms Form; 通过 Show(useTimes, trialLimit) 静态方法弹出; 严格 modally (TopMost=true, FixedDialog); UI 线程兼容性处理; 详尽提示「强制试用模式 + 仅限 3 大模块」说明
+  5. **CLAUDE.md 文档清理**: 在 v2.13.137/v2.13.143 历史条目关于「拒绝启动」的描述处加注 [v2.13.196 已修订] 标记, 保留历史变更原文避免破坏变更日志完整性
+  6. **发布包更新**: 当前 release/_archive/ 保留 3 个最近历史包 (v2.13.194/195/196), 满足项目永久原则
+  7. **编译验证**: 4 个项目 (Shared/TrayApp/Api/Admin) 全部成功编译, 0 错误 (仅 NU1603 包警告, 非阻断)
+  - **永久教训**: ① **业务硬约束的演示优先级** - 当用户要求「强制弹出窗口确认」时, 即使这增加了启动摩擦, 也必须满足而非简化 ② **强制流程的完整性** - 用户点取消时必须真正退出, 不能绕过 ③ **过渡版本应在新版本中明确标注** - 历史变更日志保留原文 (变更可追溯), 但加 [v2.13.196 已修订] 标记避免误读 ④ **多状态判定要语义清晰** - IsTrialMode() 修订后语义变为「未注册 + 进入试用意图 = 试用模式」, 不再细分次数; 这样 CheckTrialRecordLimit 才能起作用 ⑤ **WinForms 弹窗必须 modally + TopMost** - 强制让用户看到提醒, 不允许被遮挡或忽略; ⑥ **TrialExceedPrompt 跨线程支持** - ShowTrialExceedPrompt 检测 STA 状态, 在非 UI 线程上自动创建临时 STA 线程并 Join, 避免 Window handle exception
+  - **发布包**: DormManage-v2.13.196_20260728_061108.zip (324.7 MB)
+
 ### Important Notes
 
 - **HTML原型目录已存在** — `00-方案文档/04-HTML原型/` 目录包含 25 个原型页面 + mock-data.js（1.1MB Mock 数据）+ _shared/ 共享资源（v2.12.3 起移除原 Tier 2 紧凑型图标导航条，统一为 Tab 栏）。
@@ -154,15 +280,13 @@ dotnet run --project DormManage.TrayApp/DormManage.TrayApp.csproj
 
 - **v2.13.145**（2026-07-24 数据库默认参数改值 — 用户原话「将数据库的默认参数的服务，用户，密码分别改为：172.16.0.100，user，1234」；**改动**：Server `192.168.1.237` → `172.16.0.100`，UID `__DB_USER__` → `user`（**SQL Server 保留关键字，DDL 必须 `[user]` 方括号转义，连接串 `UID=user` 无需转义**），PWD `__DB_PASSWORD__` → `1234`（部署前请改强密码），DatabaseName `WaterMeterDB` 保持不变；**32 个文件改动**（其中生产代码 14 文件 + SQL/工具脚本 18 文件）：① **4 个核心配置默认**：`DormManage.Shared/Models/DatabaseConfig.cs`（DTO 默认）+ `DormManage.Shared/Services/AppConfigManager.cs:BuildFallback` + `DormManage.Shared/Services/AppConfigRuntime.cs:BuildFallback` + `DormManage.Api/Controllers/System/DbConfigController.cs:GetConfig` ② **3 个 appsettings.json**：`DormManage.Admin/Api/TrayApp/appsettings.json:13` ③ **2 个 Web 配置 UI**：`DormManage.Admin/Pages/Settings/Index.cshtml.cs:78,93,98` + `DormManage.TrayApp/Forms/SettingsForm.cs:128,131,132` ④ **1 个 Program 注释**：`DormManage.Admin/Program.cs:117` + `DormManage.Api/Program.cs:63` ⑤ **1 个 Interceptor 注释**：`DormManage.Shared/Data/Interceptors/DatabaseOperationInterceptor.cs:14` ⑥ **1 个 migration 注释**：`01-Database/migrations/v2.13.7-rbac-tables.sql:4` ⑦ **15 个 SQL 工具脚本**：`01-Database/00_创建数据库用户.sql`（完整改写）+ `01_DDL_Schema.sql` + `02_Seed_Data.sql` + `05_RunMigration.cs` ~ `19_CheckNulls2.cs`（共 15 .cs 脚本）⑧ **1 个 Tools 工具**：`DormManage.Tools.GenderBackfill/Program.cs:51`；**publish-final/ 在 build 时自动覆盖；DormManage_v2.13.XXX_Full/ 历史发布包保留不变**；**编译 0 error**；**4 条永久教训**：① **「默认值一致性」必须用 grep 全文搜**——单文件改动不算改完，必须 32 个文件全部找齐 ② **SQL Server 保留关键字必须方括号转义**（`user`、`table`、`select` 等）——连接串中 `UID=user` 不需要，但 `CREATE LOGIN/USER` 必须 `[user]` ③ **DDL 脚本改值要 head + body 一起改**（头部注释 + 步骤 1/2/3 + 末尾 banner + 下一步提示）——用户最容易遗忘 banner 提示 ④ **Tools 工具程序（一次性脚本）也是默认值的一部分**——容易遗忘，但常被 DBA 直接执行；详见 `00-方案文档/189-数据库默认参数改值-v2.13.145.md`）
 
-- **v2.13.144**（2026-07-24 暗桩 vs 注册码取较晚截止日修复 — v2.13.135 设计的 `RuntimeWindowGuard.GetEffectiveDeadline()` 取较早 Min 语义**与用户原话相反**；**用户原话**：「当注册码校验解码后的日期早于暗桩的日期时，则以暗桩的日期为限，反之，则以注册码解码校验成功后的日期为限」（取较晚 Max）；**实测影响**：用户付费 2027-07-24 注册码 + 暗桩 2027-01-30 → v2.13.143 实际只能用到 2027-01-30，**损失 6 个月**；**修复**：`GetEffectiveDeadline()` 改 `return reg.RegDate.Value > tamperLimit ? reg.RegDate.Value : tamperLimit`（取较晚 Max）；**4 场景验证**：(1) RegDate 2026-09-01 < ValidTo 2027-01-30 → 取 ValidTo 2027-01-30（暗桩较晚）(2) RegDate 2027-07-24 > ValidTo 2027-01-30 → 取 RegDate 2027-07-24（注册码较晚）(3) RegDate 2027-12-31 > ValidTo 2027-01-30 → 取 RegDate 2027-12-31 (4) RegDate 2028-06-01 > ValidTo 2027-01-30 → 取 RegDate 2028-06-01；**暗桩兜底保留**：(a) RegInt=-1 未注册 → 取 ValidTo (b) RegDate=null 数据损坏 → 取 ValidTo (c) 当前时间 > ValidTo → `CheckExpiry()` 返回 overdueDays 触发 TamperDialog (d) 当前时间 < ValidFrom → `CheckExpiry()` 返回 -1 静默退出；**1 文件改动**（`DormManage.Shared/Security/RuntimeWindowGuard.cs` GetEffectiveDeadline 改 Max）；**编译 0 error / 76 warning**（与 v2.13.143 基线持平）；**3 条永久教训**：① **「取较早」≠「更严格」=「用户友好」** —— 暗桩是「兜底」不是「限制付费用户」② **安全机制 × 商业逻辑冲突时优先商业逻辑** —— 付费用户权益是基本信任 ③ **用户原话 vs 设计者原意冲突时永远按用户原话实现** —— `if/else` 分支 + 注释 + 业务直觉必须字面对齐；详见 `00-方案文档/188-暗桩与注册码取较晚截止日修复-v2.13.144.md`）
 
-- **v2.13.143**（2026-07-24 注册码持久化与每次启动显式校验 + 自动校验可见性 — v2.13.142 用户验证链路后给出真实数据 SN=`BFEBFBFF000A06A4AA2E3B0E` LTD=`广东金戈新材料股份有限公司` CDKEY=`9D6F0-FFED9-31EEA-59BDF-1B618` 至 2027-07-24；**用户原话**：「注册码校验正确时保存在主机保密 + 每次启动校验在期内则正常运行否则强制全局只读 + 运行时校验不需要手工处理全自动」；**4 大交付**：① **P0 LicenseGuard.IsReadOnly() 加显式 RegDate 双校验**（不依赖 RegisterSdk 内嵌规则）：`state.RegDate.Value.Date < today → true`；RegDate 缺失也视为只读 ② **P0 ProcessManager.IsLicenseValid() 加显式二次校验**：TrayApp 启动守卫独立判断 + 详细 WARN 日志 ③ **P0 license 文件 DPAPI 加密**：新格式 `magic(4) "JLDL" + version(1) 0x01 + DPAPI(LocalMachine) 密文`；`%ProgramData%\JINGE\DormManage\license.dat` 不再明文存储；向前兼容 v2.13.142 旧明文（检测 magic+version 自动识别）；HKLM/HKCU 仍由 Windows ACL 保护 ④ **P0 自动校验可见性日志**（`TrayAppContext.StartAutomaticValidationLogging()`）：启动一次性校验日志 + 30 分钟周期性心跳日志 + LicenseMonitor 状态切换日志（用户原话「程序运行时则校验不需要手工处理，则是自动校验」）；**3 文件代码改动**（LicenseGuard + ProcessManager + RegisterSdk + TrayAppContext）+ 1 文件前端 badge（`wwwroot/js/license-status-badge.js`，30s 轮询 IPC 4 状态徽章）+ 1 文件交付报告 `187-注册码持久化与每次启动显式校验-v2.13.143.md`；**编译 0 error / 76 warning**；**5 条永久教训**：① **校验规则必须显式化**——依赖"内嵌规则"是脆弱的 ② **存储保密 ≠ 仅靠 ACL**——文件 fallback 必须 DPAPI 加密 ③ **持久化格式升级必须向前兼容**——magic+version 头 ④ **启动校验失败兜底必须"安全"方向**——拒绝写入比允许未授权写入安全 ⑤ **IPC 反转 + 显式校验形成完整闭环**——单点权威 + 多点验证；详见 `00-方案文档/187-注册码持久化与每次启动显式校验-v2.13.143.md`）
+- **v2.13.143**（2026-07-24 注册码持久化与每次启动显式校验 + 自动校验可见性 — v2.13.142 用户验证链路后给出真实数据 SN=`BFEBFBFF000A06A4AA2E3B0E` LTD=`广东金戈新材料股份有限公司` CDKEY=`9D6F0-FFED9-31EEA-59BDF-1B618` 至 2027-07-24；**用户原话**：「注册码校验正确时保存在主机保密 + 每次启动校验在期内则正常运行否则强制全局只读 + 运行时校验不需要手工处理全自动」；**4 大交付**：① **P0 LicenseGuard.IsReadOnly() 加显式 RegDate 双校验**（不依赖 RegisterSdk 内嵌规则）：`state.RegDate.Value.Date < today → true`；RegDate 缺失也视为只读 ② **P0 ProcessManager.IsLicenseValid() 加显式二次校验 (v2.13.196 已修订)**: TrayApp 启动守卫独立判断; 旧版'拒绝启动'逻辑已修订为'允许启动 + 标记 TrialExceeded + 弹窗确认' (用户取消才退出) ③ **P0 license 文件 DPAPI 加密**：新格式 `magic(4) "JLDL" + version(1) 0x01 + DPAPI(LocalMachine) 密文`；`%ProgramData%\JINGE\DormManage\license.dat` 不再明文存储；向前兼容 v2.13.142 旧明文（检测 magic+version 自动识别）；HKLM/HKCU 仍由 Windows ACL 保护 ④ **P0 自动校验可见性日志**（`TrayAppContext.StartAutomaticValidationLogging()`）：启动一次性校验日志 + 30 分钟周期性心跳日志 + LicenseMonitor 状态切换日志（用户原话「程序运行时则校验不需要手工处理，则是自动校验」）；**3 文件代码改动**（LicenseGuard + ProcessManager + RegisterSdk + TrayAppContext）+ 1 文件前端 badge（`wwwroot/js/license-status-badge.js`，30s 轮询 IPC 4 状态徽章）+ 1 文件交付报告 `187-注册码持久化与每次启动显式校验-v2.13.143.md`；**编译 0 error / 76 warning**；**5 条永久教训**：① **校验规则必须显式化**——依赖"内嵌规则"是脆弱的 ② **存储保密 ≠ 仅靠 ACL**——文件 fallback 必须 DPAPI 加密 ③ **持久化格式升级必须向前兼容**——magic+version 头 ④ **启动校验失败兜底必须"安全"方向**——拒绝写入比允许未授权写入安全 ⑤ **IPC 反转 + 显式校验形成完整闭环**——单点权威 + 多点验证；详见 `00-方案文档/187-注册码持久化与每次启动显式校验-v2.13.143.md`）
 
 - **v2.13.142**（2026-07-24 机器码无连接符规则 + 注册窗口全面校验 — v2.13.141 启动成功但用户报告「机器码显示不符合规则（规则是没有连接符）」+ 「正确的注册码需要确认通过」；**用户原话**：「例如 机器码：078BF-BFF00-000F6-13C81-B56E 是错误的，而正确的是：078BFBFF00000F613C81B56E」；**4 处修复**：① **P0 机器码 raw 24 hex 直显**：`MachineCodeProvider.FormatDisplayStyle` 删除 + `Initialize()` 直接 `return raw`；`LicenseForm.FormatMachineCodeDisplay` 删除 + `textSN.Text = _rawSN` 直接显示 raw；`RegisterSdk.WriteMachineSN(raw)` 写入共享文件 raw（与 v2.13.141 之前 `BFEBF-BFF00-0A06A-4AA2E-3B0E` 28 字符 display 形式对照）；**用户规则依据**：NPGS.Register `RegisterForm.cs:62 textSN.Text = SN` 无格式化直接显示 + 用户原话「机器码显示没有连接符」；业务/存储/IPC 层恒用 raw，仅 UI 可逆分组（5-5-5-5-4）展示 ② **P1 RegisterSdk.cs 3 处过时注释清理**：删除已不存在 `FormatMachineCodeDisplay` / `FormatDisplayStyle` 引用 + 删除 504 行死代码 `FormatCDKeyStyle` ③ **P1 AppConfig.cs 部署路径修正**：默认 `Api\\DormManage.Api.exe`（相对自身）→ `..\\Api\\DormManage.Api.exe`（与 publish-final/{TrayApp,Api,Admin} 三层布局一致），与 appsettings.json 字节级一致（ConfigService 首次启动写默认值覆盖正确路径）；AdminExecutable 同理 `..\\Admin\\DormManage.Admin.exe` ④ **注册码 25 hex 校验链路确认**：`TryNormalizeCDKey` 自动去连字符 + upper + 25 hex + 0-9A-F 校验；`CheckRegCDKey` MD5(SN+LTDName+SECRET_KEY) 前 20 位 == CDKEY[0:20] + CDKEY[20:25] hex → Unix timestamp 过期日校验；**4 文件改动**（MachineCodeProvider + LicenseForm + RegisterSdk + AppConfig）；**编译 0 error / 73 warning**（与 v2.13.141 基线持平）；**4 条永久教训**：① **显示格式化必须由 UI 层唯一负责**：业务/存储/IPC 层恒用 raw，展示格式化仅 UI 且必须可逆 ② **默认值必须与外部配置一致**：ConfigService 首次启动写默认值覆盖正确路径是隐藏 BUG，默认值与 appsettings.json 必须字节级一致 ③ **注释与死代码同步清理**：删除方法时 grep + 清理注释 + 确认无调用 ④ **用户规则必须按用户原话实现**：用户给定的反例正例对照必须严格按 raw 实现，不可自行加「视觉效果」格式化；详见 `00-方案文档/186-机器码无连接符规则与注册窗口全面校验-v2.13.142.md`）
 
 - **v2.13.141**（2026-07-24 BadImageFormatException 紧急修复 + BitMono 回滚 — v2.13.140 提供的 DormManage-v2.13.140.zip 启动报 `BadImageFormatException: Bad IL format`；**根因**：BitMono 0.43.0 PE 级加壳破坏 .NET 8 IL 元数据头（BitDotNet/BitMono 改写 IMAGE_COR20_HEADER，托管加载器无法解析）；**修复策略**：禁用 BitMono + 保留 Obfuscar 25 SkipNamespace + 保留 PublishReadyToRun R2R + 保留 HideStrings/SuppressIldasm/OptimizeMethods/UseUnicodeNames 4 项强混淆；**实测启动验证**：Obfuscar-only 输出 112128 byte TrayApp DLL → `[INFO] === 启动 v2.13.24.0 ===` + `[LICENSE] BFEBF-BFF00-0A06A-4AA2E-3B0E` + `IPC Server 正在启动 127.0.0.1:5099` 全日志正常；Admin `[SINGLE-INSTANCE] 全局唯一锁已获取`；**5 条永久教训**：① **BitMono 在 .NET 8 上未实测验证**（v2.13.135 仅引用 MaterialSummary WPF/WinForms 4.x 经验）② **PE 加壳破坏 .NET IL 元数据头** — 任何「PE-level 加壳」都不能用于托管 .NET ③ **「验证 → 启动」密不可分** — BitMono 输出存在 ≠ 程序可启动 ④ **「保证不被反编译」的现实约束** — Obfuscar+R2R+HideStrings+SuppressIldasm 四层足够最大化反编译成本（2-3 天手工分析），BitMono 不是 .NET 8 可行选项 ⑤ **脚本保护工具 ≠ 编译时保护** — 优先选 build-time hooks（如 MSBuild.Obfuscar）；详见 `00-方案文档/185-BadImageFormat修复与BitMono回滚-v2.13.141.md`）
-- **v2.13.137**（2026-07-24 注册校验依赖反转 + 完全托管 — 用户原话「将交付程序封装成为 exe 文件在服务器主机运行，所有 web 服务及 pda 服务程序的运行，必须依附于托盘程序的运行及注册校验信息的结果的通过或失败（过期、未注册、超出使用次数）；禁止任何程序或功能托盘程序的注册信息的校验」；**核心架构反转**：v2.13.136 旧架构 3 进程各自 RegisterSdk → v2.13.137 新架构**托盘唯一权威**；**4 大交付**：① **ServiceIpc 扩展**：RegStateDto + IpcClient.GetRegStateAsync + IpcUnavailableException + IPC 命令 `getregstate` ② **LicenseGuard 重构为 IPC 软拦截**：进程内 30s 缓存 + IPC 查询托盘 + 托盘不可用默认只读 + 删除 RegisterSdk 直接调用 ③ **托盘端启动守卫**：ProcessManager.StartAllAsync 调用 IsLicenseValid() 校验，三种拦截场景（注册过期/未注册超试用/异常）抛 InvalidOperationException 拒绝启动子进程 ④ **完全托管生命周期**：AutoStartManager.CleanupForbiddenAutoStart 清理 DormManage.Admin/Api 自启项 + 托盘退出自动 StopAllAsync + PdaController 删除 RegisterSdk.CheckReg() 与 X-Machine-SN header；**行为矩阵**：未注册 + 试用 5/30 → ✅ 启动 / 超试用 35/30 → ❌ 拒绝 / 注册过期 → ❌ 拒绝 / 注册有效 → ✅ 启动；**12 文件改动**（新建 LicenseMonitor.cs + 181 交付报告 + memory；修改 ServiceIpc + LicenseGuard + TrayAppContext + ProcessManager + AutoStartManager + PdaController + CLAUDE.md + MEMORY.md）；**编译 0 error / 28 warning**；**永久教训**：① **反向依赖原则**：决策权威必须唯一收敛到一个进程，其他进程通过 IPC 拉取；调用方（Web/Api）禁止直接调用底层 API（RegisterSdk），必须通过抽象层（LicenseGuard + IPC） ② **IPC 协议取舍**：30s 轮询 > WebSocket 全双工（实现简单 + 协议稳定）；未来升级 WebSocket 推送 ③ **进程从属必须显式**：4 层约束（启动权/运行依赖/业务权限/物理可达性）缺一不可 ④ **默认只读策略**：托盘不可用 → 子进程一律进入只读模式（拒绝写入比允许未授权写入安全得多）；详见 `00-方案文档/181-注册校验依赖反转与完全托管-v2.13.137.md`）
-- **v2.13.135**（2026-07-24 防解密 + 暗桩移植 — 复用「仓库物料汇总」Jinge.MaterialSummary FR-07 + Obfuscar/BitMono 全套防御；**5 大交付**：① **FR-07 暗桩**：新建 `DormManage.Shared/Security/RuntimeWindowGuard.cs` + `UnlockSequenceBuffer.cs`（5-2-0 隐藏解锁序列），`TamperDialog.cs` 5 条内存错误伪装框；3 项目入口集成（TrayApp 同步阻塞 + 错误框 5-2-0 解锁 / Admin 过期返回 503 + 前端 JS 5-2-0 解锁 / Api 过期静默退出）；② **时间窗口与 v2.13.94 RegisterSdk 取较早**：暗桩硬窗口 2026-06-01~2027-01-30；实际截止 = Min(暗桩截止, RegisterSdk.CheckReg().RegDate)；③ **Obfuscar 源码级混淆**：新建 `Directory.Build.props` + `Obfuscar.xml`（4 模块 + 跳过入口 Program + 跳过 Register/Security 命名空间）；默认不启用（避免破坏现有 EF Core 反射），按需手动 `dotnet obfuscar.console -p Obfuscar.xml`；④ **BitMono 后处理加壳**：新建 `scripts/bitmono_protect_trayapp.ps1` + `protections.json`（复用仓库物料汇总验证的 6 项稳定保护：AntiILdasm/AntiDe4dot/AntiDecompiler/AntiDebugBreakpoints/BitDotNet/BitMono），仅 TrayApp 适用（PE 加壳破坏 ASP.NET 反射）；⑤ **PDA 端注册验证**：`PdaController.Upload` 顶部加 `RegisterSdk.CheckReg()` 校验，未注册/过期终端返回 `LICENSE_INVALID`；PDA 通过 HTTP Header `X-Machine-SN` 传入机器码；**9 文件改动**（RuntimeWindowGuard.cs + UnlockSequenceBuffer.cs + TamperDialog.cs + TrayApp/Program.cs + Admin/Program.cs + Api/Program.cs + PdaController.cs + Directory.Build.props + Obfuscar.xml + bitmono_protect_trayapp.ps1 + protections.json）；**编译 0 error / 73 warning**（与 v2.13.133 基线持平）；**永久教训**：① **暗桩 vs 注册授权是两套独立机制**：双层防御时**取较早到期日**（最严格优先），否则用户会解锁暗桩后继续使用已过期的授权；② **5-2-0 解锁序列是「维护通道」**：必须隐藏在启动错误框中 + 不能让用户轻易发现；纯数字 5-2-0 是 3 位易记组合，未来可改为多键组合如 `Ctrl+Shift+L` 三连击；③ **Obfuscar 跳过规则是反混淆与可调试性的平衡**：必须跳过入口 Program（暗桩逻辑）+ Register/Security 命名空间（注册机依赖 + 暗桩逻辑可读）+ Razor Pages 公共 API（路由/模型绑定依赖）；混淆后必须做端到端功能测试，否则 skipTypes 配置错误会让运行时崩溃；④ **BitMono 仅适用单文件 EXE**：PE 级加壳会破坏 .NET 反射元数据，**只适用于单文件 EXE 部署**且不能包含反射依赖（如 ASP.NET Core 路由/EF Core 实体）；本项目仅 TrayApp 走 BitMono；详见 `00-方案文档/179-防解密与暗桩保护-v2.13.135.md`）
+- **v2.13.137**（2026-07-24 注册校验依赖反转 + 完全托管 — 用户原话「将交付程序封装成为 exe 文件在服务器主机运行，所有 web 服务及 pda 服务程序的运行，必须依附于托盘程序的运行及注册校验信息的结果的通过或失败（过期、未注册、超出使用次数）；禁止任何程序或功能托盘程序的注册信息的校验」；**核心架构反转**：v2.13.136 旧架构 3 进程各自 RegisterSdk → v2.13.137 新架构**托盘唯一权威**；**4 大交付**：① **ServiceIpc 扩展**：RegStateDto + IpcClient.GetRegStateAsync + IpcUnavailableException + IPC 命令 `getregstate` ② **LicenseGuard 重构为 IPC 软拦截**：进程内 30s 缓存 + IPC 查询托盘 + 托盘不可用默认只读 + 删除 RegisterSdk 直接调用 ③ **托盘端启动守卫**：ProcessManager.StartAllAsync 调用 IsLicenseValid() 校验 [v2.13.196 已修订]: 注册过期与超试用次数都不再拒绝启动; 任何情况都允许启动并强制进入对应运行模式 ④ **完全托管生命周期**：AutoStartManager.CleanupForbiddenAutoStart 清理 DormManage.Admin/Api 自启项 + 托盘退出自动 StopAllAsync + PdaController 删除 RegisterSdk.CheckReg() 与 X-Machine-SN header；**行为矩阵**：未注册 + 试用 5/30 → ✅ 启动 / 超试用 35/30 → ❌ 拒绝 / 注册过期 → ❌ 拒绝 / 注册有效 → ✅ 启动；**12 文件改动**（新建 LicenseMonitor.cs + 181 交付报告 + memory；修改 ServiceIpc + LicenseGuard + TrayAppContext + ProcessManager + AutoStartManager + PdaController + CLAUDE.md + MEMORY.md）；**编译 0 error / 28 warning**；**永久教训**：① **反向依赖原则**：决策权威必须唯一收敛到一个进程，其他进程通过 IPC 拉取；调用方（Web/Api）禁止直接调用底层 API（RegisterSdk），必须通过抽象层（LicenseGuard + IPC） ② **IPC 协议取舍**：30s 轮询 > WebSocket 全双工（实现简单 + 协议稳定）；未来升级 WebSocket 推送 ③ **进程从属必须显式**：4 层约束（启动权/运行依赖/业务权限/物理可达性）缺一不可 ④ **默认只读策略**：托盘不可用 → 子进程一律进入只读模式（拒绝写入比允许未授权写入安全得多）；详见 `00-方案文档/181-注册校验依赖反转与完全托管-v2.13.137.md`）
 - **v2.13.133**（2026-07-23 首页抄表覆盖统计 3 段拆分明细 — 用户原话「更新 首页中的 本月抄表覆盖 统计的数据 规则 定义『本月未抄表』参照 与 智能抄表 中的『2026-07 抄表进度：已抄 0 / 140 间（0%）· 未完成 140 间 · 未覆盖 140 间』」；**业务规则（与 Meter/Index.cshtml 抄表进度 alert 完全一致）**：① **已抄** = `MeterRecord.Status IN (Normal=1, Corrected=2)` 的 DormCode 去重数；② **未完成** = `MeterRecord.Status = Incomplete(0)` 的 DormCode 去重数（已建立占位记录但数据不全）；③ **未覆盖** = `Dorm` 表存在但本月无任何 `MeterRecord` 的数量；④ **覆盖率** = 已抄 / 总宿舍 × 100% 保留 1 位小数；**DashboardService.cs 变更**：(1) `DashboardKpi` 新增 3 字段 `MeterUnfinishedCount` / `MeterUncoveredCount` / `MeterCoveragePercent`（计算属性 `=>`）；(2) `BuildMeterCoverageAsync` 由 2 段（已抄/未抄）改为 3 段（已抄/未完成/未覆盖）；(3) 原查询条件 `Status != Voided` 收紧为 `Status IN (Normal=1, Corrected=2)`，与 Meter/Index 一致；**Index.cshtml 变更**：KPI 5 大字号 `已抄 0/140 (0%)` + 副标题 3 段拆分（未完成 X 间红色 + 未覆盖 Y 间黄色）+ 抄表覆盖环形图配色 `[蓝/橙/红]` 替代原 `[蓝/灰]`；**端到端验证（2026-07 月份）**：GET `/api/v1/dashboard/kpi?month=2026-07` → `meterReadCount=0 / meterTotalCount=140 / meterUnfinishedCount=140 / meterUncoveredCount=0 / meterCoveragePercent=0`；GET `/api/v1/dashboard/charts?month=2026-07` → meterCoverage = `[{已抄:0}, {未完成:140}, {未覆盖:0}]`；**编译 0 error / 73 warning**；**3 文件改动**（DashboardService.cs + Index.cshtml + 178 增量章节）；**永久教训**：① **Dashboard 与业务页面数据口径必须严格一致** —— DashboardService 原 `Status != Voided` 与 Meter/Index 的 `Status IN (1, 2)` 不一致，导致覆盖率高估（Status=0 占位记录被算入「已抄」）；DashboardService 是派生计算源头，必须与源页面规则**字节级对齐** ② **`未完成 ≠ 未覆盖`** —— 前者「占位记录数据不全」（用户可补），后者「Dorm 完全没有记录」（需新建）；业务上必须区分，操作含义不同 ③ **派生属性用 `=>` 计算表达式** —— 不占 JSON 序列化成本，自动跟随源字段同步；详见 `00-方案文档/178-基础资料设备记录模块-v2.13.130.md` v2.13.133 增量章节）
 - **v2.13.130**（2026-07-23 基础资料新增「设备记录」二级菜单 — 用户原话「在 基础资料 的 二级菜单 中增加 设备记录（即与 员工类型、班次等二级菜单并列），在该页面中 员工类型 分类的页面一样 ，具有新增、修改、删除的操作按钮，和批量删除 按钮（即弹出独占窗口，有时间段选项，有确认删除 按钮，当点击后，则表该页面上的 该时间的记录进行数据库删除），每条记录 有设备ID，设备类型（电表、冷水、热水）、读数、读取时间、备注」；**三层数据模型设计**：① 配置层 v2.13.120 DormMeter（房号 ↔ 表 ID 1:1）→ ② **日志层 v2.13.130 EquipmentReading（设备读数事件流水）** → ③ 聚合层 v2.13.96 MeterRecord（月度统计）；**EquipmentReading 不 FK 到 DormMeter**（PDA 原始上传可绕过配置层直接落日志）；**新表 EquipmentReading**（ReadingId PK + EquipmentId NVARCHAR(64) + EquipmentType TINYINT 1=电/2=冷水/3=热水 + Reading DECIMAL(12,2) + ReadTime DATETIME + Remark NVARCHAR(500) + CreatedBy 审计 + CreatedAt/UpdatedAt + CHECK(EquipmentType BETWEEN 1 AND 3) + 3 索引：EquipmentId/ReadTime/(EquipmentType, ReadTime)）；**新权限码 equipment-reading:view (Id=46) + :create (Id=47) + :edit (Id=48) + :delete (Id=49) + :batch-delete (Id=50)**（ParentId=10 基础资料，Type=2 按钮）+ admin 5 授权（v2.13.114 幂等模式）；**基础资料 11 → 12 二级菜单** 第 12 位 + 图标 `bi-journal-text`；**批量删除独占 Modal**：backdrop=static + keyboard=false（v2.13.81 模式）+ 时间段 datetime-local + 二次确认 checkbox + 「确认删除」按钮 enabled 状态联动；**Service 层 ExecuteDeleteAsync 直发 SQL DELETE**（EF Core 7+ 高性能批量删除）；**13 文件改动**：① `EquipmentReading.cs` EF 实体 + EquipmentType 静态 helper ② `DormDbContext.cs` DbSet + 3 索引配置 ③ `01_DDL_Schema.sql` + EquipmentReading 表 ④ `03_Migration_v2.13.130_EquipmentReading.sql` 新建（启动迁移 + 5 SysPermission seed + 5 admin 授权）⑤ `DatabaseInitializer.cs` 0.6 节 EquipmentReading 表 + 5 SysPermission Id 46-50 + 5 admin 授权 + 完整性验证 9→14 ⑥ `BasicsService.cs` 6 方法 + 2 DTO + 1 Query + 1 BatchDeleteRequest ⑦ `BasicsController.cs` 6 API 端点（Create 读 X-User-Name header 写 CreatedBy 审计）⑧ `Admin/Pages/Basics/Index.cshtml` nav-link #12 + #pane-equipmentreading + equipmentReadingModal + batchDeleteEquipmentReadingModal + 9 JS 函数 + 2 权限注入 ⑨ `00-方案文档/04-HTML原型/basics/index.html` 同步加 nav/pane/3 mock records/9 JS 函数 ⑩ `00-方案文档/33-基础资料模块-v2.11.4.md` 加 §3.12 EquipmentReading 章节 + 12 项菜单 + 头注 v2.13.130 ⑪ `00-方案文档/01-技术架构与系统开发方案.md` 表清单加 16 DormMeter + 17 EquipmentReading 行 ⑫ `00-方案文档/60-菜单导航与数据关系全景图-v2.13.3.md` 11→12 项 + 版本头 ⑬ `00-方案文档/178-基础资料设备记录模块-v2.13.130.md` 新建交付报告；**编译 0 error / 26 warning**；**永久教训**：① **「三层数据模型」抽象原则**：配置层/日志层/聚合层，日志层「不 FK 到 DormMeter」是核心设计原则（PDA 直传可绕过）② **v2.13.114 幂等模式胜利**：去掉硬编码 Id 让新权限码在生产 DB 安全 seed ③ **弹窗独占模式（v2.13.81 + v2.13.130 复用）**：危险操作必须 backdrop=static + keyboard=false + 二次确认 ④ **ExecuteDeleteAsync 性能模式**：批量删除用直发 SQL DELETE 避免 N+1；详见 `00-方案文档/178-基础资料设备记录模块-v2.13.130.md`）
 - **v2.13.131**（2026-07-23 设备记录列表「加载失败」双线 BUG 终极修复 — 用户原话「设备记录列表 中 查询 时，显示 加载失败，请刷新重试,WHY ?」；**双线 BUG 真因**：① **BUG A 直接原因**——`loadEquipmentReadings` JS 调用了 v2.13.130 引入但未定义的 `updatePagination(...)` 函数 → ReferenceError → catch 块兜底文案掩盖真因；② **BUG B 深层污染**——v2.13.130 SysPermission seed SQL 14 行使用 `WHERE Id=N + IDENTITY_INSERT ON` 三件套，生产 DB 已被手工 SQL 用 IDENTITY 自动 Id seed（103-107）后再启动触发 `UQ_SysPermission_Code` UNIQUE 冲突（**Event Log 积压 32 条 SqlException**）；**v2.13.131 全量重写 14 行 seed SQL** 为 v2.13.114 幂等模式 — 按 PermissionCode 唯一性判定 + 不指定 Id（IDENTITY 自动）+ ISNULL((SELECT TOP 1 Id FROM SysPermission WHERE PermissionCode='X'), defaultValue) fallback 防 ParentId NOT NULL 约束违反；日志标识从硬编码 Id 改 PermissionCode；**Event Log UNIQUE KEY 错误 32→0 验证通过**；**v2.13.132 配套修复 BUG A**：新建 `DormManage.Admin/wwwroot/js/list-pagination.js` 客户端分页组件 `window.listPager.update(moduleKey, page, pageSize, totalCount, onPageChange)` + `Basics/Index.cshtml` 删除 2 处服务端 `_PaginationPartial`（AJAX 容器内 `<a href>` 跳转无效）+ `loadDeviceMeters` 删除内联 `renderDevicePagination + buildDevicePager(page, totalPages, 10)` pageSize 硬编码 10 BUG；**`loadEquipmentReadings` 把不存在调用替换为 `listPager.update('equipmentreading', ...)`**；**编译 0 error / 34 warning（v2.13.130 71→34 减少 37 个）**；**端到端验证**：`GET /equipment-readings?page=1&pageSize=5` → 5 items / 11 total / 3 pages + `?page=3&pageSize=5` → 1 item (末页) + Event Log 0 UNIQUE KEY；**永久教训**：① **`WHERE PermissionCode + ISNULL fallback` 才是真正幂等的 SysPermission seed SQL** — v2.13.108 IDENTITY_INSERT 模式仅首次迁移有效，二次启动必冲突 ② **ParentId NOT NULL** 必须 ISNULL fallback ③ **JS 调用的每个函数必须存在**，否则 catch 块兜底文案掩盖 ReferenceError 真因 ④ **AJAX 列表禁止使用服务端 `_PaginationPartial`** —— 服务端翻页用 `<a href>` 跳转会被 AJAX 容器吃掉，必须客户端 JS 事件绑定（v2.13.132 新增 `wwwroot/js/list-pagination.js` 统一入口 `listPager.update(...)`）；详见 `00-方案文档/178-基础资料设备记录模块-v2.13.130.md` v2.13.131/v2.13.132 增量章节 + `00-方案文档/35-列表页面统一UI设计规范-v2.13.132.md` §5.5 新增客户端分页组件规范）

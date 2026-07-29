@@ -1,0 +1,276 @@
+@page
+@model DormManage.Admin.Pages.Meter.ImportModel
+@{
+    ViewData["Title"] = "批量导入抄表";
+    Layout = "_Layout";
+}
+
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery PageAntiforgery
+@{
+    var antiforgery = PageAntiforgery.GetAndStoreTokens(HttpContext);
+}
+
+@section Styles {
+    <style>
+        .step-card { border-left: 4px solid #1976d2; }
+        .step-card.completed { border-left-color: #2e7d32; }
+        .step-number {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: #1976d2; color: #fff; display: inline-flex;
+            align-items: center; justify-content: center; font-weight: bold;
+        }
+        .step-card.completed .step-number { background: #2e7d32; }
+        .reading { font-variant-numeric: tabular-nums; }
+        tr.row-bad { background: #fde8e8; }
+        tr.row-ok { background: #e6f4ea; }
+    </style>
+}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-file-earmark-arrow-up"></i> 批量导入抄表
+            <small class="text-muted fs-6">（Excel 文件批量导入）</small>
+        </h2>
+        <a href="/Meter" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> 返回智能抄表
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-x-circle"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="alert alert-info py-2 mb-3">
+        <i class="bi bi-info-circle"></i>
+        <strong>v2.13.69 更新：</strong>所有数据操作均为覆盖模式。<strong>status=0(未完成)/3/4 允许覆盖</strong>；status=1(正常)/2(已修正) 拒绝覆盖，请走修正流程。文件内同月同房号重复仅首行有效。
+    </div>
+
+    <!-- 步骤指示器（v2.13.69 保留） -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 1 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">1</span>
+                    <div>
+                        <h6 class="mb-0">下载模板</h6>
+                        <small class="text-muted">获取标准 Excel 模板</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 2 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">2</span>
+                    <div>
+                        <h6 class="mb-0">上传文件</h6>
+                        <small class="text-muted">校验并预览</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 3 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">3</span>
+                    <div>
+                        <h6 class="mb-0">导入结果</h6>
+                        <small class="text-muted">查看导入统计与错误</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 步骤 1：下载模板 -->
+    <div class="card mb-3 step-card">
+        <div class="card-body">
+            <h5>步骤 1：下载模板</h5>
+            <p class="text-muted small mb-2">模板列：<strong>房号、抄表月份(YYYY-MM)、冷水读数、热水读数、电表读数、抄表员、备注</strong>（7 列）</p>
+            <form method="get" asp-page-handler="DownloadTemplate">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-download"></i> 下载 抄表导入模板.xlsx
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 步骤 2：上传文件 -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5>步骤 2：上传文件并校验</h5>
+            <form method="post" enctype="multipart/form-data" asp-page-handler="Upload" id="uploadForm" class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <input type="file" id="fileInput" name="file" accept=".xlsx" class="form-control">
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-search"></i> 校验并预览
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="loadSample()">
+                        <i class="bi bi-table"></i> 加载示例数据演示
+                    </button>
+                </div>
+            </form>
+            <small class="text-muted d-block mt-2">💡 原型无法解析真实 Excel，可点「加载示例数据演示」查看 5 项业务规则校验效果（含各类错误示例）。支持 .xlsx ≤ 10MB。</small>
+        </div>
+    </div>
+
+    @if (Model.ImportResult != null)
+    {
+        <!-- 步骤 3：导入结果 -->
+        <div class="card mb-3" id="resultCard">
+            <div class="card-body">
+                <h5>步骤 3：校验结果</h5>
+
+                <!-- v2.13.69：4 个 KPI 卡片 -->
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light text-center">
+                            <div class="card-body">
+                                <h6 class="text-muted">总数据行</h6>
+                                <h3 class="mb-0">@Model.ImportResult.TotalRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success bg-opacity-10 text-center">
+                            <div class="card-body">
+                                <h6 class="text-muted">✓ 可导入</h6>
+                                <h3 class="mb-0 text-success">@Model.ImportResult.ValidRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger bg-opacity-10 text-center">
+                            <div class="card-body">
+                                <h6 class="text-muted">✗ 拦截</h6>
+                                <h3 class="mb-0 text-danger">@Model.ImportResult.InvalidRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info bg-opacity-10 text-center">
+                            <div class="card-body">
+                                <h6 class="text-muted">待修正</h6>
+                                <h3 class="mb-0 text-info">@Model.ImportResult.InvalidRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- v2.13.69：完整预览表（含有效行 + 错误行） -->
+                <h6 class="mt-3">预览详情</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px">行号</th>
+                                <th style="width:100px">房号</th>
+                                <th style="width:100px">月份</th>
+                                <th class="text-end" style="width:90px">冷水</th>
+                                <th class="text-end" style="width:90px">热水</th>
+                                <th class="text-end" style="width:90px">电表</th>
+                                <th class="text-center">冷/热/电 用量</th>
+                                <th style="width:120px">抄表员</th>
+                                <th>校验结果</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ValidRows != null)
+                            {
+                                foreach (var r in Model.ValidRows)
+                                {
+                                    <tr class="row-ok">
+                                        <td>@r.RowNumber</td>
+                                        <td><strong>@r.DormCode</strong></td>
+                                        <td>@r.ReadMonth</td>
+                                        <td class="text-end reading">@r.ColdMeter.ToString("F2")</td>
+                                        <td class="text-end reading">@r.HotMeter.ToString("F2")</td>
+                                        <td class="text-end reading">@r.ElectricMeter.ToString("F2")</td>
+                                        <td class="text-center">
+                                            @if (r.PreviousColdReading > 0 || r.PreviousHotReading > 0 || r.PreviousElectricReading > 0)
+                                            {
+                                                <span class="badge bg-primary">+@r.ColdUsage.ToString("F2")</span>
+                                                <span class="badge bg-danger">+@r.HotUsage.ToString("F2")</span>
+                                                <span class="badge bg-warning text-dark">+@r.ElectricUsage.ToString("F2")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">首次抄表</span>
+                                            }
+                                        </td>
+                                        <td><small>@r.Operator</small></td>
+                                        <td><span class="badge bg-success"><i class="bi bi-check-circle"></i> 可导入</span></td>
+                                    </tr>
+                                }
+                            }
+                            @if (Model.ErrorDetails != null)
+                            {
+                                foreach (var e in Model.ErrorDetails)
+                                {
+                                    <tr class="row-bad">
+                                        <td>@e.RowNumber</td>
+                                        <td>@e.DormCode</td>
+                                        <td>@e.Month</td>
+                                        <td colspan="3" class="text-center text-muted">—</td>
+                                        <td class="text-center text-muted">—</td>
+                                        <td class="text-muted small">—</td>
+                                        <td><span class="badge bg-danger"><i class="bi bi-x-circle"></i> @e.ErrorMessage</span></td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr>
+                <form method="post" asp-page-handler="Import">
+                    <button type="submit" class="btn btn-success" @(Model.ImportResult.ValidRows == 0 ? "disabled" : "")>
+                        <i class="bi bi-upload"></i> 确认导入 (@Model.ImportResult.ValidRows 条)
+                    </button>
+                    <a href="/Meter" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> 返回
+                    </a>
+                </form>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // v2.13.69 加载示例数据演示（演示 5 项业务规则校验）
+        var csrfToken = document.getElementById('antiforgeryToken')?.value || '@antiforgery.RequestToken';
+        var sampleData = @Html.Raw(Model.SampleJson());
+
+        function loadSample() {
+            var rows = sampleData;
+            var summary = '📊 将演示 ' + rows.length + ' 行示例数据：\n' +
+                '✅ 通过校验：3 条（D-301/302/303 新月）\n' +
+                '❌ 拦截：6 条（房号不存在 / 房号重复 / 库中冲突 / 读数负数 / 读数不足 / 月份错）';
+            if (!confirm(summary)) return;
+            // 把示例数据塞到表单 File input（这里直接弹提示 + 跳示例，需后台配合解析）
+            alert('💡 已加载示例数据演示。\n\n因前端不能直接生成 .xlsx 文件，请按以下步骤：\n' +
+                '1) 用本页「步骤 1：下载模板」下载 .xlsx\n' +
+                '2) 打开模板，按示例填入 9-10 行（含各类错误）\n' +
+                '3) 上传文件触发校验，看到与原型一致的错误标记\n\n示例数据预览：\n' +
+                rows.map(function(r) {
+                    return '  ' + r.row + '. ' + r.dormCode + ' / ' + r.readMonth + ' 冷 ' + r.cold + ' 热 ' + r.hot + ' 电 ' + r.electric + ' (' + r.remark + ')';
+                }).join('\n'));
+            document.getElementById('fileInput').focus();
+        }
+    </script>
+}

@@ -54,9 +54,11 @@ public class PersonnelEditDto
     public string RealName { get; set; } = "";
     public int DepartmentId { get; set; }
     public int EmployeeTypeId { get; set; }
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }  // 改为可空
     public int Gender { get; set; } = 1;
     public string? Phone { get; set; }
+    // v2.13.208 BUG 修复：字段名 IdCard → IdNumber（与 EF 模型 SysEmployee.IdNumber + DB 列名一致）
+    public string? IdNumber { get; set; }
     public DateOnly? HireDate { get; set; }
     public int AttendanceTypeId { get; set; }
     public int EmploymentStatusId { get; set; } = 1;

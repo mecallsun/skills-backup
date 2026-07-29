@@ -34,6 +34,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
     private readonly NotifyIconManager _notifyIcon;
     private readonly IpcServer? _ipcServer;
     private readonly LicenseMonitor _licenseMonitor;
+    private IconAnimator? _iconAnimator; // v2.13.199: 启动动画
 
     /// <summary>v2.13.4 新增：不可见主窗体，作为所有弹窗的 Owner</summary>
     private readonly Form _ownerForm;
@@ -105,7 +106,9 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             _log.Warn($"[AUTO-START] 清理禁止自启项异常：{ex.Message}");
         }
 
-        // 3) 创建托盘图标 + 右键菜单（关联 _ownerForm 作为 ContextMenuStrip 宿主）
+        // 3) 先创建 NotifyIconManager（创建 NotifyIcon 实例）
+        // v2.13.208 BUG 修复：必须先创建 NotifyIconManager 再创建 IconAnimator，
+        // 否则 IconAnimator 构造时访问 _notifyIcon.InnerNotifyIcon 会触发 NullReferenceException
         _notifyIcon = new NotifyIconManager(
             owner: _ownerForm,
             onOpenAdmin: OpenAdminBrowser,
@@ -131,7 +134,25 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
             },
             onToggleAutoStart: ToggleAutoStart);
 
+        // v2.13.208: 创建 IconAnimator 并传入 NotifyIconManager 的 InnerNotifyIcon
+        // （NotifyIconManager 创建后 _notifyIcon 已实例化，可安全访问）
+        _iconAnimator = new IconAnimator(
+            _notifyIcon.InnerNotifyIcon,
+            NotifyIconManager.LoadTrayIconStatic());
+
+        // v2.13.208 BUG 修复：将 IconAnimator 引用回传给 NotifyIconManager，建立事件联动
+        // 必须通过公开方法设置，不能直接修改字段（_notifyIcon 是 readonly）
+        _notifyIcon.SetIconAnimator(_iconAnimator);
+
+        // v2.13.203: 立即启动三色轮询动画
+        // 统一规则（详见 00-方案文档/241-启动流程与图标状态机标准-v2.13.200.md）：
+        //   - 双服务均处于 Stopped 状态 → 三色轮询（灰/白/橙，每 500ms 切换）
+        //   - 任一服务进入 Running 或 Crashed 状态 → 自动停止轮询（由 NotifyIconManager 联动）
+        _iconAnimator.StartAnimation();
+
         // 4) 配置驱动：托盘启动后自动拉起 Api + Admin
+        // 注意：不需要在此处显式调用 StopAnimation，当任一服务进入 Running/Crashed 时
+        // ProcessManager 会触发 ServiceStateChanged 事件，由 NotifyIconManager 内部自动停止动画
         if (config.Current.Tray.AutoStartServices)
         {
             _ = Task.Run(async () =>
@@ -139,6 +160,7 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 try
                 {
                     await _process.StartAllAsync();
+                    _log.Info("服务启动流程已完成（动画停止由事件驱动）");
                 }
                 catch (Exception ex)
                 {
@@ -146,6 +168,8 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 }
             });
         }
+        // 不自动启动服务时：保持轮询动画，由用户在右键菜单点击"启动服务"后触发 ServiceStateChanged 事件
+        // → 自动停止轮询
 
         // 5) 启动 IPC Server（接收 Web Admin 命令：ping/status/start/stop/restart）
         _ipcServer = new IpcServer(ServiceIpc.DefaultPort, HandleIpcCommand);
@@ -477,9 +501,13 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
         try
         {
             var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+            // v2.13.169：同步填充 RegStatus 字段（拆分 Unregistered/Valid/Expired/Invalid 四态）
+            var regStatus = DormManage.Shared.Security.LicenseGuard.ConvertRegIntToRegStatus(reg.RegInt);
+
             var state = new ServiceIpc.RegStateDto
             {
                 RegInt = reg.RegInt,
+                RegStatus = regStatus,
                 SN = reg.SN,
                 CDKEY = reg.CDKEY ?? "",
                 LTDName = reg.LTDName ?? "",
@@ -487,6 +515,8 @@ public sealed class TrayAppContext : ApplicationContext, IDisposable
                 UseTimes = reg.UseTimes,
                 DetectedAtUtc = DateTime.UtcNow
             };
+
+            _log.Info($"[IPC getregstate] RegInt={reg.RegInt} RegStatus={regStatus} LTD={reg.LTDName} Exp={reg.RegDate:yyyy-MM-dd}");
 
             respond(new ServiceIpc.IpcResponse
             {

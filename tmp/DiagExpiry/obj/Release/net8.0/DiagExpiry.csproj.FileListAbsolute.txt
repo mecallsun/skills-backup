@@ -1,0 +1,15 @@
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\bin\Release\net8.0\DiagExpiry.exe
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\bin\Release\net8.0\DiagExpiry.deps.json
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\bin\Release\net8.0\DiagExpiry.runtimeconfig.json
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\bin\Release\net8.0\DiagExpiry.dll
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\bin\Release\net8.0\DiagExpiry.pdb
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.GeneratedMSBuildEditorConfig.editorconfig
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.AssemblyInfoInputs.cache
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.AssemblyInfo.cs
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.csproj.CoreCompileInputs.cache
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.sourcelink.json
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.dll
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\refint\DiagExpiry.dll
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.pdb
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\DiagExpiry.genruntimeconfig.cache
+E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\DiagExpiry\obj\Release\net8.0\ref\DiagExpiry.dll

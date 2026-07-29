@@ -152,10 +152,11 @@ public partial class IndexModel
         if (await _db.SysUsers.AnyAsync(u => u.UserName == UserName))
             return new JsonResult(new { success = false, message = $"用户名 {UserName} 已存在" });
 
-        // v2.13.93 新增：解析有效期至（datetime-local 提交格式 yyyy-MM-ddTHH:mm）
+        // v2.13.193 修正：日期型 ExpiresAt（仅 yyyy-MM-dd，无时间部分）
+        // 选择日期 = 那天结束前有效（存为 23:59:59）
         DateTime? expiresAtValue = null;
         if (!string.IsNullOrWhiteSpace(ExpiresAt) && DateTime.TryParse(ExpiresAt, out var parsed))
-            expiresAtValue = parsed;
+            expiresAtValue = parsed.Date.AddDays(1).AddSeconds(-1);
 
         var user = new SysUser
         {
@@ -194,11 +195,18 @@ public partial class IndexModel
         user.Email = string.IsNullOrWhiteSpace(Email) ? null : Email.Trim();
         user.Phone = string.IsNullOrWhiteSpace(Phone) ? null : Phone.Trim();
         user.IsActive = IsActive;
-        // v2.13.93 新增：账号有效期至（空字符串视为清空；否则按 datetime-local 解析）
+        // v2.13.193 修正：日期型 ExpiresAt（仅 yyyy-MM-dd，无时间部分）
+        // 空字符串视为清空（永久有效）；否则解析为当日 23:59:59（该日结束前有效）
         if (string.IsNullOrWhiteSpace(ExpiresAt))
+        {
             user.ExpiresAt = null;
+        }
         else if (DateTime.TryParse(ExpiresAt, out var parsed))
-            user.ExpiresAt = parsed;
+        {
+            // v2.13.193: 日期型 ExpiresAt 表示"到这天结束" → 存为 23:59:59
+            user.ExpiresAt = parsed.Date.AddDays(1).AddSeconds(-1);
+        }
+        // else: 解析失败 → 保留旧值（不破坏现有数据）
         user.UpdatedAt = DateTime.Now;
 
         var oldRoles = _db.SysUserRoles.Where(ur => ur.UserId == Id);

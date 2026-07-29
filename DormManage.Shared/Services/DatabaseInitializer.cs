@@ -438,7 +438,7 @@ public static class DatabaseInitializer
     ///   SQLite 生产库（dorm.db / DormManage.Admin/dorm.db）。
     ///
     /// 后果：
-    ///   Html.IsFieldHiddenAsync → HasPrivacyFieldEnabledAsync → GetUserPermissionCodesAsync
+    ///   Html.IsFieldHiddenAsync → AllowDisplayPrivacyFieldsAsync → GetUserPermissionCodesAsync
     ///   → 查不到 PermissionCode='privacy:field:enable'（SysPermission 表无 Id=39）
     ///   → 整条隐私判定链路短路返回 false → 所有字段始终可见。
     ///
@@ -631,7 +631,7 @@ public static class DatabaseInitializer
                 logger.LogInformation("[v2.13.99 Migrate] SysFieldPermission 表已创建");
             }
 
-            // 2. 插入 5 字段种子（idempotent via IF NOT EXISTS）
+            // 2. 插入 7 字段种子（idempotent via IF NOT EXISTS）—— v2.13.205 新增 employee.hiredate / employee.leavedate
             var fieldsSql = @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 1)
                     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
                     VALUES (1, N'employee.realname', N'Personnel', N'姓名', N'string', 1, 1, 1, N'员工真实姓名（高 PII）', '2026-07-22');
@@ -646,7 +646,23 @@ public static class DatabaseInitializer
                     VALUES (4, N'employee.dormcode', N'Personnel', N'宿舍房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
                     IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
                     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
-                    VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');";
+                    VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 6)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (6, N'employee.hiredate', N'Personnel', N'入职日期', N'date', 2, 6, 1, N'员工入职日期（隐私履历）', '2026-07-28');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 7)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (7, N'employee.leavedate', N'Personnel', N'离职日期', N'date', 2, 7, 1, N'员工离职日期（高敏感，可能泄露员工变动趋势）', '2026-07-28');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 8)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (8, N'employee.idnumber', N'Personnel', N'身份证号', N'string', 1, 8, 1, N'18 位中国大陆居民身份证号（极高 PII，法定身份证件号码；DB 列名 SysEmployee.IdNumber）', '2026-07-28');
+                    -- v2.13.215 新增：班组、班次
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 9)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (9, N'employee.team', N'Personnel', N'班组', N'string', 2, 9, 1, N'所属班组（员工基础组织信息，可推断工作小组成员关系）', '2026-07-28');
+                    IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 10)
+                    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+                    VALUES (10, N'employee.attendance_type', N'Personnel', N'班次', N'string', 2, 10, 1, N'考勤班次（员工排班信息，可推断作息规律）', '2026-07-28');";
 
             await db.Database.ExecuteSqlRawAsync(fieldsSql, ct);
 
@@ -675,7 +691,7 @@ public static class DatabaseInitializer
                 // privacy:field:enable 原 ParentId=0（顶级权限，不依赖任何父节点），保留不变
                 @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'privacy:field:enable')
                   INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[Description],[CreatedAt])
-                  VALUES (N'privacy:field:enable', N'启用隐私字段保护', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段', '2026-07-22');",
+                  VALUES (N'privacy:field:enable', N'允许显示隐私字段', 3, 0, N'', N'', 30, 1, 1, N'勾选此权限的角色才能看到 SysFieldPermission 清单中的字段；不勾选则全部隐藏（deny-by-default）', '2026-07-22');",
                 // v2.13.131 修订：personnel:add（ParentId=9 来自 personnel:view 菜单 — v2.13.97 派生查询）
                 @"IF NOT EXISTS (SELECT 1 FROM [dbo].[SysPermission] WHERE PermissionCode = N'personnel:add')
                   INSERT INTO [dbo].[SysPermission] ([PermissionCode],[PermissionName],[PermissionType],[ParentId],[Route],[Icon],[SortOrder],[IsActive],[IsSystem],[CreatedAt])
@@ -1088,7 +1104,7 @@ public class SeedIntegrityReport
         {
             "settings:fields" => "settings:fields（字段权限菜单）",
             "fieldpermission:edit" => "fieldpermission:edit（编辑字段权限）",
-            "privacy:field:enable" => "privacy:field:enable（启用隐私字段保护）",
+            "privacy:field:enable" => "privacy:field:enable（允许显示隐私字段）",
             "personnel:add" => "personnel:add（新增人员按钮）",
             "billingstandard:add" => "billingstandard:add（新增费用标准按钮）",
             _ => code

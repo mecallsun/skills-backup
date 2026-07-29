@@ -4,13 +4,32 @@ using DormManage.TrayApp.Models;
 namespace DormManage.TrayApp;
 
 /// <summary>
-/// 托盘图标颜色状态。
+/// 托盘图标颜色状态（v2.13.200 扩展启动轮询动画色）。
+///
+/// 三色状态机（v2.13.19）：
+/// - Red：启动阶段或双服务均异常
+/// - Yellow：仅一个服务 Running
+/// - Green：双服务均 Running
+///
+/// 启动轮询色（v2.13.200）：
+/// - StartupGray/100：托盘初始化中
+/// - StartupWhite/101：服务准备中
+/// - StartupOrange/102：等待数据库或健康检查
+///
+/// 轮询动画规则：t0 阶段（Api=Stopped 且 Admin=Stopped）每 500ms 在
+/// Gray → White → Orange 之间循环；任一服务进入 Starting/Running/Crashed
+/// 时停止轮询，切换到上述三色状态机的对应颜色。
 /// </summary>
 public enum TrayIconColor
 {
-    Red,
-    Yellow,
-    Green
+    Red = 0,
+    Yellow = 1,
+    Green = 2,
+
+    // v2.13.200 启动轮询动画专用色（IconGenerator 通过整数值识别）
+    StartupGray = 100,
+    StartupWhite = 101,
+    StartupOrange = 102
 }
 
 /// <summary>
@@ -42,6 +61,24 @@ public sealed class NotifyIconManager : IDisposable
 {
     private readonly NotifyIcon _notifyIcon;
     private readonly ContextMenuStrip _ctx;
+
+    /// <summary>v2.13.199: 暴露内部 NotifyIcon 给 IconAnimator 使用（启动旋转动画）</summary>
+    public NotifyIcon InnerNotifyIcon => _notifyIcon;
+
+    /// <summary>
+    /// v2.13.208: 注入 IconAnimator（解决初始化顺序问题：NotifyIconManager 必须先创建，
+    /// IconAnimator 才能从已实例化的 NotifyIconManager 拿到 InnerNotifyIcon）。
+    /// 必须在 NotifyIconManager 实例化后立即调用 SetIconAnimator。
+    /// </summary>
+    public void SetIconAnimator(Services.IconAnimator animator)
+    {
+        ArgumentNullException.ThrowIfNull(animator);
+        _iconAnimator = animator;
+    }
+
+    /// <summary>v2.13.203: 图标动画器（可选依赖，状态变化时通知停止）</summary>
+    private Services.IconAnimator? _iconAnimator;
+
     private ToolStripMenuItem _miApiStatus = null!;
     private ToolStripMenuItem _miAdminStatus = null!;
     private ToolStripMenuItem _miAutoStart = null!;
@@ -60,9 +97,11 @@ public sealed class NotifyIconManager : IDisposable
         Action onAbout,
         Func<Task> onExit,
         Action onToggleAutoStart,
-        Action onLicense)
+        Action onLicense,
+        Services.IconAnimator? iconAnimator = null)
     {
         ArgumentNullException.ThrowIfNull(owner);
+        _iconAnimator = iconAnimator;
         _uiContext = SynchronizationContext.Current;
 
         _notifyIcon = new NotifyIcon
@@ -71,6 +110,10 @@ public sealed class NotifyIconManager : IDisposable
             Text = "金戈宿舍管理系统 v2.13.71",
             Visible = true
         };
+
+        // v2.13.200: 启动轮询动画由 TrayAppContext 统一管理
+        // 原因：NotifyIconManager 只负责三色状态机（绿/黄/红），
+        //       启动轮询动画（灰/白/橙）由 IconAnimator 独立维护。
 
         // 左键单击：打开管理后台
         _notifyIcon.MouseClick += (_, e) =>
@@ -235,8 +278,70 @@ public sealed class NotifyIconManager : IDisposable
 
         _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.71\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
 
+        // v2.13.213 启动轮询动画联动：图标变为绿色之前一直轮询
+        // 统一规则：
+        //   - 双服务 Stopped → 保持 🩶⚪🟧 三色轮询（启动阶段）
+        //   - 任一服务进入 Starting → 继续轮询（启动过程中，绿色还未出现）
+        //   - 任一服务进入 Running → 评估图标颜色：
+        //     - 双服务都 Running → 🟢 Green，停止轮询
+        //     - 仅一个 Running → 🟡 Yellow，停止轮询
+        //   - 任一服务进入 Crashed → 🟥 Red，停止轮询（不会变绿色）
+        //   - 任一服务进入 Stopping → 停止轮询（属于另一个状态）
+        // 即：只有当图标即将变为绿色（双服务都 Running）时，才停止轮询
+        if (_iconAnimator != null && ShouldStopPolling(state))
+        {
+            _iconAnimator.StopAnimation();
+        }
+
         // v2.13.19：同步刷新图标颜色
         SetIconColor(EvaluateIconColor());
+    }
+
+    /// <summary>
+    /// v2.13.213：判断是否应该停止启动轮询动画
+    /// 规则：在图标变为绿色（双服务都 Running）之前，一直保持 🩶⚪🟧 三色轮询
+    /// </summary>
+    /// <param name="newState">服务状态变化</param>
+    /// <returns>true = 停止轮询；false = 继续轮询</returns>
+    private bool ShouldStopPolling(ServiceState newState)
+    {
+        // 1. Stopped → 不停止（保持轮询：双服务都未启动）
+        if (newState == ServiceState.Stopped) return false;
+
+        // 2. Starting → 不停止（启动过程中，绿色还未出现）
+        if (newState == ServiceState.Starting) return false;
+
+        // 3. Stopping → 停止（属于另一个状态转换）
+        if (newState == ServiceState.Stopping) return true;
+
+        // 4. Running → 评估图标颜色
+        if (newState == ServiceState.Running)
+        {
+            // 仅当双服务都 Running（即将变绿）时才停止
+            // 但 UpdateServiceStateCore 是在状态变化后调用，所以这里 _apiState/_adminState 已更新
+            var apiRunning = _apiState == ServiceState.Running;
+            var adminRunning = _adminState == ServiceState.Running;
+            // 双服务都 Running → 图标即将变为绿色，停止轮询
+            if (apiRunning && adminRunning) return true;
+            // 只有一个 Running → 图标变黄，继续轮询
+            return false;
+        }
+
+        // 5. Crashed → 停止（图标将变红色，不会变绿色）
+        if (newState == ServiceState.Crashed) return true;
+
+        // 默认：停止
+        return true;
+    }
+
+    /// <summary>
+    /// v2.13.200 启动轮询动画的开关控制（保留接口，仅便于 TrayAppContext 调用）。
+    /// 实际上此方法不再内部使用，动画由 TrayAppContext 显式 Start/Stop。
+    /// </summary>
+    [Obsolete("启动轮询动画由 TrayAppContext 统一管理，本方法已被替代")]
+    private void UpdateStartupAnimation()
+    {
+        // 不再使用
     }
 
     private static string StateText(ServiceState state) => state switch
@@ -297,22 +402,21 @@ public sealed class NotifyIconManager : IDisposable
         }
     }
 
+    /// <summary>v2.13.199: 公开的静态图标加载方法，供 IconAnimator 使用</summary>
+    public static Icon LoadTrayIconStatic() => LoadTrayIcon();
+
     private static Icon LoadTrayIcon()
     {
-        // v2.13.19：优先使用动态生成图标，静态 ICO 仅作为极端回退
+        // v2.13.211：托盘启动初始图标改为 Gray（与 IconAnimator 启动轮询动画的第一个颜色一致）
+        // 修复：原本使用 Red 导致托盘一启动就显示红色图标（"卡死"假象），现在改为 Gray 圆形
+        // 双服务均 Stopped 时 IconAnimator 接管并立即启动 灰/白/橙 三色轮询（500ms 切换）
         try
         {
-            return IconGenerator.CreateSolidCircle(TrayIconColor.Red);
+            return IconGenerator.CreateSolidCircle(TrayIconColor.StartupGray);
         }
         catch
         {
-            var iconPath = Path.Combine(AppContext.BaseDirectory, "Resources", "tray-icon.ico");
-            if (File.Exists(iconPath))
-            {
-                try { return new Icon(iconPath); }
-                catch { /* 损坏时回退 */ }
-            }
-            // 回退：使用系统图标
+            // 极端情况回退：使用系统默认圆形图标（SystemIcons.Application 本身就是圆形）
             return SystemIcons.Application;
         }
     }

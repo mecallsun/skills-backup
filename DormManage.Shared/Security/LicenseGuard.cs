@@ -52,6 +52,15 @@ public static class LicenseGuard
         ["人员清单"] = 5
     };
 
+    /// <summary>v2.13.169 注册状态枚举常量（与 RegStateDto.RegStatus 对应）</summary>
+    public static class RegStatusEnum
+    {
+        public const int Unregistered = -1;  // 未注册（试用模式）
+        public const int Valid = 1;          // 注册有效
+        public const int Expired = 2;         // 已过期
+        public const int Invalid = 3;         // 校验失败（机器码/公司名不匹配等）
+    }
+
     /// <summary>v2.13.149：旧版统一 5 条上限（保留兼容，已被 TrialMaxRecordsByModule 取代）</summary>
     [Obsolete("v2.13.149 单一 5 条上限已被 v2.13.150 分模块上限取代，请使用 TrialMaxRecordsByModule")]
     public const int TrialMaxRecords = 5;
@@ -122,15 +131,24 @@ public static class LicenseGuard
             return false;
         }
 
-        // 已注册 → 不是试用模式
+        // v2.13.196：明确三种模式的判定
+        // - 已注册（RegInt=1）→ 不是试用模式
+        // - 未注册（RegInt=-1）→ 试用模式（包括次数未满 + 超试用次数强制模式）
+        // - 其他（RegInt=0 旧格式）→ 不视为试用模式
         if (state.RegInt == 1)
         {
             return false;
         }
 
-        // 未注册（RegInt=-1 或 0 过期）+ 在试用次数范围内 → 试用模式
-        // （RegInt=0 已过期的会被 IsReadOnly=true 拦截，先于此处生效）
-        return state.UseTimes < RegisterSdk.TRIAL_LIMIT;
+        if (state.RegInt == -1)
+        {
+            // 试用模式（强制）：包括超试用次数时也进入试用模式
+            // 配合 CheckTrialRecordLimit 实现"3 模块记录数限制"
+            return true;
+        }
+
+        // RegInt=0（旧格式过期或其他未知状态）→ 不视为试用模式
+        return false;
     }
 
     /// <summary>
@@ -298,5 +316,84 @@ public static class LicenseGuard
                 return _cachedState?.DetectedAtUtc ?? DateTime.MinValue;
             }
         }
+    }
+
+    /// <summary>
+    /// v2.13.169 注册状态徽章四态信息（供前端 license-status-badge.js 30s 轮询）
+    ///
+    /// 返回值：
+    /// - code   : "已注册" / "试用模式" / "已过期" / "校验失败" / "授权不可用"
+    /// - message: 详细提示（含操作建议）
+    /// - level  : "success" / "info" / "warning" / "danger" / "info"
+    ///
+    /// 调用时机：LicenseStatusController.GetLicenseStatus 在每次请求时调用
+    /// 与 IsReadOnly/IsTrialMode 区别：本方法返回「展示用」字符串而非布尔判定
+    ///
+    /// v2.13.179 全面梳理（用户原话：保证 3 种注册状态与 3 种运行模式的功能一致性）：
+    ///   - Unregistered(-1) → 试用模式（中间件放行 GET + 3 模块 POST 限记录数）
+    ///   - Valid(1)        → 注册模式（全功能）
+    ///   - Expired(2)      → 只读模式（中间件拦截全部 POST）
+    ///   - Invalid(3)      → 只读模式（同上）
+    /// </summary>
+    public static (string Code, string Message, string Level) GetLicenseBanner()
+    {
+        var state = GetCachedState();
+
+        // 托盘未运行 / IPC 失败 → 不可用
+        if (state is null)
+        {
+            return ("授权不可用", "无法连接到托盘程序的 IPC 服务（127.0.0.1:5099）。请检查托盘程序是否运行。", "danger");
+        }
+
+        // v2.13.179 详细化：5 case 覆盖所有场景
+        return state.RegStatus switch
+        {
+            RegStatusEnum.Valid =>
+                ("已注册",
+                 $"✅ 软件已正式注册：{state.LTDName}，有效期至 {state.RegDate:yyyy-MM-dd}，所有功能正常使用。",
+                 "success"),
+
+            RegStatusEnum.Unregistered =>
+                ("试用模式",
+                 state.UseTimes >= RegisterSdk.TRIAL_LIMIT
+                    ? "⚠ 试用次数已用尽，请联系信息科完成正式注册。"
+                    : $"🟦 试用模式：剩余 {RegisterSdk.TRIAL_LIMIT - state.UseTimes} 次使用机会，正式注册请联系信息科。",
+                 "info"),
+
+            RegStatusEnum.Expired =>
+                ("已过期",
+                 $"⚠ 注册码已过期（{state.RegDate:yyyy-MM-dd}），软件进入只读模式。请联系信息科进行续期。",
+                 "warning"),
+
+            RegStatusEnum.Invalid =>
+                ("校验失败",
+                 "⚠ 注册码校验失败（机器码/公司名不匹配）。软件进入只读模式，请联系信息科。",
+                 "danger"),
+
+            _ =>
+                ("未知状态",
+                 $"未识别的注册状态码：{state.RegStatus}。请检查托盘程序日志。",
+                 "info"),
+        };
+    }
+
+    /// <summary>
+    /// v2.13.170：将 RegInt 转换为 RegStatus 枚举值
+    /// 转换规则：
+    ///   RegInt=1 → Valid(1)
+    ///   RegInt=0 → Expired(2)（已过期/无效）
+    ///   RegInt=-1 → Unregistered(-1)（未注册/试用）
+    ///
+    /// 在 HandleGetRegState 调用，构造 RegStateDto 时使用
+    /// </summary>
+    public static int ConvertRegIntToRegStatus(int regInt)
+    {
+        return regInt switch
+        {
+            1 => RegStatusEnum.Valid,
+            0 => RegStatusEnum.Expired,
+            -1 => RegStatusEnum.Unregistered,
+            _ => RegStatusEnum.Invalid,
+        };
     }
 }

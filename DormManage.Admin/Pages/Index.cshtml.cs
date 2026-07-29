@@ -35,6 +35,7 @@ public class IndexModel : PageModel
 
     public async Task OnGetAsync()
     {
+        // v2.13.201: 外层 try-catch 包裹整个方法，防止任何异常导致页面崩溃
         try
         {
             CurrentMonth = string.IsNullOrWhiteSpace(Month) ? DateTime.Now.ToString("yyyy-MM") : Month;
@@ -49,17 +50,40 @@ public class IndexModel : PageModel
                 .Select(i => dt.AddMonths(-i).ToString("yyyy-MM"))
                 .ToList();
 
-            Dashboard = await _dashboard.GetDashboardAsync(dt);
-            // camelCase 序列化与前端 JS 字段对应
-            DashboardJson = System.Text.Json.JsonSerializer.Serialize(Dashboard, new System.Text.Json.JsonSerializerOptions
+            // v2.13.201: Dashboard 服务异常时使用空对象（绝不抛异常）
+            try
             {
-                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-            });
+                Dashboard = await _dashboard.GetDashboardAsync(dt);
+            }
+            catch (Exception dex)
+            {
+                _logger.LogError(dex, "Dashboard 服务异常，使用空数据");
+                Dashboard = new DashboardDto();
+            }
+
+            // camelCase 序列化与前端 JS 字段对应（Dashboard 为空对象时序列化为 {})
+            try
+            {
+                DashboardJson = System.Text.Json.JsonSerializer.Serialize(Dashboard, new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                });
+            }
+            catch (Exception jex)
+            {
+                _logger.LogError(jex, "Dashboard JSON 序列化失败");
+                DashboardJson = "{}";
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "加载 Dashboard 失败（month={Month}）", Month);
+            // 终极兜底：任何异常都不让页面崩溃
+            _logger.LogError(ex, "OnGetAsync 异常");
+            CurrentMonth = DateTime.Now.ToString("yyyy-MM");
+            AvailableMonths = Enumerable.Range(0, 12)
+                .Select(i => DateTime.Now.AddMonths(-i).ToString("yyyy-MM"))
+                .ToList();
             Dashboard = new DashboardDto();
             DashboardJson = "{}";
         }

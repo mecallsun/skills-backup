@@ -1,9 +1,13 @@
 # 方案文档索引
 
-> **版本**：v2.13.59（办理登记 SqlNullValueException 修复）
-> **日期**：2026-07-21
+> **版本**：v2.13.209（智能抄表 alert 重构 + CoverageDto 计算修复）
+> **日期**：2026-07-29
 > **范围**：`00-方案文档/` 目录全部文档导航与版本状态
 > **状态**：✅ 数据库 100% 对齐 + 业务深度 100% 补全 + 双向联动 14/14 = 100% + 数据源热加载 + BUG 修复 + 入住弹窗 100% 原型对齐 + 按钮交互 5 关闭 + 1 提交触发器 + 办理入住升级为独立 Razor Page（1:1 克隆原型） + Dashboard 首页 100% 原型对齐 + Booking 全部 4 页面 100% 原型对齐 + v2.13.59 SqlNullValueException 修复（HTTP 200 + 337 条记录正常显示）
+
+| 2026-07-25 | **v2.13.164 抄表进度值驱动 3 段定义 + KPI 5 改造** | DashboardService 从 Status 枚举驱动改为读数值驱动（已抄表/抄表中/未抄表）；关键不变量 GroupBy 去重；v2.13.133 "未完成/未覆盖" 旧术语废弃；详见 206 |
+| 2026-07-29 | **v2.13.209 智能抄表 alert 重构 + CoverageDto 计算修复** | Meter/Index.cshtml.cs CoverageDto 计算 BUG 修复（UnfinishedDorms==UncoveredDorms 完全相同 → 3 段独立）；alert 移入 PageHeader h2 subtitle 内联；文案"未完成/未覆盖" → "抄中/未抄表"；详见 206 §6.2；INDEX 版本升至 v2.13.209 |
+
 
 ## 使用说明
 

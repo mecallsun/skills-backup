@@ -45,12 +45,25 @@ public class ProcessManager
     /// <summary>启动所有服务（按顺序：先 Api 再 Admin）</summary>
     public async Task StartAllAsync()
     {
-        // v2.13.137 完全托管模式：托盘是注册校验唯一权威
-        // 启动 Admin/Api 子进程前必须先校验注册状态，未注册/已过期/超试用次数 → 拒绝启动
-        if (!IsLicenseValid())
+        // v2.13.196 修正：托盘启动不再拒绝任何情况
+        // 即使是超试用次数也允许启动（通过 TrialExceeded 状态标记强制窗口弹窗）
+        IsLicenseValid();
+
+        // v2.13.196：超试用次数强制弹窗确认（必须点击确认才能继续）
+        // 如果用户取消确认，进程退出，强制要求正式注册后才能再次启动
+        if (TrialExceeded)
         {
-            _log.Error("[LICENSE] 注册校验未通过，拒绝启动 Api/Admin 子进程。请在托盘端「软件注册授权」菜单完成注册。");
-            throw new InvalidOperationException("注册校验未通过，禁止启动 Web 服务");
+            var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+            var useTimes = reg.UseTimes;
+            var trialLimit = DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT;
+            _log.Warn($"[LICENSE] 试用次数已达上限 {useTimes}/{trialLimit}，强制弹窗确认");
+            bool confirmed = ShowTrialExceedPrompt(useTimes, trialLimit);
+            if (!confirmed)
+            {
+                _log.Error("[LICENSE] 用户未确认试用模式，进程退出");
+                throw new InvalidOperationException("试用次数超出，用户未确认 - 请联系信息科完成正式注册");
+            }
+            _log.Info("[LICENSE] 用户已确认进入强制试用模式，继续启动");
         }
 
         _isStopping = false;
@@ -60,51 +73,110 @@ public class ProcessManager
     }
 
     /// <summary>
-    /// v2.13.137 + v2.13.143：校验当前注册状态是否允许启动服务
-    /// 业务规则：
-    /// - RegInt == 1（已注册有效）→ 允许；**v2.13.143 二次显式校验 RegDate 是否在期内**
-    /// - RegInt == 0（已过期）→ 拒绝
-    /// - RegInt == -1（未注册）+ UseTimes > TRIAL_LIMIT → 拒绝
-    /// - RegInt == -1（未注册）+ UseTimes <= TRIAL_LIMIT → 允许试用
+    /// v2.13.196：标记当前是否处于超试用次数状态
+    /// 如果为 true，启动后必须先显示 TrialExceedPrompt 才能继续
     /// </summary>
+    public bool TrialExceeded { get; private set; }
+
+    /// <summary>
+    /// v2.13.196：显示试用次数超出强制确认窗口
+    /// 调用 TrialExceedPrompt.Show 在 UI 线程上弹窗
+    /// </summary>
+    private bool ShowTrialExceedPrompt(int useTimes, int trialLimit)
+    {
+        try
+        {
+            // 如果在非 UI 线程上，使用 invoke 切到 UI 线程
+            bool result = false;
+            var thread = System.Threading.Thread.CurrentThread;
+            if (thread.GetApartmentState() == System.Threading.ApartmentState.STA)
+            {
+                result = DormManage.TrayApp.Forms.TrialExceedPrompt.Show(useTimes, trialLimit);
+            }
+            else
+            {
+                // 非 UI 线程，启动临时窗口循环
+                var thread2 = new System.Threading.Thread(() =>
+                {
+                    result = DormManage.TrayApp.Forms.TrialExceedPrompt.Show(useTimes, trialLimit);
+                });
+                thread2.SetApartmentState(System.Threading.ApartmentState.STA);
+                thread2.Start();
+                thread2.Join();
+            }
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _log.Error("[LICENSE] 弹窗失败", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// v2.13.196 修正：校验当前注册状态，决定是否需要弹出强制确认窗口
+    /// 业务规则（修订）：
+    /// - 永远允许启动（不再拒绝任何情况）
+    /// - 如果是超试用次数（RegInt=-1 且 UseTimes ≥ TRIAL_LIMIT）→ 返回 TrialExceedPrompt 必须显示的标志
+    /// - 其他所有情况（注册有效、注册过期、未注册次数未满）→ 都允许启动
+    /// - 注册过期仍由运行时 LicenseGuard 拦截写入
+    /// </summary>
+    /// <returns>
+    /// true = 正常状态（已注册或未试用完），可以正常启动
+    /// 取决于调用方对 trial-exceeded 标记的处理
+    /// </returns>
     private bool IsLicenseValid()
     {
         try
         {
             var reg = DormManage.Shared.Register.RegisterSdk.CheckReg();
+
+            // 唯一特殊处理的情况：超试用次数（必须弹窗确认后进入试用模式）
+            if (reg.RegInt == -1 && reg.UseTimes >= DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT)
+            {
+                _log.Warn($"[LICENSE] 试用次数已达上限 {reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}，启动后必须强制弹窗确认后进入试用模式");
+                TrialExceeded = true;
+            }
+            else
+            {
+                TrialExceeded = false;
+            }
+
+            // 已注册（且未过期）
             if (reg.RegInt == 1)
             {
-                // v2.13.143 防御深度：显式二次校验 RegDate
-                // 即使 RegisterSdk.CheckReg 内嵌规则未来变动，这里也能独立判断
-                if (!reg.RegDate.HasValue)
+                if (reg.RegDate.HasValue)
                 {
-                    _log.Warn($"[LICENSE] RegInt=1 但 RegDate 缺失 → 拒绝启动");
-                    return false;
+                    if (reg.RegDate.Value.Date < DateTime.Today)
+                    {
+                        _log.Info($"[LICENSE] 注册已过期（RegDate={reg.RegDate:yyyy-MM-dd} < Today），但允许启动（进入只读模式）");
+                    }
+                    else
+                    {
+                        _log.Info($"[LICENSE] 注册有效：LTD={reg.LTDName}，有效期至 {reg.RegDate:yyyy-MM-dd}");
+                    }
                 }
-                if (reg.RegDate.Value.Date < DateTime.Today)
+                else
                 {
-                    _log.Warn($"[LICENSE] 注册已过期：RegDate={reg.RegDate:yyyy-MM-dd} < Today={DateTime.Today:yyyy-MM-dd} → 拒绝启动");
-                    return false;
+                    _log.Warn($"[LICENSE] RegInt=1 但 RegDate 缺失，允许启动但可能存在风险");
                 }
-                _log.Info($"[LICENSE] 注册有效：LTD={reg.LTDName}，有效期至 {reg.RegDate:yyyy-MM-dd}");
                 return true;
             }
 
-            // 试用模式：未注册但未超试用次数 → 允许
             if (reg.RegInt == -1 && reg.UseTimes < DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT)
             {
                 _log.Info($"[LICENSE] 试用模式：UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
                 return true;
             }
 
-            // 已过期 或 超试用次数 → 拒绝
-            _log.Warn($"[LICENSE] 启动拒绝：RegInt={reg.RegInt} UseTimes={reg.UseTimes}/{DormManage.Shared.Register.RegisterSdk.TRIAL_LIMIT}");
-            return false;
+            // RegInt == 0（旧格式过期）或其他未知状态 → 允许启动，由运行时决定只读
+            _log.Info($"[LICENSE] 注册状态={reg.RegInt}，允许启动（运行时将通过 LicenseGuard 判定只读）");
+            return true;
         }
         catch (Exception ex)
         {
-            _log.Error("[LICENSE] 注册校验异常，按拒绝处理", ex);
-            return false;
+            _log.Error("[LICENSE] 注册校验异常，按允许启动处理（安全优先）", ex);
+            return true;  // 异常时允许启动，避免系统完全不可用
         }
     }
 
@@ -389,7 +461,9 @@ public class ProcessManager
             FileName = exePath,
             WorkingDirectory = workingDir,
             UseShellExecute = false,
-            CreateNoWindow = false,
+            // v2.13.199: 隐藏命令行窗口（in-memory silent launch）
+            CreateNoWindow = true,
+            WindowStyle = ProcessWindowStyle.Hidden,
             RedirectStandardOutput = false,
             RedirectStandardError = false
         };

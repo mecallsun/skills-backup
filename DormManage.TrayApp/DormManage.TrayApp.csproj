@@ -31,10 +31,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 托盘图标：若 Resources/tray-icon.ico 缺失，构建仅警告（NotifyIcon 使用 SystemIcons 后备） -->
-    <None Update="Resources\tray-icon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <!-- v2.13.208：托盘图标已统一为圆形实心点（由 IconGenerator.CreateSolidCircle 动态生成）
+         删除 Resources/tray-icon.ico 静态资源 — 不再使用 ICO 格式的非圆形图标。
+         NotifyIconManager.LoadTrayIcon() 在异常时回退到 SystemIcons.Application（系统默认圆形图标） -->
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

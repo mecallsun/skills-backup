@@ -658,9 +658,16 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 4)
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
     VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');
+-- v2.13.215 新增：班组、班次
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 6)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (6, N'employee.team', N'Personnel', N'班组', N'string', 2, 6, 1, N'所属班组（员工基础组织信息，可推断工作小组成员关系）', '2026-07-28');
+IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 7)
+    INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
+    VALUES (7, N'employee.attendance_type', N'Personnel', N'班次', N'string', 2, 7, 1, N'考勤班次（员工排班信息，可推断作息规律）', '2026-07-28');
 GO
 
-PRINT N'✅ v2.13.99 SysFieldPermission 表 + 隐私字段权限种子 DDL 已补充';
+PRINT N'✅ v2.13.215 SysFieldPermission 表 + 隐私字段权限种子 DDL 已补充（含班组、班次）';
 
 -- =========================================================================
 -- v2.13.97 补充：personnel:add 权限码（用户反馈 P0：缺少「新增人员」按钮权限）

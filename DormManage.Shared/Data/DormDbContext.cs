@@ -293,6 +293,9 @@ public class DormDbContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.DormCode).HasMaxLength(20);
             entity.Property(e => e.Remark).HasMaxLength(500);
+            // v2.13.208 BUG 修复：实体属性 IdNumber 映射到 SQL Server 列 IdNumber（v2.13.180 已添加该列），保持与已有数据库 schema 一致
+            // 之前错误命名为 IdCard，导致 EF Core 查询抛 Invalid column name 'IdCard' → 人员清单 INTERNAL_ERROR
+            entity.Property(e => e.IdNumber).HasMaxLength(18);
             entity.HasIndex(e => e.EmployeeCode).IsUnique();
             // v2.11.18 新增：在职状态 FK 关联引用基础资料-在职状态表
             entity.HasOne(e => e.EmploymentStatus)
@@ -844,7 +847,7 @@ public class DormDbContext : DbContext
             // ========== v2.13.92 字段权限（PermissionType=3 数据权限落地）：3 个权限码 ==========
             new SysPermission { Id = 37, PermissionCode = "settings:fields", PermissionName = "字段权限", PermissionType = 1, ParentId = 18, Route = "/Settings?tab=fields", Icon = "bi-shield-check", SortOrder = 28, IsActive = true, IsSystem = true, Description = "管理敏感字段清单", CreatedAt = DateTime.Parse("2026-07-22") },
             new SysPermission { Id = 38, PermissionCode = "fieldpermission:edit", PermissionName = "编辑字段权限", PermissionType = 2, ParentId = 37, Route = "", Icon = "", SortOrder = 29, IsActive = true, IsSystem = true, Description = "勾选/取消勾选敏感字段", CreatedAt = DateTime.Parse("2026-07-22") },
-            new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "启用隐私字段保护", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色将看不到所有 SysFieldPermission 清单中的字段", CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysPermission { Id = 39, PermissionCode = "privacy:field:enable", PermissionName = "允许显示隐私字段", PermissionType = 3, ParentId = 0, Route = "", Icon = "", SortOrder = 30, IsActive = true, IsSystem = true, Description = "勾选此权限的角色才能看到 SysFieldPermission 清单中的字段；不勾选则全部隐藏（deny-by-default）", CreatedAt = DateTime.Parse("2026-07-22") },
             // ========== v2.13.97 P0 BUG：personnel 子权限补全（用户反馈：缺少「新增」按钮权限） ==========
             new SysPermission { Id = 40, PermissionCode = "personnel:add", PermissionName = "新增人员", PermissionType = 2, ParentId = 9, Route = "/Personnel/Create", Icon = "bi-plus-lg", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-22") },
             // ========== v2.13.110 P0 BUG：billing 子权限补全（用户反馈：缺少「新增标准」按钮权限） ==========
@@ -935,13 +938,16 @@ public class DormDbContext : DbContext
             new SysRolePermission { Id = 29, RoleId = 4, PermissionId = 1, CreatedAt = DateTime.Parse("2026-07-14") }
         );
 
-        // ========== v2.13.92 SysFieldPermission 默认字段清单（5 个核心敏感字段） ==========
+        // ========== v2.13.215 SysFieldPermission 默认字段清单（11 个字段，含 v2.13.215 新增的班组/班次） ==========
         modelBuilder.Entity<SysFieldPermission>().HasData(
             new SysFieldPermission { Id = 1, FieldKey = "employee.realname",   FieldName = "姓名",     Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 1, IsActive = true, Description = "员工真实姓名（高 PII）",   CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 2, FieldKey = "employee.phone",      FieldName = "手机号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 2, IsActive = true, Description = "联系电话（高 PII）",       CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 3, FieldKey = "employee.employeecode", FieldName = "工号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 3, IsActive = true, Description = "公司内唯一标识",         CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 4, FieldKey = "employee.dormcode",   FieldName = "宿舍房号", Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 4, IsActive = true, Description = "当前入住房号（隐私住址）", CreatedAt = DateTime.Parse("2026-07-22") },
-            new SysFieldPermission { Id = 5, FieldKey = "employee.remark",     FieldName = "备注",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 5, IsActive = true, Description = "自由文本备注（可能含敏感信息）", CreatedAt = DateTime.Parse("2026-07-22") }
+            new SysFieldPermission { Id = 5, FieldKey = "employee.remark",     FieldName = "备注",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 5, IsActive = true, Description = "自由文本备注（可能含敏感信息）", CreatedAt = DateTime.Parse("2026-07-22") },
+            // v2.13.215 新增：班组、班次（员工基础组织信息）
+            new SysFieldPermission { Id = 6, FieldKey = "employee.team",       FieldName = "班组",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 6, IsActive = true, Description = "所属班组（员工基础组织信息，可推断工作小组成员关系）", CreatedAt = DateTime.Parse("2026-07-28") },
+            new SysFieldPermission { Id = 7, FieldKey = "employee.attendance_type", FieldName = "班次", Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 7, IsActive = true, Description = "考勤班次（员工排班信息，可推断作息规律）", CreatedAt = DateTime.Parse("2026-07-28") }
         );
 
         // 智能抄表种子数据（2026年6月、7月；DB 表名仍为 MeterRecord）

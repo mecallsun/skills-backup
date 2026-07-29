@@ -57,8 +57,8 @@ public class SysEmployee : BaseEntity
     /// <summary>员工类型名称（冗余，对应真实表 EmployeeType nvarchar 列，NOT NULL）</summary>
     public string? EmployeeTypeText { get; set; }
 
-    /// <summary>班组ID（对应真实表 TeamId，NOT NULL）</summary>
-    public int TeamId { get; set; }
+    /// <summary>班组ID（对应真实表 TeamId，可为空）</summary>
+    public int? TeamId { get; set; }
 
     /// <summary>
     /// 班组导航属性（v2.13.78 新增，对应基础资料-班组表 Team）
@@ -87,6 +87,18 @@ public class SysEmployee : BaseEntity
     /// </summary>
     [MaxLength(20)]
     public string? Phone { get; set; }
+
+    /// <summary>
+    /// 身份证号（v2.13.180 + v2.13.208 修复字段名一致性：DB 列名是 IdNumber，C# 属性保持 IdNumber）
+    /// </summary>
+    /// <remarks>
+    /// 18 位中国大陆居民身份证号（GB 11643-1999）。
+    /// 属于高敏感个人信息（高 PII），UI 显示受「字段权限」控制；
+    /// 默认 deny-by-default ——未勾选"允许显示隐私字段"角色的视图自动隐藏该列。
+    /// 单一数据源：SysEmployee.IdNumber 列（v2.13.180 已添加），不再有冗余字段。
+    /// </remarks>
+    [MaxLength(18)]
+    public string? IdNumber { get; set; }
 
     /// <summary>
     /// 在职状态ID（v2.11.18 新增 FK 字段，引用基础资料-在职状态表 EmploymentStatus.Id）

@@ -5,6 +5,7 @@ using DormManage.Shared.Models;
 using DormManage.Shared.Services;
 using DormManage.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging; // v2.13.204: ILogger.Info / Warn 扩展方法需要
 
 namespace DormManage.Admin.Pages.Dorms;
 
@@ -17,12 +18,14 @@ public class EditModel : PageModel
     private readonly DormDbContext _db;
     private readonly IBasicsService _basicsService;
     private readonly IPermissionService _perm;
+    private readonly ILogger<EditModel> _log; // v2.13.204: 用于记录注册过期日志
 
-    public EditModel(DormDbContext db, IBasicsService basicsService, IPermissionService perm)
+    public EditModel(DormDbContext db, IBasicsService basicsService, IPermissionService perm, ILogger<EditModel> log)
     {
         _db = db;
         _basicsService = basicsService;
         _perm = perm;
+        _log = log;
     }
 
     /// <summary>v2.13.88 只读模式：当前用户无 dorm:edit 权限时为 true，UI 全字段 readonly</summary>
@@ -77,8 +80,18 @@ public class EditModel : PageModel
             return NotFound();
         }
 
-        // v2.13.88 RBAC：检测 dorm:edit 权限，无权限进入只读模式
-        IsReadOnly = !await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit");
+        // v2.13.204: 综合判定只读模式（注册过期 OR 缺权限）
+        // 优先级：注册过期 > 权限缺失
+        // 1. LicenseGuard.IsReadOnly() = true（注册过期/未注册/托盘未运行）→ 强制只读
+        // 2. 当前用户无 dorm:edit 权限 → 权限级只读
+        IsReadOnly = DormManage.Shared.Security.LicenseGuard.IsReadOnly()
+                     || !await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit");
+
+        // v2.13.204: 注册过期时记录日志（首次访问检测到过期时记录）
+        if (DormManage.Shared.Security.LicenseGuard.IsReadOnly())
+        {
+            _log.LogInformation($"[LICENSE] 检测到注册过期/无效，用户 {HttpContext.GetCurrentUserId()} 访问宿舍编辑（{id}）进入只读模式");
+        }
 
         // v2.13.82 业务约束：当前在宿人数 > 0 时锁定 IsActive
         CurrentCount = await _db.DormBookings
@@ -124,6 +137,14 @@ public class EditModel : PageModel
 
     public async Task<IActionResult> OnPostAsync()
     {
+        // v2.13.201: 注册过期时静默拒绝（前端 license-protect.js 已在操作时弹窗拦截）
+        // 此处保留 LicenseGuard.IsReadOnly() 安全检查作为服务端最后防线，但不显示注册提示
+        if (DormManage.Shared.Security.LicenseGuard.IsReadOnly())
+        {
+            _log.LogWarning($"[LICENSE] 用户 {HttpContext.GetCurrentUserId()} 尝试保存宿舍（{Dorm.Id}），但当前为只读模式（注册过期/未注册）");
+            return RedirectToPage("/Dorms/Details", new { id = Dorm.Id });
+        }
+
         // v2.13.88 RBAC 第二层防御：无 dorm:edit 权限时直接拒绝提交
         if (!await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit"))
         {

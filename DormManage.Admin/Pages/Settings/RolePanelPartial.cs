@@ -75,8 +75,13 @@ public partial class IndexModel
         var rolePerms = await _db.SysRolePermissions.ToListAsync();
         var allPerms = await _db.SysPermissions.OrderBy(p => p.SortOrder).ToListAsync();
 
+        // 隐私字段总开关权限（privacy:field:enable）作为特殊权限，不应在普通权限矩阵中显示
+        // 它由独立的 checkbox 控制（见下方 RolePrivacyFieldEnabled），避免与权限树重复
+        var privacyPerm = allPerms.FirstOrDefault(p => p.PermissionCode == "privacy:field:enable");
+        var permsForMatrix = allPerms.Where(p => privacyPerm == null || p.Id != privacyPerm.Id).ToList();
+
         // v2.13.92 加载字段权限相关上下文（RolePrivacyFieldEnabled 供 permMatrixModal 渲染）
-        var privacyPermId = allPerms.FirstOrDefault(p => p.PermissionCode == "privacy:field:enable")?.Id;
+        var privacyPermId = privacyPerm?.Id;
         var privacyRoleIds = privacyPermId.HasValue
             ? rolePerms.Where(rp => rp.PermissionId == privacyPermId.Value).Select(rp => rp.RoleId).ToHashSet()
             : new HashSet<int>();
@@ -103,7 +108,7 @@ public partial class IndexModel
             RolePermissions[rid] = rolePerms.Where(rp => rp.RoleId == rid).Select(rp => rp.PermissionId).ToHashSet();
         }
 
-        var topPerms = allPerms.Where(p => p.ParentId == 0).ToList();
+        var topPerms = permsForMatrix.Where(p => p.ParentId == 0).ToList();
         foreach (var top in topPerms)
         {
             var group = new PermissionGroupViewModel { GroupName = top.PermissionName };
@@ -115,7 +120,7 @@ public partial class IndexModel
                 PermissionType = top.PermissionType,
                 ParentId = 0
             });
-            var children = allPerms.Where(p => p.ParentId == top.Id).ToList();
+            var children = permsForMatrix.Where(p => p.ParentId == top.Id).ToList();
             foreach (var c in children)
             {
                 group.Items.Add(new PermissionItemViewModel
@@ -172,6 +177,12 @@ public partial class IndexModel
 
     public async Task<IActionResult> OnPostRoleUpdateAsync(int Id, string RoleName, string Description, int SortOrder, bool IsActive)
     {
+        // 验证模型绑定是否成功
+        if (!ModelState.IsValid)
+        {
+            return new JsonResult(new { success = false, message = "数据格式验证失败，请检查输入内容" });
+        }
+
         var role = await _db.SysRoles.FindAsync(Id);
         if (role is null)
             return new JsonResult(new { success = false, message = "角色不存在" });
@@ -245,7 +256,7 @@ public partial class IndexModel
 
         await _db.SaveChangesAsync();
 
-        var msg = $"角色 {role.RoleName} 的权限已更新（{PermissionIds?.Length ?? 0} 项" + (PrivacyFieldEnabled ? " + 隐私字段保护" : "") + "）";
+        var msg = $"角色 {role.RoleName} 的权限已更新（{PermissionIds?.Length ?? 0} 项" + (PrivacyFieldEnabled ? " + 允许显示隐私字段" : "") + "）";
         return new JsonResult(new { success = true, message = msg });
     }
 

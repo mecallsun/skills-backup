@@ -1,0 +1,213 @@
+@page
+@model DormManage.Admin.Pages.Personnel.ImportModel
+@{
+    ViewData["Title"] = "导入人员";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .step-card { border-left: 4px solid #1976d2; }
+        .step-card.completed { border-left-color: #2e7d32; }
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1976d2;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-card.completed .step-number { background: #2e7d32; }
+        .error-table th { background: #ffebee; }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-upload"></i> 导入人员清单
+            <small class="text-muted fs-6">（批量导入员工数据）</small>
+        </h2>
+        <div>
+            <a href="/Personnel" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> 返回人员清单
+            </a>
+        </div>
+    </div>
+
+    <!-- 步骤指示器 -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 1 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">1</span>
+                    <div>
+                        <h6 class="mb-0">下载模板</h6>
+                        <small class="text-muted">获取标准 Excel 模板</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 2 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">2</span>
+                    <div>
+                        <h6 class="mb-0">上传文件</h6>
+                        <small class="text-muted">选择 Excel 文件上传</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card step-card @(Model.Step >= 3 ? "completed" : "")">
+                <div class="card-body d-flex align-items-center">
+                    <span class="step-number me-3">3</span>
+                    <div>
+                        <h6 class="mb-0">导入结果</h6>
+                        <small class="text-muted">查看导入统计与错误</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 步骤 1：下载模板 -->
+    <div class="card mb-3 step-card @(Model.Step >= 1 ? "completed" : "")">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><span class="step-number me-2">1</span> 下载模板</h5>
+        </div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">
+                模板包含以下字段：<strong>工号、姓名、性别、部门、员工类型、班次、班组</strong>、手机号、入职日期、离职日期、房号、备注（v2.13.87 共 12 列；v2.13.86 新增「性别」作为第 3 列；v2.12.2 新增班组列）
+            </p>
+            <div class="mb-2">
+                @* v2.13.87 性别提示行（与原型 personnel/import.html 第 59 行 一致） *@
+                <strong>性别</strong>取值：男 / 女（中文）或 1 / 2（数字），留空默认「男」
+            </div>
+            <div class="mb-2">
+                <strong>班次</strong>取值：默认 / 早 / 中 / 晚 / 夜 / 其他（留空默认"默认"）
+            </div>
+            <div class="mb-2">
+                <strong>班组</strong>取值：默认 / A班 / B班 / C班 / D班 / E班 / F班 / G班 / H班（留空默认"默认"）
+            </div>
+            <div class="mb-2">
+                <strong>员工类型</strong>取值：合同工 / 临时工 / 外包 / 实习生 / 驻场
+            </div>
+            <div class="mb-3">
+                <strong>部门</strong>取值：生产部 / 技术部 / 行政部 / 财务部 / 销售部 / 后勤部 / 仓储部 / 其他
+            </div>
+            <form method="post" asp-page-handler="DownloadTemplate">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-download"></i> 下载人员清单导入模板.xlsx
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 步骤 2：上传文件 -->
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><span class="step-number me-2">2</span> 上传文件</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" asp-page-handler="Upload">
+                <div class="mb-3">
+                    <label class="form-label">选择 Excel 文件（.xlsx）</label>
+                    <input type="file" id="file" name="file" accept=".xlsx" class="form-control" required>
+                    <small class="text-muted">支持 .xlsx 格式，文件大小不超过 10MB</small>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="overwriteExisting" name="overwriteExisting" checked>
+                        <label class="form-check-label" for="overwriteExisting">
+                            覆盖已存在的员工记录（工号相同则更新）
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-upload"></i> 上传并导入
+                </button>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.ImportResult != null)
+    {
+        <!-- 步骤 3：导入结果 -->
+        <div class="card mb-3">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><span class="step-number me-2">3</span> 导入结果</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">总数据行</h6>
+                                <h3 class="mb-0">@Model.ImportResult.TotalRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">成功导入</h6>
+                                <h3 class="mb-0 text-success">@Model.ImportResult.SuccessRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">失败</h6>
+                                <h3 class="mb-0 text-danger">@Model.ImportResult.FailedRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning bg-opacity-10">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted">重复跳过</h6>
+                                <h3 class="mb-0 text-warning">@Model.ImportResult.SkippedRows</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (Model.ImportResult.Errors != null && Model.ImportResult.Errors.Count > 0)
+                {
+                    <h6 class="mt-4">错误详情</h6>
+                    <table class="table table-sm table-bordered error-table">
+                        <thead>
+                            <tr>
+                                <th style="width:80px">行号</th>
+                                <th style="width:100px">字段</th>
+                                <th>错误信息</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var error in Model.ImportResult.Errors)
+                            {
+                                <tr>
+                                    <td>@error.RowNumber</td>
+                                    <td>@error.FieldName</td>
+                                    <td>@error.ErrorMessage</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                <hr>
+                <a href="/Personnel" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> 返回人员清单
+                </a>
+            </div>
+        </div>
+    }
+</div>

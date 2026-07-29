@@ -143,9 +143,9 @@ public class DetailsModel : PageModel
         // 维护 EmployeeId → TeamBadgeDto 索引（前端按 EmployeeId 查询，避免模板内再嵌套判断）
         foreach (var emp in empDict.Values)
         {
-            if (emp.TeamId > 0 && teamMap.ContainsKey(emp.TeamId))
+            if (emp.TeamId.HasValue && teamMap.ContainsKey(emp.TeamId.Value))
             {
-                EmployeeTeamMap[emp.Id] = teamMap[emp.TeamId];
+                EmployeeTeamMap[emp.Id] = teamMap[emp.TeamId.Value];
             }
         }
 
@@ -169,7 +169,9 @@ public class DetailsModel : PageModel
                 ? empDict[b.EmployeeId].EmployeeTypeId : null,
             // v2.13.91 新增：班组 ID（前端渲染 Badge 时按 EmployeeId 查 EmployeeTeamMap）
             TeamId = empDict.ContainsKey(b.EmployeeId) && empDict[b.EmployeeId].TeamId > 0
-                ? empDict[b.EmployeeId].TeamId : null
+                ? empDict[b.EmployeeId].TeamId : null,
+            // v2.13.188 新增：按 EmployeeId 关联 SysEmployee.Gender
+            Gender = empDict.ContainsKey(b.EmployeeId) ? empDict[b.EmployeeId].Gender : 0
         }).ToList();
 
         // 历史记录（入住+退房）
@@ -258,6 +260,12 @@ public class BookingRecordDto
     /// 前端通过 EmployeeTeamMap 渲染 Badge。
     /// </summary>
     public int? TeamId { get; set; }
+
+    /// <summary>
+    /// 员工性别（v2.13.188 新增）：按 EmployeeId 关联 SysEmployee.Gender，
+    /// 1=男 2=女 0=未知；前端渲染 Badge 显示。
+    /// </summary>
+    public int Gender { get; set; } = 0;
 }
 
 /// <summary>

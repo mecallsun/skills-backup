@@ -17,45 +17,20 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
+    @* v2.13.209 重构：抄表进度移入 PageHeader subtitle（内嵌于 h2 行内）；旧 alert div 已删除 *@
     @await Component.InvokeAsync("PageHeader", new {
         icon = "bi-clipboard-data-fill",
         title = "智能抄表",
         count = Model.Total,
         countLabel = "条",
+        subtitleHtml = Html.Raw($"{Model.Coverage.TargetMonth} 抄表进度：已抄 {Model.Coverage.ReadDorms} / {Model.Coverage.TotalDorms} 间 · 抄表中 {Model.Coverage.UnfinishedDorms} 间 · 未抄表 {Model.Coverage.UncoveredDorms} 间"),
         // v2.13.81 1:1 原型对齐：移除「新增记录」按钮（原型只有「手动补录」Modal + 「批量导入」链接 + 「导出Excel」函数）
-        // 手动补录 → 调起大弹窗（modal-xl 900px，弹窗独占模式）
-        // 批量导入 → 跳转到独立 /Meter/Import 页面
-        // 导出 Excel → 后端 API 端点
         actions = new List<PageAction> {
             new() { Label = "手动补录", OnClick = "showManualEntryModal()", Icon = "bi-pencil-square", Style = "success", PermissionCode = "meter:entry" },
             new() { Label = "批量导入", Url = "/Meter/Import", Icon = "bi-upload", Style = "primary", PermissionCode = "meter:import" },
             new() { Label = "导出Excel", Url = "/api/meter/export", Icon = "bi-file-earmark-excel", Style = "outline-secondary", PermissionCode = "meter:export" }
         }
     })
-
-    @* v2.13.41 100% 原型对齐：抄表覆盖率进度 alert *@
-    <div class="alert alert-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger") d-flex justify-content-between align-items-center mb-3" role="alert">
-        <div>
-            <i class="bi bi-pie-chart-fill"></i>
-            <strong>@Model.Coverage.TargetMonth</strong> 抄表进度：
-            已抄 <strong class="fs-5">@Model.Coverage.ReadDorms</strong> / <strong>@Model.Coverage.TotalDorms</strong> 间
-            （<strong>@Model.Coverage.Percentage%</strong>）
-            @if (Model.Coverage.UnfinishedDorms > 0)
-            {
-                <span class="ms-2">· 未完成 <strong class="text-danger">@Model.Coverage.UnfinishedDorms</strong> 间</span>
-            }
-            @if (Model.Coverage.UncoveredDorms > 0)
-            {
-                <span class="ms-2">· 未覆盖 <strong class="text-warning">@Model.Coverage.UncoveredDorms</strong> 间</span>
-            }
-        </div>
-        <div class="progress" style="width: 200px; height: 12px;">
-            <div class="progress-bar bg-@(Model.Coverage.Percentage >= 90 ? "success" : Model.Coverage.Percentage >= 60 ? "warning" : "danger")"
-                 role="progressbar" style="width: @Model.Coverage.Percentage%"
-                 aria-valuenow="@Model.Coverage.Percentage" aria-valuemin="0" aria-valuemax="100"></div>
-        </div>
-    </div>
 
     <!-- 筛选条件区域（一行排列，响应式） -->
     <form method="get" class="card mb-3 filter-card" data-filter-form="meter">
@@ -94,7 +69,7 @@
                         <option value="0" selected="@(Model.Status == 0)">未抄表</option>
                     </select>
                 </div>
-                <div class="col-auto filter-item">
+                <div class="col-auto filter-item filter-item-dorm">
                     <label class="form-label mb-1">房号</label>
                     <input list="dormList" name="DormCode" value="@Model.DormCode" class="form-control" placeholder="如 D-001">
                     <datalist id="dormList">
@@ -109,14 +84,14 @@
                     <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="模糊查询">
                 </div>
                 <div class="col-auto filter-item filter-item-btn">
-                    <button type="submit" class="btn btn-primary filter-btn">
-                        <i class="bi bi-search"></i> 查询
-                    </button>
-                </div>
-                <div class="col-auto filter-item filter-item-btn">
-                    <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('meter')">
-                        <i class="bi bi-arrow-clockwise"></i> 重置
-                    </button>
+                    <div class="filter-item-btn-group">
+                        <button type="submit" class="btn btn-primary filter-btn">
+                            <i class="bi bi-search"></i> 查询
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('meter')">
+                            <i class="bi bi-arrow-clockwise"></i> 重置
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -799,6 +774,15 @@ document.addEventListener('DOMContentLoaded', function() {
     /* 未完成行高亮 */
     .table-warning {
         background-color: rgba(255, 193, 7, 0.1) !important;
+    }
+
+    /* v2.13.209：抄表进度 subtitle 内嵌于 PageHeader h2 行内 */
+    .page-header .coverage-subtitle {
+        font-size: 0.82rem;
+        font-weight: 400;
+        color: #6c757d;
+        margin-left: 0.75rem;
+        white-space: nowrap;
     }
 
     /* v2.13.81 1:1 原型对齐：手动补录 Modal 紧凑样式 */

@@ -1,0 +1,185 @@
+@page
+@model DormManage.Admin.Pages.Dorms.HistoryModel
+@{
+    ViewData["Title"] = "宿舍住宿历史";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .timeline { border-left: 2px solid #1976d2; padding-left: 20px; margin-left: 10px; min-height: 200px; }
+        .timeline-item { position: relative; padding: 12px 0; border-bottom: 1px dashed #dee2e6; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1976d2;
+        }
+        .timeline-item.checked-out::before { background: #6c757d; }
+        .dorm-info-table th { width: 100px; color: #6c757d; }
+        .stats-card { border-radius: 12px; }
+    </style>
+}
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-clock-history"></i> 住宿历史
+            <span class="text-muted">/</span>
+            <strong>@Model.DormInfo?.DormCode</strong>
+        </h2>
+        <div>
+            <a href="/Dorms" class="btn btn-secondary me-2">
+                <i class="bi bi-arrow-left"></i> 返回宿舍列表
+            </a>
+            <a href="/Dorms/Details?id=@Model.Id" class="btn btn-info text-white">
+                <i class="bi bi-info-circle"></i> 宿舍详情
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- 左侧：宿舍信息 + 统计 -->
+        <div class="col-md-4 col-lg-3">
+            @if (Model.DormInfo != null)
+            {
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <strong>宿舍信息</strong>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless dorm-info-table mb-0">
+                            <tr>
+                                <th>房号</th>
+                                <td><strong>@Model.DormInfo.DormCode</strong></td>
+                            </tr>
+                            <tr>
+                                <th>楼栋</th>
+                                <td>@Model.DormInfo.BuildingName</td>
+                            </tr>
+                            <tr>
+                                <th>楼层</th>
+                                <td>@Model.DormInfo.FloorName</td>
+                            </tr>
+                            <tr>
+                                <th>地址</th>
+                                <td>@Model.DormInfo.AddressText</td>
+                            </tr>
+                            <tr>
+                                <th>容量</th>
+                                <td>@Model.DormInfo.Capacity 人</td>
+                            </tr>
+                            <tr>
+                                <th>性别</th>
+                                <td>
+                                    @if (Model.DormInfo.Gender == 1)
+                                    {
+                                        <span class="badge bg-primary">男</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-danger">女</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>状态</th>
+                                <td>
+                                    @if (Model.DormInfo.IsActive)
+                                    {
+                                        <span class="badge bg-success">启用</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">停用</span>
+                                    }
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <div class="card border-info">
+                <div class="card-body text-center stats-card">
+                    <small class="text-muted">累计住宿人次</small>
+                    <div class="display-6 text-info">@Model.TotalHistoryCount</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：历史记录时间线 -->
+        <div class="col-md-8 col-lg-9">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <strong><i class="bi bi-list-ul"></i> 历史记录</strong>
+                </div>
+                <div class="card-body">
+                    @if (Model.HistoryRecords.Any())
+                    {
+                        <div class="timeline">
+                            @foreach (var record in Model.HistoryRecords)
+                            {
+                                <div class="timeline-item @(record.IsCheckedOut ? "checked-out" : "")">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>@record.EmployeeName</strong>
+                                            @* v2.13.86 性别 Badge *@
+                                            @if (record.Gender == 1)
+                                            {
+                                                <span class="badge bg-primary ms-2"><i class="bi bi-gender-male"></i> 男</span>
+                                            }
+                                            else if (record.Gender == 2)
+                                            {
+                                                <span class="badge bg-danger ms-2"><i class="bi bi-gender-female"></i> 女</span>
+                                            }
+                                            <small class="text-muted ms-2">@record.EmployeeCode | @record.Department</small>
+                                            @if (!record.IsCheckedOut)
+                                            {
+                                                <span class="badge bg-success ms-2">在宿</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary ms-2">已退宿</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted">@record.Reason</small>
+                                    </div>
+                                    <div class="mt-1 text-muted small">
+                                        <i class="bi bi-box-arrow-in-right"></i> 入住：@record.CheckInDate.ToString("yyyy-MM-dd")
+                                        @if (record.LeaveDate.HasValue)
+                                        {
+                                            <text>
+                                                <i class="bi bi-box-arrow-right ms-3"></i> 退宿：@record.LeaveDate.Value.ToString("yyyy-MM-dd")
+                                            </text>
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                                <i class="bi bi-hourglass-split ms-3"></i> 至今
+                                            </text>
+                                        }
+                                        <i class="bi bi-clock ms-3"></i> 共 @record.StayDays 天
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-muted text-center py-5">
+                            <i class="bi bi-inbox display-4"></i>
+                            <p class="mt-2">暂无住宿记录</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

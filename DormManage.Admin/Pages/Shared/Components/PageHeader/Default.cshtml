@@ -29,6 +29,11 @@
             {
                 <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
             }
+            @* v2.13.209 新增：Raw HTML 副标题（抄表进度 3 段统计，内嵌于 h2 行内） *@
+            @if (Model.SubtitleHtml != default)
+            {
+                <span class="coverage-subtitle ms-3">@Model.SubtitleHtml</span>
+            }
         </h2>
         <div class="d-flex align-items-center gap-2 page-header-actions flex-nowrap">
             @if (Model.PrimaryAction is not null && HasPerm(Model.PrimaryAction.PermissionCode))
@@ -88,10 +93,6 @@
                         @action.Label
                     </button>
                 }
-            }
-            @if (!string.IsNullOrEmpty(Model.Subtitle))
-            {
-                <small class="text-muted">@Model.Subtitle</small>
             }
         </div>
     </div>

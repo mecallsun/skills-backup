@@ -1,0 +1,821 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x5BBF;&#x820D;&#x8BE6;&#x60C5; - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* v2.11.4 (s) 时间线样式 */
+        .timeline { border-left: 2px solid #1976d2; padding-left: 20px; margin-left: 10px; min-height: 100px; }
+        .timeline-item { position: relative; padding: 10px 0; border-bottom: 1px dashed #dee2e6; }
+        .timeline-item:last-child { border-bottom: none; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 18px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #1976d2;
+        }
+        .timeline-item.left::before { background: #6c757d; }
+
+        /* v2.12.24 布局固定：左右两栏严格并排，禁止换行 */
+        .details-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .details-left {
+            width: 300px;
+            flex-shrink: 0;
+        }
+        .details-right {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+    </style>
+
+    <style>
+        /* ===== 全局样式 ===== */
+        body {
+            font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        /* v2.13.165：所有列表页按键区（page-header-actions）靠右 + 强制一行排列 + 按钮不换行 */
+        .page-header-actions { flex-wrap: nowrap; overflow-x: auto; }
+        .page-header-actions .btn { white-space: nowrap; flex-shrink: 0; }
+        .page-header h2 { flex-shrink: 1; min-width: 0; }
+
+        /* ===== Tier 1: 顶部品牌栏 (48px) ===== */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            height: 48px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+        }
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+        .top-bar .brand-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .brand-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .top-bar .brand-version {
+            font-size: 0.7rem;
+            color: #9e9e9e;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .top-bar .user-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .top-bar .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 24px;
+            background: #f5f7fa;
+            color: #333;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .top-bar .user-pill:hover { background: #e8eaed; }
+        .top-bar .user-pill i { color: #1976d2; }
+        .top-bar .logout-btn {
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            color: #666;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .top-bar .logout-btn:hover { border-color: #e53935; color: #e53935; }
+
+        /* ===== Tier 2: Tab 页签栏 (45px) ===== */
+        .tab-bar {
+            height: 45px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c0c0c0 transparent;
+        }
+        .tab-bar::-webkit-scrollbar { height: 4px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #c0c0c0; height: 4px; border-radius: 2px; }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            min-width: 100px;
+            max-width: 240px;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-item:hover {
+            background: rgba(25,118,210,0.04);
+            color: #1976d2;
+        }
+        .tab-item .tab-icon { font-size: 1.15rem; flex-shrink: 0; }
+        .tab-item.active {
+            font-weight: 600;
+            background: #fff;
+            z-index: 1;
+        }
+        .tab-item[data-module="booking"].active,
+        .tab-item[data-module="dorms"].active { color: #1976d2; border-bottom-color: #1976d2; }
+        .tab-item[data-module="personnel"].active { color: #2e7d32; border-bottom-color: #2e7d32; }
+        .tab-item[data-module="billing"].active,
+        .tab-item[data-module="dorm-bills"].active,
+        .tab-item[data-module="employee-bills"].active { color: #e65100; border-bottom-color: #e65100; }
+        .tab-item[data-module="meter"].active { color: #00838f; border-bottom-color: #00838f; }
+        .tab-item[data-module="basics"].active,
+        .tab-item[data-module="settings"].active { color: #546e7a; border-bottom-color: #546e7a; }
+
+        /* ===== Tier 3: 页面内容区 ===== */
+        .page-content {
+            padding: 1rem 1.25rem;
+            min-height: calc(100vh - 48px - 45px);
+            background: #f5f7fa;
+        }
+
+        /* ===== 页面页头 ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-header h2 .header-icon { font-size: 1.4rem; color: #1976d2; }
+        .page-header .header-count { font-size: 0.85rem; color: #6c757d; font-weight: 400; }
+
+        /* ===== 筛选区 ===== */
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .filter-item { flex-shrink: 0; }
+        .filter-item:first-child { min-width: 180px; }
+        .filter-item:not(:first-child) { min-width: 120px; }
+        .filter-item label.form-label { font-size: 0.78rem; color: #607d8b; margin-bottom: 0.15rem; }
+        .filter-item .form-control,
+        .filter-item .form-select {
+            height: 34px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .filter-btn {
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            cursor: pointer !important;
+        }
+        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+        .btn-primary.filter-btn,
+        .btn-primary.filter-btn:hover,
+        .btn-primary.filter-btn:focus,
+        button.btn-primary.filter-btn {
+            background: #1976d2 !important;
+            border-color: #1976d2 !important;
+            color: #fff !important;
+        }
+        .btn-primary.filter-btn:hover,
+        button.btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn,
+        .btn-outline-secondary.filter-btn:hover,
+        .btn-outline-secondary.filter-btn:focus,
+        button.btn-outline-secondary.filter-btn,
+        a.btn-outline-secondary.filter-btn {
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background: #fff !important;
+        }
+        .btn-outline-secondary.filter-btn:hover,
+        button.btn-outline-secondary.filter-btn:hover,
+        a.btn-outline-secondary.filter-btn:hover {
+            background: #f8f9fa !important;
+            color: #495057 !important;
+            border-color: #ced4da !important;
+        }
+
+        /* ===== 筛选区：统计/班组/按钮容器 ===== */
+        .filter-card .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+        .filter-card .filter-item-team {
+            min-width: 108px !important;
+            max-width: 120px !important;
+        }
+        .filter-card .filter-item-btn {
+            display: flex !important;
+            align-items: flex-end !important;
+            min-height: 60px !important;
+        }
+        .filter-card .filter-row {
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+
+        /* ===== 列表卡片 ===== */
+        .content-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .content-card .table {
+            margin-bottom: 0;
+        }
+        .content-card .table thead th {
+            background: #f8f9fa;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e8eaed;
+            padding: 0.65rem 0.75rem;
+        }
+        .content-card .table tbody td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.75rem;
+        }
+        .content-card .table-hover tbody tr:hover { background: #f8f9ff; }
+
+        /* ===== 分页页尾 ===== */
+        .pagination-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #e8eaed;
+            background: #fafbfc;
+            border-radius: 0 0 8px 8px;
+        }
+        .pagination-footer .page-info {
+            font-size: 0.82rem;
+            color: #6c757d;
+        }
+        .pagination-footer .page-info strong { color: #333; }
+
+        /* ===== Badge 样式 ===== */
+        .badge {
+            font-size: 0.75em;
+            padding: 0.35em 0.65em;
+            line-height: 1;
+            border-radius: 0.375rem;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .top-bar { padding: 0 0.75rem; }
+            .top-bar .brand-text { font-size: 1rem; }
+            .tab-item { min-width: 80px; padding: 0.65rem 0.85rem; font-size: 0.82rem; }
+            .filter-row { flex-wrap: wrap; }
+            .filter-item,
+            .filter-item-stats,
+            .filter-item-team { min-width: calc(50% - 8px) !important; max-width: none !important; }
+            .filter-item:first-child { min-width: 100% !important; }
+            .page-content { padding: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tier 1: 顶部品牌栏 -->
+    <div b-7qkhyzkv64 class="top-bar">
+        <a b-7qkhyzkv64 href="/" class="brand">
+            <i b-7qkhyzkv64 class="bi bi-droplet-half brand-icon"></i>
+            <span b-7qkhyzkv64 class="brand-text">金戈宿舍管理系统</span>
+            <span b-7qkhyzkv64 class="brand-version">v2.13.71</span>
+        </a>
+        <div b-7qkhyzkv64 class="user-area">
+            <!-- v2.13.32：连接健康徽章（每 30s 轮询 runtime-info） -->
+            <span b-7qkhyzkv64 id="dbIndicator" class="badge bg-info" title="点击刷新数据库连接信息" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                <i b-7qkhyzkv64 class="bi bi-database"></i> <span b-7qkhyzkv64 id="dbIndicatorText">加载中...</span>
+            </span>
+            <a b-7qkhyzkv64 href="/Account/Profile" class="user-pill">
+                <i b-7qkhyzkv64 class="bi bi-person-circle"></i>
+                &#x7CFB;&#x7EDF;&#x7BA1;&#x7406;&#x5458;
+            </a>
+            <a b-7qkhyzkv64 href="/Account/Logout" class="logout-btn">
+                <i b-7qkhyzkv64 class="bi bi-box-arrow-right"></i> 退出
+            </a>
+        </div>
+    </div>
+
+    <!-- Tier 2: Tab 页签栏（v2.13.76 RBAC 三级权限控制：按当前用户权限过滤） -->
+    <div b-7qkhyzkv64 class="tab-bar" role="tablist">
+        
+        <a class="tab-item active"
+           data-tab-id="tab-home-view"
+           data-module="home:view"
+           data-url="/"
+           href="/"
+           data-permission="home:view"
+           title="&#x9996;&#x9875;&#x770B;&#x677F;">
+            <i class="bi bi-speedometer2 tab-icon"></i> &#x9996;&#x9875;&#x770B;&#x677F;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-booking-view"
+           data-module="booking:view"
+           data-url="/Booking"
+           href="/Booking"
+           data-permission="booking:view"
+           title="&#x529E;&#x7406;&#x767B;&#x8BB0;">
+            <i class="bi bi-clipboard-check tab-icon"></i> &#x529E;&#x7406;&#x767B;&#x8BB0;
+        </a>
+        <a class="tab-item active"
+           data-tab-id="tab-dorm-view"
+           data-module="dorm:view"
+           data-url="/Dorms"
+           href="/Dorms"
+           data-permission="dorm:view"
+           title="&#x5BBF;&#x820D;&#x7BA1;&#x7406;">
+            <i class="bi bi-building tab-icon"></i> &#x5BBF;&#x820D;&#x7BA1;&#x7406;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-personnel-view"
+           data-module="personnel:view"
+           data-url="/Personnel"
+           href="/Personnel"
+           data-permission="personnel:view"
+           title="&#x4EBA;&#x5458;&#x6E05;&#x5355;">
+            <i class="bi bi-people tab-icon"></i> &#x4EBA;&#x5458;&#x6E05;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-billing-view"
+           data-module="billing:view"
+           data-url="/BillingStandard"
+           href="/BillingStandard"
+           data-permission="billing:view"
+           title="&#x8D39;&#x7528;&#x6807;&#x51C6;">
+            <i class="bi bi-currency-dollar tab-icon"></i> &#x8D39;&#x7528;&#x6807;&#x51C6;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dormbilling-view"
+           data-module="dormbilling:view"
+           data-url="/DormBilling"
+           href="/DormBilling"
+           data-permission="dormbilling:view"
+           title="&#x5BBF;&#x820D;&#x8D26;&#x5355;">
+            <i class="bi bi-receipt tab-icon"></i> &#x5BBF;&#x820D;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-employeebilling-view"
+           data-module="employeebilling:view"
+           data-url="/EmployeeBilling"
+           href="/EmployeeBilling"
+           data-permission="employeebilling:view"
+           title="&#x5458;&#x5DE5;&#x8D26;&#x5355;">
+            <i class="bi bi-wallet2 tab-icon"></i> &#x5458;&#x5DE5;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-meter-view"
+           data-module="meter:view"
+           data-url="/Meter"
+           href="/Meter"
+           data-permission="meter:view"
+           title="&#x667A;&#x80FD;&#x6284;&#x8868;">
+            <i class="bi bi-gauge tab-icon"></i> &#x667A;&#x80FD;&#x6284;&#x8868;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-basics-view"
+           data-module="basics:view"
+           data-url="/Basics"
+           href="/Basics"
+           data-permission="basics:view"
+           title="&#x57FA;&#x7840;&#x8D44;&#x6599;">
+            <i class="bi bi-database tab-icon"></i> &#x57FA;&#x7840;&#x8D44;&#x6599;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-settings-view"
+           data-module="settings:view"
+           data-url="/Settings"
+           href="/Settings"
+           data-permission="settings:view"
+           title="&#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;">
+            <i class="bi bi-gear tab-icon"></i> &#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;
+        </a>
+
+    </div>
+
+    <!-- Tier 3: 页面内容区 -->
+    <div b-7qkhyzkv64 class="page-content">
+        
+
+<div class="container-fluid">
+    <!-- 页头 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
+            <i class="bi bi-building"></i> 宿舍详情
+        </h2>
+        <div>
+            <a href="/Dorms" class="btn btn-outline-secondary" data-back-to-list="/Dorms" onclick="ReturnUrl.handleBack(event)">
+                <i class="bi bi-arrow-left"></i> 返回列表
+            </a>
+            <a href="/Dorms/Edit?id=3" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> 编辑
+            </a>
+        </div>
+    </div>
+
+        <!-- v2.12.24 布局：左右两栏严格并排，左栏300px固定宽度，右栏自适应剩余空间 -->
+        <div class="details-row">
+            <!-- 左栏：基本信息 + 操作（各300px固定宽度，上下堆叠，左边框对齐） -->
+            <div class="details-left">
+                <!-- 基本信息卡片（v2.13.60 1:1 对齐原型 dorms/details.html 用 table table-sm table-borderless） -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> 基本信息</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless mb-0">
+                            <tr>
+                                <th width="60" class="text-muted">房号</th>
+                                <td><strong>A103</strong></td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">楼栋</th>
+                                <td>A&#x680B;</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">楼层</th>
+                                <td>1 楼</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">地址</th>
+                                <td>A&#x680B;&#x5BBF;&#x820D;</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">房间数</th>
+                                <td>1 间</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">容量</th>
+                                <td>2 人</td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">性别</th>
+                                <td>
+                                        <span class="badge bg-info text-dark" title="男 1 人">男</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th width="60" class="text-muted">状态</th>
+                                <td>
+                                        <span class="badge bg-success">启用</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 操作卡片 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-tools"></i> 操作</h5>
+                    </div>
+                    <div class="card-body">
+                        <button id="btnToggleHistory" class="btn btn-outline-secondary w-100 mb-2" onclick="toggleHistory()">
+                            <i class="bi bi-clock-history"></i> 查看住宿历史
+                        </button>
+                        <a href="/Dorms" class="btn btn-link w-100"><i class="bi bi-arrow-left"></i> 返回宿舍列表</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右栏：当前入住人员 + 住宿历史（与左侧栏顶部对齐，上下堆叠） -->
+            <div class="details-right">
+                <!-- 当前入住人员（与左侧栏顶部对齐） -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people"></i> 当前入住人员
+                            <span class="badge bg-primary ms-2">2</span>
+                        </h5>
+                        <span class="text-muted small">容量上限：2 人</span>
+                    </div>
+                    <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>工号</th>
+                                            <th>姓名</th>
+                                            <th class="text-center">性别</th>
+                                            <th>部门</th>
+                                            <th>班组</th>
+                                            <th>员工类型</th>
+                                            <th>班次</th>
+                                            <th class="text-center">床号</th>
+                                            <th>入住日期</th>
+                                            <th>已入住</th>
+                                            <th width="200">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                            <tr>
+                                                <td><strong>JG002155</strong></td>
+                                                <td>&#x6881;&#x667A;&#x950B;</td>
+                                                <td class="text-center">
+                                                        <span class="badge bg-primary" title="男"><i class="bi bi-gender-male"></i> 男</span>
+                                                </td>
+                                                <td>&#x751F;&#x4EA7;&#x90E8;</td>
+                                                <td>
+                                                        <span class="badge bg-warning text-dark" title="来源：SysEmployee.TeamId → Team.Name">D</span>
+                                                </td>
+                                                <td>
+                                                        <span class="badge bg-secondary" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">&#x5408;&#x540C;&#x5DE5;</span>
+                                                </td>
+                                                <td>
+                                                        <span class="badge bg-info text-dark">&#x4E2D;</span>
+                                                </td>
+                                                <td class="text-center">
+                                                        <span class="badge bg-info text-dark">1</span>
+                                                </td>
+                                                <td>2024-11-19</td>
+                                                <td>
+                                                        <span class="badge bg-info">615 天</span>
+                                                </td>
+                                                <td>
+                                                    <a href="/Booking/Edit?id=5" class="btn btn-sm btn-outline-warning">
+                                                        <i class="bi bi-arrow-left-right"></i> 调宿
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="checkoutResident(5, '&#x6881;&#x667A;&#x950B;')">
+                                                        <i class="bi bi-box-arrow-right"></i> 退宿
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>JG001814</strong></td>
+                                                <td>&#x5F20;&#x68A6;&#x73E0;</td>
+                                                <td class="text-center">
+                                                        <span class="badge bg-danger" title="女"><i class="bi bi-gender-female"></i> 女</span>
+                                                </td>
+                                                <td>&#x7814;&#x53D1;&#x90E8;</td>
+                                                <td>
+                                                        <span class="badge bg-warning text-dark" title="来源：SysEmployee.TeamId → Team.Name">-</span>
+                                                </td>
+                                                <td>
+                                                        <span class="badge bg-secondary" title="来源：SysEmployee.EmployeeTypeId → EmployeeType.Name">&#x5408;&#x540C;&#x5DE5;</span>
+                                                </td>
+                                                <td>
+                                                        <span class="badge bg-secondary">-</span>
+                                                </td>
+                                                <td class="text-center">
+                                                        <span class="badge bg-info text-dark">2</span>
+                                                </td>
+                                                <td>2024-11-19</td>
+                                                <td>
+                                                        <span class="badge bg-info">615 天</span>
+                                                </td>
+                                                <td>
+                                                    <a href="/Booking/Edit?id=6" class="btn btn-sm btn-outline-warning">
+                                                        <i class="bi bi-arrow-left-right"></i> 调宿
+                                                    </a>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="checkoutResident(6, '&#x5F20;&#x68A6;&#x73E0;')">
+                                                        <i class="bi bi-box-arrow-right"></i> 退宿
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                    </div>
+                </div>
+
+                <!-- 住宿历史记录（默认隐藏，timeline 时间线样式） -->
+                <div id="historySection" class="card" style="display: none;">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> 住宿历史记录
+                            <span class="badge bg-secondary ms-2" id="historyCount">0</span>
+                        </h5>
+                        <button class="btn btn-sm btn-link" onclick="toggleHistory()">收起 ▲</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline" id="historyTimeline"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- v2.13.11 全局筛选条件持久化（localStorage） -->
+    <script src="/js/filter-persistence.js"></script>
+    <!-- v2.13.88 列表 → 详情/编辑 返回路径记忆（全局） -->
+    <script src="/js/return-url.js"></script>
+    
+    <script>
+        // v2.11.4 (s) 查看住宿历史开关效果
+        let historyVisible = false;
+
+        // v2.13.39 新增：退宿操作（POST /api/v1/bookings/{id}/check-out）
+        function checkoutResident(bookingId, name) {
+            if (!confirm('确定办理 ' + name + ' 的退宿吗？')) return;
+            var token = document.querySelector('input[name="__RequestVerificationToken"]');
+            var headers = { 'Content-Type': 'application/json' };
+            if (token) headers['RequestVerificationToken'] = token.value;
+
+            fetch('/api/v1/bookings/' + bookingId + '/check-out', {
+                method: 'POST',
+                headers: headers,
+                credentials: 'same-origin'
+            })
+            .then(function(r) { return r.json().then(function(j) { return { ok: r.ok, body: j }; }); })
+            .then(function(res) {
+                if (res.ok && res.body.success !== false) {
+                    alert('✓ ' + name + ' 已退宿');
+                    location.reload();
+                } else {
+                    alert('✗ 退宿失败：' + (res.body.message || res.body.error || '未知错误'));
+                }
+            })
+            .catch(function(err) { alert('✗ 退宿请求失败：' + err.message); });
+        }
+
+        function toggleHistory() {
+            historyVisible = !historyVisible;
+            const section = document.getElementById('historySection');
+            const btn = document.getElementById('btnToggleHistory');
+
+            if (historyVisible) {
+                section.style.display = 'block';
+                btn.innerHTML = '<i class="bi bi-x-circle"></i> 关闭历史';
+                btn.classList.remove('btn-outline-secondary');
+                btn.classList.add('btn-secondary');
+                renderHistory();
+            } else {
+                section.style.display = 'none';
+                btn.innerHTML = '<i class="bi bi-clock-history"></i> 查看住宿历史';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-outline-secondary');
+            }
+        }
+
+        function formatDate(d) {
+            if (!d) return '-';
+            return d instanceof Date ? d.toISOString().slice(0, 10) : String(d);
+        }
+
+        function renderHistory() {
+            // 从后端传入的历史数据渲染时间线
+            const history = [];
+            document.getElementById('historyCount').textContent = history.length;
+            const timeline = document.getElementById('historyTimeline');
+
+            if (history.length === 0) {
+                timeline.innerHTML = '<div class="text-muted text-center py-4">暂无历史记录</div>';
+                return;
+            }
+
+            timeline.innerHTML = history.map(r => {
+                const isCheckedOut = r.type === 2 && r.status === 3;
+                const checkInDate = r.checkInDate ? new Date(r.checkInDate) : new Date();
+                const leaveDate = r.checkOutDate ? new Date(r.checkOutDate) : null;
+                const stayDays = leaveDate
+                    ? Math.floor((leaveDate - checkInDate) / (1000 * 60 * 60 * 24))
+                    : Math.floor((new Date() - checkInDate) / (1000 * 60 * 60 * 24));
+
+                return `
+                <div class="timeline-item ${isCheckedOut ? 'left' : ''}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${r.employeeName || '-'}</strong>
+                            <small class="text-muted ms-2">${r.employeeCode || '-'} | ${r.department || '-'}</small>
+                            ${isCheckedOut ? '<span class="badge bg-secondary ms-2">已退宿</span>' : '<span class="badge bg-success ms-2">在宿</span>'}
+                        </div>
+                        <small class="text-muted">${r.registrar || ''}</small>
+                    </div>
+                    <div class="mt-1 text-muted small">
+                        <i class="bi bi-box-arrow-in-right"></i> 入住：${formatDate(r.checkInDate)}
+                        ${r.checkOutDate ? `<i class="bi bi-box-arrow-right ms-3"></i> 退宿：${formatDate(r.checkOutDate)}` : '<i class="bi bi-hourglass-split ms-3"></i> 至今'}
+                        <i class="bi bi-clock ms-3"></i> 共 ${stayDays} 天
+                    </div>
+                </div>`;
+            }).join('');
+        }
+    </script>
+
+    <script>
+        // Tab 激活态键盘快捷键（Ctrl+1~9 切换 Tab 1~9, Ctrl+0 切换 Tab 10）
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.altKey) {
+                var num = parseInt(e.key);
+                if (num >= 0 && num <= 9) {
+                    var idx = num === 0 ? 9 : num - 1;
+                    var tabs = document.querySelectorAll('.tab-item');
+                    if (tabs[idx]) tabs[idx].click();
+                }
+            }
+        });
+
+        // v2.13.32：连接健康徽章轮询 + 点击刷新
+        (function() {
+            var elText = document.getElementById('dbIndicatorText');
+            var elBadge = document.getElementById('dbIndicator');
+            if (!elText || !elBadge) return;
+            function loadRuntimeInfo() {
+                fetch('/api/v1/system/dbconfig/runtime-info')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(j) {
+                        if (j && j.success && j.data) {
+                            elText.textContent = (j.data.server || '?') + '/' + (j.data.database || '?');
+                            elBadge.title = 'Provider: ' + j.data.provider + '\n最后重载: ' + new Date(j.data.lastReloadedAt).toLocaleString();
+                        } else {
+                            elText.textContent = '离线';
+                        }
+                    })
+                    .catch(function() { elText.textContent = '离线'; });
+            }
+            loadRuntimeInfo();
+            setInterval(loadRuntimeInfo, 30000);
+            elBadge.addEventListener('click', loadRuntimeInfo);
+            window.refreshDbIndicator = loadRuntimeInfo;
+        })();
+    </script>
+</body>
+</html>

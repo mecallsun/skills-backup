@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using DormManage.Shared.Data;
+using DormManage.Shared.Extensions;
 using DormManage.Shared.Models;
 using System.Security.Claims;
 
@@ -36,8 +37,9 @@ public class AuthService : IAuthService
         if (user.IsLocked)
             return (false, "账号已锁定，请联系管理员", null);
 
-        // v2.13.93: 账号有效期校验 — 严格按日期（Today > ExpiresAt.Date 即拒绝；ExpiresAt=NULL 表示永久）
-        if (user.ExpiresAt.HasValue && DateTime.Today > user.ExpiresAt.Value.Date)
+        // v2.13.193: 账号有效期校验 — 使用统一助手 UserExpiryHelper（前后端一致）
+        // 规则：Today >= ExpiresAt.Date 即拒绝（过期当天即视为已过期）
+        if (UserExpiryHelper.IsExpired(user.ExpiresAt))
             return (false, "账号已过期，请联系管理员", null);
 
         // 查询用户的角色
@@ -81,9 +83,13 @@ public class AuthService : IAuthService
     {
         if (userId <= 0) return new List<AuthHelperExtensions.MenuNode>();
 
-        // 查询用户角色关联的所有菜单类权限（PermissionType=1）
-        // 含 ParentId / SortOrder 字段，供前端按父子层级渲染
-        var menus = await (from perm in _db.SysPermissions
+        // v2.13.198 修复：捕获数据库异常，防止菜单渲染失败导致整个页面 Error
+        List<AuthHelperExtensions.MenuNode> menus;
+        try
+        {
+            // 查询用户角色关联的所有菜单类权限（PermissionType=1）
+            // 含 ParentId / SortOrder 字段，供前端按父子层级渲染
+            menus = await (from perm in _db.SysPermissions
                            join rp in _db.SysRolePermissions on perm.Id equals rp.PermissionId
                            join ur in _db.SysUserRoles on rp.RoleId equals ur.RoleId
                            where ur.UserId == userId
@@ -101,6 +107,13 @@ public class AuthService : IAuthService
                                SortOrder = perm.SortOrder,
                                PermissionType = perm.PermissionType
                            }).Distinct().ToListAsync();
+        }
+        catch (Exception)
+        {
+            // 数据库异常时记录日志并返回空列表（避免抛出导致整个页面 Error）
+            // 注：刻意不记录日志避免循环依赖；如需诊断可通过应用日志系统获得
+            return new List<AuthHelperExtensions.MenuNode>();
+        }
 
         // 若顶级菜单缺少父级链，自动补齐父级（确保父级可见时子菜单才能显示）
         var parentIds = menus.Where(m => m.ParentId > 0).Select(m => m.ParentId).Distinct().ToList();

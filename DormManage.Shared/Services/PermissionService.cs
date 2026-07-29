@@ -34,13 +34,14 @@ public interface IPermissionService
     bool CurrentUserHasRoute(IHttpContextAccessor accessor, string routePrefix);
 
     // ========== v2.13.92 字段权限（数据权限 PermissionType=3 落地） ==========
-    /// <summary>当前用户是否启用了隐私字段保护（即拥有 privacy:field:enable 权限）</summary>
-    Task<bool> HasPrivacyFieldEnabledAsync(int userId);
+    // v2.13.193 翻转：HasPrivacyFieldEnabledAsync → AllowDisplayPrivacyFieldsAsync（语义反转）
+    /// <summary>是否允许显示隐私字段（v2.13.176 deny-by-default：勾选才能显示，不勾选隐藏）</summary>
+    Task<bool> AllowDisplayPrivacyFieldsAsync(int userId);
 
     /// <summary>
     /// 获取当前用户应该隐藏的字段 FieldKey 集合。
-    /// 当 HasPrivacyFieldEnabled=true 时返回 SysFieldPermission 中所有 IsActive=true 的 FieldKey；
-    /// 否则返回空 HashSet（不隐藏任何字段）。
+    /// 当 AllowDisplayPrivacyFields=true（角色勾选了「允许显示」）时返回空集合（不隐藏）；
+    /// 否则（deny-by-default）返回所有 IsActive=true 的 FieldKey（全部隐藏）。
     /// </summary>
     Task<HashSet<string>> GetHiddenFieldKeysAsync(int userId);
 }
@@ -151,29 +152,41 @@ public class PermissionService : IPermissionService
         return matchedRoutes.Any(r => r == routePrefix || r.StartsWith(routePrefix + "/"));
     }
 
-    // ========== v2.13.92 字段权限实现 ==========
+    // ========== v2.13.92 字段权限实现 → v2.13.193 修复 deny-by-default ==========
 
     /// <summary>隐私字段权限码（PermissionType=3 数据权限）</summary>
     public const string PrivacyFieldPermissionCode = "privacy:field:enable";
 
-    public async Task<bool> HasPrivacyFieldEnabledAsync(int userId)
+    /// <summary>
+    /// v2.13.176 翻转：是否允许显示隐私字段（v2.13.92 是 HasPrivacyFieldEnabledAsync，语义相反）
+    /// 勾选 → 允许显示所有隐私字段
+    /// 不勾选 → 全部隐藏（deny-by-default）
+    /// </summary>
+    public async Task<bool> AllowDisplayPrivacyFieldsAsync(int userId)
     {
         if (userId <= 0) return false;
         var codes = await GetUserPermissionCodesAsync(userId);
         return codes.Contains(PrivacyFieldPermissionCode);
     }
 
+    /// <summary>
+    /// v2.13.176 翻转：获取应该隐藏的字段集合
+    /// v2.13.92 旧逻辑（有 BUG）：勾选权限 → 隐藏所有字段；不勾选 → 显示所有字段
+    /// v2.13.176 新逻辑（已修复）：不勾选 → 隐藏所有 IsActive 字段（deny-by-default）；勾选 → 不隐藏任何字段
+    /// </summary>
     public async Task<HashSet<string>> GetHiddenFieldKeysAsync(int userId)
     {
-        // 默认：用户无隐私权限 → 不隐藏任何字段
-        if (!await HasPrivacyFieldEnabledAsync(userId)) return new HashSet<string>();
+        // v2.13.176 deny-by-default：不勾选 → 隐藏所有 IsActive=true 的字段
+        if (!await AllowDisplayPrivacyFieldsAsync(userId))
+        {
+            var allActiveKeys = await _db.SysFieldPermissions
+                .Where(p => p.IsActive)
+                .Select(p => p.FieldKey)
+                .ToListAsync();
+            return new HashSet<string>(allActiveKeys);
+        }
 
-        // 启用隐私权限 → 拉取所有 IsActive=true 的字段键
-        var activeKeys = await _db.SysFieldPermissions
-            .Where(p => p.IsActive)
-            .Select(p => p.FieldKey)
-            .ToListAsync();
-
-        return new HashSet<string>(activeKeys);
+        // 勾选了「允许显示隐私字段」 → 不隐藏任何字段
+        return new HashSet<string>();
     }
 }

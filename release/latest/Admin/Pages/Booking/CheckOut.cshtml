@@ -1,0 +1,311 @@
+@page
+@model DormManage.Admin.Pages.Booking.CheckOutModel
+@{
+    ViewData["Title"] = "办理退房";
+    Layout = "_Layout";
+}
+
+<style>
+    /* v2.13.38: CheckOut 重大重构，按原型 booking/check-out.html 1:1 实施 form-card 架构 */
+    .form-card { background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; max-width: 900px; margin: 0 auto; }
+    .form-card-header { padding: 0.75rem 1.25rem; border-bottom: 1px solid #eee; background: #fafbfc; display: flex; align-items: center; gap: 0.5rem; }
+    .form-card-header h3 { margin: 0; font-size: 1rem; font-weight: 600; color: #1976d2; }
+    .form-card-body { padding: 1.25rem; }
+    .form-section { margin-bottom: 1rem; }
+    .form-section-title { font-size: 0.875rem; font-weight: 600; color: #1976d2; border-left: 3px solid #1976d2; padding-left: 0.5rem; margin-bottom: 0.5rem; }
+    .form-field { margin-bottom: 0.5rem; }
+    .form-label { font-size: 0.875rem; font-weight: 500; color: #495057; margin-bottom: 0.25rem; display: block; }
+    .form-label .required { color: #dc3545; margin-left: 2px; }
+    .form-control, .form-select { border-radius: 6px; padding: 0.45rem 0.75rem; font-size: 0.9rem; border: 1px solid #dee2e6; width: 100%; }
+    .form-actions { background: #fafbfc; border-top: 1px solid #eee; padding: 0.85rem 1.25rem; display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center; }
+    .form-actions .btn { min-width: 100px; }
+
+    .suggestion-list { position: absolute; z-index: 100; background: white; border: 1px solid #dee2e6; border-radius: 6px; max-height: 220px; overflow-y: auto; width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-top: 2px; }
+    .suggestion-item { padding: 0.55rem 0.85rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; }
+    .suggestion-item:hover { background-color: #f0f7ff; }
+    .suggestion-item:last-child { border-bottom: none; }
+
+    .emp-info-card { background: #f8f9fa; border-radius: 6px; padding: 0.6rem 0.85rem; margin-top: 0.5rem; font-size: 0.875rem; line-height: 1.8; }
+    .emp-info-item { display: inline-block; margin-right: 1.25rem; }
+    .emp-info-item .label { color: #6c757d; margin-right: 0.25rem; }
+    .emp-info-item .value { font-weight: 500; color: #212529; }
+
+    kbd { background: #f0f0f0; border: 1px solid #dee2e6; border-radius: 3px; padding: 1px 5px; font-size: 0.8em; font-family: monospace; }
+</style>
+
+<!-- 页头 -->
+<div class="page-header d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">
+        <i class="bi bi-box-arrow-right text-warning"></i> 办理退房
+        <small class="text-muted fs-6 ms-2">办理登记 / 办理退房</small>
+    </h2>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/Booking">办理登记</a></li>
+            <li class="breadcrumb-item active" aria-current="page">办理退房</li>
+        </ol>
+    </nav>
+</div>
+
+<!-- 表单卡片（v2.13.38 重大重构：按原型 form-card 架构 1:1 实施） -->
+<div class="form-card">
+    <div class="form-card-header">
+        <i class="bi bi-clipboard-minus text-warning"></i>
+        <h3>退房信息录入</h3>
+    </div>
+
+    <form id="checkOutForm" onsubmit="event.preventDefault(); submitForm(); return false;">
+        <div class="form-card-body">
+
+            <!-- 区块 1：员工选择（v2.13.38 姓名模糊筛选 + 仅在宿员工） -->
+            <div class="form-section">
+                <div class="form-section-title">员工选择（仅显示在宿员工）</div>
+                <div class="position-relative">
+                    <input type="text" id="empKeyword" class="form-control" placeholder="姓名（模糊筛选）" oninput="onEmpSearch()" onfocus="showSuggestions()" autocomplete="off">
+                    <div id="empSuggestions" class="suggestion-list" style="display:none;"></div>
+                </div>
+                <div class="emp-info-card" id="empInfo" style="display:none;">
+                    <span class="emp-info-item"><span class="label">工号:</span><span class="value" id="empCode"></span></span>
+                    <span class="emp-info-item"><span class="label">姓名:</span><span class="value" id="empName"></span></span>
+                    <span class="emp-info-item"><span class="label">性别:</span><span class="value" id="empGender"></span></span>
+                    @* v2.13.92 字段权限：手机号条件渲染 *@
+                    @if (!await Html.IsFieldHiddenAsync("employee.phone"))
+                    {
+                        <span class="emp-info-item" id="empPhoneField"><span class="label">手机:</span><span class="value" id="empPhone"></span></span>
+                    }
+                    <span class="emp-info-item"><span class="label">部门:</span><span class="value" id="empDept"></span></span>
+                    <span class="emp-info-item"><span class="label">类型:</span><span class="value" id="empType"></span></span>
+                    <span class="emp-info-item"><span class="label">班次:</span><span class="value" id="empAtt"></span></span>
+                    <span class="emp-info-item"><span class="label">班组:</span><span class="value" id="empTeam"></span></span>
+                </div>
+                <input type="hidden" id="activeRecordId" />
+            </div>
+
+            <!-- 区块 2：退房信息（退房日期 + 原因 + 登记人 + 校验提示） -->
+            <div class="form-section">
+                <div class="form-section-title">退房信息</div>
+                <div class="row g-2">
+                    <div class="col-md-3 form-field">
+                        <label class="form-label" for="checkoutDate">退房日期<span class="required">*</span></label>
+                        <input type="date" id="checkoutDate" class="form-control" onchange="onDateChange()">
+                    </div>
+                    <div class="col-md-3 form-field">
+                        <label class="form-label" for="reason">原因</label>
+                        <select id="reason" class="form-select">
+                            <option value="离职">离职</option>
+                            <option value="调岗">调岗</option>
+                            <option value="换房">换房</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 form-field">
+                        <label class="form-label" for="registrar">登记人</label>
+                        <input type="text" id="registrar" class="form-control" disabled>
+                    </div>
+                    <div class="col-md-3 form-field">
+                        <label class="form-label" for="dateHint">校验提示</label>
+                        <div id="dateHint" class="form-control" style="background: #f8f9fa; font-size: 0.85rem; padding-top: 0.5rem;">请先选择员工</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 操作按钮区（v2.13.38 5 关闭 + 1 提交触发器统一化设计） -->
+        <div class="form-actions">
+            <small class="text-muted me-auto" style="font-size:0.75rem;">
+                <i class="bi bi-keyboard"></i> 快捷键：<kbd>Enter</kbd> 提交
+            </small>
+            <a href="/Booking" class="btn btn-outline-secondary">
+                <i class="bi bi-x"></i> 取消
+            </a>
+            <button type="submit" class="btn btn-warning text-white" id="btnSubmit">
+                <i class="bi bi-check-lg"></i> 提交退房
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+const API_BASE = '/api/v1/bookings';
+
+// 考勤班次 Badge（v2.13.38 与原型一致）
+// v2.13.122 100% 原型 1:1 对齐：班次简称单字化（默认/早/中/晚/夜/其他）
+//   与 v2.13.98 班次简化命名统一 + 数据库 AttendanceType.Name
+const ATTENDANCE_NAME = { DEFAULT: '默认', MORNING: '早', MIDDLE: '中', EVENING: '晚', NIGHT: '夜', OTHER: '其他' };
+const ATTENDANCE_BADGE = { DEFAULT: 'bg-secondary', MORNING: 'bg-warning text-dark', MIDDLE: 'bg-info text-dark', EVENING: 'bg-primary', NIGHT: 'bg-dark', OTHER: 'bg-success' };
+function attendanceBadge(t) {
+    return `<span class="badge ${ATTENDANCE_BADGE[t] || 'bg-secondary'}">${ATTENDANCE_NAME[t] || t || '默认'}</span>`;
+}
+
+// 全局状态
+let selectedEmp = null;
+let activeRecord = null;
+let empSearchResults = [];
+
+// 初始化默认值（v2.13.38 与原型一致）
+const today = new Date().toISOString().slice(0, 10);
+document.getElementById('checkoutDate').value = today;
+document.getElementById('registrar').value = 'admin';
+
+// ===== 1. 员工搜索（v2.13.38 仅显示在宿员工） =====
+async function onEmpSearch() {
+    const kw = document.getElementById('empKeyword').value.trim();
+    const sug = document.getElementById('empSuggestions');
+    if (!kw) { sug.style.display = 'none'; empSearchResults = []; return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/employee-search?keyword=${encodeURIComponent(kw)}`);
+        const res = await resp.json();
+        if (res.success && res.data && res.data.length > 0) {
+            // v2.13.121 BUG 修复：原 v2.13.36 仅按 realName.includes(kw) 二次过滤，
+            //   用户按工号搜（如 "JG000607"）时过滤失败 → 退房员工下拉列表为空。
+            // 修复：姓名 + 工号 双重匹配，同时仍要求 dormCode 非空（仅保留在宿员工）。
+            empSearchResults = res.data.filter(e =>
+                e.dormCode && (
+                    (e.realName && e.realName.includes(kw)) ||
+                    (e.employeeCode && e.employeeCode.includes(kw))
+                )
+            );
+            if (empSearchResults.length === 0) { sug.style.display = 'none'; return; }
+            sug.innerHTML = empSearchResults.slice(0, 10).map((e, i) =>
+                `<div class="suggestion-item" onclick='selectEmp(${JSON.stringify(empSearchResults[i])})'>
+                    <strong>${e.realName}</strong>
+                    <small class="text-muted ms-2">${e.dormCode || '-'} | ${e.employeeCode} | ${e.department || '-'}</small>
+                </div>`
+            ).join('');
+            sug.style.display = 'block';
+        } else {
+            empSearchResults = [];
+            sug.style.display = 'none';
+        }
+    } catch (err) {
+        console.error('员工搜索失败', err);
+        sug.style.display = 'none';
+    }
+}
+
+// ===== 2. 显示/隐藏建议 =====
+function showSuggestions() { document.getElementById('empSuggestions').style.display = 'block'; }
+document.addEventListener('click', e => {
+    if (!e.target.closest('#empKeyword') && !e.target.closest('#empSuggestions')) {
+        document.getElementById('empSuggestions').style.display = 'none';
+    }
+});
+
+// ===== 3. 选中员工（v2.13.38 加载在宿记录 + 填充员工信息 + v2.13.127 null check + try/catch） =====
+async function selectEmp(emp) {
+    selectedEmp = emp;
+    try {
+        // v2.13.127 防御性 null check（与 CheckIn 一致）：手机号 span 可能因 IsFieldHiddenAsync("employee.phone") 隐藏
+        function setText(id, value) { const el = document.getElementById(id); if (el) el.textContent = value; }
+        function setHtml(id, value) { const el = document.getElementById(id); if (el) el.innerHTML = value; }
+
+        const empSuggestions = document.getElementById('empSuggestions');
+        if (empSuggestions) empSuggestions.style.display = 'none';
+        const empKeywordEl = document.getElementById('empKeyword');
+        if (empKeywordEl) empKeywordEl.value = emp.realName;
+        const empInfoEl = document.getElementById('empInfo');
+        if (empInfoEl) empInfoEl.style.display = 'block';
+
+        setText('empCode', emp.employeeCode);
+        setText('empName', emp.realName);
+        // v2.13.86 性别 Badge
+        let genderHtml = '<span class="badge bg-secondary">未知</span>';
+        if (emp.gender === 1) {
+            genderHtml = '<span class="badge bg-primary"><i class="bi bi-gender-male"></i> 男</span>';
+        } else if (emp.gender === 2) {
+            genderHtml = '<span class="badge bg-danger"><i class="bi bi-gender-female"></i> 女</span>';
+        }
+        setHtml('empGender', genderHtml);
+
+        // v2.13.127 BUG 修复：手机号 span 可能因字段权限隐藏，原版无条件 setText 会抛 TypeError 中断函数
+        setText('empPhone', emp.phone || '-');
+        // v2.13.113 BUG 修复：部门走 FK 关联
+        setText('empDept', emp.departmentName || emp.department || '-');
+        setText('empType', emp.employeeTypeName || emp.employeeType || '-');
+        // v2.13.88 BUG 修复：用 AttendanceType.Code 映射 Badge 颜色
+        const attCode2 = emp.attendanceTypeCode || 'DEFAULT';
+        const attName2 = emp.attendanceTypeName || '默认';
+        setHtml('empAtt', `<span class="badge ${ATTENDANCE_BADGE[attCode2] || 'bg-secondary'}">${attName2}</span>`);
+        // v2.13.113 BUG 修复：班组 FK 关联，Badge 渲染
+        const teamName2 = emp.teamName || (emp.teamId > 0 ? '班组 #' + emp.teamId : null);
+        setHtml('empTeam', teamName2
+            ? `<span class="badge bg-primary">${teamName2}</span>`
+            : '<span class="text-muted">-</span>');
+
+    } catch (err) {
+        console.error('[selectEmp] 渲染异常:', err);
+    }
+
+    // 加载在宿记录（v2.13.38 与原型一致：自动绑定第一条 active 记录）
+    try {
+        const resp = await fetch(`${API_BASE}/staying-records/${emp.id}`);
+        const res = await resp.json();
+        if (res.success && res.data && res.data.length > 0) {
+            activeRecord = res.data[0];  // 取第一条在宿记录
+            document.getElementById('activeRecordId').value = activeRecord.id;
+            document.getElementById('dateHint').innerHTML =
+                `<i class="bi bi-info-circle text-primary"></i> 在宿：${activeRecord.dormCode}（入住日期 ${activeRecord.bookingDate}）`;
+        } else {
+            activeRecord = null;
+            document.getElementById('activeRecordId').value = '';
+            document.getElementById('dateHint').innerHTML =
+                '<i class="bi bi-exclamation-triangle text-warning"></i> 该员工当前无在宿记录';
+        }
+    } catch (err) {
+        console.error('加载在宿记录失败', err);
+        document.getElementById('dateHint').innerHTML =
+            '<i class="bi bi-x-circle text-danger"></i> 加载在宿记录失败';
+    }
+}
+
+// ===== 4. 退房日期变化（v2.13.38 与原型 onDateChange 一致：校验日期约束） =====
+function onDateChange() {
+    if (!activeRecord) {
+        document.getElementById('dateHint').innerHTML =
+            '<i class="bi bi-exclamation-triangle text-warning"></i> 请先选择员工';
+        return;
+    }
+    const date = document.getElementById('checkoutDate').value;
+    const checkInDate = activeRecord.bookingDate;  // 入住日期
+    if (date < checkInDate) {
+        document.getElementById('dateHint').innerHTML =
+            `<i class="bi bi-x-circle text-danger"></i> 退房日期 (${date}) 早于入住日期 (${checkInDate})`;
+    } else {
+        document.getElementById('dateHint').innerHTML =
+            `<i class="bi bi-check-circle text-success"></i> 校验通过：${checkInDate} → ${date}（在宿 ${activeRecord.dormCode}）`;
+    }
+}
+
+// ===== 5. 提交（v2.13.38 与原型 submitForm 一致） =====
+async function submitForm() {
+    if (!selectedEmp) { alert('请先选择员工'); return; }
+    if (!activeRecord) { alert('该员工当前无在宿记录'); return; }
+    const date = document.getElementById('checkoutDate').value;
+    const reason = document.getElementById('reason').value;
+    const checkInDate = activeRecord.bookingDate;
+    if (!date) { alert('请选择退房日期'); return; }
+    if (date < checkInDate) { alert(`退房日期 (${date}) 不能早于入住日期 (${checkInDate})`); return; }
+
+    try {
+        const resp = await fetch(`${API_BASE}/${activeRecord.id}/check-out`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ checkOutDate: date, reason, remark: '' })
+        });
+        const result = await resp.json();
+        if (result.success) {
+            alert(`✓ 退房办理成功\n员工：${selectedEmp.realName}\n宿舍：${activeRecord.dormCode}\n日期：${date}`);
+            location.href = '/Booking';
+        } else {
+            alert(result.message || '退房办理失败');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('退房办理失败：' + err.message);
+    }
+}
+</script>
+}

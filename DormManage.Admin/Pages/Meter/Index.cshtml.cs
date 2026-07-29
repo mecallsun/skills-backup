@@ -177,21 +177,46 @@ public class IndexModel : PaginatedPageModel
             PageSize = PageSize
         };
 
-        // v2.13.41 计算抄表覆盖率（按当前筛选月份）
+        // v2.13.209 修复 CoverageDto 计算：应用 v2.13.164 值驱动 3 段逻辑 + GroupBy 去重不变量
+        // 关键不变量：每月同房号去重仅留最新（Id DESC）
         var targetMonth = !string.IsNullOrWhiteSpace(ReadMonth) ? ReadMonth : DateTime.Now.ToString("yyyy-MM");
         var totalActiveDorms = await _db.Dorms.CountAsync(d => d.IsActive);
-        var readDormsInMonth = await _db.MeterRecords
-            .Where(r => r.ReadMonth == targetMonth && (r.Status == 1 || r.Status == 2))
-            .Select(r => r.DormCode)
-            .Distinct()
-            .CountAsync();
+
+        // Step 1: 按 DormCode 分组取最新一条记录（v2.13.164 关键不变量）
+        var latestRecords = await _db.MeterRecords
+            .Where(r => r.ReadMonth == targetMonth)
+            .GroupBy(r => r.DormCode)
+            .Select(g => g.OrderByDescending(r => r.Id).First())
+            .ToListAsync();
+
+        // Step 2: 3 段值驱动判定（v2.13.164：与 DashboardService.cs 完全一致）
+        // 已抄表：三表读数都 > 0
+        var readDormCodes = latestRecords
+            .Where(r => r.ColdMeter > 0 && r.HotMeter > 0 && r.ElectricMeter > 0)
+            .Select(r => r.DormCode).ToHashSet();
+        // 抄表中：至少一表 > 0 但不全 > 0
+        var unfinishedDormCodes = latestRecords
+            .Where(r => (r.ColdMeter > 0 || r.HotMeter > 0 || r.ElectricMeter > 0)
+                     && !(r.ColdMeter > 0 && r.HotMeter > 0 && r.ElectricMeter > 0))
+            .Select(r => r.DormCode).ToHashSet();
+        // 未抄表：全 0 或当月无任何记录
+        var allMeterCodes = latestRecords.Select(r => r.DormCode).ToHashSet();
+        var allZeroDormCodes = latestRecords
+            .Where(r => r.ColdMeter == 0 && r.HotMeter == 0 && r.ElectricMeter == 0)
+            .Select(r => r.DormCode).ToHashSet();
+        var noRecordDormCodes = await _db.Dorms
+            .Where(d => d.IsActive && !allMeterCodes.Contains(d.DormCode))
+            .Select(d => d.DormCode).ToListAsync();
+        var uncoveredDormCodes = allZeroDormCodes
+            .Concat(noRecordDormCodes).Distinct().ToHashSet();
+
         Coverage = new CoverageDto
         {
             TargetMonth = targetMonth,
             TotalDorms = totalActiveDorms,
-            ReadDorms = readDormsInMonth,
-            UnfinishedDorms = Math.Max(0, totalActiveDorms - readDormsInMonth),
-            UncoveredDorms = Math.Max(0, totalActiveDorms - readDormsInMonth)
+            ReadDorms = readDormCodes.Count,
+            UnfinishedDorms = unfinishedDormCodes.Count,   // 抄表中
+            UncoveredDorms = uncoveredDormCodes.Count       // 未抄表
         };
     }
 
@@ -240,15 +265,21 @@ public class IndexModel : PaginatedPageModel
 }
 
 /// <summary>
-/// v2.13.41 新增：抄表覆盖率 DTO（与原型 meter/index.html coverage alert 1:1 对齐）
+/// v2.13.41 新增，v2.13.209 修复：抄表覆盖率 DTO（与 v2.13.164 值驱动 3 段对齐）
+/// 3 段：已抄表（Cold/Hot/Electric 全>0）/ 抄表中（至少一表>0 但不全>0）/ 未抄表（全0 或 无记录）
 /// </summary>
 public class CoverageDto
 {
     public string TargetMonth { get; set; } = "";
+    /// <summary>总宿舍数（IsActive=true）</summary>
     public int TotalDorms { get; set; }
+    /// <summary>v2.13.209：已抄表数（ColdMeter>0 AND HotMeter>0 AND ElectricMeter>0 的 DormCode 去重数）</summary>
     public int ReadDorms { get; set; }
+    /// <summary>v2.13.209：抄表中数（至少一表>0 但不全>0 的 DormCode 去重数）</summary>
     public int UnfinishedDorms { get; set; }
+    /// <summary>v2.13.209：未抄表数（全0 或 当月无任何记录的 DormCode 去重数）</summary>
     public int UncoveredDorms { get; set; }
+    /// <summary>覆盖率（已抄表 / 总宿舍 × 100，保留 1 位小数）</summary>
     public double Percentage => TotalDorms > 0 ? Math.Round(ReadDorms * 100.0 / TotalDorms, 1) : 0;
 }
 

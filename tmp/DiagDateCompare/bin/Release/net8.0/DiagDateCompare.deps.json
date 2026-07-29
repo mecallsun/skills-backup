@@ -1,0 +1,46 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "DiagDateCompare/1.0.0": {
+        "dependencies": {
+          "MSBuild.Obfuscar": "2.2.49"
+        },
+        "runtime": {
+          "DiagDateCompare.dll": {}
+        }
+      },
+      "MSBuild.Obfuscar/2.2.49": {
+        "dependencies": {
+          "Obfuscar": "2.2.49"
+        }
+      },
+      "Obfuscar/2.2.49": {}
+    }
+  },
+  "libraries": {
+    "DiagDateCompare/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "MSBuild.Obfuscar/2.2.49": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ACy9e+ezUSpVVsFc8bzWMk5j9BmCCyBGcxyogOH4hrr0Vmzc84P1kdK+bhmfdc01VphDcPL+Fls7BhAqs5tKCw==",
+      "path": "msbuild.obfuscar/2.2.49",
+      "hashPath": "msbuild.obfuscar.2.2.49.nupkg.sha512"
+    },
+    "Obfuscar/2.2.49": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-xmREfNTkv4WT0OI/UOWJLeNjaTj8UVLr18HWi9DIsIBSMdQ/S7pd2dS8fxnjKvDQSMUWN0yhtEJK+g0vNwAs7Q==",
+      "path": "obfuscar/2.2.49",
+      "hashPath": "obfuscar.2.2.49.nupkg.sha512"
+    }
+  }
+}

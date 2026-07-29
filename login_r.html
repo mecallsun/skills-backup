@@ -1,0 +1,1129 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>&#x9996;&#x9875; - 金戈宿舍管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* ===== 全局样式 ===== */
+        body {
+            font-family: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        /* v2.13.165：所有列表页按键区（page-header-actions）靠右 + 强制一行排列 + 按钮不换行 */
+        .page-header-actions { flex-wrap: nowrap; overflow-x: auto; }
+        .page-header-actions .btn { white-space: nowrap; flex-shrink: 0; }
+        .page-header h2 { flex-shrink: 1; min-width: 0; }
+
+        /* ===== Tier 1: 顶部品牌栏 (48px) ===== */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            height: 48px;
+            background: #ffffff;
+            border-bottom: 1px solid #e8eaed;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.25rem;
+        }
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            text-decoration: none;
+        }
+        .top-bar .brand-icon {
+            font-size: 1.5rem;
+            background: linear-gradient(135deg, #1976d2, #42a5f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .brand-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #1976d2;
+        }
+        .top-bar .brand-version {
+            font-size: 0.7rem;
+            color: #9e9e9e;
+            border-left: 1px solid #e0e0e0;
+            padding-left: 0.5rem;
+            margin-left: 0.5rem;
+        }
+        .top-bar .user-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .top-bar .user-pill {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 24px;
+            background: #f5f7fa;
+            color: #333;
+            font-size: 0.85rem;
+            text-decoration: none;
+        }
+        .top-bar .user-pill:hover { background: #e8eaed; }
+        .top-bar .user-pill i { color: #1976d2; }
+        .top-bar .logout-btn {
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            color: #666;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .top-bar .logout-btn:hover { border-color: #e53935; color: #e53935; }
+
+        /* ===== Tier 2: Tab 页签栏 (45px) ===== */
+        .tab-bar {
+            height: 45px;
+            background: #fafbfc;
+            border-bottom: 1px solid #e8eaed;
+            display: flex;
+            align-items: stretch;
+            overflow-x: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #c0c0c0 transparent;
+        }
+        .tab-bar::-webkit-scrollbar { height: 4px; }
+        .tab-bar::-webkit-scrollbar-thumb { background: #c0c0c0; height: 4px; border-radius: 2px; }
+        .tab-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.85rem 1.15rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #5f6368;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 3px solid transparent;
+            min-width: 100px;
+            max-width: 240px;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .tab-item:hover {
+            background: rgba(25,118,210,0.04);
+            color: #1976d2;
+        }
+        .tab-item .tab-icon { font-size: 1.15rem; flex-shrink: 0; }
+        .tab-item.active {
+            font-weight: 600;
+            background: #fff;
+            z-index: 1;
+        }
+        .tab-item[data-module="booking"].active,
+        .tab-item[data-module="dorms"].active { color: #1976d2; border-bottom-color: #1976d2; }
+        .tab-item[data-module="personnel"].active { color: #2e7d32; border-bottom-color: #2e7d32; }
+        .tab-item[data-module="billing"].active,
+        .tab-item[data-module="dorm-bills"].active,
+        .tab-item[data-module="employee-bills"].active { color: #e65100; border-bottom-color: #e65100; }
+        .tab-item[data-module="meter"].active { color: #00838f; border-bottom-color: #00838f; }
+        .tab-item[data-module="basics"].active,
+        .tab-item[data-module="settings"].active { color: #546e7a; border-bottom-color: #546e7a; }
+
+        /* ===== Tier 3: 页面内容区 ===== */
+        .page-content {
+            padding: 1rem 1.25rem;
+            min-height: calc(100vh - 48px - 45px);
+            background: #f5f7fa;
+        }
+
+        /* ===== 页面页头 ===== */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .page-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-header h2 .header-icon { font-size: 1.4rem; color: #1976d2; }
+        .page-header .header-count { font-size: 0.85rem; color: #6c757d; font-weight: 400; }
+
+        /* ===== 筛选区 ===== */
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+        .filter-item { flex-shrink: 0; }
+        .filter-item:first-child { min-width: 180px; }
+        .filter-item:not(:first-child) { min-width: 120px; }
+        .filter-item label.form-label { font-size: 0.78rem; color: #607d8b; margin-bottom: 0.15rem; }
+        .filter-item .form-control,
+        .filter-item .form-select {
+            height: 34px;
+            font-size: 0.85rem;
+            border-radius: 6px;
+        }
+        .filter-btn {
+            min-width: 90px !important;
+            max-width: 90px !important;
+            width: 90px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            line-height: 38px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            font-size: 14px !important;
+            font-weight: 400 !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            border: 1px solid transparent !important;
+            cursor: pointer !important;
+        }
+        .filter-btn i { font-size: 14px !important; line-height: 1 !important; margin: 0 !important; }
+        .btn-primary.filter-btn,
+        .btn-primary.filter-btn:hover,
+        .btn-primary.filter-btn:focus,
+        button.btn-primary.filter-btn {
+            background: #1976d2 !important;
+            border-color: #1976d2 !important;
+            color: #fff !important;
+        }
+        .btn-primary.filter-btn:hover,
+        button.btn-primary.filter-btn:hover { background: #1565c0 !important; border-color: #1565c0 !important; }
+        .btn-outline-secondary.filter-btn,
+        .btn-outline-secondary.filter-btn:hover,
+        .btn-outline-secondary.filter-btn:focus,
+        button.btn-outline-secondary.filter-btn,
+        a.btn-outline-secondary.filter-btn {
+            color: #6c757d !important;
+            border-color: #dee2e6 !important;
+            background: #fff !important;
+        }
+        .btn-outline-secondary.filter-btn:hover,
+        button.btn-outline-secondary.filter-btn:hover,
+        a.btn-outline-secondary.filter-btn:hover {
+            background: #f8f9fa !important;
+            color: #495057 !important;
+            border-color: #ced4da !important;
+        }
+
+        /* ===== 筛选区：统计/班组/按钮容器 ===== */
+        .filter-card .filter-item-stats {
+            flex: 0 1 auto !important;
+            min-width: 90px !important;
+            max-width: 140px !important;
+        }
+        .filter-card .filter-item-team {
+            min-width: 108px !important;
+            max-width: 120px !important;
+        }
+        .filter-card .filter-item-btn {
+            display: flex !important;
+            align-items: flex-end !important;
+            min-height: 60px !important;
+        }
+        .filter-card .filter-row {
+            overflow-x: auto;
+            scrollbar-width: thin;
+        }
+        .filter-card .filter-row::-webkit-scrollbar { height: 4px; }
+        .filter-card .filter-row::-webkit-scrollbar-thumb { background: #c0c0c0; border-radius: 2px; }
+
+        /* ===== 列表卡片 ===== */
+        .content-card {
+            background: #fff;
+            border: 1px solid #e8eaed;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .content-card .table {
+            margin-bottom: 0;
+        }
+        .content-card .table thead th {
+            background: #f8f9fa;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e8eaed;
+            padding: 0.65rem 0.75rem;
+        }
+        .content-card .table tbody td {
+            vertical-align: middle;
+            font-size: 0.85rem;
+            padding: 0.55rem 0.75rem;
+        }
+        .content-card .table-hover tbody tr:hover { background: #f8f9ff; }
+
+        /* ===== 分页页尾 ===== */
+        .pagination-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-top: 1px solid #e8eaed;
+            background: #fafbfc;
+            border-radius: 0 0 8px 8px;
+        }
+        .pagination-footer .page-info {
+            font-size: 0.82rem;
+            color: #6c757d;
+        }
+        .pagination-footer .page-info strong { color: #333; }
+
+        /* ===== Badge 样式 ===== */
+        .badge {
+            font-size: 0.75em;
+            padding: 0.35em 0.65em;
+            line-height: 1;
+            border-radius: 0.375rem;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 768px) {
+            .top-bar { padding: 0 0.75rem; }
+            .top-bar .brand-text { font-size: 1rem; }
+            .tab-item { min-width: 80px; padding: 0.65rem 0.85rem; font-size: 0.82rem; }
+            .filter-row { flex-wrap: wrap; }
+            .filter-item,
+            .filter-item-stats,
+            .filter-item-team { min-width: calc(50% - 8px) !important; max-width: none !important; }
+            .filter-item:first-child { min-width: 100% !important; }
+            .page-content { padding: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Tier 1: 顶部品牌栏 -->
+    <div b-7qkhyzkv64 class="top-bar">
+        <a b-7qkhyzkv64 href="/" class="brand">
+            <i b-7qkhyzkv64 class="bi bi-droplet-half brand-icon"></i>
+            <span b-7qkhyzkv64 class="brand-text">金戈宿舍管理系统</span>
+            <span b-7qkhyzkv64 class="brand-version">v2.13.71</span>
+        </a>
+        <div b-7qkhyzkv64 class="user-area">
+            <!-- v2.13.32：连接健康徽章（每 30s 轮询 runtime-info） -->
+            <span b-7qkhyzkv64 id="dbIndicator" class="badge bg-info" title="点击刷新数据库连接信息" style="cursor:pointer;font-size:0.75rem;font-weight:500;padding:0.35rem 0.65rem;">
+                <i b-7qkhyzkv64 class="bi bi-database"></i> <span b-7qkhyzkv64 id="dbIndicatorText">加载中...</span>
+            </span>
+            <a b-7qkhyzkv64 href="/Account/Profile" class="user-pill">
+                <i b-7qkhyzkv64 class="bi bi-person-circle"></i>
+                &#x7CFB;&#x7EDF;&#x7BA1;&#x7406;&#x5458;
+            </a>
+            <a b-7qkhyzkv64 href="/Account/Logout" class="logout-btn">
+                <i b-7qkhyzkv64 class="bi bi-box-arrow-right"></i> 退出
+            </a>
+        </div>
+    </div>
+
+    <!-- Tier 2: Tab 页签栏（v2.13.76 RBAC 三级权限控制：按当前用户权限过滤） -->
+    <div b-7qkhyzkv64 class="tab-bar" role="tablist">
+        
+        <a class="tab-item active"
+           data-tab-id="tab-home-view"
+           data-module="home:view"
+           data-url="/"
+           href="/"
+           data-permission="home:view"
+           title="&#x9996;&#x9875;&#x770B;&#x677F;">
+            <i class="bi bi-speedometer2 tab-icon"></i> &#x9996;&#x9875;&#x770B;&#x677F;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-booking-view"
+           data-module="booking:view"
+           data-url="/Booking"
+           href="/Booking"
+           data-permission="booking:view"
+           title="&#x529E;&#x7406;&#x767B;&#x8BB0;">
+            <i class="bi bi-clipboard-check tab-icon"></i> &#x529E;&#x7406;&#x767B;&#x8BB0;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dorm-view"
+           data-module="dorm:view"
+           data-url="/Dorms"
+           href="/Dorms"
+           data-permission="dorm:view"
+           title="&#x5BBF;&#x820D;&#x7BA1;&#x7406;">
+            <i class="bi bi-building tab-icon"></i> &#x5BBF;&#x820D;&#x7BA1;&#x7406;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-personnel-view"
+           data-module="personnel:view"
+           data-url="/Personnel"
+           href="/Personnel"
+           data-permission="personnel:view"
+           title="&#x4EBA;&#x5458;&#x6E05;&#x5355;">
+            <i class="bi bi-people tab-icon"></i> &#x4EBA;&#x5458;&#x6E05;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-billing-view"
+           data-module="billing:view"
+           data-url="/BillingStandard"
+           href="/BillingStandard"
+           data-permission="billing:view"
+           title="&#x8D39;&#x7528;&#x6807;&#x51C6;">
+            <i class="bi bi-currency-dollar tab-icon"></i> &#x8D39;&#x7528;&#x6807;&#x51C6;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-dormbilling-view"
+           data-module="dormbilling:view"
+           data-url="/DormBilling"
+           href="/DormBilling"
+           data-permission="dormbilling:view"
+           title="&#x5BBF;&#x820D;&#x8D26;&#x5355;">
+            <i class="bi bi-receipt tab-icon"></i> &#x5BBF;&#x820D;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-employeebilling-view"
+           data-module="employeebilling:view"
+           data-url="/EmployeeBilling"
+           href="/EmployeeBilling"
+           data-permission="employeebilling:view"
+           title="&#x5458;&#x5DE5;&#x8D26;&#x5355;">
+            <i class="bi bi-wallet2 tab-icon"></i> &#x5458;&#x5DE5;&#x8D26;&#x5355;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-meter-view"
+           data-module="meter:view"
+           data-url="/Meter"
+           href="/Meter"
+           data-permission="meter:view"
+           title="&#x667A;&#x80FD;&#x6284;&#x8868;">
+            <i class="bi bi-gauge tab-icon"></i> &#x667A;&#x80FD;&#x6284;&#x8868;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-basics-view"
+           data-module="basics:view"
+           data-url="/Basics"
+           href="/Basics"
+           data-permission="basics:view"
+           title="&#x57FA;&#x7840;&#x8D44;&#x6599;">
+            <i class="bi bi-database tab-icon"></i> &#x57FA;&#x7840;&#x8D44;&#x6599;
+        </a>
+        <a class="tab-item "
+           data-tab-id="tab-settings-view"
+           data-module="settings:view"
+           data-url="/Settings"
+           href="/Settings"
+           data-permission="settings:view"
+           title="&#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;">
+            <i class="bi bi-gear tab-icon"></i> &#x7CFB;&#x7EDF;&#x8BBE;&#x7F6E;
+        </a>
+
+    </div>
+
+    <!-- Tier 3: 页面内容区 -->
+    <div b-7qkhyzkv64 class="page-content">
+        
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+    /* === 首页看板样式（按 04-HTML原型/index.html 1:1 实施） === */
+    :root {
+        --primary: #1976d2;
+        --success: #2e7d32;
+        --warning: #e65100;
+        --danger: #c62828;
+        --info: #00838f;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --bg-page: #f5f7fa;
+        --bg-card: #ffffff;
+        --border-color: #e8eaed;
+    }
+    body { background: var(--bg-page); }
+
+    /* KPI 指标行 - 横向布局 */
+    .kpi-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: thin;
+    }
+    .kpi-row::-webkit-scrollbar { height: 6px; }
+    .kpi-row::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    .kpi-row::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* KPI 卡片 */
+    .kpi-card {
+        flex: 1 1 auto;
+        min-width: 140px;
+        max-width: 220px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #eee;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .kpi-value { font-size: 1.4rem; font-weight: bold; line-height: 1.1; }
+    .kpi-label { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
+    .kpi-sub { font-size: 0.7rem; color: #999; margin-top: 0.1rem; }
+
+    /* 图表卡片 */
+    .viz-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        border: 1px solid #eee;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .viz-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+    .viz-card .card-header i { color: var(--primary); font-size: 1.1rem; }
+    .viz-card .card-body {
+        padding: 1rem;
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .viz-card canvas { max-height: none; height: 100% !important; }
+
+    /* 页面标题 */
+    .page-header { padding: 1rem 0; margin-bottom: 1rem; }
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .page-title i { color: var(--primary); }
+
+    /* 响应式 */
+    @media (max-width: 768px) {
+        .kpi-card { min-width: 120px; max-width: 160px; }
+        .kpi-value { font-size: 1.2rem; }
+        .kpi-icon { width: 36px; height: 36px; font-size: 1rem; }
+    }
+    @media (min-width: 1400px) {
+        .kpi-card { min-width: 180px; max-width: 280px; }
+        .kpi-value { font-size: 1.6rem; }
+        .kpi-label { font-size: 0.9rem; }
+        .kpi-sub { font-size: 0.8rem; }
+    }
+    @media (min-width: 1600px) {
+        .kpi-row { gap: 16px; }
+        .kpi-card { min-width: 200px; max-width: none; flex: 1; }
+        .kpi-value { font-size: 1.8rem; }
+    }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+        <i class="bi bi-speedometer2"></i>经营概览
+    </h1>
+    <div class="d-flex align-items-center gap-2">
+        <label class="text-muted small">统计月份：</label>
+        <!-- v2.13.37 完全反向适配原型：硬编码 3 个固定月份选项（原型：2026-07/2026-06/2026-05） -->
+        <select id="monthSelect" class="form-select form-select-sm" style="width: 130px;" onchange="window.location.href='/?month=' + this.value">
+            <option value="2026-07" selected="selected">2026-07</option>
+            <option value="2026-06">2026-06</option>
+            <option value="2026-05">2026-05</option>
+        </select>
+        <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> 刷新
+        </button>
+    </div>
+</div>
+
+<!-- KPI 指标行 (7 张横向排列) -->
+<div class="kpi-row mb-3">
+    <!-- KPI 1: 入住人数（v2.11.18 修订：dormCode 非空计数） -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #2a78d6;" id="kpiEmployee">340</div>
+                <div class="kpi-label">入住人数</div>
+                <div class="kpi-sub">共登记 <span id="kpiEmployeeTotal">906</span> 人</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(42,120,214,0.1); color: #2a78d6;">
+                <i class="bi bi-people-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 2: 宿舍入住率 -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #1baf7a;" id="kpiOccupancy">93%</div>
+                <div class="kpi-label">宿舍入住率</div>
+                <div class="kpi-sub"><span id="kpiOccupied">340</span>/<span id="kpiTotalBeds">365</span> 床位</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(27,175,122,0.1); color: #1baf7a;">
+                <i class="bi bi-house-check-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 3: 预约人员 (v2.11.2新增) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 30，黄色 #eda100） -->
+                <div class="kpi-value" style="color: #eda100; font-size: 1.6rem; font-weight: bold;" id="kpiBooking">0</div>
+                <div class="kpi-label">预约人员</div>
+                <div class="kpi-sub" id="kpiBookingSub">人待入住</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(237,161,0,0.1); color: #eda100;">
+                <i class="bi bi-clipboard-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 4: 异常人员 (A+B+C，v2.11.18 修订：A 项 status=3 已离职) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 19，绿色 #008300） -->
+                <div class="kpi-value" style="color: #008300; font-size: 1.6rem; font-weight: bold;" id="kpiAbnormal">0</div>
+                <div class="kpi-label">异常人员</div>
+                <div class="kpi-sub" id="kpiAbnormalSub">需处理</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(0,131,0,0.1); color: #008300;">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 5: 本月抄表进度（v2.13.164：值驱动 3 段拆分明细 — 已抄表/抄表中/未抄表） -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #2a78d6;" id="kpiMeter">0/140<span class="fs-6 text-muted ms-1">(0%)</span></div>
+                <div class="kpi-label">本月抄表进度</div>
+                <div class="kpi-sub">
+                        <span class="text-danger">抄中<strong>1</strong>间</span>
+                        <span>·</span>
+                        <span class="text-warning">未抄<strong>139</strong>间</span>
+                </div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(42,120,214,0.1); color: #2a78d6;">
+                <i class="bi bi-clipboard-data-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 6: 人均费用 (v2.11.4新增) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #eda100;" id="kpiAvgFee">¥0.00</div>
+                <div class="kpi-label">人均费用</div>
+                <div class="kpi-sub">员工分摊均价</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(237,161,0,0.1); color: #eda100;">
+                <i class="bi bi-wallet2"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 7: 本月费用合计 -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #e34948;" id="kpiFee">¥0</div>
+                <div class="kpi-label">本月费用合计</div>
+                <div class="kpi-sub">约 <span id="kpiFeeRooms">0</span> 间</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(227,73,72,0.1); color: #e34948;">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域: 左右分栏布局 -->
+<div class="row g-2 mb-2">
+    <!-- 左半: 上下两个趋势图 -->
+    <div class="col-lg-6">
+        <!-- 上: 入住/退房人数对比 -->
+        <div class="viz-card mb-2" style="height: calc(225px - 4px);">
+            <div class="card-header">
+                <i class="bi bi-arrow-left-right"></i>
+                <span>入住 / 退房 人数对比（近12个月）</span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;background:#2a78d6;border-radius:2px;display:inline-block;"></span>入住</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;background:#eb6834;border-radius:2px;display:inline-block;"></span>退房</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="chartMove"></canvas>
+            </div>
+        </div>
+        <!-- 下: 每月总费用变化曲线 -->
+        <div class="viz-card" style="height: calc(225px - 4px);">
+            <div class="card-header">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>每月总费用变化曲线</span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <!-- v2.13.37 完全反向适配原型：图例写死 2026年/2025年（原型 L369-370） -->
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#4a3aa7;display:inline-block;"></span>2026年</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#c3c2b7;display:inline-block;border-style:dashed;"></span>2025年</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="chartCostTrend"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右半: 宿舍费用排名TOP10 + 入住率排名TOP15 -->
+    <div class="col-lg-6">
+        <div class="row g-2" style="height: 450px;">
+            <!-- 左: 宿舍费用排名 TOP 10 -->
+            <div class="col-6">
+                <div class="viz-card h-100">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart-steps"></i>
+                        <span>宿舍费用排名 TOP 10（费用由高到低）</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartDormCost"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- 右: 宿舍入住率排名 TOP 15 -->
+            <div class="col-6">
+                <div class="viz-card h-100">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart-fill"></i>
+                        <span>入住率排名 TOP 15（%）</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartOccupancyRank"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 行3: 4 个分布图 -->
+<div class="row g-2 mb-3" style="--chart-height: 225px;">
+    <!-- 部门分布 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-building"></i>
+                <span>部门分布</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartDept"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 费用类型占比 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i>
+                <span>费用类型占比</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartCostType"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工类型分布 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-people"></i>
+                <span>员工类型分布</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEmpType"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 抄表覆盖 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check"></i>
+                <span>本月抄表进度</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartMeterCov"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部信息 -->
+<div class="text-center text-muted small py-4 mt-4 border-top">
+    <!-- v2.13.37 完全反向适配原型：版本号硬编码为 v2.13.37（原型写死 v2.12.0） -->
+    <p class="mb-1">金戈宿舍管理系统 v2.13.37 · 2026&#x5E74;07&#x6708;</p>
+    <p class="mb-0">© 金戈新材料 · 技术支持</p>
+</div>
+
+<script>
+    // 配色方案（按原型 v2.11.4 + dataviz 规范）
+    const COLORS = {
+        blue: '#2a78d6',
+        red: '#e34948',
+        orange: '#eb6834',
+        yellow: '#eda100',
+        green: '#1baf7a',
+        purple: '#4a3aa7',
+        cyan: '#00838f',
+        gray: '#c3c2b7'
+    };
+
+    Chart.defaults.font.family = 'Microsoft YaHei UI, sans-serif';
+    Chart.defaults.color = '#666';
+
+    const D = {"referenceMonth":"2026-07-01T00:00:00","currentMonth":"2026-07","kpi":{"residentCount":340,"totalPersonnelCount":906,"occupancyRate":93,"occupiedBeds":340,"totalBeds":365,"bookingCount":0,"abnormalCount":0,"abnormalA":0,"abnormalB":0,"abnormalC":0,"meterReadCount":0,"meterTotalCount":140,"meterUnfinishedCount":1,"meterUncoveredCount":139,"meterCoveragePercent":0,"unreadDormCodes":["A102","A103","A104","A105","A106"],"avgFee":0,"totalFee":0,"feeRooms":0},"checkInOutMonthly":[{"month":"2025-08","checkIn":1,"checkOut":0},{"month":"2025-09","checkIn":8,"checkOut":0},{"month":"2025-10","checkIn":6,"checkOut":0},{"month":"2025-11","checkIn":1,"checkOut":0},{"month":"2025-12","checkIn":4,"checkOut":0},{"month":"2026-01","checkIn":3,"checkOut":0},{"month":"2026-02","checkIn":2,"checkOut":0},{"month":"2026-03","checkIn":20,"checkOut":0},{"month":"2026-04","checkIn":13,"checkOut":0},{"month":"2026-05","checkIn":15,"checkOut":0},{"month":"2026-06","checkIn":16,"checkOut":0},{"month":"2026-07","checkIn":10,"checkOut":6}],"costTrendMonthly":[{"month":"2025-08","currentYear":0,"lastYear":0},{"month":"2025-09","currentYear":0,"lastYear":0},{"month":"2025-10","currentYear":0,"lastYear":0},{"month":"2025-11","currentYear":0,"lastYear":0},{"month":"2025-12","currentYear":0,"lastYear":0},{"month":"2026-01","currentYear":0,"lastYear":0},{"month":"2026-02","currentYear":0,"lastYear":0},{"month":"2026-03","currentYear":0,"lastYear":0},{"month":"2026-04","currentYear":0,"lastYear":0},{"month":"2026-05","currentYear":0,"lastYear":0},{"month":"2026-06","currentYear":0,"lastYear":0},{"month":"2026-07","currentYear":0,"lastYear":0}],"dormCostTop10":[],"occupancyRankTop15":[{"dormCode":"A112","capacity":2,"currentResidents":0,"occupancyRate":0},{"dormCode":"A203","capacity":1,"currentResidents":0,"occupancyRate":0},{"dormCode":"A312","capacity":2,"currentResidents":0,"occupancyRate":0},{"dormCode":"B102","capacity":2,"currentResidents":0,"occupancyRate":0},{"dormCode":"A205","capacity":2,"currentResidents":1,"occupancyRate":50},{"dormCode":"A406","capacity":2,"currentResidents":1,"occupancyRate":50},{"dormCode":"A515","capacity":2,"currentResidents":1,"occupancyRate":50},{"dormCode":"A111","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"A306","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"A311","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"A315","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"B201","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"B202","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"B203","capacity":4,"currentResidents":3,"occupancyRate":75},{"dormCode":"B204","capacity":4,"currentResidents":3,"occupancyRate":75}],"departmentDistribution":[{"label":"\u751F\u4EA7\u90E8","value":644},{"label":"\u7814\u53D1\u90E8","value":108},{"label":"\u5176\u4ED6","value":83},{"label":"\u9500\u552E\u90E8","value":45},{"label":"\u4EBA\u8D44\u884C\u653F\u90E8","value":23},{"label":"\u5BA1\u8BA1\u90E8","value":1},{"label":"\u8463\u79D8\u529E","value":1},{"label":"\u91C7\u8D2D\u90E8","value":1}],"costTypeRatio":[{"label":"\u7535\u8D39","value":0},{"label":"\u70ED\u6C34\u8D39","value":0},{"label":"\u51B7\u6C34\u8D39","value":0}],"employeeTypeDistribution":[{"label":"\u5408\u540C\u5DE5","value":890},{"label":"\u4E34\u65F6\u5DE5","value":11},{"label":"\u5B9E\u4E60\u751F","value":5}],"meterCoverage":[{"label":"\u5DF2\u6284\u8868","value":0},{"label":"\u6284\u8868\u4E2D","value":1},{"label":"\u672A\u6284\u8868","value":139}]};
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // === 图表 1：入住/退房人数对比（分组柱状图） ===
+        const moveData = D.checkInOutMonthly || [];
+        new Chart(document.getElementById('chartMove'), {
+            type: 'bar',
+            data: {
+                labels: moveData.map(d => d.month.substring(5)),  // 仅显示 MM
+                datasets: [
+                    { label: '入住', data: moveData.map(d => d.checkIn), backgroundColor: COLORS.blue },
+                    { label: '退房', data: moveData.map(d => d.checkOut), backgroundColor: COLORS.orange }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 2：每月总费用变化曲线（折线图 + 上年对比） ===
+        const costData = D.costTrendMonthly || [];
+        new Chart(document.getElementById('chartCostTrend'), {
+            type: 'line',
+            data: {
+                labels: costData.map(d => d.month.substring(5)),
+                datasets: [
+                    {
+                        // v2.13.37 完全反向适配原型：图例写死 2025年（原型 L603）
+                        label: '2025年',
+                        data: costData.map(d => d.lastYear),
+                        borderColor: COLORS.gray,
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointBackgroundColor: COLORS.gray
+                    },
+                    {
+                        // v2.13.37 完全反向适配原型：图例写死 2026年（原型 L613）
+                        label: '2026年',
+                        data: costData.map(d => d.currentYear),
+                        borderColor: COLORS.purple,
+                        backgroundColor: 'rgba(74, 58, 167, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: COLORS.purple
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false, min: 0, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 3：宿舍费用排名 TOP 10（水平堆叠柱状图） ===
+        const dormCostData = D.dormCostTop10 || [];
+        new Chart(document.getElementById('chartDormCost'), {
+            type: 'bar',
+            data: {
+                labels: dormCostData.map(d => d.dormCode),
+                datasets: [
+                    { label: '冷水', data: dormCostData.map(d => d.coldAmount), backgroundColor: COLORS.blue },
+                    { label: '热水', data: dormCostData.map(d => d.hotAmount), backgroundColor: COLORS.red },
+                    { label: '电费', data: dormCostData.map(d => d.electricityAmount), backgroundColor: COLORS.yellow }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { stacked: true, grid: { color: '#f0f0f0' } },
+                    y: { stacked: true, grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 4：入住率排名 TOP 15（水平柱状图，按入住率升序） ===
+        // 数据结构：{ dormCode, capacity, currentResidents, occupancyRate }
+        const occData = D.occupancyRankTop15 || [];
+        const occDormCodes = occData.map(d => d.dormCode);
+        const occRates = occData.map(d => d.occupancyRate);
+        const occResidentsMap = {};
+        occData.forEach(d => { occResidentsMap[d.dormCode] = d.currentResidents; });
+
+        new Chart(document.getElementById('chartOccupancyRank'), {
+            type: 'bar',
+            data: {
+                labels: occDormCodes,
+                datasets: [{
+                    label: '入住率(%)',
+                    data: occRates,
+                    backgroundColor: occRates.map(r => r >= 100 ? COLORS.green : r >= 75 ? COLORS.yellow : r >= 50 ? COLORS.orange : COLORS.red)
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const v = ctx.parsed.x;
+                                const residents = occResidentsMap[ctx.label] || 0;
+                                return `使用率 ${v}%，入住 ${residents} 人`;
+                            }
+                        }
+                    }
+                },
+                layout: { padding: { right: 60 } },
+                scales: {
+                    x: { beginAtZero: true, max: 100, grid: { color: '#f0f0f0' }, title: { display: false } },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            callback: function (value, index) {
+                                const code = this.getLabelForValue(value);
+                                const residents = occResidentsMap[code] || 0;
+                                return code + '  (' + residents + '人)';
+                            }
+                        }
+                    }
+                },
+                afterDraw: (chart) => {
+                    const dataset = chart.data.datasets[0];
+                    const meta = chart.getDatasetMeta(0);
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    ctx.font = '12px Microsoft YaHei UI';
+                    ctx.fillStyle = '#5f6368';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    meta.data.forEach((bar, i) => {
+                        const rate = dataset.data[i];
+                        const code = chart.data.labels[i];
+                        const residents = occResidentsMap[code] || 0;
+                        const x = bar.x + 5;
+                        const y = bar.y;
+                        ctx.fillText(rate + '% (' + residents + '人)', x, y);
+                    });
+                    ctx.restore();
+                }
+            }
+        });
+
+        // === 图表 5：部门分布（柱状图） ===
+        const deptData = D.departmentDistribution || [];
+        new Chart(document.getElementById('chartDept'), {
+            type: 'bar',
+            data: {
+                labels: deptData.map(d => d.label),
+                datasets: [{
+                    label: '人数',
+                    data: deptData.map(d => d.value),
+                    backgroundColor: COLORS.blue
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 6：费用类型占比（环形图） ===
+        const costTypeData = D.costTypeRatio || [];
+        new Chart(document.getElementById('chartCostType'), {
+            type: 'doughnut',
+            data: {
+                labels: costTypeData.map(d => d.label),
+                datasets: [{
+                    data: costTypeData.map(d => d.value),
+                    backgroundColor: [COLORS.yellow, COLORS.red, COLORS.blue]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // === 图表 7：员工类型分布（环形图） ===
+        const empTypeData = D.employeeTypeDistribution || [];
+        new Chart(document.getElementById('chartEmpType'), {
+            type: 'doughnut',
+            data: {
+                labels: empTypeData.map(d => d.label),
+                datasets: [{
+                    data: empTypeData.map(d => d.value),
+                    backgroundColor: [COLORS.blue, COLORS.cyan, COLORS.yellow, COLORS.green, COLORS.purple, COLORS.orange, COLORS.red]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // === 图表 8：抄表覆盖（环形图）v2.13.133 已抄 / 未完成 / 未覆盖 3 段拆分 ===
+        const meterCovData = D.meterCoverage || [];
+        new Chart(document.getElementById('chartMeterCov'), {
+            type: 'doughnut',
+            data: {
+                labels: meterCovData.map(d => d.label),
+                datasets: [{
+                    data: meterCovData.map(d => d.value),
+                    // v2.13.133：3 段配色（已抄=蓝 / 未完成=黄 / 未覆盖=红）
+                    backgroundColor: [COLORS.blue, COLORS.orange, COLORS.red]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    });
+</script>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- v2.13.11 全局筛选条件持久化（localStorage） -->
+    <script src="/js/filter-persistence.js"></script>
+    <!-- v2.13.88 列表 → 详情/编辑 返回路径记忆（全局） -->
+    <script src="/js/return-url.js"></script>
+    
+    <script>
+        // Tab 激活态键盘快捷键（Ctrl+1~9 切换 Tab 1~9, Ctrl+0 切换 Tab 10）
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.altKey) {
+                var num = parseInt(e.key);
+                if (num >= 0 && num <= 9) {
+                    var idx = num === 0 ? 9 : num - 1;
+                    var tabs = document.querySelectorAll('.tab-item');
+                    if (tabs[idx]) tabs[idx].click();
+                }
+            }
+        });
+
+        // v2.13.32：连接健康徽章轮询 + 点击刷新
+        (function() {
+            var elText = document.getElementById('dbIndicatorText');
+            var elBadge = document.getElementById('dbIndicator');
+            if (!elText || !elBadge) return;
+            function loadRuntimeInfo() {
+                fetch('/api/v1/system/dbconfig/runtime-info')
+                    .then(function(r) { return r.ok ? r.json() : null; })
+                    .then(function(j) {
+                        if (j && j.success && j.data) {
+                            elText.textContent = (j.data.server || '?') + '/' + (j.data.database || '?');
+                            elBadge.title = 'Provider: ' + j.data.provider + '\n最后重载: ' + new Date(j.data.lastReloadedAt).toLocaleString();
+                        } else {
+                            elText.textContent = '离线';
+                        }
+                    })
+                    .catch(function() { elText.textContent = '离线'; });
+            }
+            loadRuntimeInfo();
+            setInterval(loadRuntimeInfo, 30000);
+            elBadge.addEventListener('click', loadRuntimeInfo);
+            window.refreshDbIndicator = loadRuntimeInfo;
+        })();
+    </script>
+</body>
+</html>

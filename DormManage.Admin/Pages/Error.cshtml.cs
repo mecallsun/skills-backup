@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net;
 
 namespace DormManage.Admin.Pages;
 
@@ -8,6 +9,8 @@ namespace DormManage.Admin.Pages;
 [IgnoreAntiforgeryToken]
 public class ErrorModel : PageModel
 {
+    public string? Code { get; set; }
+    public string? Message { get; set; }
     public string? RequestId { get; set; }
 
     public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
@@ -22,6 +25,17 @@ public class ErrorModel : PageModel
     public void OnGet()
     {
         RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        // 提取查询参数 code 和 msg
+        var query = Request.Query;
+        if (query.TryGetValue("code", out var codeValue))
+        {
+            Code = codeValue.ToString();
+        }
+        if (query.TryGetValue("msg", out var msgValue))
+        {
+            // 安全处理 null 值
+            Message = !string.IsNullOrEmpty(msgValue) ? Uri.UnescapeDataString(msgValue.ToString()) : null;
+        }
     }
 }
 

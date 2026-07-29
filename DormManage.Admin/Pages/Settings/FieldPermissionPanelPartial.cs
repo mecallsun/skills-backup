@@ -15,7 +15,7 @@ public partial class IndexModel
     /// <summary>所有字段权限记录（按 SortOrder 排序）— 渲染 /Settings?tab=fields 表格</summary>
     public List<SysFieldPermission> FieldPermissions { get; set; } = new();
 
-    /// <summary>当前编辑角色是否启用了隐私字段保护（渲染「启用隐私字段保护」checkbox 时用）</summary>
+    /// <summary>当前编辑角色是否允许显示隐私字段（渲染「允许显示隐私字段」checkbox 时用）</summary>
     public bool RolePrivacyFieldEnabled { get; set; }
 
     /// <summary>权限扁平列表（含 Id/Code/Type）— 用于 JS 渲染 perm_privacy_field checkbox 时按 Code 查 Id</summary>
@@ -37,7 +37,9 @@ public partial class IndexModel
                   as ISysFieldPermissionService;
         if (svc != null)
         {
-            FieldPermissions = await svc.GetAllAsync();
+            // v2.13.195：按模块名称排序显示（使用 GetModuleDisplayName 转换中文后按字母顺序）
+            var permissions = await svc.GetAllAsync();
+            FieldPermissions = permissions.OrderBy(p => GetModuleDisplayName(p.Module)).ToList();
         }
 
         // 同步加载权限列表（前端 JS 需要 privacy:field:enable 的 Id 来判断角色是否已启用）

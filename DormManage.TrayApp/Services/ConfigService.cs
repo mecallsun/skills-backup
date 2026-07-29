@@ -139,22 +139,22 @@ public class ConfigService
         if (changed) SaveUnlocked(_current);
     }
 
-    /// <summary>与 ProcessManager.TryResolveExePath 候选路径一致；返回首个存在的绝对路径</summary>
+    /// <summary>与 ProcessManager.TryResolveExePath 候选路径一致；返回首个存在的绝对路径
+/// v2.13.197：移除 v2.13.193 之前的"兄弟目录"陷阱（baseDir/Api/, baseDir/Admin/），统一使用主目录路径
+/// </summary>
     public static string? TryFindExeUnderBase(string exeName)
     {
         var baseDir = AppContext.BaseDirectory.TrimEnd('\\', '/');
         var baseParent = Path.GetDirectoryName(baseDir) ?? baseDir;
         var candidates = new[]
         {
-            Path.Combine(baseDir, exeName),                              // 自身目录
-            Path.Combine(baseDir, "Api", exeName),                       // 新默认
-            Path.Combine(baseDir, "Admin", exeName),
-            Path.Combine(baseDir, "..", "Api", exeName),                 // 兼容旧默认
-            Path.Combine(baseDir, "..", "Admin", exeName),
+            Path.Combine(baseDir, "..", "Api", exeName),                 // v2.13.197 默认: 主目录 Api/
+            Path.Combine(baseDir, "..", "Admin", exeName),               // v2.13.197 默认: 主目录 Admin/
+            Path.Combine(baseDir, exeName),                              // 兜底: 自身目录
             Path.Combine(baseParent, "Api", exeName),                    // 父目录 dev 模式
             Path.Combine(baseParent, "Admin", exeName),
-            Path.Combine(Directory.GetCurrentDirectory(), "Api", exeName), // 工作目录兜底
-            Path.Combine(Directory.GetCurrentDirectory(), "Admin", exeName)
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "Api", exeName),  // 工作目录父目录
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "Admin", exeName)
         };
         foreach (var c in candidates)
         {

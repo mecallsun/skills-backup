@@ -281,6 +281,52 @@ public partial class IndexModel : PageModel
 
         return RedirectToPage(new { tab = "integration" });
     }
+
+    /// <summary>获取模块显示名称（中文）
+    /// v2.13.206 扩展：覆盖所有可能的英文模块名变体（含复数 + 后缀 + 缩写），
+    /// 任何 SysFieldPermission.Module 值都能精准映射到中文 UI 标签。
+    /// 单一规范入口：所有模块名 UI 显示必须通过本方法，禁止硬编码中文字符串。
+    /// </summary>
+    public string GetModuleDisplayName(string moduleCode)
+    {
+        if (string.IsNullOrWhiteSpace(moduleCode))
+            return "-";
+
+        // v2.13.206 完整映射表：覆盖单数/复数/简写/驼峰多种命名风格
+        var moduleNames = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // 核心业务模块（基础映射）
+            ["Personnel"] = "人员清单",
+            ["Booking"] = "办理登记",
+            ["Dorm"] = "宿舍档案",
+            ["Meter"] = "智能抄表",
+            ["BillingStandard"] = "费用标准",
+            ["DormBilling"] = "宿舍账单",
+            ["EmployeeBilling"] = "员工账单",
+            ["Basics"] = "基础资料",
+            ["Settings"] = "系统设置",
+            ["Dashboard"] = "数据看板",
+            ["Bookings"] = "办理登记",
+            ["Meters"] = "智能抄表",
+            ["Dorms"] = "宿舍档案",
+            // 兼容字段：复数 / 带 s 后缀 / 多种命名风格
+            ["Personnels"] = "人员清单",
+            ["BookingStandard"] = "费用标准",
+            ["DormBillingList"] = "宿舍账单",
+            ["EmployeeBillingList"] = "员工账单",
+            ["Basic"] = "基础资料",
+            ["BasicData"] = "基础资料",
+            ["Setting"] = "系统设置",
+            ["ReadMeter"] = "智能抄表",
+            ["Bill"] = "费用账单",
+            ["Bills"] = "费用账单",
+            ["CheckIn"] = "办理登记",
+            ["CheckOut"] = "办理登记",
+            // 默认值：未知模块
+            ["Unknown"] = "未知模块"
+        };
+        return moduleNames.TryGetValue(moduleCode, out var name) ? name : moduleCode;
+    }
 }
 
 /// <summary>

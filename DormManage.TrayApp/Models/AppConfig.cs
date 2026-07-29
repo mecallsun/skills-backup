@@ -23,16 +23,17 @@ public class TraySection
 
     /// <summary>
     /// Api 可执行文件路径（相对/绝对均可，ConfigService.Load() 会做多候选 fallback）
-    /// v2.13.156：默认改为「相对自身目录的 Api 子目录」，与 publish-final/TrayApp 平级并列；
-    /// ConfigService 若该路径解析失败，会自动尝试 ../Api/、..\\..\\Api\\DormManage.Api.exe 等多个候选。
-    /// 详见 `00-方案文档/199-启动路径解析修复-v2.13.156.md`。
+    /// v2.13.197：默认改为相对路径 `..\Api\` —— TrayApp 从 release/latest/TrayApp/ 运行时，
+    /// `..\Api\` 直接指向 release/latest/Api/（主目录），消除 v2.13.193 之前的"兄弟目录"陷阱。
+    /// 详见 `00-方案文档/199-启动路径解析修复-v2.13.156.md` + `scripts/sync_publish_to_trayapp.sh` 废弃说明。
     /// </summary>
-    public string ApiExecutable { get; set; } = "Api\\DormManage.Api.exe";
+    public string ApiExecutable { get; set; } = "..\\Api\\DormManage.Api.exe";
 
     /// <summary>
     /// Admin 可执行文件路径（同 ApiExecutable 解析逻辑）
+    /// v2.13.197：默认 ..\Admin\ 同样指回主目录
     /// </summary>
-    public string AdminExecutable { get; set; } = "Admin\\DormManage.Admin.exe";
+    public string AdminExecutable { get; set; } = "..\\Admin\\DormManage.Admin.exe";
 
     /// <summary>托盘启动后自动拉起 Api + Admin</summary>
     public bool AutoStartServices { get; set; } = true;

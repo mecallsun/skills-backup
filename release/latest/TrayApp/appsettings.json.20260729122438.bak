@@ -1,0 +1,26 @@
+{
+  "Tray": {
+    "ApiPort": 5100,
+    "AdminPort": 5001,
+    "ApiExecutable": "Api\DormManage.Api.exe",
+    "AdminExecutable": "Admin\DormManage.Admin.exe",
+    "AutoStartServices": true,
+    "AutoRestartOnCrash": true,
+    "HealthCheckIntervalSeconds": 10
+  },
+  "Database": {
+    "Provider": "SqlServer",
+    "ConnectionString": "Server=172.16.0.100;Database=WaterMeterDB;UID=user;PWD=1234;TrustServerCertificate=True;",
+    "SqlitePath": ""
+  },
+  "Storage": {
+    "ImageRoot": "..\Storage\images",
+    "LogRoot": "logs"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.Extensions.Configuration": "Warning"
+    }
+  }
+}

@@ -51,8 +51,18 @@ public static class ServiceIpc
     /// </summary>
     public class RegStateDto
     {
-        /// <summary>注册结果：0=已过期 1=已注册 -1=未注册</summary>
+        /// <summary>
+        /// 注册结果：0=已过期 1=已注册 -1=未注册
+        /// 保留 v2.13.137 兼容（LicenseGuard.IsReadOnly 内部使用）
+        /// </summary>
         public int RegInt { get; set; } = -1;
+
+        /// <summary>
+        /// v2.13.169 拆分：注册状态枚举 -1=Unregistered / 1=Valid / 2=Expired / 3=Invalid
+        /// 与 RegInt 区别：RegInt 是 RegisterSdk 内嵌的字符串表示（0=-1/1=2），RegStatus 是清晰枚举
+        /// 用于前端 status 字段，LicenseStatusController 返回 -1/-2/1/2/3 四态 + 不可用态
+        /// </summary>
+        public int RegStatus { get; set; } = -1;
 
         /// <summary>机器码 SN（24 位 hex，由托盘端生成）</summary>
         public string SN { get; set; } = "";

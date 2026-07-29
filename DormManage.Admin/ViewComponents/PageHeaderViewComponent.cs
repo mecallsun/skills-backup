@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Html;
 
 namespace DormManage.Admin.ViewComponents;
 
@@ -23,7 +24,7 @@ public class PageHeaderViewComponent : ViewComponent
         string title,
         int? count = null,
         string? countLabel = null,
-        string? subtitle = null,
+        IHtmlContent? subtitleHtml = null,
         PageAction? primaryAction = null,
         List<PageAction>? actions = null,
         List<TabItem>? tabs = null,
@@ -35,7 +36,7 @@ public class PageHeaderViewComponent : ViewComponent
             Title = title,
             Count = count,
             CountLabel = countLabel,
-            Subtitle = subtitle,
+            SubtitleHtml = subtitleHtml,
             PrimaryAction = primaryAction,
             Actions = actions ?? new List<PageAction>(),
             Tabs = tabs ?? new List<TabItem>(),
@@ -51,7 +52,8 @@ public class PageHeaderModel
     public string Title { get; set; } = "";
     public int? Count { get; set; }
     public string? CountLabel { get; set; }
-    public string? Subtitle { get; set; }
+    /// <summary>v2.13.209 新增：支持 Raw HTML 的副标题（如抄表进度 3 段统计）</summary>
+    public IHtmlContent? SubtitleHtml { get; set; }
     public PageAction? PrimaryAction { get; set; }
     public List<PageAction> Actions { get; set; } = new();
     public List<TabItem> Tabs { get; set; } = new();

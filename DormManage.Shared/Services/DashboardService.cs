@@ -45,22 +45,39 @@ public class DashboardService : IDashboardService
         var monthEnd = monthStart.AddMonths(1);
         var today = DateOnly.FromDateTime(DateTime.Now);
 
+        // v2.13.203: 每个子查询都 try-catch 兜底，任一失败不影响其他数据加载
         var dto = new DashboardDto
         {
             ReferenceMonth = refMonth,
             CurrentMonth = monthStr,
-            Kpi = await BuildKpiAsync(monthStart, monthEnd, today, monthStr),
-            CheckInOutMonthly = await BuildCheckInOutMonthlyAsync(monthStart),
-            CostTrendMonthly = await BuildCostTrendMonthlyAsync(monthStart),
-            DormCostTop10 = await BuildDormCostTop10Async(monthStr),
-            OccupancyRankTop15 = await BuildOccupancyRankTop15Async(),
-            DepartmentDistribution = await BuildDepartmentDistributionAsync(),
-            CostTypeRatio = await BuildCostTypeRatioAsync(monthStr),
-            EmployeeTypeDistribution = await BuildEmployeeTypeDistributionAsync(),
-            MeterCoverage = await BuildMeterCoverageAsync(monthStr)
+            Kpi = await SafeCallAsync(() => BuildKpiAsync(monthStart, monthEnd, today, monthStr), new DashboardKpi()),
+            CheckInOutMonthly = await SafeCallAsync(() => BuildCheckInOutMonthlyAsync(monthStart), new List<MonthlyCheckInOutDto>()),
+            CostTrendMonthly = await SafeCallAsync(() => BuildCostTrendMonthlyAsync(monthStart), new List<MonthlyCostTrendDto>()),
+            DormCostTop10 = await SafeCallAsync(() => BuildDormCostTop10Async(monthStr), new List<DormCostRankDto>()),
+            OccupancyRankTop15 = await SafeCallAsync(() => BuildOccupancyRankTop15Async(), new List<DormOccupancyRankDto>()),
+            DepartmentDistribution = await SafeCallAsync(() => BuildDepartmentDistributionAsync(), new List<DistributionItem>()),
+            CostTypeRatio = await SafeCallAsync(() => BuildCostTypeRatioAsync(monthStr), new List<DistributionItem>()),
+            EmployeeTypeDistribution = await SafeCallAsync(() => BuildEmployeeTypeDistributionAsync(), new List<DistributionItem>()),
+            MeterCoverage = await SafeCallAsync(() => BuildMeterCoverageAsync(monthStr), new List<DistributionItem>())
         };
 
         return dto;
+    }
+
+    /// <summary>
+    /// v2.13.203: 安全调用包装器，捕获所有异常并返回默认值
+    /// </summary>
+    private async Task<T> SafeCallAsync<T>(Func<Task<T>> func, T defaultValue)
+    {
+        try
+        {
+            return await func();
+        }
+        catch (Exception ex)
+        {
+            // 不抛异常，返回默认值，确保 Dashboard 整体加载
+            return defaultValue;
+        }
     }
 
     #region KPI 7 项（v2.13.30 全部使用真实数据源）

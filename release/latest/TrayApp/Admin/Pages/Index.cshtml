@@ -1,0 +1,651 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "首页";
+    Layout = "_Layout";
+}
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<style>
+    /* === 首页看板样式（按 04-HTML原型/index.html 1:1 实施） === */
+    :root {
+        --primary: #1976d2;
+        --success: #2e7d32;
+        --warning: #e65100;
+        --danger: #c62828;
+        --info: #00838f;
+        --text-primary: #212529;
+        --text-secondary: #6c757d;
+        --bg-page: #f5f7fa;
+        --bg-card: #ffffff;
+        --border-color: #e8eaed;
+    }
+    body { background: var(--bg-page); }
+
+    /* KPI 指标行 - 横向布局 */
+    .kpi-row {
+        display: flex;
+        flex-wrap: nowrap;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 8px;
+        scrollbar-width: thin;
+    }
+    .kpi-row::-webkit-scrollbar { height: 6px; }
+    .kpi-row::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+    .kpi-row::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+
+    /* KPI 卡片 */
+    .kpi-card {
+        flex: 1 1 auto;
+        min-width: 140px;
+        max-width: 220px;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #eee;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .kpi-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+    }
+    .kpi-value { font-size: 1.4rem; font-weight: bold; line-height: 1.1; }
+    .kpi-label { font-size: 0.8rem; color: #666; margin-top: 0.25rem; }
+    .kpi-sub { font-size: 0.7rem; color: #999; margin-top: 0.1rem; }
+
+    /* 图表卡片 */
+    .viz-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        border: 1px solid #eee;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .viz-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.85rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+    .viz-card .card-header i { color: var(--primary); font-size: 1.1rem; }
+    .viz-card .card-body {
+        padding: 1rem;
+        flex: 1;
+        min-height: 0;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    .viz-card canvas { max-height: none; height: 100% !important; }
+
+    /* 页面标题 */
+    .page-header { padding: 1rem 0; margin-bottom: 1rem; }
+    .page-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .page-title i { color: var(--primary); }
+
+    /* 响应式 */
+    @@media (max-width: 768px) {
+        .kpi-card { min-width: 120px; max-width: 160px; }
+        .kpi-value { font-size: 1.2rem; }
+        .kpi-icon { width: 36px; height: 36px; font-size: 1rem; }
+    }
+    @@media (min-width: 1400px) {
+        .kpi-card { min-width: 180px; max-width: 280px; }
+        .kpi-value { font-size: 1.6rem; }
+        .kpi-label { font-size: 0.9rem; }
+        .kpi-sub { font-size: 0.8rem; }
+    }
+    @@media (min-width: 1600px) {
+        .kpi-row { gap: 16px; }
+        .kpi-card { min-width: 200px; max-width: none; flex: 1; }
+        .kpi-value { font-size: 1.8rem; }
+    }
+</style>
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+        <i class="bi bi-speedometer2"></i>经营概览
+    </h1>
+    <div class="d-flex align-items-center gap-2">
+        <label class="text-muted small">统计月份：</label>
+        <!-- v2.13.37 完全反向适配原型：硬编码 3 个固定月份选项（原型：2026-07/2026-06/2026-05） -->
+        <select id="monthSelect" class="form-select form-select-sm" style="width: 130px;" onchange="window.location.href='/?month=' + this.value">
+            <option value="2026-07" selected="@(Model.CurrentMonth == "2026-07")">2026-07</option>
+            <option value="2026-06" selected="@(Model.CurrentMonth == "2026-06")">2026-06</option>
+            <option value="2026-05" selected="@(Model.CurrentMonth == "2026-05")">2026-05</option>
+        </select>
+        <button class="btn btn-sm btn-outline-primary" onclick="window.location.reload()">
+            <i class="bi bi-arrow-clockwise"></i> 刷新
+        </button>
+    </div>
+</div>
+
+<!-- KPI 指标行 (7 张横向排列) -->
+<div class="kpi-row mb-3">
+    <!-- KPI 1: 入住人数（v2.11.18 修订：dormCode 非空计数） -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #2a78d6;" id="kpiEmployee">@Model.Dashboard.Kpi.ResidentCount</div>
+                <div class="kpi-label">入住人数</div>
+                <div class="kpi-sub">共登记 <span id="kpiEmployeeTotal">@Model.Dashboard.Kpi.TotalPersonnelCount</span> 人</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(42,120,214,0.1); color: #2a78d6;">
+                <i class="bi bi-people-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 2: 宿舍入住率 -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #1baf7a;" id="kpiOccupancy">@Model.Dashboard.Kpi.OccupancyRate%</div>
+                <div class="kpi-label">宿舍入住率</div>
+                <div class="kpi-sub"><span id="kpiOccupied">@Model.Dashboard.Kpi.OccupiedBeds</span>/<span id="kpiTotalBeds">@Model.Dashboard.Kpi.TotalBeds</span> 床位</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(27,175,122,0.1); color: #1baf7a;">
+                <i class="bi bi-house-check-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 3: 预约人员 (v2.11.2新增) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 30，黄色 #eda100） -->
+                <div class="kpi-value" style="color: #eda100; font-size: 1.6rem; font-weight: bold;" id="kpiBooking">@Model.Dashboard.Kpi.BookingCount</div>
+                <div class="kpi-label">预约人员</div>
+                <div class="kpi-sub" id="kpiBookingSub">人待入住</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(237,161,0,0.1); color: #eda100;">
+                <i class="bi bi-clipboard-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 4: 异常人员 (A+B+C，v2.11.18 修订：A 项 status=3 已离职) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <!-- v2.13.37 完全反向适配原型：始终显示数字（原型静态展示 19，绿色 #008300） -->
+                <div class="kpi-value" style="color: #008300; font-size: 1.6rem; font-weight: bold;" id="kpiAbnormal">@Model.Dashboard.Kpi.AbnormalCount</div>
+                <div class="kpi-label">异常人员</div>
+                <div class="kpi-sub" id="kpiAbnormalSub">需处理</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(0,131,0,0.1); color: #008300;">
+                <i class="bi bi-exclamation-triangle"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 5: 本月抄表进度（v2.13.164：值驱动 3 段拆分明细 — 已抄表/抄表中/未抄表） -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #2a78d6;" id="kpiMeter">@Model.Dashboard.Kpi.MeterReadCount/@Model.Dashboard.Kpi.MeterTotalCount<span class="fs-6 text-muted ms-1">(@Model.Dashboard.Kpi.MeterCoveragePercent%)</span></div>
+                <div class="kpi-label">本月抄表进度</div>
+                <div class="kpi-sub">
+                    @* v2.13.166：副标签简称 + 去空格 + 紧凑排列（抄中1间·未抄139间）*@
+                    @if (Model.Dashboard.Kpi.MeterUnfinishedCount > 0)
+                    {
+                        <span class="text-danger">抄中<strong>@Model.Dashboard.Kpi.MeterUnfinishedCount</strong>间</span>
+                        <span>·</span>
+                    }
+                    @if (Model.Dashboard.Kpi.MeterUncoveredCount > 0)
+                    {
+                        <span class="text-warning">未抄<strong>@Model.Dashboard.Kpi.MeterUncoveredCount</strong>间</span>
+                    }
+                    @if (Model.Dashboard.Kpi.UnreadDormCodes.Any() && Model.Dashboard.Kpi.MeterUncoveredCount > 0 && Model.Dashboard.Kpi.MeterUncoveredCount <= 5)
+                    {
+                        <span class="text-muted">@string.Join(",", Model.Dashboard.Kpi.UnreadDormCodes.Take(5))</span>
+                    }
+                </div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(42,120,214,0.1); color: #2a78d6;">
+                <i class="bi bi-clipboard-data-fill"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 6: 人均费用 (v2.11.4新增) -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #eda100;" id="kpiAvgFee">¥@Model.Dashboard.Kpi.AvgFee.ToString("F2")</div>
+                <div class="kpi-label">人均费用</div>
+                <div class="kpi-sub">员工分摊均价</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(237,161,0,0.1); color: #eda100;">
+                <i class="bi bi-wallet2"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPI 7: 本月费用合计 -->
+    <div class="kpi-card">
+        <div class="d-flex align-items-start justify-content-between">
+            <div>
+                <div class="kpi-value" style="color: #e34948;" id="kpiFee">¥@string.Format("{0:N0}", Model.Dashboard.Kpi.TotalFee)</div>
+                <div class="kpi-label">本月费用合计</div>
+                <div class="kpi-sub">约 <span id="kpiFeeRooms">@Model.Dashboard.Kpi.FeeRooms</span> 间</div>
+            </div>
+            <div class="kpi-icon" style="background: rgba(227,73,72,0.1); color: #e34948;">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 图表区域: 左右分栏布局 -->
+<div class="row g-2 mb-2">
+    <!-- 左半: 上下两个趋势图 -->
+    <div class="col-lg-6">
+        <!-- 上: 入住/退房人数对比 -->
+        <div class="viz-card mb-2" style="height: calc(225px - 4px);">
+            <div class="card-header">
+                <i class="bi bi-arrow-left-right"></i>
+                <span>入住 / 退房 人数对比（近12个月）</span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;background:#2a78d6;border-radius:2px;display:inline-block;"></span>入住</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:12px;height:12px;background:#eb6834;border-radius:2px;display:inline-block;"></span>退房</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="chartMove"></canvas>
+            </div>
+        </div>
+        <!-- 下: 每月总费用变化曲线 -->
+        <div class="viz-card" style="height: calc(225px - 4px);">
+            <div class="card-header">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>每月总费用变化曲线</span>
+                <div class="ms-auto d-flex align-items-center gap-3">
+                    <!-- v2.13.37 完全反向适配原型：图例写死 2026年/2025年（原型 L369-370） -->
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#4a3aa7;display:inline-block;"></span>2026年</span>
+                    <span class="d-flex align-items-center gap-1"><span style="width:20px;height:2px;background:#c3c2b7;display:inline-block;border-style:dashed;"></span>2025年</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <canvas id="chartCostTrend"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 右半: 宿舍费用排名TOP10 + 入住率排名TOP15 -->
+    <div class="col-lg-6">
+        <div class="row g-2" style="height: 450px;">
+            <!-- 左: 宿舍费用排名 TOP 10 -->
+            <div class="col-6">
+                <div class="viz-card h-100">
+                    <div class="card-header">
+                        <i class="bi bi-bar-chart-steps"></i>
+                        <span>宿舍费用排名 TOP 10（费用由高到低）</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartDormCost"></canvas>
+                    </div>
+                </div>
+            </div>
+            <!-- 右: 宿舍入住率排名 TOP 15 -->
+            <div class="col-6">
+                <div class="viz-card h-100">
+                    <div class="card-header">
+                        <i class="bi bi-pie-chart-fill"></i>
+                        <span>入住率排名 TOP 15（%）</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartOccupancyRank"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 行3: 4 个分布图 -->
+<div class="row g-2 mb-3" style="--chart-height: 225px;">
+    <!-- 部门分布 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-building"></i>
+                <span>部门分布</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartDept"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 费用类型占比 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i>
+                <span>费用类型占比</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartCostType"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 员工类型分布 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-people"></i>
+                <span>员工类型分布</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartEmpType"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- 抄表覆盖 -->
+    <div class="col-lg-3 col-md-6">
+        <div class="viz-card" style="height: var(--chart-height);">
+            <div class="card-header">
+                <i class="bi bi-clipboard-check"></i>
+                <span>本月抄表进度</span>
+            </div>
+            <div class="card-body">
+                <canvas id="chartMeterCov"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 底部信息 -->
+<div class="text-center text-muted small py-4 mt-4 border-top">
+    <!-- v2.13.37 完全反向适配原型：版本号硬编码为 v2.13.37（原型写死 v2.12.0） -->
+    <p class="mb-1">金戈宿舍管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
+    <p class="mb-0">© 金戈新材料 · 技术支持</p>
+</div>
+
+<script>
+    // 配色方案（按原型 v2.11.4 + dataviz 规范）
+    const COLORS = {
+        blue: '#2a78d6',
+        red: '#e34948',
+        orange: '#eb6834',
+        yellow: '#eda100',
+        green: '#1baf7a',
+        purple: '#4a3aa7',
+        cyan: '#00838f',
+        gray: '#c3c2b7'
+    };
+
+    Chart.defaults.font.family = 'Microsoft YaHei UI, sans-serif';
+    Chart.defaults.color = '#666';
+
+    const D = @Html.Raw(Model.DashboardJson);
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // === 图表 1：入住/退房人数对比（分组柱状图） ===
+        const moveData = D.checkInOutMonthly || [];
+        new Chart(document.getElementById('chartMove'), {
+            type: 'bar',
+            data: {
+                labels: moveData.map(d => d.month.substring(5)),  // 仅显示 MM
+                datasets: [
+                    { label: '入住', data: moveData.map(d => d.checkIn), backgroundColor: COLORS.blue },
+                    { label: '退房', data: moveData.map(d => d.checkOut), backgroundColor: COLORS.orange }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 2：每月总费用变化曲线（折线图 + 上年对比） ===
+        const costData = D.costTrendMonthly || [];
+        new Chart(document.getElementById('chartCostTrend'), {
+            type: 'line',
+            data: {
+                labels: costData.map(d => d.month.substring(5)),
+                datasets: [
+                    {
+                        // v2.13.37 完全反向适配原型：图例写死 2025年（原型 L603）
+                        label: '2025年',
+                        data: costData.map(d => d.lastYear),
+                        borderColor: COLORS.gray,
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        tension: 0.3,
+                        pointRadius: 3,
+                        pointBackgroundColor: COLORS.gray
+                    },
+                    {
+                        // v2.13.37 完全反向适配原型：图例写死 2026年（原型 L613）
+                        label: '2026年',
+                        data: costData.map(d => d.currentYear),
+                        borderColor: COLORS.purple,
+                        backgroundColor: 'rgba(74, 58, 167, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: COLORS.purple
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: false, min: 0, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 3：宿舍费用排名 TOP 10（水平堆叠柱状图） ===
+        const dormCostData = D.dormCostTop10 || [];
+        new Chart(document.getElementById('chartDormCost'), {
+            type: 'bar',
+            data: {
+                labels: dormCostData.map(d => d.dormCode),
+                datasets: [
+                    { label: '冷水', data: dormCostData.map(d => d.coldAmount), backgroundColor: COLORS.blue },
+                    { label: '热水', data: dormCostData.map(d => d.hotAmount), backgroundColor: COLORS.red },
+                    { label: '电费', data: dormCostData.map(d => d.electricityAmount), backgroundColor: COLORS.yellow }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    x: { stacked: true, grid: { color: '#f0f0f0' } },
+                    y: { stacked: true, grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 4：入住率排名 TOP 15（水平柱状图，按入住率升序） ===
+        // 数据结构：{ dormCode, capacity, currentResidents, occupancyRate }
+        const occData = D.occupancyRankTop15 || [];
+        const occDormCodes = occData.map(d => d.dormCode);
+        const occRates = occData.map(d => d.occupancyRate);
+        const occResidentsMap = {};
+        occData.forEach(d => { occResidentsMap[d.dormCode] = d.currentResidents; });
+
+        new Chart(document.getElementById('chartOccupancyRank'), {
+            type: 'bar',
+            data: {
+                labels: occDormCodes,
+                datasets: [{
+                    label: '入住率(%)',
+                    data: occRates,
+                    backgroundColor: occRates.map(r => r >= 100 ? COLORS.green : r >= 75 ? COLORS.yellow : r >= 50 ? COLORS.orange : COLORS.red)
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const v = ctx.parsed.x;
+                                const residents = occResidentsMap[ctx.label] || 0;
+                                return `使用率 ${v}%，入住 ${residents} 人`;
+                            }
+                        }
+                    }
+                },
+                layout: { padding: { right: 60 } },
+                scales: {
+                    x: { beginAtZero: true, max: 100, grid: { color: '#f0f0f0' }, title: { display: false } },
+                    y: {
+                        grid: { display: false },
+                        ticks: {
+                            callback: function (value, index) {
+                                const code = this.getLabelForValue(value);
+                                const residents = occResidentsMap[code] || 0;
+                                return code + '  (' + residents + '人)';
+                            }
+                        }
+                    }
+                },
+                afterDraw: (chart) => {
+                    const dataset = chart.data.datasets[0];
+                    const meta = chart.getDatasetMeta(0);
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    ctx.font = '12px Microsoft YaHei UI';
+                    ctx.fillStyle = '#5f6368';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'middle';
+                    meta.data.forEach((bar, i) => {
+                        const rate = dataset.data[i];
+                        const code = chart.data.labels[i];
+                        const residents = occResidentsMap[code] || 0;
+                        const x = bar.x + 5;
+                        const y = bar.y;
+                        ctx.fillText(rate + '% (' + residents + '人)', x, y);
+                    });
+                    ctx.restore();
+                }
+            }
+        });
+
+        // === 图表 5：部门分布（柱状图） ===
+        const deptData = D.departmentDistribution || [];
+        new Chart(document.getElementById('chartDept'), {
+            type: 'bar',
+            data: {
+                labels: deptData.map(d => d.label),
+                datasets: [{
+                    label: '人数',
+                    data: deptData.map(d => d.value),
+                    backgroundColor: COLORS.blue
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f0f0f0' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // === 图表 6：费用类型占比（环形图） ===
+        const costTypeData = D.costTypeRatio || [];
+        new Chart(document.getElementById('chartCostType'), {
+            type: 'doughnut',
+            data: {
+                labels: costTypeData.map(d => d.label),
+                datasets: [{
+                    data: costTypeData.map(d => d.value),
+                    backgroundColor: [COLORS.yellow, COLORS.red, COLORS.blue]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // === 图表 7：员工类型分布（环形图） ===
+        const empTypeData = D.employeeTypeDistribution || [];
+        new Chart(document.getElementById('chartEmpType'), {
+            type: 'doughnut',
+            data: {
+                labels: empTypeData.map(d => d.label),
+                datasets: [{
+                    data: empTypeData.map(d => d.value),
+                    backgroundColor: [COLORS.blue, COLORS.cyan, COLORS.yellow, COLORS.green, COLORS.purple, COLORS.orange, COLORS.red]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+
+        // === 图表 8：抄表覆盖（环形图）v2.13.133 已抄 / 未完成 / 未覆盖 3 段拆分 ===
+        const meterCovData = D.meterCoverage || [];
+        new Chart(document.getElementById('chartMeterCov'), {
+            type: 'doughnut',
+            data: {
+                labels: meterCovData.map(d => d.label),
+                datasets: [{
+                    data: meterCovData.map(d => d.value),
+                    // v2.13.133：3 段配色（已抄=蓝 / 未完成=黄 / 未覆盖=红）
+                    backgroundColor: [COLORS.blue, COLORS.orange, COLORS.red]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right' } }
+            }
+        });
+    });
+</script>

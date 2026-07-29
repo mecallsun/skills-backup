@@ -23,23 +23,52 @@ public class MenuViewComponent : ViewComponent
 
     public async Task<IViewComponentResult> InvokeAsync()
     {
-        var http = _httpContextAccessor.HttpContext;
-        var userId = http?.GetCurrentUserId() ?? 0;
-        var currentPath = http?.Request.Path.Value ?? "";
-
-        // 未登录：返回空模型（_Layout 已通过 AuthorizeFolder 守卫，此分支为兜底）
-        if (userId <= 0) return View(new MenuViewModel());
-
-        var menus = await _authService.GetUserMenusAsync(userId);
-
-        // 仅保留 PermissionType=1 顶级菜单（ParentId=0）
-        var topMenus = menus.Where(m => m.PermissionType == 1 && m.ParentId == 0).ToList();
-
-        return View(new MenuViewModel
+        // v2.13.200 修复：外层 try-catch 包裹整个方法，捕获所有可能的异常
+        // 包括 DI 失败（数据库连接断开导致 scoped service 异常）
+        try
         {
-            TopMenus = topMenus,
-            CurrentPath = currentPath
-        });
+            var http = _httpContextAccessor?.HttpContext;
+            var userId = http?.GetCurrentUserId() ?? 0;
+            var currentPath = http?.Request.Path.Value ?? "";
+
+            // 未登录：返回空模型（_Layout 已通过 AuthorizeFolder 守卫，此分支为兜底）
+            if (userId <= 0) return View(new MenuViewModel());
+
+            // v2.13.198 修复：try-catch 兜底，防止菜单查询异常导致整个页面 Error
+            List<AuthHelperExtensions.MenuNode> menus;
+            try
+            {
+                menus = await _authService.GetUserMenusAsync(userId);
+            }
+            catch (Exception)
+            {
+                // 查询异常时返回空菜单（前端显示"无可见菜单"提示）
+                return View(new MenuViewModel
+                {
+                    TopMenus = new List<AuthHelperExtensions.MenuNode>(),
+                    CurrentPath = currentPath
+                });
+            }
+
+            // 仅保留 PermissionType=1 顶级菜单（ParentId=0）
+            var topMenus = menus.Where(m => m.PermissionType == 1 && m.ParentId == 0).ToList();
+
+            return View(new MenuViewModel
+            {
+                TopMenus = topMenus,
+                CurrentPath = currentPath
+            });
+        }
+        catch (Exception)
+        {
+            // 终极兜底：任何异常（如 DI 失败、字段访问异常等）都返回空菜单
+            // 避免 Menu 组件崩溃导致整个页面 Error
+            return View(new MenuViewModel
+            {
+                TopMenus = new List<AuthHelperExtensions.MenuNode>(),
+                CurrentPath = string.Empty
+            });
+        }
     }
 }
 

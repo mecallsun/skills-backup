@@ -164,7 +164,7 @@ public class EmployeeDetailDto
     public string EmployeeTypeName { get; set; } = "";
     public int? AttendanceTypeId { get; set; }
     public string AttendanceTypeName { get; set; } = "";
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }
     public string TeamName { get; set; } = "";
     public DateOnly? HireDate { get; set; }
     public DateOnly? LeaveDate { get; set; }

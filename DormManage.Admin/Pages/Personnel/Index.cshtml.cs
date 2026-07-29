@@ -159,6 +159,7 @@ public class IndexModel : PaginatedPageModel
             .Include(e => e.EmployeeType)      // 员工类型 FK 关联
             .Include(e => e.AttendanceType)    // 考勤班次 FK 关联
             .Include(e => e.Team)              // v2.13.78 BUG 修复：班组 FK 关联（之前缺 Include 导致班组列显示"-"）
+            .Include(e => e.EmploymentStatus)  // v2.13.208 BUG 修复：在职状态 FK 关联（DTO 投影用到 .EmploymentStatus.Name 但未 Include → EF Core 抛 InvalidOperationException → 页面 INTERNAL_ERROR）
             .AsQueryable();
 
         if (DepartmentId.HasValue)
@@ -202,6 +203,8 @@ public class IndexModel : PaginatedPageModel
                 EmployeeCode = e.EmployeeCode,
                 RealName = e.RealName,
                 Phone = e.Phone ?? "-",
+                // v2.13.208 BUG 修复：DB 列名是 IdNumber，投影用 .IdNumber（不再是 .IdCard 否则 EF Core 抛 Invalid column name）
+                IdNumber = e.IdNumber ?? "",
                 // v2.13.83 性别字段（SysEmployee.Gender：1=男 2=女 0=未知）
                 Gender = e.Gender,
                 DepartmentId = e.DepartmentId,
@@ -260,6 +263,8 @@ public class PersonnelDto
     public string EmployeeCode { get; set; } = "";
     public string RealName { get; set; } = "";
     public string Phone { get; set; } = "";
+    /// <summary>v2.13.208 BUG 修复：字段名 IdCard → IdNumber（与 EF 模型 + DB 列名一致）；v2.13.180 已添加 18 位中国大陆居民身份证号列；默认隐私字段，受字段权限控制</summary>
+    public string IdNumber { get; set; } = "";
     /// <summary>v2.13.83 新增：性别（1=男 2=女 0=未知）</summary>
     public int Gender { get; set; }
     public string GenderName => Gender == 1 ? "男" : Gender == 2 ? "女" : "未知";
@@ -282,7 +287,7 @@ public class PersonnelDto
     public string LeaveDate { get; set; } = "";
     public string DormCode { get; set; } = "";
     public int BedNo { get; set; }
-    public int TeamId { get; set; }
+    public int? TeamId { get; set; }
     public string TeamName { get; set; } = "";
     public bool IsActive { get; set; }
 }

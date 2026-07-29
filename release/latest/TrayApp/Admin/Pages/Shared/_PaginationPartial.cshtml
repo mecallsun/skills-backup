@@ -1,0 +1,134 @@
+@* v2.13.71 列表分页通用组件（100% 原型对齐）
+
+    用法（在任意 Index 页面底部）：
+    @await Html.PartialAsync("_PaginationPartial", new DormManage.Admin.Pages.Shared.PaginationModel
+    {
+        PageIndex = Model.PageIndex,
+        PageSize = Model.PageSize,
+        TotalCount = totalCount
+    })
+
+    功能：
+    - 智能截断分页:« 1 2 3 … 65 »
+    - 每页下拉选择:10 / 20 / 50 / 100 条
+    - 统计信息:共 N 条 · 第 X-Y 条 · 共 Z 页
+    - URL 参数自动保留(从 Context.Request.QueryString 提取,排除 pageIndex/pageSize)
+    - 同步 pageSize 到 localStorage,下次进入页面恢复
+*@
+@model DormManage.Admin.Pages.Shared.PaginationModel
+@{
+    var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Math.Max(Model.PageSize, 1));
+    var startItem = Model.TotalCount == 0 ? 0 : (Model.PageIndex - 1) * Model.PageSize + 1;
+    var endItem = Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount);
+
+    var pageNumbers = new List<int>();
+    for (int p = 1; p <= totalPages; p++)
+    {
+        if (p == 1 || p == totalPages || (p >= Model.PageIndex - 2 && p <= Model.PageIndex + 2))
+        {
+            pageNumbers.Add(p);
+        }
+        else if (p < Model.PageIndex - 2)
+        {
+            if (pageNumbers.Count == 0 || pageNumbers[pageNumbers.Count - 1] != -1)
+            {
+                pageNumbers.Add(-1);
+            }
+        }
+        else if (p > Model.PageIndex + 2)
+        {
+            if (pageNumbers.Count == 0 || pageNumbers[pageNumbers.Count - 1] != -2)
+            {
+                pageNumbers.Add(-2);
+            }
+        }
+    }
+
+    var currentPath = Context.Request.Path.Value;
+    var queryString = Context.Request.QueryString.Value ?? "";
+    string Url(int pageIndex)
+    {
+        var qs = queryString.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries)
+            .Where(p => !p.StartsWith("pageIndex=", StringComparison.OrdinalIgnoreCase) && !p.StartsWith("pageSize=", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+        qs.Add($"pageIndex={pageIndex}");
+        if (Model.PageSize != 10) qs.Add($"pageSize={Model.PageSize}");
+        return currentPath + "?" + string.Join("&", qs);
+    }
+}
+
+@* v2.13.75 BUG 修复：dropdown + 统计信息始终显示（即使 totalPages=0），让用户随时切换 pageSize
+    只有翻页数字（« 1 2 3 … »）在 totalPages > 1 时才显示（无意义时不显示） *@
+@if (Model.TotalCount > 0)
+{
+    <div class="card-footer d-flex justify-content-between align-items-center pagination-footer" style="background: #f8f9fa; border-top: 1px solid #e9ecef; padding: 8px 16px;">
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">
+                <i class="bi bi-list-ol"></i> 共 <strong>@Model.TotalCount</strong> 条 ·
+                第 <strong>@startItem-@endItem</strong> 条 ·
+                共 <strong>@totalPages</strong> 页
+            </span>
+            <span class="text-muted small ms-2">|</span>
+            <span class="text-muted small">每页</span>
+            <select class="form-select form-select-sm page-size-select" style="width: 70px;" onchange="changePageSize(this.value)">
+                <option value="10" selected="@(Model.PageSize == 10)">10</option>
+                <option value="20" selected="@(Model.PageSize == 20)">20</option>
+                <option value="50" selected="@(Model.PageSize == 50)">50</option>
+                <option value="100" selected="@(Model.PageSize == 100)">100</option>
+            </select>
+            <span class="text-muted small">条</span>
+        </div>
+
+        @* v2.13.75：翻页数字仅当 totalPages > 1 时才渲染（1 页或 0 页时不显示无意义的单数字） *@
+        @if (totalPages > 1)
+        {
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    @if (Model.PageIndex > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url(Model.PageIndex - 1)" aria-label="上一页">&laquo;</a>
+                        </li>
+                    }
+
+                    @foreach (var p in pageNumbers)
+                    {
+                        if (p < 0)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                        else
+                        {
+                            <li class="page-item @(p == Model.PageIndex ? "active" : "")">
+                                <a class="page-link" href="@Url(p)">@p</a>
+                            </li>
+                        }
+                    }
+
+                    @if (Model.PageIndex < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link" href="@Url(Model.PageIndex + 1)" aria-label="下一页">&raquo;</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+
+    <script>
+        (function () {
+            var moduleKey = (location.pathname || '').split('/').filter(Boolean).pop() || 'list';
+
+            // v2.13.99 BUG 修复：移除 JS 启动回退逻辑
+            // v2.13.104 二次修复：移除 localStorage 写入（v2.13.99 后不再读取，写入是冗余）
+            // 用户主动选择 pageSize → URL 跳转（?pageSize=N），PageModel 绑定即生效
+            window.changePageSize = function (newSize) {
+                var url = new URL(location.href);
+                url.searchParams.set('pageSize', newSize);
+                url.searchParams.set('pageIndex', '1');
+                location.href = url.toString();
+            };
+        })();
+    </script>
+}

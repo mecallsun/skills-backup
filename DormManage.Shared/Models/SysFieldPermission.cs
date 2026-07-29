@@ -10,8 +10,8 @@ namespace DormManage.Shared.Models;
 ///
 /// 典型用法：
 ///   - 默认敏感字段：姓名（realname）/ 手机号（phone）/ 工号（employeecode）/ 宿舍房号（dormcode）/ 备注（remark）
-///   - 角色勾选「启用隐私字段保护」→ 看不到 SysFieldPermission.IsActive=true 的所有字段
-///   - 字段不勾选（IsActive=false）→ 即使角色有隐私权限，该字段也仍然显示
+///   - 角色未勾选「允许显示隐私字段」（deny-by-default）→ 看不到 SysFieldPermission.IsActive=true 的所有字段
+///   - 字段不勾选（IsActive=false）→ 即使角色有此权限，该字段也仍然显示（字段级粒度）
 ///
 /// 关联：
 ///   - 与 SysPermission 解耦（SysPermission 是 RBAC 配置，本表是字段元数据配置）
@@ -20,7 +20,7 @@ namespace DormManage.Shared.Models;
 [Table("SysFieldPermission")]
 public class SysFieldPermission
 {
-    /// <summary>主键</summary>
+    /// <summary>主键（v2.13.196 修复：手动生成，DB 列未设置 IDENTITY）</summary>
     public int Id { get; set; }
 
     /// <summary>
