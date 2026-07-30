@@ -131,24 +131,31 @@
             transition: background 0.15s, color 0.15s;
         }
         .tab-item:hover {
-            background: rgba(25,118,210,0.04);
-            color: #1976d2;
+            background: #f5f9ff;  /* v2.13.219：hover 浅蓝背景（更浅） */
+            color: #1565c0;
         }
         .tab-item .tab-icon { font-size: 1.15rem; flex-shrink: 0; }
         .tab-item.active {
+            /* v2.13.219：主菜单 Tab 选中态 — 浅蓝色背景（统一所有模块，与原型 v2.13.217 对齐） */
             font-weight: 600;
-            background: #fff;
+            background: #e3f2fd;   /* Material Blue 50 - 浅蓝背景（用户原话「浅兰色」） */
+            color: #0d47a1;         /* Material Blue 900 - 深蓝文字 */
+            border-bottom: 2px solid #1976d2;  /* v2.13.219：3px → 2px（背景色承担主要视觉） */
+            border-bottom-color: #1976d2;
             z-index: 1;
         }
+
+        /* v2.13.219：原按模块配色已废弃，统一为浅蓝色背景。
+           以下规则保留为兼容历史，但实际不再生效。 */
         .tab-item[data-module="booking"].active,
-        .tab-item[data-module="dorms"].active { color: #1976d2; border-bottom-color: #1976d2; }
-        .tab-item[data-module="personnel"].active { color: #2e7d32; border-bottom-color: #2e7d32; }
+        .tab-item[data-module="dorms"].active { /* 统一浅蓝 */ }
+        .tab-item[data-module="personnel"].active { /* 统一浅蓝 */ }
         .tab-item[data-module="billing"].active,
         .tab-item[data-module="dorm-bills"].active,
-        .tab-item[data-module="employee-bills"].active { color: #e65100; border-bottom-color: #e65100; }
-        .tab-item[data-module="meter"].active { color: #00838f; border-bottom-color: #00838f; }
+        .tab-item[data-module="employee-bills"].active { /* 统一浅蓝 */ }
+        .tab-item[data-module="meter"].active { /* 统一浅蓝 */ }
         .tab-item[data-module="basics"].active,
-        .tab-item[data-module="settings"].active { color: #546e7a; border-bottom-color: #546e7a; }
+        .tab-item[data-module="settings"].active { /* 统一浅蓝 */ }
 
         /* ===== Tier 3: 页面内容区 ===== */
         .page-content {
