@@ -11,7 +11,7 @@ using DormManage.Shared.Services;
 if (!DormManage.Shared.Security.TrayLaunchGuard.VerifyLaunchedByTray(
         DormManage.Shared.Security.TrayLaunchGuard.ChildApi, out var _trayGuardReason))
 {
-    Console.Error.WriteLine($"[TRAY-GUARD] 本程序必须由「金戈宿舍管理系统托盘程序」启动，禁止独立运行。原因：{_trayGuardReason}");
+    Console.Error.WriteLine($"[TRAY-GUARD] 本程序必须由「金智住宿管理系统托盘程序」启动，禁止独立运行。原因：{_trayGuardReason}");
     Console.Error.WriteLine("[TRAY-GUARD] 请运行 DormManage.TrayApp.exe，由其统一拉起 Web/Api 服务。本次启动将在 2 秒后终止...");
     Thread.Sleep(2000);
     return;
@@ -117,7 +117,7 @@ builder.Services.AddHttpClient();  // v2.13.3: 系统集成测试连接
 // v2.13.25: 延迟从 30s 调整为 5s（启动机制保证表已就绪）
 builder.Services.AddHostedService<DataCleanupHostedService>();
 // 注册 v2.13.128 智能抄表每日占位自动补全后台服务（每天 0:01 触发）
-// 业务规则：每个启用宿舍房号当月必须至少有一条 MeterRecord；缺失则新增占位记录
+// 业务规则：每个启用住宿房号当月必须至少有一条 MeterRecord；缺失则新增占位记录
 // 规范文档：00-方案文档/177-智能抄表每日占位自动补全-v2.13.128.md
 builder.Services.AddHostedService<MeterMonthlyAutoFillHostedService>();
 var app = builder.Build();

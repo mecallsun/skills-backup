@@ -9,7 +9,7 @@ namespace DormManage.Shared.Models;
 /// 全局共享一份清单；与角色通过"隐私字段权限"总开关关联。
 ///
 /// 典型用法：
-///   - 默认敏感字段：姓名（realname）/ 手机号（phone）/ 工号（employeecode）/ 宿舍房号（dormcode）/ 备注（remark）
+///   - 默认敏感字段：姓名（realname）/ 手机号（phone）/ 工号（employeecode）/ 住宿房号（dormcode）/ 备注（remark）
 ///   - 角色未勾选「允许显示隐私字段」（deny-by-default）→ 看不到 SysFieldPermission.IsActive=true 的所有字段
 ///   - 字段不勾选（IsActive=false）→ 即使角色有此权限，该字段也仍然显示（字段级粒度）
 ///

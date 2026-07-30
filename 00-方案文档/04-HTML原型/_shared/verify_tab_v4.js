@@ -5,7 +5,7 @@ const fs = require('fs');
 const chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
 // 备份原文件
-const targetFile = 'E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\00-方案文档\\04-HTML原型\\dorms\\list.html';
+const targetFile = 'E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\00-方案文档\\04-HTML原型\\dorms\\list.html';
 const backupFile = targetFile + '.bak';
 if (!fs.existsSync(backupFile)) {
   fs.copyFileSync(targetFile, backupFile);
@@ -19,7 +19,7 @@ localStorage.setItem('dormmanage:tabs:v1:admin', JSON.stringify({
   tabs: [
     { id: 'tab-001', title: '首页', url: 'index.html', module: 'index', icon: 'bi-speedometer2' },
     { id: 'tab-002', title: '办理登记', url: 'booking/index.html', module: 'booking', icon: 'bi-clipboard-check' },
-    { id: 'tab-003', title: '宿舍管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
+    { id: 'tab-003', title: '住宿管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
     { id: 'tab-004', title: '人员清单', url: 'personnel/list.html', module: 'personnel', icon: 'bi-people-fill' },
     { id: 'tab-005', title: '智能抄表', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
   ]
@@ -33,7 +33,7 @@ fs.writeFileSync(targetFile, content);
 const cmd = `"${chromePath}" --headless --disable-gpu --no-sandbox --user-data-dir="C:\\Users\\Mecall\\AppData\\Local\\Temp\\chrome-tab-test3" --virtual-time-budget=5000 --dump-dom "http://localhost:8765/dorms/list.html" 2>nul`;
 const output = execSync(cmd, { encoding: 'utf-8', timeout: 15000 });
 
-console.log('=== Tab 渲染验证（预设 5 个 Tab，当前为宿舍管理，激活"人员清单"）===\n');
+console.log('=== Tab 渲染验证（预设 5 个 Tab，当前为住宿管理，激活"人员清单"）===\n');
 
 const tabRegex = /<div class="tab-item[^"]*"[^>]*data-url="([^"]*)"[^>]*data-tab-id="([^"]*)"[^>]*>([\s\S]*?)<\/div>\s*(?=<div class="tab-item|<\/div>\s*<\/div>)/g;
 let m;

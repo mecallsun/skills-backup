@@ -3,8 +3,8 @@ const { execSync } = require('child_process');
 
 const SAMPLE_PAGES = [
   { url: 'http://localhost:8765/index.html', isRoot: true, name: '首页' },
-  { url: 'http://localhost:8765/dorms/list.html', isRoot: false, name: '宿舍管理' },
-  { url: 'http://localhost:8765/billing/dorm-bills.html', isRoot: false, name: '宿舍账单' },
+  { url: 'http://localhost:8765/dorms/list.html', isRoot: false, name: '住宿管理' },
+  { url: 'http://localhost:8765/billing/dorm-bills.html', isRoot: false, name: '住宿账单' },
   { url: 'http://localhost:8765/personnel/list.html', isRoot: false, name: '人员清单' }
 ];
 

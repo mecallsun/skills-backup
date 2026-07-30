@@ -11,7 +11,7 @@ void Check(string name, bool ok, string detail)
 }
 
 // 用例1：当前真实场景（用户当前安装状态 — 既有真实注册信息，v2.13.167 真机验证过）
-// 机器码 SN=BFEBFBFF000A06A4AA2E3B0E + 公司名=广东金戈新材料股份有限公司 + CDKEY 已知过期
+// 机器码 SN=BFEBFBFF000A06A4AA2E3B0E + 公司名=广东金智新材料股份有限公司 + CDKEY 已知过期
 // 本测试不依赖具体真实环境，只验证 CheckReg() 结构稳定性
 {
     var reg = RegisterSdk.CheckReg();

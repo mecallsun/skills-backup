@@ -14,10 +14,10 @@
  * Tab 与菜单的对应关系（与 icon-rail.js ICON_RAIL_MENU 一致）：
  *   首页 → index.html
  *   办理登记 → booking/index.html
- *   宿舍管理 → dorms/list.html
+ *   住宿管理 → dorms/list.html
  *   人员清单 → personnel/list.html
  *   费用标准 → billing/standards.html
- *   宿舍账单 → billing/dorm-bills.html
+ *   住宿账单 → billing/dorm-bills.html
  *   员工账单 → billing/employee-bills.html
  *   智能抄表 → meter/index.html
  *   基础资料 → basics/index.html
@@ -28,10 +28,10 @@
 const FIXED_TABS = [
   { id: 'tab-home',          title: '首页',       module: 'index',          icon: 'bi-speedometer2',      url: 'index.html' },
   { id: 'tab-booking',       title: '办理登记',   module: 'booking',        icon: 'bi-clipboard-check',   url: 'booking/index.html' },
-  { id: 'tab-dorms',         title: '宿舍管理',   module: 'dorms',          icon: 'bi-building',          url: 'dorms/list.html' },
+  { id: 'tab-dorms',         title: '住宿管理',   module: 'dorms',          icon: 'bi-building',          url: 'dorms/list.html' },
   { id: 'tab-personnel',     title: '人员清单',   module: 'personnel',      icon: 'bi-people-fill',       url: 'personnel/list.html' },
   { id: 'tab-billing',       title: '费用标准',   module: 'billing',        icon: 'bi-cash-stack',        url: 'billing/standards.html' },
-  { id: 'tab-dorm-bills',    title: '宿舍账单',   module: 'dorm-bills',     icon: 'bi-receipt',           url: 'billing/dorm-bills.html' },
+  { id: 'tab-dorm-bills',    title: '住宿账单',   module: 'dorm-bills',     icon: 'bi-receipt',           url: 'billing/dorm-bills.html' },
   { id: 'tab-employee-bills',title: '员工账单',   module: 'employee-bills', icon: 'bi-wallet2',           url: 'billing/employee-bills.html' },
   { id: 'tab-meter',         title: '智能抄表',   module: 'meter',          icon: 'bi-clipboard-data',    url: 'meter/index.html' },
   { id: 'tab-basics',        title: '基础资料',   module: 'basics',         icon: 'bi-database',          url: 'basics/index.html' },

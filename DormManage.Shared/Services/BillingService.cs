@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Shared.Services;
 
 /// <summary>
-/// 费用管理服务：费用标准 CRUD + 宿舍账单生成 + 员工分摊计算
+/// 费用管理服务：费用标准 CRUD + 住宿账单生成 + 员工分摊计算
 /// </summary>
 public interface IBillingService
 {
@@ -26,10 +26,10 @@ public interface IBillingService
     /// <summary>创建/更新费用标准</summary>
     Task<(bool ok, string message)> SaveStandardAsync(BillingStandard standard);
 
-    /// <summary>生成指定月份的宿舍账单</summary>
+    /// <summary>生成指定月份的住宿账单</summary>
     Task<BillingGenerateResult> GenerateDormBillsAsync(string billingMonth);
 
-    /// <summary>查询宿舍账单列表</summary>
+    /// <summary>查询住宿账单列表</summary>
     Task<PagedResult<DormBilling>> GetDormBillsAsync(string? billingMonth, string? dormCode, int page, int pageSize);
 
     /// <summary>生成指定月份的员工分摊账单</summary>
@@ -42,7 +42,7 @@ public interface IBillingService
     /// <summary>v2.13.44 查询员工账单列表（新增在职状态筛选）</summary>
     Task<PagedResult<EmployeeBilling>> GetEmployeeBillsAsync(string? billingMonth, string? dormCode, string? empKeyword, int? departmentId, int? employeeTypeId, int? residenceStatusId, int? employmentStatusId, int page, int pageSize);
 
-    /// <summary>发布宿舍账单</summary>
+    /// <summary>发布住宿账单</summary>
     Task<(bool ok, string message)> PublishDormBillsAsync(string billingMonth);
 
     /// <summary>发布员工账单</summary>
@@ -330,7 +330,7 @@ public class BillingService : IBillingService
 
         if (!dormBills.Any())
         {
-            result.Errors.Add("没有已发布的宿舍账单，请先生成宿舍账单并发布");
+            result.Errors.Add("没有已发布的住宿账单，请先生成住宿账单并发布");
             return result;
         }
 
@@ -533,7 +533,7 @@ public class BillingService : IBillingService
 
         if (count == 0)
             return (false, $"该月份({billingMonth})没有未发布的账单");
-        return (true, $"已发布 {count} 条宿舍账单");
+        return (true, $"已发布 {count} 条住宿账单");
     }
 
     public async Task<(bool ok, string message)> PublishEmployeeBillsAsync(string billingMonth)

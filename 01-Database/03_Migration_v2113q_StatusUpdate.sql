@@ -143,7 +143,7 @@ PRINT '月份：' + @CurrentMonth;
 SELECT
     '已抄(正常/已修正)' = (SELECT COUNT(*) FROM dbo.MeterRecord WHERE ReadMonth = @CurrentMonth AND Status IN (1,2)),
     '未完成' = (SELECT COUNT(*) FROM dbo.MeterRecord WHERE ReadMonth = @CurrentMonth AND Status = 4),
-    '启用宿舍总数' = (SELECT COUNT(*) FROM dbo.Dorm WHERE IsActive = 1);
+    '启用住宿总数' = (SELECT COUNT(*) FROM dbo.Dorm WHERE IsActive = 1);
 
 -- ============================================================
 -- 迁移完成

@@ -9,7 +9,7 @@ namespace DormManage.Tools.GenderBackfill;
 
 /// <summary>
 /// v2.13.83 一次性性别批量回填工具
-/// 读取 行政宿舍资料/员工宿舍明细表.xlsx + 姓名推断 → UPDATE SysEmployee.Gender
+/// 读取 行政住宿资料/员工住宿明细表.xlsx + 姓名推断 → UPDATE SysEmployee.Gender
 /// 优先级：admin xlsx > 姓名推断 > 默认（1=男）
 /// </summary>
 public class Program
@@ -25,7 +25,7 @@ public class Program
         // 默认路径（可被命令行覆盖）
         var xlsxPath = args.Length > 0
             ? args[0]
-            : Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "行政宿舍资料", "员工宿舍明细表.xlsx");
+            : Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "行政住宿资料", "员工住宿明细表.xlsx");
 
         // 解析 xlsx 为绝对路径
         xlsxPath = Path.GetFullPath(xlsxPath);
@@ -157,7 +157,7 @@ public class Program
     private static string GetReportPath()
     {
         var dir = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..");
-        var reportDir = Path.GetFullPath(Path.Combine(dir, "行政宿舍资料"));
+        var reportDir = Path.GetFullPath(Path.Combine(dir, "行政住宿资料"));
         Directory.CreateDirectory(reportDir);
         return Path.Combine(reportDir, $"性别回填结果_{DateTime.Now:yyyyMMdd_HHmmss}.csv");
     }
@@ -165,7 +165,7 @@ public class Program
 
 /// <summary>
 /// v2.13.83 行政资料 xlsx 读取器
-/// 期望格式（员工宿舍明细表.xlsx）：
+/// 期望格式（员工住宿明细表.xlsx）：
 ///   列 1 员工姓名（重复）
 ///   列 2 员工编号（如 JG002723）
 ///   列 3 员工姓名

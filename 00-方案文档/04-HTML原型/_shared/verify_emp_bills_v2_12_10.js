@@ -67,7 +67,7 @@ if (tbodyMatch) {
     if (rows.length > 0) {
         const cells = rows[0].match(/<td[^>]*>([\s\S]*?)<\/td>/g) || [];
         const cleaned = cells.map(c => c.replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' '));
-        console.log(`  [1] 工号=${cleaned[1]} 姓名=${cleaned[2]} 部门=${cleaned[3]} 类型=${cleaned[4]} 宿舍=${cleaned[5]}`);
+        console.log(`  [1] 工号=${cleaned[1]} 姓名=${cleaned[2]} 部门=${cleaned[3]} 类型=${cleaned[4]} 住宿=${cleaned[5]}`);
     }
 }
 

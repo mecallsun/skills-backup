@@ -297,7 +297,7 @@ async function submitForm() {
         });
         const result = await resp.json();
         if (result.success) {
-            alert(`✓ 退房办理成功\n员工：${selectedEmp.realName}\n宿舍：${activeRecord.dormCode}\n日期：${date}`);
+            alert(`✓ 退房办理成功\n员工：${selectedEmp.realName}\n住宿：${activeRecord.dormCode}\n日期：${date}`);
             location.href = '/Booking';
         } else {
             alert(result.message || '退房办理失败');

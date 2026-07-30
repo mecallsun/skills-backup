@@ -48,7 +48,7 @@ public class IndexModel : PaginatedPageModel
     public List<EmploymentStatusDropdownItem> EmploymentStatuses { get; set; } = new();
 
     /// <summary>
-    /// 宿舍房号候选（datalist 自动完成用）
+    /// 住宿房号候选（datalist 自动完成用）
     /// </summary>
     public List<string> DormCodes { get; set; } = new();
 

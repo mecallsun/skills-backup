@@ -25,7 +25,7 @@ window.location.href = '/${targetPage}';
 // 测试场景：预设 4 个 Tab，验证渲染
 const presetTabs = [
   { id: 'tab-001', title: '首页', url: 'index.html', module: 'index', icon: 'bi-speedometer2' },
-  { id: 'tab-002', title: '宿舍管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
+  { id: 'tab-002', title: '住宿管理', url: 'dorms/list.html', module: 'dorms', icon: 'bi-building' },
   { id: 'tab-003', title: '人员清单', url: 'personnel/list.html', module: 'personnel', icon: 'bi-people-fill' },
   { id: 'tab-004', title: '智能抄表', url: 'meter/index.html', module: 'meter', icon: 'bi-clipboard-data' }
 ];
@@ -34,7 +34,7 @@ const tmpHtml = 'C:\\Users\\Mecall\\AppData\\Local\\Temp\\tab-test.html';
 fs.writeFileSync(tmpHtml, makeTestHtml('dorms/list.html', presetTabs));
 
 // 把测试文件复制到原型目录（用 Python http server 提供）
-const targetHtml = 'E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\00-方案文档\\04-HTML原型\\_shared\\_tab_test.html';
+const targetHtml = 'E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\00-方案文档\\04-HTML原型\\_shared\\_tab_test.html';
 fs.writeFileSync(targetHtml, makeTestHtml('dorms/list.html', presetTabs));
 
 const cmd = `"${chromePath}" --headless --disable-gpu --no-sandbox --user-data-dir="C:\\Users\\Mecall\\AppData\\Local\\Temp\\chrome-tab-test2" --virtual-time-budget=5000 --dump-dom "http://localhost:8765/_shared/_tab_test.html" 2>nul`;
@@ -42,7 +42,7 @@ const cmd = `"${chromePath}" --headless --disable-gpu --no-sandbox --user-data-d
 const output = execSync(cmd, { encoding: 'utf-8', timeout: 15000 });
 
 // 重定向后查看 dorms/list.html 的 DOM
-console.log('=== Tab 渲染验证（预设 4 个 Tab，当前为宿舍管理）===\n');
+console.log('=== Tab 渲染验证（预设 4 个 Tab，当前为住宿管理）===\n');
 
 // 解析 Tab 项
 const tabRegex = /<div class="tab-item[^"]*"[^>]*data-url="([^"]*)"[^>]*data-tab-id="([^"]*)"[^>]*>([\s\S]*?)<\/div>/g;

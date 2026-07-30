@@ -1,5 +1,5 @@
 -- =========================================================================
--- 📌 金戈宿舍管理系统 — 绝对真理源 DDL
+-- 📌 金智住宿管理系统 — 绝对真理源 DDL
 -- 来源：192.168.1.237 / WaterMeterDB 实时探测
 -- 生成日期：2026-07-15
 -- 版本：v2.13.7（2026-07-16 RBAC 补表：SysRole.SortOrder 列 + SysPermission/SysRolePermission 表）
@@ -81,7 +81,7 @@ CREATE TABLE [dbo].[Department] (
     CONSTRAINT [UQ_Department_Code] UNIQUE ([Code])
 );
 
--- 6. Dorm（宿舍档案）
+-- 6. Dorm（住宿档案）
 CREATE TABLE [dbo].[Dorm] (
     [DormId]         INT            IDENTITY(1,1) NOT NULL,
     [DormCode]       NVARCHAR(32)   NOT NULL,
@@ -461,7 +461,7 @@ PRINT N'✅ 数据库结构定义完成（绝对真理源 v2.13.3）';
 --   原 EF Migration 自动创建，DDL 现统一到 init_schema.sql 作为权威
 -- =========================================================================
 
--- 27. DormBilling（宿舍账单）
+-- 27. DormBilling（住宿账单）
 CREATE TABLE [dbo].[DormBilling] (
     [Id]               INT            IDENTITY(1,1) NOT NULL,
     [BillingMonth]     CHAR(7)        NOT NULL,  -- yyyy-MM
@@ -654,7 +654,7 @@ IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 3)
     VALUES (3, N'employee.employeecode', N'Personnel', N'工号', N'string', 2, 3, 1, N'公司内唯一标识', '2026-07-22');
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 4)
     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
-    VALUES (4, N'employee.dormcode', N'Personnel', N'宿舍房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
+    VALUES (4, N'employee.dormcode', N'Personnel', N'住宿房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
 IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
     VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');

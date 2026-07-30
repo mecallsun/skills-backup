@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DormManage.Shared.Models;
 
 /// <summary>
-/// 宿舍档案（v2.13.24 P0-2 修复：补齐 init_schema.sql 的 9 列 PDA 扫码抄表关键字段）
+/// 住宿档案（v2.13.24 P0-2 修复：补齐 init_schema.sql 的 9 列 PDA 扫码抄表关键字段）
 ///
 /// 与 init_schema.sql 的 [Dorm] 表 1:1 对齐（主键 DormId + 25 列）。
 /// </summary>
 [Table("Dorm")]
 public class Dorm : BaseEntity
 {
-    /// <summary>宿舍代码</summary>
+    /// <summary>住宿代码</summary>
     [Required]
     [MaxLength(32)]
     public string DormCode { get; set; } = string.Empty;
@@ -30,11 +30,11 @@ public class Dorm : BaseEntity
     [MaxLength(16)]
     public string RoomNo { get; set; } = string.Empty;
 
-    /// <summary>宿舍地址（NVARCHAR(128)）— PDA 扫码展示完整地址</summary>
+    /// <summary>住宿地址（NVARCHAR(128)）— PDA 扫码展示完整地址</summary>
     [MaxLength(128)]
     public string DormAddress { get; set; } = string.Empty;
 
-    /// <summary>宿舍类型（NVARCHAR(16)）— 单人/双人/多人</summary>
+    /// <summary>住宿类型（NVARCHAR(16)）— 单人/双人/多人</summary>
     [MaxLength(16)]
     public string DormType { get; set; } = string.Empty;
 
@@ -74,7 +74,7 @@ public class Dorm : BaseEntity
     [MaxLength(200)]
     public string? AddressText { get; set; }
 
-    /// <summary>宿舍容量</summary>
+    /// <summary>住宿容量</summary>
     public int Capacity { get; set; }
 
     /// <summary>性别：1=男 2=女 0=不限</summary>

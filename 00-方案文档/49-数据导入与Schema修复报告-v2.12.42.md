@@ -10,7 +10,7 @@
 ## 1. 背景
 
 测试数据库（192.168.1.237 / WaterMeterDB）经过多次历史导入，存在以下严重问题：
-- 数据来源：`行政宿舍资料/员工宿舍明细表.xlsx`（906 条员工 + 140 个宿舍 + 405 条入住明细）
+- 数据来源：`行政住宿资料/员工住宿明细表.xlsx`（906 条员工 + 140 个住宿 + 405 条入住明细）
 - 之前导入脚本读取 Excel 列错位，导致关联引用全部失效
 - 数据库 Schema 与 EF Core 模型严重不一致
 
@@ -34,8 +34,8 @@
 **修复**：导入 8 个部门（生产部 / 研发部 / 人资行政部 / 采购部 / 销售部 / 董秘办 / 审计部 / 其他）
 
 ### BUG #3: Dorm 表数据严重不足 ✅ 已修复
-**症状**：Dorm 表只有 5 条记录（D-301~D-402），但 Excel 中有 140 个宿舍 → 入住人数统计严重不准
-**修复**：清空后按"宿舍档案"sheet 导入 140 条（A栋 1-6F × 18房 + B栋 1-6F × 7房）
+**症状**：Dorm 表只有 5 条记录（D-301~D-402），但 Excel 中有 140 个住宿 → 入住人数统计严重不准
+**修复**：清空后按"住宿档案"sheet 导入 140 条（A栋 1-6F × 18房 + B栋 1-6F × 7房）
 
 ### BUG #4: SysEmployee FK 全部为 NULL ✅ 已修复
 **症状**：888 条 SysEmployee 中 DepartmentId/TeamId/EmployeeTypeId 全为 NULL → 关联引用失效
@@ -88,7 +88,7 @@
 | Department | 0 | 8 | Excel "部门"sheet |
 | Building | 0 | 2 | A栋/B栋 |
 | Floor | 0 | 6 | 1F-6F |
-| Address | 0 | 2 | A栋宿舍/B栋宿舍 |
+| Address | 0 | 2 | A栋住宿/B栋住宿 |
 | Team | 9 | 11 | Excel "员工班组" + 新增 J/K |
 | AttendanceType | 6 | 6 | 已有种子 |
 | EmployeeType | 5 | 5 | 已有种子 |
@@ -100,7 +100,7 @@
 
 | 表 | 之前 | 现在 | 来源 |
 |----|------|------|------|
-| Dorm | 5 | 140 | Excel "宿舍档案"sheet |
+| Dorm | 5 | 140 | Excel "住宿档案"sheet |
 | SysEmployee | 888（含大量 NULL FK） | 906 | Excel "花名册"sheet |
 | DormBooking | 189（无房号） | 337 | Excel "6月"+ "入住明细"sheet |
 
@@ -125,8 +125,8 @@
 - 默认：741 / A班：29 / B班：26 / C班：36 / D班：16
 - E班：22 / F班：27 / H班：1 / J班：7 / K班：1
 
-**宿舍入住**：
-- 总宿舍：140 / 已入住：135 / 在宿总人数：337
+**住宿入住**：
+- 总住宿：140 / 已入住：135 / 在宿总人数：337
 - 入住率：94.5%
 
 ---
@@ -190,7 +190,7 @@ LEFT JOIN EmploymentStatus es ON es.Id = e.EmploymentStatusId
 LEFT JOIN ResidenceStatus rs ON rs.Id = e.ResidenceStatusId;
 ```
 
-### 5.2 宿舍详情（DormService.GetDetailAsync）
+### 5.2 住宿详情（DormService.GetDetailAsync）
 ```sql
 SELECT d.DormCode, d.Capacity, d.Gender,
     b.Name AS BuildingName,
@@ -232,6 +232,6 @@ LEFT JOIN Address a ON a.Id = d.AddressId;
 - [x] 测试数据库连接正常（192.168.1.237 / WaterMeterDB）
 - [x] 8 个 BUG 全部修复
 - [x] 906 条员工全部正确导入，FK 关联引用完整
-- [x] 140 个宿舍档案完整，容量/楼栋/楼层/地址/床位号字段齐全
+- [x] 140 个住宿档案完整，容量/楼栋/楼层/地址/床位号字段齐全
 - [x] 337 条入住明细全部有效（无超员、无无效 FK）
 - [x] 关联引用查询全部通过（PersonnelService / DormService / BookingService 模拟查询）

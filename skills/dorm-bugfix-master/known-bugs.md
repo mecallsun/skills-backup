@@ -9,7 +9,7 @@
 ## 案例 1：v2.13.187 隐私字段 Dorms 接线缺失
 
 **症状**：
-> 在隐私字段管理清单中勾选了「宿舍档案」的「容量」「在住人数」字段；未授权角色仍能看到这些字段。
+> 在隐私字段管理清单中勾选了「住宿档案」的「容量」「在住人数」字段；未授权角色仍能看到这些字段。
 
 **根因**：v2.13.180 扩展了 21 个隐私字段到 `SysFieldPermission` 表，但**只 seed 了 DB 数据，没有 UI 接线**。Dorms/Index.cshtml 和 Dorms/Details.cshtml 5 处缺 `IsFieldHiddenAsync` 调用。
 

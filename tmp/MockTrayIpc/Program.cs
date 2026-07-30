@@ -7,7 +7,7 @@
 //   --port <int>        默认 5099
 //
 // 用法示例：
-//   MockTrayIpc --regStatus 1 --regDate 2027-12-31 --ltdName "广东金戈新材料股份有限公司"
+//   MockTrayIpc --regStatus 1 --regDate 2027-12-31 --ltdName "广东金智新材料股份有限公司"
 //   MockTrayIpc --regStatus -1                    （未注册试用）
 //   MockTrayIpc --regStatus 2 --regDate 2025-01-01 --ltdName "X"  （已过期）
 //   MockTrayIpc --regStatus 3 --cdkey "INVALID_CDKEY_HERE"          （校验失败）

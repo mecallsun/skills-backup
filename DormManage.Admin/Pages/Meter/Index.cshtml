@@ -233,14 +233,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- 区块 1：基本信息（宿舍 + 月份 + 抄表员） -->
+                <!-- 区块 1：基本信息（住宿 + 月份 + 抄表员） -->
                 <div class="form-section">
                     <div class="form-section-title">基本信息</div>
                     <div class="row g-2">
                         <div class="col-md-4 form-field">
-                            <label class="form-label">宿舍<span class="required">*</span></label>
+                            <label class="form-label">住宿<span class="required">*</span></label>
                             <select id="me_dorm" class="form-select">
-                                <option value="">请选择宿舍</option>
+                                <option value="">请选择住宿</option>
                                 @foreach (var code in Model.DormCodes)
                                 {
                                     <option value="@code">@code</option>
@@ -315,7 +315,7 @@
                 <!-- 区块 4：用量预览（实时计算） -->
                 <div id="me_usagePreview" class="alert alert-light border mt-2 mb-0 py-2" style="font-size: 0.85rem;">
                     <strong><i class="bi bi-calculator"></i> 本月用量预览</strong>
-                    <p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>
+                    <p class="text-muted small mb-0 mt-1">请选择住宿与月份，并录入读数</p>
                 </div>
             </div>
             <div class="modal-footer py-2">
@@ -338,7 +338,7 @@
                 <div class="row g-3">
                     <div class="col-md-6">
                         <dl class="mb-0">
-                            <dt class="text-muted small">宿舍号</dt>
+                            <dt class="text-muted small">住宿号</dt>
                             <dd class="fw-bold" id="viewDormCode">-</dd>
                         </dl>
                     </div>
@@ -453,7 +453,7 @@ function showManualEntryModal() {
     onMeterReading();
 }
 
-// 当宿舍/月份变更时，加载上月读数 + 检测已存在记录
+// 当住宿/月份变更时，加载上月读数 + 检测已存在记录
 function onMeDormMonthChange() {
     var dormCode = document.getElementById('me_dorm').value;
     var readMonth = document.getElementById('me_month').value;
@@ -478,11 +478,11 @@ function onMeDormMonthChange() {
                 if (data.isEffective) {
                     // status=1/2 已生效 → 红色警告
                     dupWarn.className = 'alert alert-warning mt-2 mb-0 py-1';
-                    dupWarn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ⚠️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。';
+                    dupWarn.innerHTML = '<i class="bi bi-exclamation-triangle"></i> ⚠️ 该住宿 <strong>' + readMonth + '</strong> 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。';
                 } else {
                     // status=0 占位 → 蓝色提示
                     dupWarn.className = 'alert alert-info mt-2 mb-0 py-1';
-                    dupWarn.innerHTML = '<i class="bi bi-info-circle"></i> ℹ️ 该宿舍 <strong>' + readMonth + '</strong> 已有【' + statusName + '】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。';
+                    dupWarn.innerHTML = '<i class="bi bi-info-circle"></i> ℹ️ 该住宿 <strong>' + readMonth + '</strong> 已有【' + statusName + '】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。';
                 }
                 dupWarn.style.display = 'block';
             } else {
@@ -547,7 +547,7 @@ function onMeterReading() {
             '<div class="col-4">电：<span class="fw-bold text-warning">' + electricUsage.toFixed(2) + ' 度</span></div></div>' +
             '<hr class="my-1"><div class="d-flex justify-content-between"><span class="fw-bold">合计</span><span class="fw-bold text-success">' + total.toFixed(2) + '</span></div>';
     } else {
-        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><p class="text-muted small mb-0 mt-1">请选择宿舍与月份，并录入读数</p>';
+        preview.innerHTML = '<strong><i class="bi bi-calculator"></i> 本月用量预览</strong><p class="text-muted small mb-0 mt-1">请选择住宿与月份，并录入读数</p>';
     }
 
     // 校验：禁用提交按钮如果任一表读数 < 上月
@@ -606,7 +606,7 @@ async function meSubmit() {
     var electric = document.getElementById('me_electric').value;
     var remark = document.getElementById('me_remark').value;
 
-    if (!dormCode) { alert('请选择宿舍'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
+    if (!dormCode) { alert('请选择住宿'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
     if (!readMonth) { alert('请选择抄表月份'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
     if (!cold || !hot || !electric) { alert('请录入三表读数'); submitBtn.disabled = false; submitBtn.innerHTML = originalHtml; return; }
 
@@ -746,7 +746,7 @@ async function deleteRecord(id) {
     }
 }
 
-// 绑定宿舍/月份变更事件
+// 绑定住宿/月份变更事件
 document.addEventListener('DOMContentLoaded', function() {
     var dormEl = document.getElementById('me_dorm');
     var monthEl = document.getElementById('me_month');

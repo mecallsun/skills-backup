@@ -10,7 +10,7 @@ namespace DormManage.Api.HostedServices;
 /// <remarks>
 /// 业务规则（用户原话）：
 /// "对智能抄表页面的数据表，进行每天0:01检查智能抄表列表的数据表记录中，
-///  是否每个房号（依据宿舍档案）至少有一条当前月份（服务运行主机时间为参照）
+///  是否每个房号（依据住宿档案）至少有一条当前月份（服务运行主机时间为参照）
 ///  的记录数据，如果有当月的数据记录则不处理，如果该记号当前月份没有当前月份的
 ///  数据记录，则新增一条当前日期有该房号的空数据记录（各表项数据为0）"
 ///
@@ -129,7 +129,7 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
             return new MonthlyAutoFillResult { ReadMonth = readMonth, Success = false, Error = "数据库不可达" };
         }
 
-        // Step 1: 取所有启用的宿舍房号（Dorm.IsActive=true — 锁定约束延伸）
+        // Step 1: 取所有启用的住宿房号（Dorm.IsActive=true — 锁定约束延伸）
         //   DormId 列映射 BaseEntity.Id，所以 C# 属性是 .Id（不能直接 .DormId）
         var activeDorms = await db.Dorms
             .AsNoTracking()
@@ -139,7 +139,7 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
 
         if (activeDorms.Count == 0)
         {
-            logger.LogInformation("[Meter占位自动补全] 无启用宿舍，跳过");
+            logger.LogInformation("[Meter占位自动补全] 无启用住宿，跳过");
             return new MonthlyAutoFillResult { ReadMonth = readMonth, Success = true, ActiveDormCount = 0, InsertedCount = 0 };
         }
 
@@ -155,7 +155,7 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
 
         var existingSet = new HashSet<string>(existingDormCodes, StringComparer.OrdinalIgnoreCase);
 
-        // Step 3: 差集 = 启用宿舍 - 已存在当月记录
+        // Step 3: 差集 = 启用住宿 - 已存在当月记录
         var missingDorms = activeDorms
             .Where(d => !existingSet.Contains(d.DormCode))
             .ToList();
@@ -163,7 +163,7 @@ public class MeterMonthlyAutoFillHostedService : BackgroundService
         if (missingDorms.Count == 0)
         {
             logger.LogInformation(
-                "[Meter占位自动补全] ✓ {ReadMonth} 全部 {Total} 间启用宿舍已有记录，无需补全",
+                "[Meter占位自动补全] ✓ {ReadMonth} 全部 {Total} 间启用住宿已有记录，无需补全",
                 readMonth, activeDorms.Count);
             return new MonthlyAutoFillResult
             {

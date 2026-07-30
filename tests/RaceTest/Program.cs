@@ -9,7 +9,7 @@ using DormManage.Shared.Services;
 var conn = args.Length > 0 ? args[0]
     : "Server=192.168.1.237;Database=WaterMeterDB;UID=__DB_USER__;PWD=__DB_PASSWORD__;TrustServerCertificate=True;";
 int n = args.Length > 1 ? int.Parse(args[1]) : 8;   // 并发请求数
-int cap = args.Length > 2 ? int.Parse(args[2]) : 1; // 宿舍容量
+int cap = args.Length > 2 ? int.Parse(args[2]) : 1; // 住宿容量
 
 DbContextOptions<DormDbContext> BuildOptions() =>
     new DbContextOptionsBuilder<DormDbContext>()

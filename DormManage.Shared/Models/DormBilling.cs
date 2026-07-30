@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace DormManage.Shared.Models;
 
 /// <summary>
-/// 宿舍月度费用账单
+/// 住宿月度费用账单
 /// </summary>
 [Table("DormBilling")]
 public class DormBilling
@@ -15,14 +15,14 @@ public class DormBilling
     public int Id { get; set; }
 
     /// <summary>
-    /// 宿舍号
+    /// 住宿号
     /// </summary>
     [Required]
     [MaxLength(20)]
     public string DormCode { get; set; } = string.Empty;
 
     /// <summary>
-    /// 宿舍ID（冗余）
+    /// 住宿ID（冗余）
     /// </summary>
     public int DormId { get; set; }
 

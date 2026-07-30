@@ -7,7 +7,7 @@ namespace DormManage.Shared.Models;
 /// 设备档案 — v2.13.120 新增
 ///
 /// 与 Dorm 1:1 关系（DormId FK UNIQUE）：
-/// - 每间宿舍只有一套水/电表（电表 1 个 + 冷水表 1 个 + 热水表 1 个）
+/// - 每间住宿只有一套水/电表（电表 1 个 + 冷水表 1 个 + 热水表 1 个）
 /// - Dorm 删除时级联清理 DormMeter
 ///
 /// 业务用途：
@@ -46,7 +46,7 @@ public class DormMeter : BaseEntity
     [Column("Remark")]
     public string? Remark { get; set; }
 
-    /// <summary>导航属性：关联的宿舍档案</summary>
+    /// <summary>导航属性：关联的住宿档案</summary>
     [ForeignKey(nameof(DormId))]
     public Dorm? Dorm { get; set; }
 }

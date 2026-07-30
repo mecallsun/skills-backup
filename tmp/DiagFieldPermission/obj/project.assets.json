@@ -667,11 +667,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldPermission\\DiagFieldPermission.csproj",
+      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldPermission\\DiagFieldPermission.csproj",
       "projectName": "DiagFieldPermission",
-      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldPermission\\DiagFieldPermission.csproj",
+      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldPermission\\DiagFieldPermission.csproj",
       "packagesPath": "C:\\Users\\Mecall\\.nuget\\packages\\",
-      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldPermission\\obj\\",
+      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldPermission\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Mecall\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>员工分摊 - 金戈宿舍管理系统</title>
+    <title>员工分摊 - 金智住宿管理系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <style>
@@ -167,7 +167,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -200,7 +200,7 @@
 
         <!-- 提示框 -->
         <div class="alert alert-info mb-3" style="border-radius:8px;">
-            <i class="bi bi-info-circle"></i> <strong>v2.11.2 计算规则</strong>：员工冷/热/电分摊 = (<strong>宿舍月账单 ÷ 当月天数</strong>) × <strong>该员工当月入住天数</strong> ÷ <strong>同宿舍总入住人天数</strong>。
+            <i class="bi bi-info-circle"></i> <strong>v2.11.2 计算规则</strong>：员工冷/热/电分摊 = (<strong>住宿月账单 ÷ 当月天数</strong>) × <strong>该员工当月入住天数</strong> ÷ <strong>同住宿总入住人天数</strong>。
             空床位不参与分摊（按人天数加权）。<strong>调宿人员</strong>按每个房号入住记录的每段入住分别生成对应条数的记录，按房号汇总。
         </div>
 
@@ -238,7 +238,7 @@
                         <option value="">全部</option>
                     </select>
                 </div>
-                <!-- ⑥ 宿舍房号：combobox 模糊匹配 -->
+                <!-- ⑥ 住宿房号：combobox 模糊匹配 -->
                 <div class="filter-item flex-grow-1">
                     <label>房号</label>
                     <input list="dormList" id="dormCodeKw" class="form-control" placeholder="如 D-301">
@@ -290,9 +290,9 @@
         // v2.11.4 修改：计费月份默认=当月
         const CURR_MONTH = '2026-07';
 
-        // v2.12.10 修改：初始化宿舍房号 datalist + 部门/员工类型/在职状态下拉
+        // v2.12.10 修改：初始化住宿房号 datalist + 部门/员工类型/在职状态下拉
         (function initDatalist() {
-            // 1) 宿舍房号 datalist（候选列表）
+            // 1) 住宿房号 datalist（候选列表）
             const dl = document.getElementById('dormList');
             if (dl) DORMS.forEach(d => { dl.innerHTML += `<option value="${d.dormCode}">`; });
 
@@ -438,7 +438,7 @@
                 });
             }
 
-            // 宿舍房号模糊匹配（combobox）
+            // 住宿房号模糊匹配（combobox）
             if (dormKw) {
                 data = data.filter(b => b.dormCode && b.dormCode.toUpperCase().includes(dormKw));
             }
@@ -488,7 +488,7 @@
             renderRows: (items, total, start) => {
                 const tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = `<tr><td colspan="17" class="text-center text-muted py-4">该月份暂无分摊数据。请先生成宿舍账单，再点击「生成」</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="17" class="text-center text-muted py-4">该月份暂无分摊数据。请先生成住宿账单，再点击「生成」</td></tr>`;
                     return;
                 }
                 // v2.11.21 修订：账单段类型从 EMPLOYEE_BILL_SEGMENT_TYPE 字典读取（单一数据源）

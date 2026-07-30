@@ -296,7 +296,7 @@
                                 </div>
                                 <p class="text-muted small mb-3">
                                     <i class="bi bi-info-circle"></i>
-                                    勾选后，您在各列表模块（人员/宿舍/办理/抄表/账单）的筛选条件将保存到云端数据库。
+                                    勾选后，您在各列表模块（人员/住宿/办理/抄表/账单）的筛选条件将保存到云端数据库。
                                 </p>
                                 <div id="cacheListArea">
                                     @if (Model.CachedModules != null && Model.CachedModules.Any())
@@ -466,11 +466,11 @@
         return module switch
         {
             "personnel" => "人员清单",
-            "dorms" => "宿舍档案",
+            "dorms" => "住宿档案",
             "booking" => "办理登记",
             "meter" => "智能抄表",
             "billingStandard" => "费用标准",
-            "dormBilling" => "宿舍账单",
+            "dormBilling" => "住宿账单",
             "employeeBilling" => "员工账单",
             _ => module
         };

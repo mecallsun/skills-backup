@@ -14,7 +14,7 @@
 
 | 层级 | 控制粒度 | 实现位置 | 用户体验 |
 |------|---------|---------|---------|
-| **L1 菜单** | 主菜单 Tab（首页/办理登记/宿舍管理/...） | `MenuViewComponent.cs` | 无权限的 Tab **直接不渲染** |
+| **L1 菜单** | 主菜单 Tab（首页/办理登记/住宿管理/...） | `MenuViewComponent.cs` | 无权限的 Tab **直接不渲染** |
 | **L2 页面** | Razor Pages 路由（/Booking/*, /Dorms/*, ...） | `PagePermissionFilter.cs` | 无权限访问 URL → **重定向登录页 + denied=1** |
 | **L3 按钮/操作** | PageAction 上的 PermissionCode + 视图内 HtmlHelper | `PageHeader` 组件 / Razor `Html.HasPermissionAsync` | 无权限按钮 **直接不渲染** 或显示「无操作权限」 |
 
@@ -145,7 +145,7 @@ bool HasPerm(string? code) => string.IsNullOrEmpty(code) || PermService.CurrentU
 |------|--------------|---------|
 | Booking/Index | 办理入住 → booking:checkin | 修复姓名关联 → booking:checkin |
 | Personnel/Index | 新增 → personnel:import | 导入 → personnel:import |
-| Dorms/Index | 新增宿舍 → dorm:create | — |
+| Dorms/Index | 新增住宿 → dorm:create | — |
 | Meter/Index | 新增记录 → meter:entry | 手动补录 → meter:entry / 批量导入 → meter:import |
 | BillingStandard/Index | 新增标准 → billing:edit | — |
 
@@ -190,7 +190,7 @@ JS 级联规则（`Settings/Index.cshtml#wirePermMatrixCascade` + `onPermCbChang
 | 角色 | SysRolePermission 记录数 | 可访问 Tab | 可用关键操作 |
 |------|-------------------------|------------|--------------|
 | **admin** | 18 (全部) | 10 | 全部 |
-| **finance** | 6 | 首页/费用标准/宿舍账单/员工账单/基础资料 | 仅查看（无新增/编辑/导入） |
+| **finance** | 6 | 首页/费用标准/住宿账单/员工账单/基础资料 | 仅查看（无新增/编辑/导入） |
 | **pda** | 4 | 首页/抄表记录/系统设置(PDA 版本) | meter:entry / meter:import |
 | **viewer** | 1 | 仅首页 | 无 |
 
@@ -228,8 +228,8 @@ SysPermission 18 行 / SysRolePermission 29 行（admin=18 / finance=6 / pda=4 /
 
 ### 8.2 finance 用户（仅账单相关）
 
-- [x] Tab 显示：首页 / 费用标准 / 宿舍账单 / 员工账单 / 基础资料（共 5 个）
-- [x] Tab 隐藏：办理登记 / 宿舍管理 / 人员清单 / 抄表记录 / 系统设置
+- [x] Tab 显示：首页 / 费用标准 / 住宿账单 / 员工账单 / 基础资料（共 5 个）
+- [x] Tab 隐藏：办理登记 / 住宿管理 / 人员清单 / 抄表记录 / 系统设置
 - [x] 直接访问 `/Booking` → 重定向 `/Account/Login?denied=1&from=/Booking`（带原因提示）
 - [x] PageAction 按钮（新增/编辑/导入）不显示
 

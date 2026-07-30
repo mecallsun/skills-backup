@@ -13,7 +13,7 @@
 > **核心目标**：**所有 650 条 PERSONNEL 记录全部具备 `employeeTypeId` / `departmentId` / `attendanceTypeId` FK 字段**，关联引用 `EMPLOYEE_TYPES` / `DEPARTMENTS` / `ATTENDANCE_TYPES` 基础资料主键
 > **关联文档**：
 > - `34c-mock-data-人员清单FK补全-v2.11.7b.md`（FK 字典扩展 → v2.11.7.CORRECT 已回退）
-> - `29-宿舍账单详细弹窗-v2.11.4.md` §2.4.2（FK 关联引用规则源头）
+> - `29-住宿账单详细弹窗-v2.11.4.md` §2.4.2（FK 关联引用规则源头）
 > - `33-基础资料模块-v2.11.4.md` §10（关联关系 BUGFIX 主章节）+ §11（v2.11.7.CORRECT 员工类型 FK 关联修正）
 
 ---

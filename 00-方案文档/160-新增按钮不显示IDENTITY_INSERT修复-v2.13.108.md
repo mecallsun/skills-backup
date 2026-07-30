@@ -216,7 +216,7 @@ Microsoft.Data.SqlClient.SqlException: Cannot insert explicit value for identity
 | v2.13.101 | 启动日志完整性验证 | ❌ 仍是 WARNING 级别，用户看不到 |
 | v2.13.102 | UI 完整性自检 banner + 一键修复 | ❌ 一键修复也调用相同 SQL，仍然失败 |
 | v2.13.106 | 三层权限防御（UI + PageModel + API） | ❌ 三层都正确，但底层 seed 缺失，三层都隐藏按钮 |
-| v2.13.107 | 宿舍档案班组列（无关） | — |
+| v2.13.107 | 住宿档案班组列（无关） | — |
 | **v2.13.108** | **本次：SQL Server IDENTITY_INSERT 终极修复 + 手动 SQL 兜底脚本** | ✅ **真正修复** |
 
 ---

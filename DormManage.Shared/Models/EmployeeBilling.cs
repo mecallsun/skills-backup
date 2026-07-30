@@ -35,7 +35,7 @@ public class EmployeeBilling
     public string EmployeeName { get; set; } = string.Empty;
 
     /// <summary>
-    /// 宿舍号（冗余）
+    /// 住宿号（冗余）
     /// </summary>
     [MaxLength(20)]
     public string? DormCode { get; set; }
@@ -83,7 +83,7 @@ public class EmployeeBilling
     public decimal TotalShareAmount { get; set; }
 
     /// <summary>
-    /// 关联的宿舍账单ID
+    /// 关联的住宿账单ID
     /// </summary>
     [ForeignKey(nameof(DormBilling))]
     public int DormBillId { get; set; }

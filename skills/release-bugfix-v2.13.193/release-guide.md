@@ -1,7 +1,7 @@
 # 发布同步完整指南
 
 > Skill: release-bugfix-v2.13.193  
-> 适用项目：金戈宿舍管理系统（DormManage）  
+> 适用项目：金智住宿管理系统（DormManage）  
 > 创建日期：2026-07-27
 
 ---

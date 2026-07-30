@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""同步 Excel 中的宿舍到远程 Dorm 表"""
+"""同步 Excel 中的住宿到远程 Dorm 表"""
 
 import pyodbc
 from openpyxl import load_workbook
@@ -11,11 +11,11 @@ REMOTE_CONN = (
     'UID=__DB_USER__;'
     'PWD=__DB_PASSWORD__;'
 )
-EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\行政宿舍资料\员工宿舍明细表.xlsx'
+EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\行政住宿资料\员工住宿明细表.xlsx'
 
 
 def main():
-    # 1. 提取 Excel 中的所有宿舍
+    # 1. 提取 Excel 中的所有住宿
     wb = load_workbook(EXCEL_PATH, data_only=True)
     ws = wb['6月 ']
     dorm_codes = set()
@@ -25,7 +25,7 @@ def main():
             code = code.strip()
             if code:
                 dorm_codes.add(code)
-    print(f'从 6月 工作表提取的宿舍: {sorted(dorm_codes)}')
+    print(f'从 6月 工作表提取的住宿: {sorted(dorm_codes)}')
 
     # 2. 连接远程数据库
     conn = pyodbc.connect(REMOTE_CONN, timeout=30)
@@ -37,9 +37,9 @@ def main():
     existing = {r[0] for r in cursor.fetchall()}
     print(f'远程 Dorm 字典: {sorted(existing)}')
 
-    # 4. 同步：补充缺失的宿舍
+    # 4. 同步：补充缺失的住宿
     missing = dorm_codes - existing
-    print(f'\n缺失的宿舍: {sorted(missing)}')
+    print(f'\n缺失的住宿: {sorted(missing)}')
 
     if missing:
         print('\n正在补充...')

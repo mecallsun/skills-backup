@@ -49,15 +49,15 @@ if (tbodyMatch) {
     rows.slice(0, 10).forEach((row, i) => {
         const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) || [];
         const cleaned = cells.map(c => c.replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' '));
-        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 宿舍=${cleaned[10]}`);
+        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 住宿=${cleaned[10]}`);
     });
 }
 
-// 宿舍筛选下拉
+// 住宿筛选下拉
 const fDormOpts = output.match(/<select[^>]*id="fDorm"[^>]*>([\s\S]*?)<\/select>/);
 if (fDormOpts) {
     const opts = fDormOpts[1].match(/<option[^>]*value="([^"]+)">([^<]+)<\/option>/g) || [];
-    console.log(`\n--- 宿舍（房号）下拉选项数：${opts.length}（应含"全部"+ 200 房号）---`);
+    console.log(`\n--- 住宿（房号）下拉选项数：${opts.length}（应含"全部"+ 200 房号）---`);
 }
 
 console.log('\n' + '='.repeat(70));

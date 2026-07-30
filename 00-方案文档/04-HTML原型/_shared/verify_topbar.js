@@ -41,14 +41,14 @@ for (const page of PAGES) {
 
     // 检查关键元素
     const hasBrandIcon = /class="bi bi-droplet-half brand-icon"/.test(topBarHtml);
-    const hasBrandText = /class="brand-text">金戈宿舍管理系统</.test(topBarHtml);
+    const hasBrandText = /class="brand-text">金智住宿管理系统</.test(topBarHtml);
     const hasBrandVersion = /class="brand-version">v2\.12\./.test(topBarHtml);
     const hasUserPill = /class="user-pill"/.test(topBarHtml);
     const hasBtnExit = /class="btn-exit"/.test(topBarHtml);
     const hasAdminLabel = />管理员</.test(topBarHtml);
 
     // 提取品牌名称位置（应该在左侧 brand-icon 之后）
-    const brandTextPos = topBarHtml.indexOf('金戈宿舍管理系统');
+    const brandTextPos = topBarHtml.indexOf('金智住宿管理系统');
     const exitBtnPos = topBarHtml.indexOf('btn-exit');
 
     const allOk = hasBrandIcon && hasBrandText && hasBrandVersion && hasUserPill && hasBtnExit && hasAdminLabel;

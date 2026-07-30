@@ -17,7 +17,7 @@
 >    - 删除「清理」按钮及其功能
 >    - 保留「取消注册」按钮
 > 2. 修改未注册状态下的试用次数记录及处理：
->    - 在试用次数范围内时，限制 住宿登记/宿舍档案/人员清单 三个模块
+>    - 在试用次数范围内时，限制 住宿登记/住宿档案/人员清单 三个模块
 >    - 各模块最多 5 条记录
 >    - 任一模块超出记录数量时，提示「试用受限请联系信息科！」
 > 3. 统一文档到最新版 + 清理过时描述
@@ -128,7 +128,7 @@ if (!trialCheck.IsAllowed)
 
 // DormsController.CreateDorm (line 168)
 var trialCheck = LicenseGuard.CheckTrialRecordLimit(
-    "宿舍档案",
+    "住宿档案",
     await _db.Dorms.CountAsync());
 if (!trialCheck.IsAllowed)
     return ApiResponse<DormDto>.Fail(LicenseGuard.TrialLimitErrorCode, trialCheck.Message);
@@ -153,7 +153,7 @@ if (!trialCheck.IsAllowed)
 | 3 | 清除注册 (clear) | 已清除 | ✅ 已清除 | ✅ |
 | 4 | 等待 32s LicenseGuard 缓存刷新 | IPC 拉到 RegInt=-1 | ✅ 拉到 | ✅ |
 | 5 | 试用模式 - POST bookings (345 > 5) | TRIAL_LIMIT_EXCEEDED | ✅ `当前『住宿登记』已有 345 条` | ✅ |
-| 6 | 试用模式 - POST dorms (140 > 5) | TRIAL_LIMIT_EXCEEDED | ✅ `当前『宿舍档案』已有 140 条` | ✅ |
+| 6 | 试用模式 - POST dorms (140 > 5) | TRIAL_LIMIT_EXCEEDED | ✅ `当前『住宿档案』已有 140 条` | ✅ |
 | 7 | 试用模式 - POST personnel (906 > 5) | 需 login (X-User-Name) 看到 RBAC | ✅ 先 PERMISSION_DENIED（顺序正确） | ✅ |
 | 8 | 试用模式 - POST meter (非 3 模块) | LICENSE_READONLY 拦截 | ✅ HTTP 403 LICENSE_READONLY | ✅ |
 | 9 | 重新注册 | RegInt=1 🔓 | 🎉 注册成功 | ✅ |
@@ -191,7 +191,7 @@ if (!trialCheck.IsAllowed)
 | 2 | `DormManage.Shared/Security/LicenseGuard.cs` | 新增 `IsTrialMode()` + `CheckTrialRecordLimit()` + 常量 `TrialMaxRecords`/`TrialLimitMessage`/`TrialLimitErrorCode` |
 | 3 | `DormManage.Api/Middleware/LicenseReadOnlyMiddleware.cs` | 新增 `IsApiTrialModuleAllowed()` 试用放行 3 模块 POST + InvokeAsync 增加 trial 流程分支 |
 | 4 | `DormManage.Api/Controllers/Booking/BookingController.cs` | CheckIn 入口加 `CheckTrialRecordLimit("住宿登记", count)` |
-| 5 | `DormManage.Api/Controllers/Dorms/DormsController.cs` | CreateDorm 入口加 `CheckTrialRecordLimit("宿舍档案", count)` + 注入 LicenseGuard using |
+| 5 | `DormManage.Api/Controllers/Dorms/DormsController.cs` | CreateDorm 入口加 `CheckTrialRecordLimit("住宿档案", count)` + 注入 LicenseGuard using |
 | 6 | `DormManage.Api/Controllers/Personnel/PersonnelController.cs` | Create 入口加 `CheckTrialRecordLimit("人员清单", count)` + 注入 DormDbContext + using |
 
 **编译**：0 error / 4 warning（与 v2.13.148 基线持平）

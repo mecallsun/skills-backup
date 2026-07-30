@@ -99,7 +99,7 @@ public sealed class SettingsForm : Form
 
     private void InitializeFormProperties()
     {
-        Text = "金戈宿舍管理系统 — 系统设置";
+        Text = "金智住宿管理系统 — 系统设置";
         Size = new Size(680, 620);
         MinimumSize = new Size(620, 560);
         StartPosition = FormStartPosition.CenterParent;

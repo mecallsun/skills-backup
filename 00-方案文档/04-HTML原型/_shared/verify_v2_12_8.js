@@ -18,7 +18,7 @@ if (tbodyMatch) {
     rows.slice(0, 5).forEach((row, i) => {
         const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) || [];
         const cleaned = cells.map(c => c.replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' '));
-        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 宿舍=${cleaned[10]}`);
+        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 住宿=${cleaned[10]}`);
     });
 }
 
@@ -27,9 +27,9 @@ const hasResideCol = output.includes('住宿状态');
 console.log(`\n--- 残留检查 ---`);
 console.log(`  "住宿状态"列/筛选：${hasResideCol ? '❌ 仍存在' : '✅ 已删除'}`);
 
-// 验证宿舍房号列保留
-const hasDormCol = output.includes('宿舍（房号）');
-console.log(`  "宿舍（房号）"列：${hasDormCol ? '✅ 保留' : '❌ 缺失'}`);
+// 验证住宿房号列保留
+const hasDormCol = output.includes('住宿（房号）');
+console.log(`  "住宿（房号）"列：${hasDormCol ? '✅ 保留' : '❌ 缺失'}`);
 
 // 统计表头列数
 const theadMatch = output.match(/<thead[^>]*>([\s\S]*?)<\/thead>/);
@@ -43,11 +43,11 @@ if (theadMatch) {
     console.log(`  总列数：${headers.length}`);
 }
 
-// 宿舍筛选下拉
+// 住宿筛选下拉
 const fDormOpts = output.match(/<select[^>]*id="fDorm"[^>]*>([\s\S]*?)<\/select>/);
 if (fDormOpts) {
     const opts = fDormOpts[1].match(/<option[^>]*value="([^"]+)">([^<]+)<\/option>/g) || [];
-    console.log(`\n--- 宿舍（房号）下拉：${opts.length} 个选项 ---`);
+    console.log(`\n--- 住宿（房号）下拉：${opts.length} 个选项 ---`);
 }
 
 console.log('\n' + '='.repeat(70));

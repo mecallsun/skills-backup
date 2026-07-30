@@ -143,7 +143,7 @@ def main():
                 )
             """)
             cursor.execute("SET IDENTITY_INSERT dbo.Address ON")
-            for i, text in enumerate(['A栋宿舍', 'B栋宿舍'], start=1):
+            for i, text in enumerate(['A栋住宿', 'B栋住宿'], start=1):
                 cursor.execute("""
                     INSERT INTO dbo.Address (Id, AddressText, SortOrder, IsActive)
                     VALUES (?, ?, ?, 1)
@@ -244,13 +244,13 @@ def main():
 
         # 数据迁移：Dorm.DormAddress → Dorm.AddressId/AddressText
         print_log('  迁移 DormAddress → AddressId/AddressText...', 'INFO')
-        # 当前 AddressText 都是 A栋宿舍/B栋宿舍（基于 BuildingName）
+        # 当前 AddressText 都是 A栋住宿/B栋住宿（基于 BuildingName）
         cursor.execute("""
             UPDATE dbo.Dorm
-            SET AddressText = BuildingName + N'宿舍',
+            SET AddressText = BuildingName + N'住宿',
                 AddressId = CASE
-                    WHEN BuildingName = N'A栋' THEN (SELECT Id FROM Address WHERE AddressText = N'A栋宿舍')
-                    WHEN BuildingName = N'B栋' THEN (SELECT Id FROM Address WHERE AddressText = N'B栋宿舍')
+                    WHEN BuildingName = N'A栋' THEN (SELECT Id FROM Address WHERE AddressText = N'A栋住宿')
+                    WHEN BuildingName = N'B栋' THEN (SELECT Id FROM Address WHERE AddressText = N'B栋住宿')
                     ELSE 1
                 END
             WHERE AddressId IS NULL

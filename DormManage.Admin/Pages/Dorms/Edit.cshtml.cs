@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging; // v2.13.204: ILogger.Info / Warn 扩展方�
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
-/// 宿舍编辑页面模型
+/// 住宿编辑页面模型
 /// v2.13.88 RBAC：编辑页只读模式（无 dorm:edit 权限时 OnPost 拒绝 + UI 全字段 readonly）
 /// </summary>
 public class EditModel : PageModel
@@ -90,7 +90,7 @@ public class EditModel : PageModel
         // v2.13.204: 注册过期时记录日志（首次访问检测到过期时记录）
         if (DormManage.Shared.Security.LicenseGuard.IsReadOnly())
         {
-            _log.LogInformation($"[LICENSE] 检测到注册过期/无效，用户 {HttpContext.GetCurrentUserId()} 访问宿舍编辑（{id}）进入只读模式");
+            _log.LogInformation($"[LICENSE] 检测到注册过期/无效，用户 {HttpContext.GetCurrentUserId()} 访问住宿编辑（{id}）进入只读模式");
         }
 
         // v2.13.82 业务约束：当前在宿人数 > 0 时锁定 IsActive
@@ -141,14 +141,14 @@ public class EditModel : PageModel
         // 此处保留 LicenseGuard.IsReadOnly() 安全检查作为服务端最后防线，但不显示注册提示
         if (DormManage.Shared.Security.LicenseGuard.IsReadOnly())
         {
-            _log.LogWarning($"[LICENSE] 用户 {HttpContext.GetCurrentUserId()} 尝试保存宿舍（{Dorm.Id}），但当前为只读模式（注册过期/未注册）");
+            _log.LogWarning($"[LICENSE] 用户 {HttpContext.GetCurrentUserId()} 尝试保存住宿（{Dorm.Id}），但当前为只读模式（注册过期/未注册）");
             return RedirectToPage("/Dorms/Details", new { id = Dorm.Id });
         }
 
         // v2.13.88 RBAC 第二层防御：无 dorm:edit 权限时直接拒绝提交
         if (!await _perm.HasPermissionCodeAsync(HttpContext.GetCurrentUserId(), "dorm:edit"))
         {
-            TempData["ErrorMessage"] = "您没有「编辑宿舍」权限，无法保存修改";
+            TempData["ErrorMessage"] = "您没有「编辑住宿」权限，无法保存修改";
             return RedirectToPage("/Dorms/Details", new { id = Dorm.Id });
         }
 
@@ -178,7 +178,7 @@ public class EditModel : PageModel
         {
             IsActiveOriginal = dorm.IsActive;
             ModelState.AddModelError("Dorm.IsActive",
-                $"该宿舍当前在宿 {CurrentCount} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
+                $"该住宿当前在宿 {CurrentCount} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
             await LoadBasicsAsync();
             return Page();
         }
@@ -219,7 +219,7 @@ public class EditModel : PageModel
 }
 
 /// <summary>
-/// 宿舍编辑数据传输对象
+/// 住宿编辑数据传输对象
 /// </summary>
 public class DormEditDto
 {

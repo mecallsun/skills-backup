@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Api.Controllers.Billing;
 
 /// <summary>
-/// 费用管理 API 控制器（费用标准 + 宿舍账单 + 员工账单）
+/// 费用管理 API 控制器（费用标准 + 住宿账单 + 员工账单）
 /// v2.13.110 三层防御：API 层校验 billingstandard:add 权限（POST 创建/更新费用标准）
 /// </summary>
 [ApiController]
@@ -70,9 +70,9 @@ public class BillingController : ControllerBase
 
     #endregion
 
-    #region 宿舍账单
+    #region 住宿账单
 
-    /// <summary>查询宿舍账单列表</summary>
+    /// <summary>查询住宿账单列表</summary>
     [HttpGet("dorm-bills")]
     public async Task<ApiResponse<PagedResult<DormBilling>>> GetDormBills(
         [FromQuery] string? billingMonth,
@@ -84,7 +84,7 @@ public class BillingController : ControllerBase
         return ApiResponse<PagedResult<DormBilling>>.Ok(result);
     }
 
-    /// <summary>生成宿舍账单</summary>
+    /// <summary>生成住宿账单</summary>
     [HttpPost("dorm-bills/generate")]
     public async Task<ApiResponse<BillingGenerateResult>> GenerateDormBills([FromBody] GenerateRequest request)
     {
@@ -93,7 +93,7 @@ public class BillingController : ControllerBase
             $"生成完成：新增 {result.GeneratedCount} 条，更新 {result.UpdatedCount} 条，跳过 {result.SkippedCount} 条");
     }
 
-    /// <summary>发布宿舍账单</summary>
+    /// <summary>发布住宿账单</summary>
     [HttpPost("dorm-bills/publish")]
     public async Task<ApiResponse> PublishDormBills([FromBody] GenerateRequest request)
     {

@@ -53,7 +53,7 @@ public sealed class LicenseForm : Form
 
     private void InitializeComponent()
     {
-        this.Text = "软件注册授权 - 金戈宿舍管理系统";
+        this.Text = "软件注册授权 - 金智住宿管理系统";
         this.ClientSize = new Size(620, 360);
         this.FormBorderStyle = FormBorderStyle.FixedDialog;
         this.MaximizeBox = false;

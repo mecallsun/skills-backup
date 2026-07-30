@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-员工宿舍明细表导入工具 v2.12.42 — 全量同步版
+员工住宿明细表导入工具 v2.12.42 — 全量同步版
 
 修复 BUG 列表：
   BUG #1: 数据库缺失 ResidenceStatus 表，但 SysEmployee.ResidenceStatusId 引用了它
           → 所有"住宿状态"JOIN 查询会失败
   BUG #2: Department 表为空，但 SysEmployee.DepartmentId 引用了它
           → 人员清单部门筛选/显示全部失效
-  BUG #3: Dorm 表只有 5 条记录（D-301~D-402），但实际有 140 个宿舍
+  BUG #3: Dorm 表只有 5 条记录（D-301~D-402），但实际有 140 个住宿
           → 入住人数统计严重不准
   BUG #4: SysEmployee 已导入 888 条但所有 FK（DepartmentId/EmployeeTypeId/TeamId）都是 NULL
           → 关联引用失效，列表页面无法显示关联字典
@@ -20,7 +20,7 @@
   ④ AttendanceType（考勤班次）
   ⑤ EmployeeType（员工类型）
   ⑥ EmploymentStatus（在职状态）
-  ⑦ Dorm（宿舍档案 140 条）
+  ⑦ Dorm（住宿档案 140 条）
   ⑧ SysEmployee（员工花名册 906 条）
   ⑨ DormBooking（入住/退房明细）
 
@@ -43,7 +43,7 @@ REMOTE_CONN = (
     'UID=__DB_USER__;'
     'PWD=__DB_PASSWORD__;'
 )
-EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\行政宿舍资料\员工宿舍明细表.xlsx'
+EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\行政住宿资料\员工住宿明细表.xlsx'
 
 
 def print_log(msg, level='INFO'):
@@ -257,7 +257,7 @@ def ensure_teams(cursor):
 
 def reset_dorms(cursor):
     """BUG #3 修复：重置 Dorm 表（5 条 → 140 条）"""
-    print_log('===== 重置宿舍档案 =====', 'STEP')
+    print_log('===== 重置住宿档案 =====', 'STEP')
 
     # 检查是否有在宿人员或历史记录
     cursor.execute("SELECT COUNT(*) FROM DormBooking WHERE DormCode IN (SELECT DormCode FROM Dorm)")
@@ -269,9 +269,9 @@ def reset_dorms(cursor):
     cursor.execute('DELETE FROM Dorm')
     cursor.execute("DBCC CHECKIDENT('Dorm', RESEED, 0)")
 
-    # 从 Excel 读取宿舍档案
+    # 从 Excel 读取住宿档案
     wb = load_workbook(EXCEL_PATH, data_only=True)
-    ws = wb['宿舍档案']
+    ws = wb['住宿档案']
 
     dorms = []
     for r in range(2, ws.max_row + 1):
@@ -285,7 +285,7 @@ def reset_dorms(cursor):
             capacity = 2
         dorms.append((code, capacity))
 
-    print_log(f'Excel 宿舍档案: {len(dorms)} 个', 'INFO')
+    print_log(f'Excel 住宿档案: {len(dorms)} 个', 'INFO')
 
     # 解析楼栋/楼层
     def parse_building(code):
@@ -322,7 +322,7 @@ def reset_dorms(cursor):
         inserted += 1
 
     cursor.execute("SET IDENTITY_INSERT dbo.Dorm OFF")
-    print_log(f'宿舍档案导入完成: {inserted} 条', 'OK')
+    print_log(f'住宿档案导入完成: {inserted} 条', 'OK')
 
     # 返回 dorm_code → capacity 映射（用于入住时校验）
     return {code: cap for code, cap in dorms}
@@ -492,7 +492,7 @@ def import_employees(cursor, dept_map, team_map, att_map, et_map, es_map, rs_map
 
 def extract_bookings_with_dorm(ws):
     """从 6月 sheet 提取入住明细（含房号）
-    关键：6月 sheet 是嵌套结构——每个宿舍第一行带"序号+房号+入住人数"（可能无姓名），
+    关键：6月 sheet 是嵌套结构——每个住宿第一行带"序号+房号+入住人数"（可能无姓名），
     后续行只填员工姓名（共享房号）。
     例：
       R97: 序号=41, 房号=A305, 姓名=温梅玲
@@ -509,7 +509,7 @@ def extract_bookings_with_dorm(ws):
 
     for r in range(3, ws.max_row + 1):
         seq = safe_str(ws.cell(r, 1).value)        # 序号
-        dorm_code = safe_str(ws.cell(r, 2).value)  # 宿舍房号
+        dorm_code = safe_str(ws.cell(r, 2).value)  # 住宿房号
         name = safe_str(ws.cell(r, 5).value)       # 住宿员工姓名
         dept = safe_str(ws.cell(r, 7).value)       # 部门
         team = safe_str(ws.cell(r, 8).value)       # 班组/科
@@ -593,7 +593,7 @@ def import_bookings(cursor, employees, dorm_caps, rs_map):
     # 员工姓名 → ID 映射
     name_to_emp_id = {e['name']: e['_id'] for e in employees if '_id' in e}
 
-    # 已使用的宿舍集合
+    # 已使用的住宿集合
     valid_dorms = set(dorm_caps.keys())
 
     bed_assignments = {}  # {DormCode: set of used bed numbers}
@@ -618,7 +618,7 @@ def import_bookings(cursor, employees, dorm_caps, rs_map):
 
             dorm_code = bk['DormCode']
 
-            # 校验宿舍
+            # 校验住宿
             if dorm_code and dorm_code not in valid_dorms:
                 skipped_invalid_dorm += 1
                 continue
@@ -676,12 +676,12 @@ def import_bookings(cursor, employees, dorm_caps, rs_map):
             print_log(f'  入住 [{bk["EmployeeName"]}] 失败: {str(e)[:80]}', 'WARN')
 
     print_log(f'入住明细导入完成: {inserted_bk}/{len(bookings)}', 'OK')
-    print_log(f'  跳过: 无员工={skipped_no_emp}, 无日期={skipped_no_date}, 无效宿舍={skipped_invalid_dorm}', 'INFO')
+    print_log(f'  跳过: 无员工={skipped_no_emp}, 无日期={skipped_no_date}, 无效住宿={skipped_invalid_dorm}', 'INFO')
 
 
 def main():
     print_log('=========================================', 'STEP')
-    print_log('员工宿舍明细表全量导入 v2.12.42', 'STEP')
+    print_log('员工住宿明细表全量导入 v2.12.42', 'STEP')
     print_log('=========================================', 'STEP')
     print()
 
@@ -704,7 +704,7 @@ def main():
         ensure_teams(cursor)
         conn.commit()
 
-        # === 第4步：BUG #3 - 重置宿舍档案 ===
+        # === 第4步：BUG #3 - 重置住宿档案 ===
         reset_dorms(cursor)
         conn.commit()
 
@@ -717,7 +717,7 @@ def main():
         dorm_caps = get_dorm_capacity(cursor)
 
         print_log(f'字典就绪: 部门={len(dept_map)} 班组={len(team_map)} 考勤={len(att_map)} '
-                  f'员工类型={len(et_map)} 在职={len(es_map)} 住宿={len(rs_map)} 宿舍={len(dorm_caps)}', 'INFO')
+                  f'员工类型={len(et_map)} 在职={len(es_map)} 住宿={len(rs_map)} 住宿={len(dorm_caps)}', 'INFO')
 
         # === 第6步：BUG #4 - 导入员工花名册 ===
         employees = import_employees(cursor, dept_map, team_map, att_map, et_map, es_map, rs_map)
@@ -753,7 +753,7 @@ def main():
         print(f'    DormBooking: {bk_count} 条 (在宿 {staying}, 已退房 {checked_out})')
         print('=========================================')
 
-        # 宿舍入住分布（验证修复效果）
+        # 住宿入住分布（验证修复效果）
         cursor.execute("""
             SELECT d.DormCode, d.DormType, COUNT(b.BookingId) AS StayCount
             FROM dbo.Dorm d
@@ -762,7 +762,7 @@ def main():
             HAVING COUNT(b.BookingId) > 0
             ORDER BY StayCount DESC, d.DormCode
         """)
-        print('\n  宿舍入住分布（Top 20）:')
+        print('\n  住宿入住分布（Top 20）:')
         rows = cursor.fetchall()
         for r in rows[:20]:
             print(f'    {r.DormCode} ({r.DormType}): {r.StayCount} 人在宿')

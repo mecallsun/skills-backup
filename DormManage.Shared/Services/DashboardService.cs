@@ -20,7 +20,7 @@ namespace DormManage.Shared.Services;
 /// - 21-入住率最低TOP10-v2.11.2.md（v2.11.5 TOP 20→TOP 15 + 条形图 UI）
 ///
 /// 一次性查询多张表，输出 DashboardDto：
-/// - 7 个 KPI（入住人数 / 宿舍入住率 / 预约人员 / 异常人员 / 本月抄表覆盖 / 人均费用 / 本月费用合计）
+/// - 7 个 KPI（入住人数 / 住宿入住率 / 预约人员 / 异常人员 / 本月抄表覆盖 / 人均费用 / 本月费用合计）
 /// - 8 个图表（入住退房对比 / 费用变化曲线 / 费用TOP10 / 入住率TOP15 / 部门分布 / 费用类型占比 / 员工类型分布 / 抄表覆盖）
 /// </summary>
 public interface IDashboardService
@@ -101,7 +101,7 @@ public class DashboardService : IDashboardService
 
         var totalPersonnel = await _db.Employees.CountAsync();
 
-        // === KPI 2: 宿舍入住率（入住人数 / 总容量 × 100%）===
+        // === KPI 2: 住宿入住率（入住人数 / 总容量 × 100%）===
         var totalBeds = await _db.Dorms.SumAsync(d => (int?)d.Capacity) ?? 0;
         var occupancyRate = totalBeds > 0 ? Math.Round((decimal)residentCount / totalBeds * 100, 0) : 0;
 
@@ -271,7 +271,7 @@ public class DashboardService : IDashboardService
     }
 
     /// <summary>
-    /// 图表 3：宿舍费用排名 TOP 10 — 真实 DormBilling 表（按 TotalAmount 降序）
+    /// 图表 3：住宿费用排名 TOP 10 — 真实 DormBilling 表（按 TotalAmount 降序）
     /// </summary>
     private async Task<List<DormCostRankDto>> BuildDormCostTop10Async(string monthStr)
     {
@@ -439,7 +439,7 @@ public class DashboardDto
     /// <summary>2. 每月总费用变化曲线（近 12 月 + 上年对比）</summary>
     public List<MonthlyCostTrendDto> CostTrendMonthly { get; set; } = new();
 
-    /// <summary>3. 宿舍费用排名 TOP 10（水平堆叠柱状图）</summary>
+    /// <summary>3. 住宿费用排名 TOP 10（水平堆叠柱状图）</summary>
     public List<DormCostRankDto> DormCostTop10 { get; set; } = new();
 
     /// <summary>4. 入住率排名 TOP 15（水平柱状图）</summary>
@@ -467,7 +467,7 @@ public class DashboardKpi
     /// <summary>人员总数</summary>
     public int TotalPersonnelCount { get; set; }
 
-    /// <summary>宿舍入住率（百分比）</summary>
+    /// <summary>住宿入住率（百分比）</summary>
     public decimal OccupancyRate { get; set; }
 
     /// <summary>已入住床位数</summary>
@@ -491,10 +491,10 @@ public class DashboardKpi
     /// <summary>异常 C：超期未办</summary>
     public int AbnormalC { get; set; }
 
-    /// <summary>本月已抄宿舍数（v2.13.133：Status=Normal=1 或 Corrected=2 的 DormCode 去重数）</summary>
+    /// <summary>本月已抄住宿数（v2.13.133：Status=Normal=1 或 Corrected=2 的 DormCode 去重数）</summary>
     public int MeterReadCount { get; set; }
 
-    /// <summary>总宿舍数</summary>
+    /// <summary>总住宿数</summary>
     public int MeterTotalCount { get; set; }
 
     /// <summary>v2.13.164 重定义：抄表中的数（至少一表 > 0 但不全 > 0 的 DormCode 去重数）</summary>
@@ -503,12 +503,12 @@ public class DashboardKpi
     /// <summary>v2.13.164 重定义：未抄表数（Dorm 存在但本月 MeterRecord 全 0 或无任何记录的 DormCode 去重数）</summary>
     public int MeterUncoveredCount { get; set; }
 
-    /// <summary>v2.13.164 抄表进度（已抄表 / 总宿舍 × 100，保留 1 位小数）</summary>
+    /// <summary>v2.13.164 抄表进度（已抄表 / 总住宿 × 100，保留 1 位小数）</summary>
     public decimal MeterCoveragePercent => MeterTotalCount > 0
         ? Math.Round((decimal)MeterReadCount / MeterTotalCount * 100, 1)
         : 0;
 
-    /// <summary>未抄宿舍代码（前 5 个）</summary>
+    /// <summary>未抄住宿代码（前 5 个）</summary>
     public List<string> UnreadDormCodes { get; set; } = new();
 
     /// <summary>本月人均费用（v2.13.30：真实 EmployeeBilling）</summary>
@@ -537,7 +537,7 @@ public class MonthlyCostTrendDto
     public decimal LastYear { get; set; }
 }
 
-/// <summary>3. 宿舍费用排名</summary>
+/// <summary>3. 住宿费用排名</summary>
 public class DormCostRankDto
 {
     public string DormCode { get; set; } = "";

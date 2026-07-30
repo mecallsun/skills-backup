@@ -604,7 +604,7 @@ bool createdNew;
 _mutex = new Mutex(true, @"Global\DormManage.TrayApp.SingleInstance", out createdNew);
 if (!createdNew)
 {
-    MessageBox.Show("金戈宿舍管理系统托盘已在运行", "提示",
+    MessageBox.Show("金智住宿管理系统托盘已在运行", "提示",
         MessageBoxButtons.OK, MessageBoxIcon.Information);
     return;
 }

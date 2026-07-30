@@ -9,7 +9,7 @@ using DormManage.Admin.Pages.Shared;
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
-/// 宿舍档案页面模型（v2.13.10 与原型 dorms/list.html 对齐）
+/// 住宿档案页面模型（v2.13.10 与原型 dorms/list.html 对齐）
 /// 筛选条件：楼栋/楼层/状态/关键词（房号/地址）
 /// </summary>
 public class IndexModel : PaginatedPageModel
@@ -23,7 +23,7 @@ public class IndexModel : PaginatedPageModel
         _basicsService = basicsService;
     }
 
-    /// <summary>宿舍列表</summary>
+    /// <summary>住宿列表</summary>
     public PagedResult<DormDto>? Result { get; set; }
 
     /// <summary>总数（供 PageHeader 组件使用）</summary>
@@ -57,7 +57,7 @@ public class IndexModel : PaginatedPageModel
         var buildings = await _basicsService.GetBuildingsAsync(null, 1, 100);
         Buildings = buildings.Items.ToList();
 
-        // 查询宿舍列表
+        // 查询住宿列表
         var query = _db.Dorms.AsQueryable();
 
         if (BuildingId.HasValue && BuildingId.Value > 0)
@@ -187,37 +187,37 @@ public class IndexModel : PaginatedPageModel
         };
     }
 
-    /// <summary>删除宿舍（v2.12.41 删除约束）</summary>
+    /// <summary>删除住宿（v2.12.41 删除约束）</summary>
     public async Task<IActionResult> OnPostDeleteAsync(int id)
     {
         var dorm = await _db.Dorms.FindAsync(id);
         if (dorm == null)
         {
-            TempData["ErrorMessage"] = "宿舍不存在";
+            TempData["ErrorMessage"] = "住宿不存在";
             return RedirectToPage("/Dorms/Index");
         }
         // 校验：在宿人数
         var current = await _db.DormBookings.CountAsync(b => b.DormCode == dorm.DormCode && b.Status == 2);
         if (current > 0)
         {
-            TempData["ErrorMessage"] = $"该宿舍当前有 {current} 人在宿，禁止删除";
+            TempData["ErrorMessage"] = $"该住宿当前有 {current} 人在宿，禁止删除";
             return RedirectToPage("/Dorms/Index");
         }
         // 校验：办理登记历史
         var hasHistory = await _db.DormBookings.AnyAsync(b => b.DormCode == dorm.DormCode);
         if (hasHistory)
         {
-            TempData["ErrorMessage"] = $"该宿舍 \"{dorm.DormCode}\" 有历史办理登记记录，禁止删除";
+            TempData["ErrorMessage"] = $"该住宿 \"{dorm.DormCode}\" 有历史办理登记记录，禁止删除";
             return RedirectToPage("/Dorms/Index");
         }
         _db.Dorms.Remove(dorm);
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"宿舍 {dorm.DormCode} 已删除";
+        TempData["Success"] = $"住宿 {dorm.DormCode} 已删除";
         return RedirectToPage("/Dorms/Index");
     }
 }
 
-/// <summary>宿舍数据传输对象（v2.13.10 字段对齐原型：房号/楼栋/楼层/地址/房间数/容量/在住人数/使用率/状态）</summary>
+/// <summary>住宿数据传输对象（v2.13.10 字段对齐原型：房号/楼栋/楼层/地址/房间数/容量/在住人数/使用率/状态）</summary>
 public class DormDto
 {
     public int Id { get; set; }

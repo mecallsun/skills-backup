@@ -1,5 +1,5 @@
 -- ============================================================
--- 金戈宿舍管理系统 - 数据库迁移脚本 v2.13.0
+-- 金智住宿管理系统 - 数据库迁移脚本 v2.13.0
 -- 主题：认证权限体系（用户/角色/权限 RBAC）
 -- 日期：2026-07-14
 -- ============================================================
@@ -94,14 +94,14 @@ INSERT INTO SysPermission (Id, PermissionCode, PermissionName, PermissionType, P
 (2, 'booking:view', '办理登记', 1, 0, '/Booking', 'bi-clipboard-check', 1, 1, '2026-07-14 00:00:00'),
 (3, 'booking:checkin', '入住办理', 2, 2, '/Booking/CheckIn', 'bi-box-arrow-in-right', 2, 1, '2026-07-14 00:00:00'),
 (4, 'booking:checkout', '退房办理', 2, 2, '/Booking/CheckOut', 'bi-box-arrow-right', 3, 1, '2026-07-14 00:00:00'),
-(5, 'dorm:view', '宿舍管理', 1, 0, '/Dorms', 'bi-building', 2, 1, '2026-07-14 00:00:00'),
-(6, 'dorm:create', '新增宿舍', 2, 5, '', '', 4, 1, '2026-07-14 00:00:00'),
-(7, 'dorm:edit', '编辑宿舍', 2, 5, '', '', 5, 1, '2026-07-14 00:00:00'),
-(8, 'dorm:delete', '删除宿舍', 2, 5, '', '', 6, 1, '2026-07-14 00:00:00'),
+(5, 'dorm:view', '住宿管理', 1, 0, '/Dorms', 'bi-building', 2, 1, '2026-07-14 00:00:00'),
+(6, 'dorm:create', '新增住宿', 2, 5, '', '', 4, 1, '2026-07-14 00:00:00'),
+(7, 'dorm:edit', '编辑住宿', 2, 5, '', '', 5, 1, '2026-07-14 00:00:00'),
+(8, 'dorm:delete', '删除住宿', 2, 5, '', '', 6, 1, '2026-07-14 00:00:00'),
 (9, 'personnel:view', '人员清单', 1, 0, '/Personnel', 'bi-people', 3, 1, '2026-07-14 00:00:00'),
 (10, 'personnel:import', '导入员工', 2, 9, '/Personnel/Import', 'bi-upload', 7, 1, '2026-07-14 00:00:00'),
 (11, 'billing:view', '费用标准', 1, 0, '/BillingStandard', 'bi-currency-dollar', 4, 1, '2026-07-14 00:00:00'),
-(12, 'dormbilling:view', '宿舍账单', 1, 0, '/DormBilling', 'bi-receipt', 5, 1, '2026-07-14 00:00:00'),
+(12, 'dormbilling:view', '住宿账单', 1, 0, '/DormBilling', 'bi-receipt', 5, 1, '2026-07-14 00:00:00'),
 (13, 'employeebilling:view', '员工账单', 1, 0, '/EmployeeBilling', 'bi-wallet2', 6, 1, '2026-07-14 00:00:00'),
 (14, 'meter:view', '抄表记录', 1, 0, '/Meter', 'bi-gauge', 7, 1, '2026-07-14 00:00:00'),
 (15, 'meter:entry', '手动录入', 2, 14, '/Meter/Entry', 'bi-pencil', 8, 1, '2026-07-14 00:00:00'),

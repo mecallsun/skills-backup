@@ -5,7 +5,7 @@
 import re
 from pathlib import Path
 
-BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\00-方案文档\04-HTML原型")
+BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\00-方案文档\04-HTML原型")
 
 MODULE_RULES = [
     ("personnel/list.html",        "personnel",     "人员清单",     "bi-people-fill",    "personnel/list.html"),
@@ -14,17 +14,17 @@ MODULE_RULES = [
     ("personnel/import.html",      "personnel",     "导入人员",     "bi-people-fill",    "personnel/import.html"),
     ("billing/standards.html",     "billing",       "费用标准",     "bi-cash-stack",     "billing/standards.html"),
     ("billing/standard-form.html", "billing",       "费用标准表单", "bi-cash-stack",     "billing/standard-form.html"),
-    ("billing/dorm-bills.html",    "dorm-bills",    "宿舍账单",     "bi-receipt",        "billing/dorm-bills.html"),
+    ("billing/dorm-bills.html",    "dorm-bills",    "住宿账单",     "bi-receipt",        "billing/dorm-bills.html"),
     ("billing/employee-bills.html","employee-bills","员工账单",     "bi-wallet2",        "billing/employee-bills.html"),
     ("booking/index.html",         "booking",       "办理登记",     "bi-clipboard-check","booking/index.html"),
     ("booking/check-in.html",      "booking",       "办理入住",     "bi-clipboard-check","booking/check-in.html"),
     ("booking/check-out.html",     "booking",       "办理退房",     "bi-clipboard-check","booking/check-out.html"),
     ("booking/edit.html",          "booking",       "修改登记",     "bi-clipboard-check","booking/edit.html"),
-    ("dorms/list.html",            "dorms",         "宿舍管理",     "bi-building",       "dorms/list.html"),
-    ("dorms/create.html",          "dorms",         "新增宿舍",     "bi-building",       "dorms/create.html"),
-    ("dorms/edit.html",            "dorms",         "编辑宿舍",     "bi-building",       "dorms/edit.html"),
-    ("dorms/details.html",         "dorms",         "宿舍详情",     "bi-building",       "dorms/details.html"),
-    ("dorms/history.html",         "dorms",         "宿舍历史",     "bi-building",       "dorms/history.html"),
+    ("dorms/list.html",            "dorms",         "住宿管理",     "bi-building",       "dorms/list.html"),
+    ("dorms/create.html",          "dorms",         "新增住宿",     "bi-building",       "dorms/create.html"),
+    ("dorms/edit.html",            "dorms",         "编辑住宿",     "bi-building",       "dorms/edit.html"),
+    ("dorms/details.html",         "dorms",         "住宿详情",     "bi-building",       "dorms/details.html"),
+    ("dorms/history.html",         "dorms",         "住宿历史",     "bi-building",       "dorms/history.html"),
     ("meter/index.html",           "meter",         "智能抄表",     "bi-clipboard-data", "meter/index.html"),
     ("meter/edit.html",            "meter",         "编辑抄表",     "bi-clipboard-data", "meter/edit.html"),
     ("meter/detail.html",          "meter",         "抄表明细",     "bi-clipboard-data", "meter/detail.html"),

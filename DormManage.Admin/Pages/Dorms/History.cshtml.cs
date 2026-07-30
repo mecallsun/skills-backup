@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
-/// 宿舍住宿历史页面模型
+/// 住宿住宿历史页面模型
 /// </summary>
 public class HistoryModel : PageModel
 {
@@ -22,7 +22,7 @@ public class HistoryModel : PageModel
     public int Id { get; set; }
 
     /// <summary>
-    /// 宿舍信息
+    /// 住宿信息
     /// </summary>
     public DormInfoDto? DormInfo { get; set; }
 
@@ -38,13 +38,13 @@ public class HistoryModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
-        // 加载宿舍信息
+        // 加载住宿信息
         var dorm = await _db.Dorms
             .FirstOrDefaultAsync(d => d.Id == Id);
 
         if (dorm == null)
         {
-            TempData["ErrorMessage"] = "宿舍不存在";
+            TempData["ErrorMessage"] = "住宿不存在";
             return RedirectToPage("/Dorms/Index");
         }
 
@@ -59,7 +59,7 @@ public class HistoryModel : PageModel
             IsActive = dorm.IsActive
         };
 
-        // 从 DormBooking 表查询该宿舍的所有办理记录
+        // 从 DormBooking 表查询该住宿的所有办理记录
         var bookings = await _db.DormBookings
             .Where(b => b.DormCode == dorm.DormCode)
             .OrderByDescending(b => b.BookingDate)
@@ -110,7 +110,7 @@ public class HistoryModel : PageModel
 }
 
 /// <summary>
-/// 宿舍信息数据传输对象
+/// 住宿信息数据传输对象
 /// </summary>
 public class DormInfoDto
 {

@@ -7,7 +7,7 @@ class Program
     static void Main()
     {
         const string connStr = "Server=172.16.0.100;Database=WaterMeterDB;User Id=user;Password=1234;Encrypt=false;TrustServerCertificate=true;";
-        var sqlPath = @"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\tmp\ApplySeedMigration\migrate.sql";
+        var sqlPath = @"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\tmp\ApplySeedMigration\migrate.sql";
         var sqlContent = File.ReadAllText(sqlPath);
 
         // 拆分 GO 段落（仅在行首 GO 处拆分）

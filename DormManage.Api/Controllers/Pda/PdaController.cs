@@ -86,10 +86,10 @@ public class PdaController : ControllerBase
         if (meta is null || string.IsNullOrWhiteSpace(meta.DormCode) || string.IsNullOrWhiteSpace(meta.ReadMonth))
             return ApiResponse<PdaUploadResult>.Fail("INVALID_METADATA", "DormCode 和 ReadMonth 必填");
 
-        // 1. 查找宿舍
+        // 1. 查找住宿
         var dorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == meta.DormCode && d.IsActive);
         if (dorm is null)
-            return ApiResponse<PdaUploadResult>.Fail("DORM_NOT_FOUND", $"宿舍 {meta.DormCode} 不存在或已停用");
+            return ApiResponse<PdaUploadResult>.Fail("DORM_NOT_FOUND", $"住宿 {meta.DormCode} 不存在或已停用");
 
         // 2. 查找或创建记录（按 DormCode + ReadMonth 唯一）
         var existing = await _db.MeterRecords
@@ -168,7 +168,7 @@ public class PdaController : ControllerBase
             }
             else
             {
-                return ApiResponse<PdaUploadResult>.Fail("ALREADY_NORMAL", $"宿舍 {meta.DormCode}/{meta.ReadMonth} 已是正常状态，请走修正流程");
+                return ApiResponse<PdaUploadResult>.Fail("ALREADY_NORMAL", $"住宿 {meta.DormCode}/{meta.ReadMonth} 已是正常状态，请走修正流程");
             }
         }
     }

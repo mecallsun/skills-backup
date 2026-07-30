@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj": {}
+    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj": {}
   },
   "projects": {
-    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj": {
+    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj",
+        "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj",
         "projectName": "DiagExpiry",
-        "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj",
+        "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagExpiry\\DiagExpiry.csproj",
         "packagesPath": "C:\\Users\\Mecall\\.nuget\\packages\\",
-        "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagExpiry\\obj\\",
+        "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagExpiry\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Mecall\\AppData\\Roaming\\NuGet\\NuGet.Config"

@@ -19,7 +19,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -127,7 +127,7 @@
         const u = meterUsage(m);
         const usagePanel = document.getElementById('usagePanel');
         if (u.prev === null) {
-            usagePanel.innerHTML = '<p class="text-muted mb-0">该宿舍无上月记录，本月为首次抄表，用量暂不参与计费。</p>';
+            usagePanel.innerHTML = '<p class="text-muted mb-0">该住宿无上月记录，本月为首次抄表，用量暂不参与计费。</p>';
         } else {
             const uv = { cold: u.cold, hot: u.hot, electric: u.electric };
             const pv = { cold: u.prev.coldMeter, hot: u.prev.hotMeter, electric: u.prev.electricMeter };

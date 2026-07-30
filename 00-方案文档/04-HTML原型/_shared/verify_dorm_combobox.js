@@ -43,7 +43,7 @@ if (tbodyMatch) {
     if (rows.length > 0) {
         const cells = rows[0].match(/<td[^>]*>([\s\S]*?)<\/td>/g) || [];
         const cleaned = cells.map(c => c.replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' '));
-        console.log('  [1] ' + cleaned[2] + '(' + cleaned[1] + ') 宿舍=' + cleaned[10]);
+        console.log('  [1] ' + cleaned[2] + '(' + cleaned[1] + ') 住宿=' + cleaned[10]);
     }
 }
 

@@ -7,7 +7,7 @@ v2.12.12 统一所有页面的顶部品牌栏（Tier 1）样式
 import re
 from pathlib import Path
 
-BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\00-方案文档\04-HTML原型")
+BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\00-方案文档\04-HTML原型")
 
 # 需要清理的 CSS 选择器（外联 layout-tab.css 已统一定义）
 TARGET_SELECTORS = [

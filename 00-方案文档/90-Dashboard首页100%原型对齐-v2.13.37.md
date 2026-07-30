@@ -98,13 +98,13 @@
 
 **变更前**：
 ```cshtml
-<p class="mb-1">金戈宿舍管理系统 v@(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.4") · @DateTime.Now.ToString("yyyy年MM月")</p>
+<p class="mb-1">金智住宿管理系统 v@(System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "2.13.4") · @DateTime.Now.ToString("yyyy年MM月")</p>
 ```
 
 **变更后**：
 ```cshtml
 <!-- v2.13.37 完全反向适配原型：版本号硬编码为 v2.13.37（原型写死 v2.11.2） -->
-<p class="mb-1">金戈宿舍管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
+<p class="mb-1">金智住宿管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
 ```
 
 ### 2.5 图表图例文字（反向适配）
@@ -137,13 +137,13 @@
 | # | 项目 | 状态 |
 |---|------|------|
 | 1 | KPI 1 入住人数（蓝色 #2a78d6） | ✅ 已对齐 |
-| 2 | KPI 2 宿舍入住率（绿色 #1baf7a） | ✅ 已对齐 |
+| 2 | KPI 2 住宿入住率（绿色 #1baf7a） | ✅ 已对齐 |
 | 3 | KPI 5 本月抄表覆盖 | ✅ 已对齐 |
 | 4 | KPI 6 人均费用（橙色 #eda100） | ✅ 已对齐 |
 | 5 | KPI 7 本月费用合计（红色 #e34948） | ✅ 已对齐 |
 | 6 | 图表 1 入住/退房对比 | ✅ 已对齐 |
 | 7 | 图表 2 费用变化曲线（结构） | ✅ 已对齐 |
-| 8 | 图表 3 宿舍费用 TOP10 | ✅ 已对齐 |
+| 8 | 图表 3 住宿费用 TOP10 | ✅ 已对齐 |
 | 9 | 图表 4 入住率排名 TOP15 | ✅ 已对齐 |
 | 10 | 图表 5 部门分布 | ✅ 已对齐 |
 | 11 | 图表 6 费用类型占比 | ✅ 已对齐 |

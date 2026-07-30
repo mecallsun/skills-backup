@@ -38,7 +38,7 @@ const ATTENDANCE_WEIGHT_BY_DEPT = {
 const ATTENDANCE_NAME = { DEFAULT: "默认", MORNING: "早", MIDDLE: "中", EVENING: "晚", NIGHT: "夜", OTHER: "其他" };
 const SURNAMES = ["张", "李", "王", "赵", "刘", "陈", "杨", "黄", "周", "吴", "徐", "孙", "胡", "朱", "高", "林", "何", "郭", "马", "罗", "梁", "宋", "郑", "谢", "韩", "唐", "冯", "于", "董", "萧", "程", "曹", "袁", "邓", "许", "傅", "沈", "曾", "彭", "吕", "苏", "卢", "蒋", "蔡", "贾", "丁", "魏", "薛", "叶", "阎", "余", "潘", "杜", "戴", "夏", "钟", "汪", "田", "任", "姜", "范", "方", "石", "姚", "谭", "廖", "邹", "熊", "金", "陆", "郝", "孔", "白", "崔", "康", "毛", "邱", "秦", "江", "史", "顾", "侯", "邵", "孟", "龙", "万", "段", "曹", "钱", "汤", "尹", "黎", "易", "常", "武", "乔", "贺", "赖", "龚", "文"];
 const GIVEN_NAMES = ["伟", "芳", "娜", "敏", "静", "丽", "强", "磊", "军", "洋", "勇", "艳", "杰", "娟", "涛", "明", "超", "秀英", "霞", "平", "刚", "桂英", "玲", "桂兰", "玉兰", "建华", "志强", "小红", "永生", "建国", "红", "辉", "亮", "刚", "婷", "颖", "雪", "倩", "洁", "浩", "鹏", "宇", "欣", "怡", "晨", "睿", "轩", "泽", "昊", "思", "睿", "梓", "宇航", "梓豪", "梓萱", "梓涵", "一鸣", "思源", "思远", "志强", "志远", "志豪", "志成"];
-const REMARKS_POOL = ["", "", "", "", "班长", "副班长", "组长", "党员", "团员", "工会代表", "先进工作者", "新员工", "老员工", "技术骨干", "业务能手", "高潜人才", "", "", "", "", "宿舍长", "团支书"];
+const REMARKS_POOL = ["", "", "", "", "班长", "副班长", "组长", "党员", "团员", "工会代表", "先进工作者", "新员工", "老员工", "技术骨干", "业务能手", "高潜人才", "", "", "", "", "住宿长", "团支书"];
 
 // =====================================================================
 // 1. PERSONNEL — 600 人（在职 500 + 待入职 30 + 已离职 70）
@@ -103,7 +103,7 @@ function genPersonnel() {
             phone: `138${String(randInt(10000000, 99999999))}`,
             hireDate,
             leaveDate,
-            dormCode: null, // 先留空，分配宿舍阶段处理
+            dormCode: null, // 先留空，分配住宿阶段处理
             status,
             remark: pick(REMARKS_POOL),
             // v2.11.2：考勤类型（按部门加权分配，见 ATTENDANCE_WEIGHT_BY_DEPT）
@@ -176,13 +176,13 @@ function genDorms() {
 }
 
 // =====================================================================
-// 3. 宿舍分配 — 为 500 在职员工分配 dormCode
+// 3. 住宿分配 — 为 500 在职员工分配 dormCode
 // =====================================================================
 function assignDorms(personnel, dorms) {
-    // 启用宿舍按 capacity 累加
+    // 启用住宿按 capacity 累加
     const activeDorms = dorms.filter(d => d.isActive);
 
-    // 当前在宿人数 + 考勤类型分布（按宿舍记录）
+    // 当前在宿人数 + 考勤类型分布（按住宿记录）
     const dormOccupied = {};
     const dormAttendance = {};  // { dormCode: { DEFAULT: 0, MORNING: 0, ... } }
     activeDorms.forEach(d => {
@@ -199,19 +199,19 @@ function assignDorms(personnel, dorms) {
 
     for (const p of active) {
         // v2.11.2 智能分配：按考勤类型一致性优先级
-        // 1) 找同考勤类型 + 有空位的宿舍
+        // 1) 找同考勤类型 + 有空位的住宿
         let candidates = activeDorms.filter(d =>
             dormOccupied[d.dormCode] < d.capacity &&
-            dormAttendance[d.dormCode][p.attendanceType] > 0  // 该宿舍已有同类型员工
+            dormAttendance[d.dormCode][p.attendanceType] > 0  // 该住宿已有同类型员工
         );
-        // 2) 兜底：任意有空位的宿舍
+        // 2) 兜底：任意有空位的住宿
         if (candidates.length === 0) {
             candidates = activeDorms.filter(d => dormOccupied[d.dormCode] < d.capacity);
         }
 
         let assigned = null;
         if (candidates.length > 0) {
-            // 优先选择考勤一致性最高（占比最高）的宿舍
+            // 优先选择考勤一致性最高（占比最高）的住宿
             candidates.sort((a, b) => {
                 const aCount = dormAttendance[a.dormCode][p.attendanceType] || 0;
                 const bCount = dormAttendance[b.dormCode][p.attendanceType] || 0;
@@ -301,15 +301,15 @@ function genBookings(personnel, dorms) {
             registrationDate: `${p.hireDate}T${hh}:${mm}:${ss}`,
             registrar: "admin"
         });
-        // 调宿记录：原宿舍退房 + 新宿舍入住
+        // 调宿记录：原住宿退房 + 新住宿入住
         if (transferSet.has(p.id)) {
             const transferDate = `2026-07-${String(randInt(10, 20)).padStart(2, "0")}`;
-            // 找一个不同的宿舍
+            // 找一个不同的住宿
             let newDorm = p.dormCode;
             while (newDorm === p.dormCode) {
                 newDorm = allDorms[randInt(0, allDorms.length - 1)];
             }
-            // 1) 原宿舍退房
+            // 1) 原住宿退房
             out.push({
                 id: id++,
                 employeeId: p.id, employeeCode: p.employeeCode, employeeName: p.realName,
@@ -318,7 +318,7 @@ function genBookings(personnel, dorms) {
                 reason: "调宿", remark: `调至 ${newDorm}`, registrationDate: `${transferDate}T${String(randInt(9, 17)).padStart(2, "0")}:${String(randInt(0, 59)).padStart(2, "0")}:${ss}`,
                 registrar: "admin"
             });
-            // 2) 新宿舍入住
+            // 2) 新住宿入住
             const nextDay = `2026-07-${String(parseInt(transferDate.slice(-2)) + 1).padStart(2, "0")}`;
             out.push({
                 id: id++,
@@ -397,13 +397,13 @@ function genBookings(personnel, dorms) {
 }
 
 // =====================================================================
-// 6. METER_RECORDS — 每间启用宿舍 2 条（上月 + 本月）
+// 6. METER_RECORDS — 每间启用住宿 2 条（上月 + 本月）
 // =====================================================================
 function genMeters(dorms) {
     const out = [];
     let id = 1;
     const activeDorms = dorms.filter(d => d.isActive);
-    // 基线读数（每间宿舍累积基数）
+    // 基线读数（每间住宿累积基数）
     const baseline = {};
     activeDorms.forEach(d => {
         baseline[d.dormCode] = {
@@ -450,7 +450,7 @@ function genMeters(dorms) {
 }
 
 // =====================================================================
-// 7. DORM_BILLS_202607 — 190 条（启用宿舍 200 中排除 ~10 条）
+// 7. DORM_BILLS_202607 — 190 条（启用住宿 200 中排除 ~10 条）
 // =====================================================================
 function genDormBills(dorms, meters) {
     const out = [];
@@ -476,7 +476,7 @@ function genDormBills(dorms, meters) {
         "驻场":   { cold: 4.80, hot: 26.00, elec: 0.85, stdId: 7 }
     };
 
-    // 计算有在住员工的启用宿舍集合（确保 dorm_bills 与 employee_bills 数据守恒）
+    // 计算有在住员工的启用住宿集合（确保 dorm_bills 与 employee_bills 数据守恒）
     const dormsWithResidents = new Set(
         personnel.filter(p => p.status === 1 && p.dormCode).map(p => p.dormCode)
     );
@@ -486,7 +486,7 @@ function genDormBills(dorms, meters) {
         dormIdx++;
         // 跳过约 5%（每 25 间跳 1）→ 期望 ~182
         if (dormIdx % 25 === 0) continue;
-        // 仅对有在住员工的宿舍生成账单
+        // 仅对有在住员工的住宿生成账单
         if (!dormsWithResidents.has(d.dormCode)) continue;
         const cur = thisMonth[d.dormCode];
         const prev = prevMonth[d.dormCode];
@@ -496,7 +496,7 @@ function genDormBills(dorms, meters) {
         const elecUsage = +(cur.electricMeter - prev.electricMeter).toFixed(2);
         if (coldUsage < 0 || hotUsage < 0 || elecUsage < 0) continue;
 
-        // 用宿舍内主要员工类型决定标准
+        // 用住宿内主要员工类型决定标准
         out.push({
             id: id++, dormCode: d.dormCode, dormAddress: d.address, building: d.building,
             billingMonth: "2026-07",
@@ -516,7 +516,7 @@ function genDormBills(dorms, meters) {
 // 8. EMPLOYEE_BILLS_202607 — 按入住天数 × 日均费用 × 占比 精确计算（v2.11.2 增补 k）
 //
 // 计算规则（核心）：
-//   每人某表项分摊 = (该宿舍该表项总费用 / 当月天数) × 该员工在该宿舍的入住天数 / ∑(同宿舍入住天数)
+//   每人某表项分摊 = (该住宿该表项总费用 / 当月天数) × 该员工在该住宿的入住天数 / ∑(同住宿入住天数)
 //
 // 调宿人员：生成 2 条记录（按 BOOKINGS 中该员工的每段入住分别计算）
 // 空床位：按"实际入住人天数"加权分摊
@@ -529,7 +529,7 @@ function genEmployeeBills(personnel, dormBills, meters, bookings) {
     // 统一单价（按合同工基准）
     const PRICE = { cold: 4.50, hot: 25.00, elec: 0.80 };
 
-    // 计算每个宿舍的当月用量
+    // 计算每个住宿的当月用量
     const thisMonth = {};
     meters.filter(m => m.readMonth === "2026-07" && m.status !== 3).forEach(m => {
         thisMonth[m.dormCode] = m;
@@ -618,7 +618,7 @@ function genEmployeeBills(personnel, dormBills, meters, bookings) {
         const empById = {};
         personnel.forEach(p => empById[p.id] = p);
 
-        // 按员工+宿舍聚合 BOOKINGS，找出每段的入住起止
+        // 按员工+住宿聚合 BOOKINGS，找出每段的入住起止
         // 段结构：type=1 入住 + type=2 退房 配对
         const records = {};
         bookings.forEach(b => {

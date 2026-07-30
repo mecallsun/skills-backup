@@ -151,15 +151,15 @@ public class MeterController : ControllerBase
     public async Task<ApiResponse<MeterRecordDto>> SaveRecord([FromBody] MeterRecordSaveRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.DormCode))
-            return ApiResponse<MeterRecordDto>.Fail("CODE_REQUIRED", "宿舍号不能为空");
+            return ApiResponse<MeterRecordDto>.Fail("CODE_REQUIRED", "住宿号不能为空");
 
         if (string.IsNullOrWhiteSpace(request.ReadMonth))
             return ApiResponse<MeterRecordDto>.Fail("MONTH_REQUIRED", "抄表月份不能为空");
 
-        // 查找宿舍
+        // 查找住宿
         var dorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == request.DormCode && d.IsActive);
         if (dorm == null)
-            return ApiResponse<MeterRecordDto>.Fail("DORM_NOT_FOUND", "宿舍不存在或已停用");
+            return ApiResponse<MeterRecordDto>.Fail("DORM_NOT_FOUND", "住宿不存在或已停用");
 
         // 查找已有记录
         var existing = await _db.MeterRecords
@@ -571,7 +571,7 @@ public class MeterController : ControllerBase
 
         // 生成 CSV (Excel 可打开) — v2.13.24 P76：扩展列含用量
         var sb = new global::System.Text.StringBuilder();
-        sb.AppendLine("序号,宿舍号,抄表月份,冷水读数(m³),热水读数(m³),电读数(度),冷水用量(m³),热水用量(m³),电用量(度),操作员,状态,抄表日期,抄表方式,备注");
+        sb.AppendLine("序号,住宿号,抄表月份,冷水读数(m³),热水读数(m³),电读数(度),冷水用量(m³),热水用量(m³),电用量(度),操作员,状态,抄表日期,抄表方式,备注");
         var index = 1;
         foreach (var r in records)
         {
@@ -611,7 +611,7 @@ public class MeterController : ControllerBase
                 message = result.Success
                     ? (result.InsertedCount > 0
                         ? $"✓ 已补全 {result.InsertedCount} 条占位记录（{result.ReadMonth}）"
-                        : $"✓ {result.ReadMonth} 全部 {result.ActiveDormCount} 间启用宿舍已有记录，无需补全")
+                        : $"✓ {result.ReadMonth} 全部 {result.ActiveDormCount} 间启用住宿已有记录，无需补全")
                     : $"✗ {result.Error}",
             });
         }

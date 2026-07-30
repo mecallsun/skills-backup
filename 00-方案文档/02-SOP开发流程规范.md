@@ -1,4 +1,4 @@
-# 金戈宿舍管理系统 — 软件开发 SOP 流程规范
+# 金智住宿管理系统 — 软件开发 SOP 流程规范
 
 > **版本**：v3.2  
 > **生效日期**：2026-07-19  
@@ -144,7 +144,7 @@ prototype/
 ├── billing/
 │   ├── standards.html      # 费用标准列表
 │   ├── standard-form.html  # 新增/编辑费用标准
-│   ├── dorm-bills.html     # 宿舍费用清单
+│   ├── dorm-bills.html     # 住宿费用清单
 │   └── employee-bills.html # 员工分摊费用
 └── assets/
     └── mock-data.js        # Mock 数据（员工/账单）
@@ -255,7 +255,7 @@ dotnet build DormManage.sln -c Release    # 必须 0 错误
 | 编辑人员 | 修改姓名 | 更新成功，列表显示新姓名 | | |
 | 删除人员 | 点击离职 | Status=2，列表不再显示 | | |
 | Excel导入 | 标准模板上传 | 批量创建，导入报告 | | |
-| 生成账单 | 选择月份 | 创建宿舍账单记录 | | |
+| 生成账单 | 选择月份 | 创建住宿账单记录 | | |
 
 ### 步骤 5.3：边界与异常测试
 

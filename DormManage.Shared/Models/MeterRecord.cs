@@ -82,10 +82,10 @@ public class MeterRecord : BaseEntity
     [Column("RecordId")]
     public new long Id { get; set; }
 
-    /// <summary>宿舍ID（FK → Dorm.DormId，SQL 有外键）</summary>
+    /// <summary>住宿ID（FK → Dorm.DormId，SQL 有外键）</summary>
     public int DormId { get; set; }
 
-    /// <summary>宿舍号（冗余）</summary>
+    /// <summary>住宿号（冗余）</summary>
     [Required]
     [MaxLength(32)]
     public string DormCode { get; set; } = string.Empty;

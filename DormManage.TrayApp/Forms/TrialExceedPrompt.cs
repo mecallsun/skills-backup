@@ -43,7 +43,7 @@ public static class TrialExceedPrompt
 
         var lblDetail = new Label
         {
-            Text = $"当前已使用 {useTimes} 次 / 上限 {trialLimit} 次\n\n您必须确认以下内容后才能继续使用：\n\n  •  程序将以强制试用模式运行\n  •  仅限3大基础模块（住宿登记/宿舍档案/人员清单）使用\n  •  其他模块将无法写入或保存\n  •  强烈建议联系信息科完成正式注册",
+            Text = $"当前已使用 {useTimes} 次 / 上限 {trialLimit} 次\n\n您必须确认以下内容后才能继续使用：\n\n  •  程序将以强制试用模式运行\n  •  仅限3大基础模块（住宿登记/住宿档案/人员清单）使用\n  •  其他模块将无法写入或保存\n  •  强烈建议联系信息科完成正式注册",
             Font = new System.Drawing.Font("Microsoft YaHei UI", 9F),
             Location = new System.Drawing.Point(20, 55),
             Size = new System.Drawing.Size(430, 150),

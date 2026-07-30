@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from collections import defaultdict
 
-BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\00-方案文档\04-HTML原型")
+BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\00-方案文档\04-HTML原型")
 
 
 def fix_file(file_path: Path):

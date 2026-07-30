@@ -208,11 +208,11 @@
   "project": {
     "version": "2.13.25",
     "restore": {
-      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\TestFieldAdd\\TestFieldAdd.csproj",
+      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\TestFieldAdd\\TestFieldAdd.csproj",
       "projectName": "TestFieldAdd",
-      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\TestFieldAdd\\TestFieldAdd.csproj",
+      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\TestFieldAdd\\TestFieldAdd.csproj",
       "packagesPath": "C:\\Users\\Mecall\\.nuget\\packages\\",
-      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\TestFieldAdd\\obj\\",
+      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\TestFieldAdd\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Mecall\\AppData\\Roaming\\NuGet\\NuGet.Config"

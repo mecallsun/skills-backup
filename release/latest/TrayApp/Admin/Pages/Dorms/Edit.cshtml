@@ -1,7 +1,7 @@
 @page
 @model DormManage.Admin.Pages.Dorms.EditModel
 @{
-    ViewData["Title"] = "编辑宿舍";
+    ViewData["Title"] = "编辑住宿";
     Layout = "_Layout";
 }
 
@@ -22,7 +22,7 @@
     <!-- v2.12.38 紧凑页头（v2.13.201: 删除注册过期提示，交由 license-protect.js 操作时弹窗） -->
     <div class="d-flex justify-content-between align-items-center mb-2">
         <h2 class="mb-0">
-            <i class="bi bi-building text-primary"></i> 编辑宿舍
+            <i class="bi bi-building text-primary"></i> 编辑住宿
         </h2>
         <a href="/Dorms" class="btn btn-outline-secondary" data-back-to-list="/Dorms" onclick="ReturnUrl.handleBack(event)">
             <i class="bi bi-arrow-left"></i> 返回列表
@@ -40,9 +40,9 @@
                 <div class="form-section-title">基本信息</div>
                 <div class="row g-2">
                     <div class="col-md-6 form-field">
-                        <label class="form-label">宿舍号<span class="required">*</span></label>
+                        <label class="form-label">住宿号<span class="required">*</span></label>
                         <input type="text" class="form-control form-readonly" asp-for="Dorm.DormCode" required maxlength="20" readonly>
-                        <small class="text-muted" style="font-size:0.75rem;">宿舍编号不可修改，禁止创建重复房号</small>
+                        <small class="text-muted" style="font-size:0.75rem;">住宿编号不可修改，禁止创建重复房号</small>
                         <span class="text-danger small d-block" asp-validation-for="Dorm.DormCode"></span>
                     </div>
                     <div class="col-md-6 form-field">
@@ -135,7 +135,7 @@
                                    disabled="@Model.IsActiveLocked"
                                    aria-describedby="dormLockedHelp">
                             <label class="form-check-label" for="Dorm_IsActive">
-                                启用该宿舍
+                                启用该住宿
                                 @if (Model.IsActiveLocked)
                                 {
                                     <i class="bi bi-lock-fill text-warning ms-1" title="有在宿人员时不可停用"></i>
@@ -149,14 +149,14 @@
                         <span class="text-danger small" asp-validation-for="Dorm.Remark"></span>
                     </div>
                 </div>
-                @* v2.13.82 业务约束：在宿人数 > 0 时锁定「启用宿舍」勾选状态 *@
+                @* v2.13.82 业务约束：在宿人数 > 0 时锁定「启用住宿」勾选状态 *@
                 @if (Model.IsActiveLocked)
                 {
                     <div class="alert alert-warning py-2 mb-0 mt-2" id="dormLockedHelp" role="alert">
                         <i class="bi bi-exclamation-triangle-fill"></i>
-                        <strong>该宿舍当前在宿 <span class="badge bg-danger">@Model.CurrentCount</span> 人</strong>，
-                        <strong>禁止停用</strong>。请先办理所有人员的退宿手续后，方可取消「启用该宿舍」勾选。
-                        <div class="mt-1 small text-muted">业务约束（v2.13.82）：CurrentCount &gt; 0 时锁定 IsActive，避免在宿员工失去宿舍关联。</div>
+                        <strong>该住宿当前在宿 <span class="badge bg-danger">@Model.CurrentCount</span> 人</strong>，
+                        <strong>禁止停用</strong>。请先办理所有人员的退宿手续后，方可取消「启用该住宿」勾选。
+                        <div class="mt-1 small text-muted">业务约束（v2.13.82）：CurrentCount &gt; 0 时锁定 IsActive，避免在宿员工失去住宿关联。</div>
                     </div>
                 }
                 <span class="text-danger small d-block mt-1" asp-validation-for="Dorm.IsActive"></span>
@@ -194,7 +194,7 @@
                 if (form) {
                     form.addEventListener('submit', function(e) {
                         e.preventDefault();
-                        alert('您没有编辑宿舍权限，无法保存修改');
+                        alert('您没有编辑住宿权限，无法保存修改');
                         return false;
                     });
                 }

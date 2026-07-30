@@ -82,7 +82,7 @@ public class IndexModel : PaginatedPageModel
     /// </summary>
     public List<AttendanceTypeDropdownItem> AttendanceTypes { get; set; } = new();
 
-    /// <summary>宿舍房号候选（datalist 自动完成用）</summary>
+    /// <summary>住宿房号候选（datalist 自动完成用）</summary>
     public List<string> DormCodes { get; set; } = new();
 
     [BindProperty(SupportsGet = true)]
@@ -146,7 +146,7 @@ public class IndexModel : PaginatedPageModel
             .Select(a => new AttendanceTypeDropdownItem { Id = a.Id, Name = a.Name, Code = a.Code })
             .ToListAsync();
 
-        // 宿舍房号候选（Dorms + Personnel.DormCode 出现过的去重）
+        // 住宿房号候选（Dorms + Personnel.DormCode 出现过的去重）
         DormCodes = await _db.Dorms
             .Select(d => d.DormCode)
             .Union(_db.Employees.Where(e => e.DormCode != null).Select(e => e.DormCode!))

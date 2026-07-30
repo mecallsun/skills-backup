@@ -13,7 +13,7 @@
 
 **现象**：
 - 系统启动日志显示 `DB Provider: Sqlite`，而非用户配置的 SQL Server
-- 所有列表页面（人员清单、宿舍档案、办理登记等）返回空数据
+- 所有列表页面（人员清单、住宿档案、办理登记等）返回空数据
 - 托盘程序系统设置中保存了 SQL Server 参数，但重启后仍使用 SQLite
 
 **根因分析**：
@@ -219,7 +219,7 @@ $ dotnet build DormManage.sln -c Release
 | 3 | 查看托盘日志 | 显示 `DB Provider=SqlServer, ConnStrLen=XXX` |
 | 4 | 查看 Admin 启动日志 | 显示 `DB Provider: SqlServer`（不再是 Sqlite） |
 | 5 | 访问 /Personnel 页面 | 显示真实人员数据 |
-| 6 | 访问 /Dorms 页面 | 显示真实宿舍数据 |
+| 6 | 访问 /Dorms 页面 | 显示真实住宿数据 |
 | 7 | 访问 /Settings 页面（不带 ?tab=db） | 数据库配置区域正常加载，测试/保存按钮可用 |
 | 8 | 独立启动 Admin（不通过托盘） | 使用 appsettings.json 中的 SqlServer 配置 |
 

@@ -126,7 +126,7 @@ public class LicenseReadOnlyMiddleware
     }
 
     /// <summary>
-    /// v2.13.149 试用模式下放行的写入路径（住宿登记/宿舍档案/人员清单）
+    /// v2.13.149 试用模式下放行的写入路径（住宿登记/住宿档案/人员清单）
     /// 业务规则：未注册但试用次数范围内 → 3 模块允许 POST，内部 CheckTrialRecordLimit 做 5 条限制
     /// </summary>
     private static bool IsApiTrialModuleAllowed(string method, string path)

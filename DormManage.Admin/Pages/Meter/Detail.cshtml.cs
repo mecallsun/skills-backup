@@ -82,7 +82,7 @@ public class DetailModel : PageModel
             CorrectedAt = record.CorrectedAt
         };
 
-        // 计算用量 — 取该宿舍所有正常记录，在内存中找上月
+        // 计算用量 — 取该住宿所有正常记录，在内存中找上月
         var allRecords = await _db.MeterRecords
             .Where(r => r.DormCode == record.DormCode && r.Status == 1)
             .OrderByDescending(r => r.ReadMonth)

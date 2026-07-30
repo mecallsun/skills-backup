@@ -17,7 +17,7 @@ GO
 -- 1. 默认角色
 IF NOT EXISTS (SELECT 1 FROM SysRole WHERE RoleCode='Admin')
     INSERT INTO SysRole(RoleCode, RoleName, Description) VALUES
-        ('Admin',    '系统管理员', '拥有全部权限，可管理用户、宿舍、系统配置'),
+        ('Admin',    '系统管理员', '拥有全部权限，可管理用户、住宿、系统配置'),
         ('Operator', 'PDA操作员', '可通过PDA上传抄表数据，不可管理后台'),
         ('Viewer',   '查看员',     '可查看数据与图片，不可修改');
 GO
@@ -88,7 +88,7 @@ IF NOT EXISTS (SELECT 1 FROM SysConfig WHERE ConfigKey='ImageUrlPrefix')
 GO
 IF NOT EXISTS (SELECT 1 FROM SysConfig WHERE ConfigKey='AllowDuplicateMonth')
     INSERT INTO SysConfig(ConfigKey, ConfigValue, ConfigGroup, Description)
-    VALUES('AllowDuplicateMonth', 'false', 'Business', '是否允许同宿舍同月重复录入');
+    VALUES('AllowDuplicateMonth', 'false', 'Business', '是否允许同住宿同月重复录入');
 GO
 IF NOT EXISTS (SELECT 1 FROM SysConfig WHERE ConfigKey='MaxImageSizeKB')
     INSERT INTO SysConfig(ConfigKey, ConfigValue, ConfigGroup, Description)
@@ -99,26 +99,26 @@ IF NOT EXISTS (SELECT 1 FROM SysConfig WHERE ConfigKey='CurrentReadMonth')
     VALUES('CurrentReadMonth', CONVERT(NVARCHAR(7), GETDATE(), 120), 'Business', '当前抄表月份 YYYY-MM');
 GO
 
--- 5. 演示宿舍档案
+-- 5. 演示住宿档案
 IF NOT EXISTS (SELECT 1 FROM Dorm WHERE DormCode='D-301')
     INSERT INTO Dorm(DormCode, Building, Floor, RoomNo, DormAddress, DormType, Barcode)
-    VALUES('D-301', '1号楼', '3F', '301', '金戈新材料1号楼3层301室', '单人间', 'JG-D-301');
+    VALUES('D-301', '1号楼', '3F', '301', '金智新材料1号楼3层301室', '单人间', 'JG-D-301');
 GO
 IF NOT EXISTS (SELECT 1 FROM Dorm WHERE DormCode='D-302')
     INSERT INTO Dorm(DormCode, Building, Floor, RoomNo, DormAddress, DormType, Barcode)
-    VALUES('D-302', '1号楼', '3F', '302', '金戈新材料1号楼3层302室', '双人间', 'JG-D-302');
+    VALUES('D-302', '1号楼', '3F', '302', '金智新材料1号楼3层302室', '双人间', 'JG-D-302');
 GO
 IF NOT EXISTS (SELECT 1 FROM Dorm WHERE DormCode='D-303')
     INSERT INTO Dorm(DormCode, Building, Floor, RoomNo, DormAddress, DormType, Barcode)
-    VALUES('D-303', '1号楼', '3F', '303', '金戈新材料1号楼3层303室', '单人间', 'JG-D-303');
+    VALUES('D-303', '1号楼', '3F', '303', '金智新材料1号楼3层303室', '单人间', 'JG-D-303');
 GO
 IF NOT EXISTS (SELECT 1 FROM Dorm WHERE DormCode='D-401')
     INSERT INTO Dorm(DormCode, Building, Floor, RoomNo, DormAddress, DormType, Barcode)
-    VALUES('D-401', '1号楼', '4F', '401', '金戈新材料1号楼4层401室', '单人间', 'JG-D-401');
+    VALUES('D-401', '1号楼', '4F', '401', '金智新材料1号楼4层401室', '单人间', 'JG-D-401');
 GO
 IF NOT EXISTS (SELECT 1 FROM Dorm WHERE DormCode='D-402')
     INSERT INTO Dorm(DormCode, Building, Floor, RoomNo, DormAddress, DormType, Barcode)
-    VALUES('D-402', '1号楼', '4F', '402', '金戈新材料1号楼4层402室', '双人间', 'JG-D-402');
+    VALUES('D-402', '1号楼', '4F', '402', '金智新材料1号楼4层402室', '双人间', 'JG-D-402');
 GO
 
 -- ============================================================
@@ -150,7 +150,7 @@ GO
 -- v2.13.57 补充：办理登记演示数据（10 条）
 -- 与 DormDbContext.cs line 661-671 HasData 种子数据 1:1 对齐
 -- EmployeeId/DormCode 受 FK 约束（FK_DormBooking_Employee / FK_DormBooking_Dorm）
--- v2.13.58 修订：DormCode 必须与 02_Seed_Data.sql 演示宿舍档案 D-301/D-302/D-303/D-401/D-402 对齐
+-- v2.13.58 修订：DormCode 必须与 02_Seed_Data.sql 演示住宿档案 D-301/D-302/D-303/D-401/D-402 对齐
 --   原 v2.13.57 误用 D-001~D-005，导致 FK_DormBooking_Dorm 约束失败
 -- ============================================================
 IF NOT EXISTS (SELECT 1 FROM DormBooking WHERE BookingId=1)

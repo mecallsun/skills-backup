@@ -227,7 +227,7 @@ public class IndexModel : PaginatedPageModel
 
     /// <summary>
     /// v2.13.81 新增：手动补录 Modal 的「加载上月读数 + 检测已存在记录」AJAX 端点
-    /// JS 在宿舍/月份变更时调用，返回 JSON 包含 prevCold/Hot/Electric、hasPrev、currentStatus 等
+    /// JS 在住宿/月份变更时调用，返回 JSON 包含 prevCold/Hot/Electric、hasPrev、currentStatus 等
     /// </summary>
     public JsonResult OnGetLoadReadings([FromQuery] string? dormCode, [FromQuery] string? readMonth)
     {
@@ -276,7 +276,7 @@ public class IndexModel : PaginatedPageModel
 public class CoverageDto
 {
     public string TargetMonth { get; set; } = "";
-    /// <summary>总宿舍数（IsActive=true）</summary>
+    /// <summary>总住宿数（IsActive=true）</summary>
     public int TotalDorms { get; set; }
     /// <summary>v2.13.209：已抄表数（ColdMeter>0 AND HotMeter>0 AND ElectricMeter>0 的 DormCode 去重数）</summary>
     public int ReadDorms { get; set; }
@@ -284,7 +284,7 @@ public class CoverageDto
     public int UnfinishedDorms { get; set; }
     /// <summary>v2.13.209：未抄表数（全0 或 当月无任何记录的 DormCode 去重数）</summary>
     public int UncoveredDorms { get; set; }
-    /// <summary>覆盖率（已抄表 / 总宿舍 × 100，保留 1 位小数）</summary>
+    /// <summary>覆盖率（已抄表 / 总住宿 × 100，保留 1 位小数）</summary>
     public double Percentage => TotalDorms > 0 ? Math.Round(ReadDorms * 100.0 / TotalDorms, 1) : 0;
 }
 

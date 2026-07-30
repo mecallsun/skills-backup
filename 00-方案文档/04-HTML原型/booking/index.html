@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>办理登记 - 金戈宿舍管理系统</title>
+    <title>办理登记 - 金智住宿管理系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <style>
@@ -182,7 +182,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -616,12 +616,12 @@
 
         // v2.11.8 / v2.11.8.b 入住快速确认
         // 调用 POST /api/v1/bookings/{id}/confirm-checkin
-        // 服务端先校验宿舍房号余量：
+        // 服务端先校验住宿房号余量：
         //   - 有余量 → Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()
         //   - 无余量 → 返回 400 NO_CAPACITY，前端弹窗提示"床位已满，请更换其他房间"
         // v2.11.13 成功后调用 render() 即时刷新列表
         function confirmCheckin(id) {
-            if (!confirm('确认该员工已入住？\n（后台将先校验宿舍房号余量，有余量则状态：预约 → 在宿；无余量则提示床位已满）')) return;
+            if (!confirm('确认该员工已入住？\n（后台将先校验住宿房号余量，有余量则状态：预约 → 在宿；无余量则提示床位已满）')) return;
             // 原型演示：mock 50% 概率返回无余量错误
             if (Math.random() < 0.5) {
                 alert('⚠ 床位已满，请更换其他房间');
@@ -640,12 +640,12 @@
         // v2.11.10 新增：撤销退房
         // 调用 POST /api/v1/bookings/{id}/undo-checkout
         // 仅当 BookingDate == today && Status == 3 已退房 时显示
-        // 服务端先校验宿舍房号余量：
+        // 服务端先校验住宿房号余量：
         //   - 有余量 → Status 即时变更为 2 在宿，同步 Registrar=当前账号、RegistrationDate=now()，联动恢复 SysEmployee.DormCode
         //   - 无余量 → 返回 400 NO_CAPACITY，前端弹窗提示"床位已满，撤销退房失败！"，不修改任何字段
         // v2.11.13 成功后调用 render() 即时刷新列表
         function undoCheckout(id) {
-            if (!confirm('确认撤销该记录的退房？\n（后台将先校验宿舍房号余量，有余量则恢复状态：在宿；无余量则提示床位已满，撤销失败）')) return;
+            if (!confirm('确认撤销该记录的退房？\n（后台将先校验住宿房号余量，有余量则恢复状态：在宿；无余量则提示床位已满，撤销失败）')) return;
             // 原型演示：mock 50% 概率返回无余量错误
             if (Math.random() < 0.5) {
                 alert('⚠ 床位已满，撤销退房失败！');
@@ -696,7 +696,7 @@
         // 调用 POST /api/v1/bookings/{id}/confirm-checkout
         // 仅当 Type == 2 退房 && Status == 1 预约 时显示（位置在"修改"与"撤销预约"之间）
         // 服务端将 Status 即时变更为 3 已退房，同步 Registrar=当前账号、RegistrationDate=now()、UpdatedAt=now()
-        // 联动 SysEmployee.DormCode=NULL（员工变为未分配宿舍）
+        // 联动 SysEmployee.DormCode=NULL（员工变为未分配住宿）
         // v2.11.13 成功后调用 render() 即时刷新列表
         function confirmCheckout(id) {
             if (!confirm('确认该员工已退房？\n（状态：预约 → 已退房，登记人/登记时间将更新为当前信息）')) return;

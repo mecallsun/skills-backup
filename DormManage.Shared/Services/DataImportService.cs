@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 namespace DormManage.Shared.Services;
 
 /// <summary>
-/// 行政宿舍 Excel 数据导入服务（v2.13.19）
-/// 仅导入可靠主数据：部门/楼栋/楼层/地址/班组/考勤班次/员工/宿舍
+/// 行政住宿 Excel 数据导入服务（v2.13.19）
+/// 仅导入可靠主数据：部门/楼栋/楼层/地址/班组/考勤班次/员工/住宿
 /// 不导入有质量问题的入住明细关系
 /// </summary>
 public class DataImportService
@@ -38,15 +38,15 @@ public class DataImportService
 
         // 1. 导入并保存字典表（必须先 SaveChanges，后续 Dorm/Employee 才能查到 FK）
         await ImportDepartmentsAsync(workbook.Worksheet("部门"), result);
-        await ImportBuildingsAsync(workbook.Worksheet("宿舍档案"), result);
-        await ImportFloorsAsync(workbook.Worksheet("宿舍档案"), result);
+        await ImportBuildingsAsync(workbook.Worksheet("住宿档案"), result);
+        await ImportFloorsAsync(workbook.Worksheet("住宿档案"), result);
         await ImportAddressesAsync(result);
         await ImportTeamsAsync(workbook.Worksheet("员工班组"), result);
         await ImportAttendanceTypesAsync(result);
         await _db.SaveChangesAsync();
 
-        // 2. 导入宿舍
-        await ImportDormsAsync(workbook.Worksheet("宿舍档案"), result);
+        // 2. 导入住宿
+        await ImportDormsAsync(workbook.Worksheet("住宿档案"), result);
         await _db.SaveChangesAsync();
 
         // 3. 导入员工
@@ -365,5 +365,5 @@ public class ImportResult
     public List<string> Errors { get; set; } = new();
 
     public override string ToString() =>
-        $"导入完成：部门 {Departments}，楼栋 {Buildings}，楼层 {Floors}，地址 {Addresses}，班组 {Teams}，考勤班次 {AttendanceTypes}，宿舍 {Dorms}，员工 {Employees}。错误 {Errors.Count} 条。";
+        $"导入完成：部门 {Departments}，楼栋 {Buildings}，楼层 {Floors}，地址 {Addresses}，班组 {Teams}，考勤班次 {AttendanceTypes}，住宿 {Dorms}，员工 {Employees}。错误 {Errors.Count} 条。";
 }

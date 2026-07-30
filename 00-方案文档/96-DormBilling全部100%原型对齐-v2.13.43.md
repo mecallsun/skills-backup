@@ -63,7 +63,7 @@ function exportBilling(e) {
     var url = '/api/v1/billing/dorm-bills/export?billingMonth=' + encodeURIComponent(month);
     var a = document.createElement('a');
     a.href = url;
-    a.download = '宿舍账单_' + month + '.xlsx';
+    a.download = '住宿账单_' + month + '.xlsx';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

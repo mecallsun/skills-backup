@@ -50,7 +50,7 @@ const TAB_MAX_COUNT = 15;
 const MODULE_ICON_MAP = {
   'index':      { icon: 'bi-house-door-fill', color: '#1976d2', title: '首页' },
   'booking':    { icon: 'bi-clipboard-check', color: '#1976d2', title: '办理登记' },
-  'dorms':      { icon: 'bi-building',        color: '#1976d2', title: '宿舍管理' },
+  'dorms':      { icon: 'bi-building',        color: '#1976d2', title: '住宿管理' },
   'personnel':  { icon: 'bi-people-fill',     color: '#2e7d32', title: '人员清单' },
   'billing':    { icon: 'bi-cash-stack',      color: '#e65100', title: '费用' },
   'meter':      { icon: 'bi-clipboard-data',  color: '#00838f', title: '智能抄表' },
@@ -63,10 +63,10 @@ const MODULE_ICON_MAP = {
 const ICON_RAIL_MENU = [
   { key: 'index',     icon: 'bi-speedometer2',      title: '首页',       url: 'index.html' },
   { key: 'booking',   icon: 'bi-clipboard-check',   title: '办理登记',   url: 'booking/index.html' },
-  { key: 'dorms',     icon: 'bi-building',          title: '宿舍管理',   url: 'dorms/list.html' },
+  { key: 'dorms',     icon: 'bi-building',          title: '住宿管理',   url: 'dorms/list.html' },
   { key: 'personnel', icon: 'bi-people-fill',       title: '人员清单',   url: 'personnel/list.html' },
   { key: 'billing',   icon: 'bi-cash-stack',        title: '费用标准',   url: 'billing/standards.html' },
-  { key: 'dorm-bills',icon: 'bi-receipt',           title: '宿舍账单',   url: 'billing/dorm-bills.html' },
+  { key: 'dorm-bills',icon: 'bi-receipt',           title: '住宿账单',   url: 'billing/dorm-bills.html' },
   { key: 'employee-bills', icon: 'bi-wallet2',     title: '员工账单',   url: 'billing/employee-bills.html' },
   { key: 'meter',     icon: 'bi-clipboard-data',    title: '智能抄表',   url: 'meter/index.html' },
   { key: 'basics',    icon: 'bi-database',          title: '基础资料',   url: 'basics/index.html' },

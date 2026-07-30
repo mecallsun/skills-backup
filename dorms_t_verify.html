@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>&#x5BBF;&#x820D;&#x7BA1;&#x7406; - 金戈宿舍管理系统</title>
+    <title>&#x5BBF;&#x820D;&#x7BA1;&#x7406; - 金智住宿管理系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
@@ -330,7 +330,7 @@
     <div b-7qkhyzkv64 class="top-bar">
         <a b-7qkhyzkv64 href="/" class="brand">
             <i b-7qkhyzkv64 class="bi bi-droplet-half brand-icon"></i>
-            <span b-7qkhyzkv64 class="brand-text">金戈宿舍管理系统</span>
+            <span b-7qkhyzkv64 class="brand-text">金智住宿管理系统</span>
             <span b-7qkhyzkv64 class="brand-version">v2.13.71</span>
         </a>
         <div b-7qkhyzkv64 class="user-area">
@@ -902,12 +902,12 @@
 </div>
 
 
-<!-- v2.13.11 宿舍新增/编辑 Modal 弹窗（iframe 复用独立页面，避免表单代码重复） -->
+<!-- v2.13.11 住宿新增/编辑 Modal 弹窗（iframe 复用独立页面，避免表单代码重复） -->
 <div class="modal fade" id="dormModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h5 class="modal-title" id="dormModalTitle"><i class="bi bi-plus-circle text-success"></i> 新增宿舍</h5>
+                <h5 class="modal-title" id="dormModalTitle"><i class="bi bi-plus-circle text-success"></i> 新增住宿</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
@@ -951,7 +951,7 @@
     
 <script>
     function deleteDorm(id, code) {
-        if (!confirm('确定删除宿舍 "' + code + '" 吗？此操作不可恢复。')) return;
+        if (!confirm('确定删除住宿 "' + code + '" 吗？此操作不可恢复。')) return;
         const f = document.createElement('form');
         f.method = 'post';
         f.action = '/Dorms?handler=Delete&id=' + id;
@@ -960,7 +960,7 @@
         document.body.appendChild(f);
         f.submit();
     }
-    // v2.13.117 「新增宿舍」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
+    // v2.13.117 「新增住宿」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
     //   原 Modal 弹窗 + iframe 模式保留给行内「编辑」按钮使用（OPT-1 优化项，行 179-181）
     function openDormModal(id) {
         var url = id > 0 ? '/Dorms/Edit?id=' + id + '&inModal=1' : '/Dorms/Create?inModal=1';
@@ -968,8 +968,8 @@
         frame.src = url;
         var title = document.getElementById('dormModalTitle');
         title.innerHTML = id > 0
-            ? '<i class="bi bi-pencil-square text-primary"></i> 编辑宿舍'
-            : '<i class="bi bi-plus-circle text-success"></i> 新增宿舍';
+            ? '<i class="bi bi-pencil-square text-primary"></i> 编辑住宿'
+            : '<i class="bi bi-plus-circle text-success"></i> 新增住宿';
     }
     // 监听 iframe 提交完成事件（Create/Edit 页面保存后跳转到 /Dorms，弹窗需关闭）
     var modalEl = document.getElementById('dormModal');

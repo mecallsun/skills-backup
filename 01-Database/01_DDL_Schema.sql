@@ -1,5 +1,5 @@
 -- ============================================================
--- 金戈新材料 - PDA 水电抄表系统 数据库结构
+-- 金智新材料 - PDA 水电抄表系统 数据库结构
 -- 适用：SQL Server 2017 / 2019
 -- 编码：UTF-8（保存时确保 SSMS 使用中文排序规则）
 --
@@ -25,22 +25,22 @@ USE WaterMeterDB;
 GO
 
 -- ============================================================
--- 1. 宿舍档案表 Dorm
+-- 1. 住宿档案表 Dorm
 -- ============================================================
 IF OBJECT_ID('dbo.Dorm', 'U') IS NULL
 BEGIN
     CREATE TABLE dbo.Dorm (
         DormId           INT            IDENTITY(1,1) NOT NULL,
-        DormCode         NVARCHAR(32)   NOT NULL,        -- 宿舍编码（如 D-301）
+        DormCode         NVARCHAR(32)   NOT NULL,        -- 住宿编码（如 D-301）
         Building         NVARCHAR(32)   NULL,            -- 楼栋
         Floor            NVARCHAR(16)   NULL,            -- 楼层
         RoomNo           NVARCHAR(16)   NULL,            -- 房号
         DormAddress      NVARCHAR(128)  NULL,            -- 完整地址
-        DormType         NVARCHAR(16)   NULL,            -- 宿舍类型：单人间/双人间
+        DormType         NVARCHAR(16)   NULL,            -- 住宿类型：单人间/双人间
         HasColdMeter     BIT            NOT NULL DEFAULT 1,
         HasHotMeter      BIT            NOT NULL DEFAULT 1,
         HasElectricMeter BIT            NOT NULL DEFAULT 1,
-        Barcode          NVARCHAR(64)   NULL,            -- 宿舍对应的条码/二维码内容
+        Barcode          NVARCHAR(64)   NULL,            -- 住宿对应的条码/二维码内容
         Remark           NVARCHAR(256)  NULL,
         IsActive         BIT            NOT NULL DEFAULT 1,
         CreatedAt        DATETIME       NOT NULL DEFAULT GETDATE(),
@@ -79,7 +79,7 @@ BEGIN
         CONSTRAINT FK_MeterRecord_Dorm FOREIGN KEY (DormId) REFERENCES dbo.Dorm(DormId)
     );
 
-    -- 核心索引：每宿舍每月只能有一条记录（防重复录入）
+    -- 核心索引：每住宿每月只能有一条记录（防重复录入）
     CREATE UNIQUE INDEX IX_MeterRecord_DormMonth
         ON dbo.MeterRecord(DormCode, ReadMonth);
 
@@ -272,7 +272,7 @@ BEGIN
         HireDate           DATE           NULL,
         LeaveDate          DATE           NULL,
         BedNo              INT            NULL,
-        DormCode           NVARCHAR(20)   NULL,               -- 当前宿舍（入住人数单一数据源）
+        DormCode           NVARCHAR(20)   NULL,               -- 当前住宿（入住人数单一数据源）
         Team               NVARCHAR(20)   NULL,
         ResidenceStatusId  INT            NOT NULL DEFAULT 2, -- 1=已住宿 2=未住宿 3=待入住
         AttendanceTypeId   INT            NULL,
@@ -306,7 +306,7 @@ BEGIN
         MoveFromDormCode    NVARCHAR(32)   NULL,               -- v2.13.24 业务深度：调宿来源房号
         ActualCheckInDate   DATE           NULL,               -- v2.13.24 业务深度：实际入住日期
         ActualCheckOutDate  DATE           NULL,               -- v2.13.24 业务深度：实际退房日期
-        DormCode            NVARCHAR(64)   NOT NULL,           -- FK → Dorm.DormCode（宿舍代码）
+        DormCode            NVARCHAR(64)   NOT NULL,           -- FK → Dorm.DormCode（住宿代码）
         BookingType         TINYINT        NOT NULL,           -- 1=入住 2=退房
         BookingDate         DATE           NOT NULL,           -- 入退日期
         Status              TINYINT        NOT NULL,           -- 1=预约 2=在宿 3=已退房 4=已取消

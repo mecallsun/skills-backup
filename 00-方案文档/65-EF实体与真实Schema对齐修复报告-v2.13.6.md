@@ -3,7 +3,7 @@
 > **版本**：v2.13.6
 > **日期**：2026-07-16
 > **作者**：Claude Opus 4.8 (1M context)
-> **范围**：宿舍 / 办理登记 / 人员 / 抄表 四大核心业务模块 —— EF Core 实体映射与真实 SQL Server（192.168.1.237 / WaterMeterDB）schema 对齐，消除 HTTP 500
+> **范围**：住宿 / 办理登记 / 人员 / 抄表 四大核心业务模块 —— EF Core 实体映射与真实 SQL Server（192.168.1.237 / WaterMeterDB）schema 对齐，消除 HTTP 500
 > **真理源**：`init_schema.sql`（v2.13.3，实时探测 DDL）
 > **关联**：64-详情编辑页路由链接修复验证报告-v2.13.5、CLAUDE.md §8.1 冒烟测试
 

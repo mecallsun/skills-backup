@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>首页 — 金戈宿舍管理系统 v2.11.2</title>
+    <title>首页 — 金智住宿管理系统 v2.11.2</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -203,7 +203,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -254,12 +254,12 @@
                 </div>
             </div>
 
-            <!-- KPI 2: 宿舍入住率 -->
+            <!-- KPI 2: 住宿入住率 -->
             <div class="kpi-card">
                 <div class="d-flex align-items-start justify-content-between">
                     <div>
                         <div class="kpi-value" style="color: #1baf7a;" id="kpiOccupancy">64%</div>
-                        <div class="kpi-label">宿舍入住率</div>
+                        <div class="kpi-label">住宿入住率</div>
                         <div class="kpi-sub"><span id="kpiOccupied">500</span>/<span id="kpiTotalBeds">777</span> 床位</div>
                     </div>
                     <div class="kpi-icon" style="background: rgba(27,175,122,0.1); color: #1baf7a;">
@@ -373,22 +373,22 @@
                 </div>
             </div>
 
-            <!-- 右半: 宿舍费用排名TOP10 + 入住率排名TOP20 (占50%宽度，高度450px) -->
+            <!-- 右半: 住宿费用排名TOP10 + 入住率排名TOP20 (占50%宽度，高度450px) -->
             <div class="col-lg-6">
                 <div class="row g-2" style="height: 450px;">
-                    <!-- 左: 宿舍费用排名 TOP 10 -->
+                    <!-- 左: 住宿费用排名 TOP 10 -->
                     <div class="col-6">
                         <div class="viz-card h-100">
                             <div class="card-header">
                                 <i class="bi bi-bar-chart-steps"></i>
-                                <span>宿舍费用排名 TOP 10（费用由高到低）</span>
+                                <span>住宿费用排名 TOP 10（费用由高到低）</span>
                             </div>
                             <div class="card-body">
                                 <canvas id="chartDormCost"></canvas>
                             </div>
                         </div>
                     </div>
-                    <!-- 右: 宿舍入住率排名 TOP 20 -->
+                    <!-- 右: 住宿入住率排名 TOP 20 -->
                     <div class="col-6">
                         <div class="viz-card h-100">
                             <div class="card-header">
@@ -461,8 +461,8 @@
 
         <!-- 底部信息 -->
         <div class="text-center text-muted small py-4 mt-4 border-top">
-            <p class="mb-1">金戈宿舍管理系统 v2.11.2 · 2026年7月</p>
-            <p class="mb-0">© 金戈新材料 · 技术支持</p>
+            <p class="mb-1">金智住宿管理系统 v2.11.2 · 2026年7月</p>
+            <p class="mb-0">© 金智新材料 · 技术支持</p>
         </div>
     </div>
 
@@ -477,7 +477,7 @@
             document.getElementById('kpiEmployee').textContent = residentCount;
             document.getElementById('kpiEmployeeTotal').textContent = PERSONNEL.length;
 
-            // KPI 2: 宿舍入住率（v2.11.6 修复：分子独立计算，复用 KPI 1 的 residentCount）
+            // KPI 2: 住宿入住率（v2.11.6 修复：分子独立计算，复用 KPI 1 的 residentCount）
             const totalCapacity = DORMS.reduce((sum, d) => sum + (d.isActive ? d.capacity : 0), 0);
             const occupancyRate = totalCapacity > 0 ? Math.round(residentCount / totalCapacity * 100) : 0;
             document.getElementById('kpiOccupancy').textContent = occupancyRate + '%';
@@ -635,7 +635,7 @@
                 }
             });
 
-            // 3. 宿舍费用排名TOP10 (水平堆叠柱状图)
+            // 3. 住宿费用排名TOP10 (水平堆叠柱状图)
             const dormCodes = ['D-101', 'D-055', 'D-078', 'D-023', 'D-156', 'D-089', 'D-134', 'D-067', 'D-112', 'D-045'];
             const coldData = [180, 160, 145, 138, 130, 125, 120, 115, 110, 105];
             const hotData = [320, 290, 265, 250, 235, 220, 210, 195, 185, 175];
@@ -665,25 +665,25 @@
                 }
             });
 
-            // 3.1 宿舍入住率排名TOP20 (水平柱状图，由小到大排序)
-            // 数据来源：DORMS表 (宿舍档案) + RESIDENCIES表 (入住记录)
+            // 3.1 住宿入住率排名TOP20 (水平柱状图，由小到大排序)
+            // 数据来源：DORMS表 (住宿档案) + RESIDENCIES表 (入住记录)
             //
             // 取数逻辑（v2.11.2 增补 m2 修正）：
-            // 1. 从DORMS表获取宿舍列表，过滤 isActive=true (已启用) 且 capacity>0 的宿舍
-            // 2. 从RESIDENCIES表统计每个宿舍的当前在住人数：
+            // 1. 从DORMS表获取住宿列表，过滤 isActive=true (已启用) 且 capacity>0 的住宿
+            // 2. 从RESIDENCIES表统计每个住宿的当前在住人数：
             //    - 条件：status=1 (在住) 且 leaveDate IS NULL (未退房)
-            // 3. 计算入住率 = (当前在住人数 / 宿舍容量(capacity)) × 100%
+            // 3. 计算入住率 = (当前在住人数 / 住宿容量(capacity)) × 100%
             // 4. 按入住率由小到大排序，取前20条
             //
             // 字段说明：
-            // - DORMS.capacity: 宿舍容量（可容纳人数），入住率计算的分母
+            // - DORMS.capacity: 住宿容量（可容纳人数），入住率计算的分母
             // - DORMS.bedCount: 实际床位数
             // - RESIDENCIES.dormCode: 关联到DORMS.dormCode
             // - RESIDENCIES.status: 1=在住，2=已退房
             // - RESIDENCIES.leaveDate: 退房日期，NULL表示未退房
 
             const occData = DORMS
-                .filter(d => d.isActive && d.capacity > 0)  // 只统计已启用且有容量的宿舍
+                .filter(d => d.isActive && d.capacity > 0)  // 只统计已启用且有容量的住宿
                 .map(d => {
                     // 统计当前在住人数：RESIDENCIES中在住且未退房的记录数
                     const currentResidents = RESIDENCIES.filter(

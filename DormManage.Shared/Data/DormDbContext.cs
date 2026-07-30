@@ -111,7 +111,7 @@ public class DormDbContext : DbContext
     public DbSet<SysEmployee> Employees { get; set; } = null!;
 
     /// <summary>
-    /// 宿舍
+    /// 住宿
     /// </summary>
     public DbSet<Dorm> Dorms { get; set; } = null!;
 
@@ -136,7 +136,7 @@ public class DormDbContext : DbContext
     public DbSet<BillingStandard> BillingStandards { get; set; } = null!;
 
     /// <summary>
-    /// 宿舍月度账单
+    /// 住宿月度账单
     /// </summary>
     public DbSet<DormBilling> DormBillings { get; set; } = null!;
 
@@ -745,7 +745,7 @@ public class DormDbContext : DbContext
         );
 
         /*
-        // 宿舍种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
+        // 住宿种子数据（v2.13.19 起由行政住宿 Excel 导入，不再硬编码）
         modelBuilder.Entity<Dorm>().HasData(
             new Dorm { Id = 1, DormCode = "D-001", BuildingId = 1, BuildingName = "1号楼", FloorId = 1, AddressId = 1, AddressText = "园区A栋", Capacity = 4, Gender = 1, IsActive = true },
             new Dorm { Id = 2, DormCode = "D-002", BuildingId = 1, BuildingName = "1号楼", FloorId = 1, AddressId = 1, AddressText = "园区A栋", Capacity = 4, Gender = 1, IsActive = true },
@@ -754,7 +754,7 @@ public class DormDbContext : DbContext
             new Dorm { Id = 5, DormCode = "D-005", BuildingId = 2, BuildingName = "2号楼", FloorId = 2, AddressId = 2, AddressText = "园区B栋", Capacity = 6, Gender = 2, IsActive = true }
         );
 
-        // 员工种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
+        // 员工种子数据（v2.13.19 起由行政住宿 Excel 导入，不再硬编码）
         modelBuilder.Entity<SysEmployee>().HasData(
             new SysEmployee { Id = 1, EmployeeCode = "EMP-2026-001", RealName = "张三", DepartmentId = 1, Department = "生产部", EmployeeTypeId = 1, Phone = "13800000001", EmploymentStatusId = 1, Status = 1, HireDate = DateOnly.Parse("2025-01-15"), DormCode = "D-001", ResidenceStatusId = 1, IsActive = true },
             new SysEmployee { Id = 2, EmployeeCode = "EMP-2026-002", RealName = "李四", DepartmentId = 2, Department = "技术部", EmployeeTypeId = 1, Phone = "13800000002", EmploymentStatusId = 1, Status = 1, HireDate = DateOnly.Parse("2025-02-20"), DormCode = "D-002", ResidenceStatusId = 1, IsActive = true },
@@ -768,7 +768,7 @@ public class DormDbContext : DbContext
             new SysEmployee { Id = 10, EmployeeCode = "EMP-2026-010", RealName = "陈二", DepartmentId = 3, Department = "行政部", EmployeeTypeId = 4, Phone = "13800000010", EmploymentStatusId = 2, Status = 2, HireDate = DateOnly.Parse("2026-08-01"), ResidenceStatusId = 2, IsActive = true }
         );
 
-        // 办理记录种子数据（v2.13.19 起由行政宿舍 Excel 导入，不再硬编码）
+        // 办理记录种子数据（v2.13.19 起由行政住宿 Excel 导入，不再硬编码）
         modelBuilder.Entity<DormBooking>().HasData(
             new DormBooking { Id = 1, EmployeeId = 1, EmployeeCode = "EMP-2026-001", EmployeeName = "张三", Phone = "13800000001", Department = "生产部", DormCode = "D-001", Type = 1, BookingDate = DateOnly.Parse("2025-01-15"), Status = 2, Reason = "入职", RegistrationDate = DateTime.Parse("2025-01-15 10:00:00"), Registrar = "admin", IsActive = true },
             new DormBooking { Id = 2, EmployeeId = 2, EmployeeCode = "EMP-2026-002", EmployeeName = "李四", Phone = "13800000002", Department = "技术部", DormCode = "D-002", Type = 1, BookingDate = DateOnly.Parse("2025-02-20"), Status = 2, Reason = "入职", RegistrationDate = DateTime.Parse("2025-02-20 14:30:00"), Registrar = "admin", IsActive = true },
@@ -808,14 +808,14 @@ public class DormDbContext : DbContext
             new SysPermission { Id = 2, PermissionCode = "booking:view", PermissionName = "办理登记", PermissionType = 1, ParentId = 0, Route = "/Booking", Icon = "bi-clipboard-check", SortOrder = 1, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 3, PermissionCode = "booking:checkin", PermissionName = "入住办理", PermissionType = 2, ParentId = 2, Route = "/Booking/CheckIn", Icon = "bi-box-arrow-in-right", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 4, PermissionCode = "booking:checkout", PermissionName = "退房办理", PermissionType = 2, ParentId = 2, Route = "/Booking/CheckOut", Icon = "bi-box-arrow-right", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 5, PermissionCode = "dorm:view", PermissionName = "宿舍管理", PermissionType = 1, ParentId = 0, Route = "/Dorms", Icon = "bi-building", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 6, PermissionCode = "dorm:create", PermissionName = "新增宿舍", PermissionType = 2, ParentId = 5, Route = "/Dorms/Create", Icon = "", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 7, PermissionCode = "dorm:edit", PermissionName = "编辑宿舍", PermissionType = 2, ParentId = 5, Route = "/Dorms/Edit", Icon = "", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 8, PermissionCode = "dorm:delete", PermissionName = "删除宿舍", PermissionType = 2, ParentId = 5, Route = "", Icon = "", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 5, PermissionCode = "dorm:view", PermissionName = "住宿管理", PermissionType = 1, ParentId = 0, Route = "/Dorms", Icon = "bi-building", SortOrder = 2, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 6, PermissionCode = "dorm:create", PermissionName = "新增住宿", PermissionType = 2, ParentId = 5, Route = "/Dorms/Create", Icon = "", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 7, PermissionCode = "dorm:edit", PermissionName = "编辑住宿", PermissionType = 2, ParentId = 5, Route = "/Dorms/Edit", Icon = "", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 8, PermissionCode = "dorm:delete", PermissionName = "删除住宿", PermissionType = 2, ParentId = 5, Route = "", Icon = "", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 9, PermissionCode = "personnel:view", PermissionName = "人员清单", PermissionType = 1, ParentId = 0, Route = "/Personnel", Icon = "bi-people", SortOrder = 3, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 10, PermissionCode = "personnel:import", PermissionName = "导入员工", PermissionType = 2, ParentId = 9, Route = "/Personnel/Import", Icon = "bi-upload", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 11, PermissionCode = "billing:view", PermissionName = "费用标准", PermissionType = 1, ParentId = 0, Route = "/BillingStandard", Icon = "bi-currency-dollar", SortOrder = 4, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
-            new SysPermission { Id = 12, PermissionCode = "dormbilling:view", PermissionName = "宿舍账单", PermissionType = 1, ParentId = 0, Route = "/DormBilling", Icon = "bi-receipt", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
+            new SysPermission { Id = 12, PermissionCode = "dormbilling:view", PermissionName = "住宿账单", PermissionType = 1, ParentId = 0, Route = "/DormBilling", Icon = "bi-receipt", SortOrder = 5, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 13, PermissionCode = "employeebilling:view", PermissionName = "员工账单", PermissionType = 1, ParentId = 0, Route = "/EmployeeBilling", Icon = "bi-wallet2", SortOrder = 6, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 14, PermissionCode = "meter:view", PermissionName = "智能抄表", PermissionType = 1, ParentId = 0, Route = "/Meter", Icon = "bi-gauge", SortOrder = 7, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
             new SysPermission { Id = 15, PermissionCode = "meter:entry", PermissionName = "手动录入", PermissionType = 2, ParentId = 14, Route = "/Meter/Entry", Icon = "bi-pencil", SortOrder = 8, IsActive = true, CreatedAt = DateTime.Parse("2026-07-14") },
@@ -825,15 +825,15 @@ public class DormDbContext : DbContext
             // ========== v2.13.88 按钮权限细化（用户反馈：列表内按钮权限独立） ==========
             new SysPermission { Id = 19, PermissionCode = "booking:edit", PermissionName = "修改办理登记", PermissionType = 2, ParentId = 2, Route = "/Booking/Edit", Icon = "", SortOrder = 10, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 20, PermissionCode = "booking:cancel", PermissionName = "撤销办理登记", PermissionType = 2, ParentId = 2, Route = "", Icon = "", SortOrder = 11, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            new SysPermission { Id = 21, PermissionCode = "dorm:detail", PermissionName = "查看宿舍详情", PermissionType = 2, ParentId = 5, Route = "/Dorms/Details", Icon = "", SortOrder = 12, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 21, PermissionCode = "dorm:detail", PermissionName = "查看住宿详情", PermissionType = 2, ParentId = 5, Route = "/Dorms/Details", Icon = "", SortOrder = 12, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 22, PermissionCode = "personnel:edit", PermissionName = "编辑员工", PermissionType = 2, ParentId = 9, Route = "/Personnel/Edit", Icon = "", SortOrder = 13, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 23, PermissionCode = "personnel:markleft", PermissionName = "标记离职", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 14, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 24, PermissionCode = "personnel:delete", PermissionName = "删除员工", PermissionType = 2, ParentId = 9, Route = "", Icon = "", SortOrder = 15, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 25, PermissionCode = "billing:edit", PermissionName = "编辑费用标准", PermissionType = 2, ParentId = 11, Route = "/BillingStandard/Edit", Icon = "", SortOrder = 16, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 26, PermissionCode = "billing:delete", PermissionName = "删除费用标准", PermissionType = 2, ParentId = 11, Route = "", Icon = "", SortOrder = 17, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            // ========== v2.13.88 宿舍账单/员工账单 按钮权限（用户第二轮追加需求） ==========
-            new SysPermission { Id = 27, PermissionCode = "dormbilling:generate", PermissionName = "生成宿舍账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 18, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
-            new SysPermission { Id = 28, PermissionCode = "dormbilling:export", PermissionName = "导出宿舍账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 19, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            // ========== v2.13.88 住宿账单/员工账单 按钮权限（用户第二轮追加需求） ==========
+            new SysPermission { Id = 27, PermissionCode = "dormbilling:generate", PermissionName = "生成住宿账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 18, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
+            new SysPermission { Id = 28, PermissionCode = "dormbilling:export", PermissionName = "导出住宿账单", PermissionType = 2, ParentId = 12, Route = "", Icon = "", SortOrder = 19, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 29, PermissionCode = "employeebilling:generate", PermissionName = "生成分摊账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 20, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 30, PermissionCode = "employeebilling:publish", PermissionName = "发布员工账单", PermissionType = 2, ParentId = 13, Route = "", Icon = "", SortOrder = 21, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
             new SysPermission { Id = 31, PermissionCode = "employeebilling:export", PermissionName = "导出员工账单", PermissionType = 2, ParentId = 13, Route = "", SortOrder = 22, IsActive = true, CreatedAt = DateTime.Parse("2026-07-21") },
@@ -943,7 +943,7 @@ public class DormDbContext : DbContext
             new SysFieldPermission { Id = 1, FieldKey = "employee.realname",   FieldName = "姓名",     Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 1, IsActive = true, Description = "员工真实姓名（高 PII）",   CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 2, FieldKey = "employee.phone",      FieldName = "手机号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 1, SortOrder = 2, IsActive = true, Description = "联系电话（高 PII）",       CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 3, FieldKey = "employee.employeecode", FieldName = "工号",   Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 3, IsActive = true, Description = "公司内唯一标识",         CreatedAt = DateTime.Parse("2026-07-22") },
-            new SysFieldPermission { Id = 4, FieldKey = "employee.dormcode",   FieldName = "宿舍房号", Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 4, IsActive = true, Description = "当前入住房号（隐私住址）", CreatedAt = DateTime.Parse("2026-07-22") },
+            new SysFieldPermission { Id = 4, FieldKey = "employee.dormcode",   FieldName = "住宿房号", Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 4, IsActive = true, Description = "当前入住房号（隐私住址）", CreatedAt = DateTime.Parse("2026-07-22") },
             new SysFieldPermission { Id = 5, FieldKey = "employee.remark",     FieldName = "备注",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 5, IsActive = true, Description = "自由文本备注（可能含敏感信息）", CreatedAt = DateTime.Parse("2026-07-22") },
             // v2.13.215 新增：班组、班次（员工基础组织信息）
             new SysFieldPermission { Id = 6, FieldKey = "employee.team",       FieldName = "班组",     Module = "Personnel", FieldType = "string", SensitivityLevel = 2, SortOrder = 6, IsActive = true, Description = "所属班组（员工基础组织信息，可推断工作小组成员关系）", CreatedAt = DateTime.Parse("2026-07-28") },

@@ -75,7 +75,7 @@ public class DormBooking : BaseEntity
     // ========== 住宿信息 ==========
 
     /// <summary>
-    /// 宿舍代码（FK → Dorm.DormCode）
+    /// 住宿代码（FK → Dorm.DormCode）
     /// v2.13.59 P0 BUG 修复：移除 [Required] + 改为 string?
     /// 原因：兼容历史 NULL 数据（FK_DormBooking_Dorm 约束保证新建数据合法）
     /// </summary>

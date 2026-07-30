@@ -152,7 +152,7 @@ public class EmployeeSearchResult
 }
 
 /// <summary>
-/// 宿舍选项
+/// 住宿选项
 /// </summary>
 public class DormOption
 {
@@ -174,7 +174,7 @@ public class DormOption
     public string BlockReason { get; set; } = "";
 
     // ========== v2.13.88 床位号字段（用户需求：分配房间同时显示分配的床位号） ==========
-    /// <summary>该宿舍的全部床位号列表（从 Dorm.BedNumbers CSV 解析）</summary>
+    /// <summary>该住宿的全部床位号列表（从 Dorm.BedNumbers CSV 解析）</summary>
     public List<int> AllBedNos { get; set; } = new();
     /// <summary>当前可用的床位号（AllBedNos 排除 Status=2 在宿员工的 BedNo）</summary>
     public List<int> AvailableBedNos { get; set; } = new();
@@ -621,13 +621,13 @@ public class BookingService : IBookingService
         if (employee == null)
             return ApiResponse<DormBooking>.Fail("EMPLOYEE_NOT_FOUND", "员工不存在");
 
-        // 2. 获取宿舍信息
+        // 2. 获取住宿信息
         var dorm = await _db.Dorms.FirstOrDefaultAsync(x => x.DormCode == request.DormCode);
         if (dorm == null)
-            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "宿舍不存在");
+            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "住宿不存在");
 
         if (!dorm.IsActive)
-            return ApiResponse<DormBooking>.Fail("DORM_INACTIVE", "宿舍已停用");
+            return ApiResponse<DormBooking>.Fail("DORM_INACTIVE", "住宿已停用");
 
         // 3. 校验：入住日期不能早于入职日期
         if (employee.HireDate.HasValue && request.BookingDate < employee.HireDate.Value)
@@ -665,7 +665,7 @@ public class BookingService : IBookingService
 
         var available = dorm.Capacity - currentStaying - reserved;
         if (available <= 0)
-            return ApiResponse<DormBooking>.Fail("NO_CAPACITY", "该宿舍已满员");
+            return ApiResponse<DormBooking>.Fail("NO_CAPACITY", "该住宿已满员");
 
         // 5.5 v2.13.84 性别约束（业务硬约束三层防御的第二层：Service 层兜底）
         // 即使前端 disabled/隐藏了不同性别房间，恶意请求绕过时仍由 Service 校验拒绝
@@ -689,11 +689,11 @@ public class BookingService : IBookingService
 
             if (empGender == 1 && hasFemale)
                 return ApiResponse<DormBooking>.Fail("DORM_GENDER_CONFLICT",
-                    $"该宿舍当前在宿女员工 {stayingGenders.Count(g => g == 2)} 人，禁止男员工入住");
+                    $"该住宿当前在宿女员工 {stayingGenders.Count(g => g == 2)} 人，禁止男员工入住");
 
             if (empGender == 2 && hasMale)
                 return ApiResponse<DormBooking>.Fail("DORM_GENDER_CONFLICT",
-                    $"该宿舍当前在宿男员工 {stayingGenders.Count(g => g == 1)} 人，禁止女员工入住");
+                    $"该住宿当前在宿男员工 {stayingGenders.Count(g => g == 1)} 人，禁止女员工入住");
         }
         // 空房间或同性别 → 放行
 
@@ -780,7 +780,7 @@ public class BookingService : IBookingService
 
         _db.DormBookings.Add(booking);
 
-        // 7. 更新员工的当前宿舍 + 床位号 + 住宿状态（v2.13.77：统一通过 SyncEmployeeDormCodeAsync 联动）
+        // 7. 更新员工的当前住宿 + 床位号 + 住宿状态（v2.13.77：统一通过 SyncEmployeeDormCodeAsync 联动）
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, booking.DormCode, registrar, "入住办理", booking.BedNo);
 
         await _db.SaveChangesAsync();
@@ -827,7 +827,7 @@ public class BookingService : IBookingService
 
         _db.DormBookings.Update(booking);
 
-        // v2.11.18：清除员工的当前宿舍（同步 PERSONNEL.dormCode）
+        // v2.11.18：清除员工的当前住宿（同步 PERSONNEL.dormCode）
         // v2.13.77：扩展 bedNo 参数，退房时清空 BedNo
         await SyncEmployeeDormCodeAsync(booking.EmployeeId, null, registrar, "退房", booking.BedNo);
 
@@ -855,7 +855,7 @@ public class BookingService : IBookingService
         // 校验房间床位余量
         var dorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == booking.DormCode);
         if (dorm == null)
-            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "宿舍不存在");
+            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "住宿不存在");
 
         var currentStaying = await _db.DormBookings.CountAsync(b =>
             b.DormCode == booking.DormCode && b.Status == BookingStatus.Staying && b.Id != booking.Id);
@@ -901,7 +901,7 @@ public class BookingService : IBookingService
         // 校验房间床位余量
         var dorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == booking.DormCode);
         if (dorm == null)
-            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "宿舍不存在");
+            return ApiResponse<DormBooking>.Fail("DORM_NOT_FOUND", "住宿不存在");
 
         var currentStaying = await _db.DormBookings.CountAsync(b =>
             b.DormCode == booking.DormCode && b.Status == BookingStatus.Staying && b.Id != booking.Id);
@@ -1056,7 +1056,7 @@ public class BookingService : IBookingService
     /// v2.13.77 业务规则：
     /// - 入住路径（dormCode != null）：如果提供 bedNo → 写入；不提供则保留原值（向后兼容）
     /// - 退房路径（dormCode == null）：**始终清空 BedNo = NULL**（核心修复：之前退房不清床位号）
-    /// - 宿舍端联动：Dorm.CurrentCount 由派生查询实时计算（不存储在 Dorm 表），
+    /// - 住宿端联动：Dorm.CurrentCount 由派生查询实时计算（不存储在 Dorm 表），
     ///   退房后下一次查询 Dorm 列表/详情自动反映 -1；Dorm.BedNumbers 是静态候选床位列表，不因退房而变
     /// </remarks>
     private async Task SyncEmployeeDormCodeAsync(int employeeId, string? dormCode, string registrar, string operation, int? bedNo = null)
@@ -1097,7 +1097,7 @@ public class BookingService : IBookingService
         {
             // 异常时提示信息，不中断主流程（用户可在前端提示确认）
             Console.WriteLine($"[v2.13.77 SyncEmployeeDormCode ERROR] {operation}: EmployeeId={employeeId}, Error={ex.Message}");
-            throw new InvalidOperationException($"同步人员宿舍失败：{ex.Message}。请确认后返回重试。", ex);
+            throw new InvalidOperationException($"同步人员住宿失败：{ex.Message}。请确认后返回重试。", ex);
         }
     }
 

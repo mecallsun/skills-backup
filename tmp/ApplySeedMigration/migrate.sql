@@ -22,7 +22,7 @@ IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'employee.emplo
     VALUES (3, 'employee.employeecode', 'Personnel', '工号', 'string', 2, 3, 1, '公司内唯一标识', '2026-07-22');
 IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'employee.dormcode')
     INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-    VALUES (4, 'employee.dormcode', 'Personnel', '宿舍房号', 'string', 2, 4, 1, '当前入住房号（隐私住址）', '2026-07-22');
+    VALUES (4, 'employee.dormcode', 'Personnel', '住宿房号', 'string', 2, 4, 1, '当前入住房号（隐私住址）', '2026-07-22');
 IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'employee.remark')
     INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
     VALUES (5, 'employee.remark', 'Personnel', '备注', 'string', 2, 5, 1, '自由文本备注（可能含敏感信息）', '2026-07-22');
@@ -66,10 +66,10 @@ IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'booking.operat
 -- Dorms 3 字段（v2.13.180 新增容量+在住人数）
 IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'dorm.address')
     INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-    VALUES (11, 'dorm.address', 'Dorms', '地址', 'string', 2, 11, 1, '宿舍地址（隐私住址）', '2026-07-26');
+    VALUES (11, 'dorm.address', 'Dorms', '地址', 'string', 2, 11, 1, '住宿地址（隐私住址）', '2026-07-26');
 IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'dorm.capacity')
     INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
-    VALUES (20, 'dorm.capacity', 'Dorms', '容量', 'int', 3, 20, 1, '宿舍最大入住人数（可推断房型）', '2026-07-26');
+    VALUES (20, 'dorm.capacity', 'Dorms', '容量', 'int', 3, 20, 1, '住宿最大入住人数（可推断房型）', '2026-07-26');
 IF NOT EXISTS (SELECT 1 FROM SysFieldPermission WHERE FieldKey = 'dorm.currentcount')
     INSERT INTO SysFieldPermission (Id, FieldKey, Module, FieldName, FieldType, SensitivityLevel, SortOrder, IsActive, Description, CreatedAt)
     VALUES (21, 'dorm.currentcount', 'Dorms', '在住人数', 'int', 3, 21, 1, '当前入住人数（可推断房型）', '2026-07-26');

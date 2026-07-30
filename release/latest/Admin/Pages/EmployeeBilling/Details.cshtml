@@ -38,7 +38,7 @@
                     <div class="col-md-2"><div class="text-muted small">姓名</div><div class="fw-bold">@Model.Employee.RealName</div></div>
                     <div class="col-md-2"><div class="text-muted small">部门</div><div>@Model.Employee.Department</div></div>
                     <div class="col-md-2"><div class="text-muted small">员工类型</div><div>@Model.Employee.EmployeeTypeId</div></div>
-                    <div class="col-md-2"><div class="text-muted small">当前宿舍</div><div>@(Model.Employee.DormCode ?? "未分配")</div></div>
+                    <div class="col-md-2"><div class="text-muted small">当前住宿</div><div>@(Model.Employee.DormCode ?? "未分配")</div></div>
                     @* v2.13.92 字段权限：联系电话条件渲染 *@
                     @if (!await Html.IsFieldHiddenAsync("employee.phone"))
                     {
@@ -101,7 +101,7 @@
                     <div class="card-body">
                         <div class="text-muted small">同住人数</div>
                         <div class="fs-3 fw-bold">@Model.Summary.ResidentCount 人</div>
-                        <small class="text-muted">本宿舍本月</small>
+                        <small class="text-muted">本住宿本月</small>
                     </div>
                 </div>
             </div>
@@ -192,7 +192,7 @@
             <!-- 用量趋势 -->
             <div class="col-lg-6">
                 <div class="card shadow-sm h-100">
-                    <div class="card-header bg-light"><strong><i class="bi bi-graph-up"></i> 宿舍最近 6 个月用量</strong></div>
+                    <div class="card-header bg-light"><strong><i class="bi bi-graph-up"></i> 住宿最近 6 个月用量</strong></div>
                     <div class="card-body">
                         <table class="table table-sm table-hover mb-0">
                             <thead class="table-light">

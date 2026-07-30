@@ -163,12 +163,12 @@
         </div>
     </div>
 
-    <!-- KPI 2: 宿舍入住率 -->
+    <!-- KPI 2: 住宿入住率 -->
     <div class="kpi-card">
         <div class="d-flex align-items-start justify-content-between">
             <div>
                 <div class="kpi-value" style="color: #1baf7a;" id="kpiOccupancy">@Model.Dashboard.Kpi.OccupancyRate%</div>
-                <div class="kpi-label">宿舍入住率</div>
+                <div class="kpi-label">住宿入住率</div>
                 <div class="kpi-sub"><span id="kpiOccupied">@Model.Dashboard.Kpi.OccupiedBeds</span>/<span id="kpiTotalBeds">@Model.Dashboard.Kpi.TotalBeds</span> 床位</div>
             </div>
             <div class="kpi-icon" style="background: rgba(27,175,122,0.1); color: #1baf7a;">
@@ -300,22 +300,22 @@
         </div>
     </div>
 
-    <!-- 右半: 宿舍费用排名TOP10 + 入住率排名TOP15 -->
+    <!-- 右半: 住宿费用排名TOP10 + 入住率排名TOP15 -->
     <div class="col-lg-6">
         <div class="row g-2" style="height: 450px;">
-            <!-- 左: 宿舍费用排名 TOP 10 -->
+            <!-- 左: 住宿费用排名 TOP 10 -->
             <div class="col-6">
                 <div class="viz-card h-100">
                     <div class="card-header">
                         <i class="bi bi-bar-chart-steps"></i>
-                        <span>宿舍费用排名 TOP 10（费用由高到低）</span>
+                        <span>住宿费用排名 TOP 10（费用由高到低）</span>
                     </div>
                     <div class="card-body">
                         <canvas id="chartDormCost"></canvas>
                     </div>
                 </div>
             </div>
-            <!-- 右: 宿舍入住率排名 TOP 15 -->
+            <!-- 右: 住宿入住率排名 TOP 15 -->
             <div class="col-6">
                 <div class="viz-card h-100">
                     <div class="card-header">
@@ -389,8 +389,8 @@
 <!-- 底部信息 -->
 <div class="text-center text-muted small py-4 mt-4 border-top">
     <!-- v2.13.37 完全反向适配原型：版本号硬编码为 v2.13.37（原型写死 v2.12.0） -->
-    <p class="mb-1">金戈宿舍管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
-    <p class="mb-0">© 金戈新材料 · 技术支持</p>
+    <p class="mb-1">金智住宿管理系统 v2.13.37 · @DateTime.Now.ToString("yyyy年MM月")</p>
+    <p class="mb-0">© 金智新材料 · 技术支持</p>
 </div>
 
 <script>
@@ -476,7 +476,7 @@
             }
         });
 
-        // === 图表 3：宿舍费用排名 TOP 10（水平堆叠柱状图） ===
+        // === 图表 3：住宿费用排名 TOP 10（水平堆叠柱状图） ===
         const dormCostData = D.dormCostTop10 || [];
         new Chart(document.getElementById('chartDormCost'), {
             type: 'bar',

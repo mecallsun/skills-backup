@@ -157,10 +157,10 @@ public class FieldPermissionMetaViewModel
         {
             new() { Code = "Personnel", DisplayName = "人员清单", EntityName = "SysEmployee", Icon = "bi-people-fill", Fields = GetPersonnelFields() },
             new() { Code = "Booking", DisplayName = "办理登记", EntityName = "DormBooking", Icon = "bi-clipboard-check", Fields = GetBookingFields() },
-            new() { Code = "Dorm", DisplayName = "宿舍档案", EntityName = "Dorm", Icon = "bi-building", Fields = GetDormFields() },
+            new() { Code = "Dorm", DisplayName = "住宿档案", EntityName = "Dorm", Icon = "bi-building", Fields = GetDormFields() },
             new() { Code = "Meter", DisplayName = "智能抄表", EntityName = "MeterRecord", Icon = "bi-clipboard-data", Fields = GetMeterFields() },
             new() { Code = "BillingStandard", DisplayName = "费用标准", EntityName = "BillingStandard", Icon = "bi-cash-stack", Fields = GetBillingStandardFields() },
-            new() { Code = "DormBilling", DisplayName = "宿舍账单", EntityName = "DormBilling", Icon = "bi-receipt", Fields = GetDormBillingFields() },
+            new() { Code = "DormBilling", DisplayName = "住宿账单", EntityName = "DormBilling", Icon = "bi-receipt", Fields = GetDormBillingFields() },
             new() { Code = "EmployeeBilling", DisplayName = "员工账单", EntityName = "EmployeeBilling", Icon = "bi-wallet2", Fields = GetEmployeeBillingFields() }
         };
     }
@@ -176,7 +176,7 @@ public class FieldPermissionMetaViewModel
         new() { Key = "employee.attendance", DisplayName = "考勤班次", FieldType = "string", SensitivityHint = 2, DescriptionHint = "考勤班次（可推断作息规律）" },
         new() { Key = "employee.hiredate", DisplayName = "入职日期", FieldType = "date", SensitivityHint = 2, DescriptionHint = "员工入职日期（隐私履历）" },
         new() { Key = "employee.leavedate", DisplayName = "离职日期", FieldType = "date", SensitivityHint = 2, DescriptionHint = "员工离职日期（高敏感）" },
-        new() { Key = "employee.dormcode", DisplayName = "宿舍房号", FieldType = "string", SensitivityHint = 2, DescriptionHint = "当前入住房号（隐私住址）" },
+        new() { Key = "employee.dormcode", DisplayName = "住宿房号", FieldType = "string", SensitivityHint = 2, DescriptionHint = "当前入住房号（隐私住址）" },
         new() { Key = "employee.bedno", DisplayName = "床号", FieldType = "number", SensitivityHint = 2, DescriptionHint = "当前入住床号" },
         new() { Key = "employee.remark", DisplayName = "备注", FieldType = "string", SensitivityHint = 2, DescriptionHint = "自由文本备注（可能含敏感信息）" }
     };
@@ -194,11 +194,11 @@ public class FieldPermissionMetaViewModel
 
     private static List<FieldOptionViewModel> GetDormFields() => new()
     {
-        new() { Key = "dorm.dormcode", DisplayName = "房号", FieldType = "string", SensitivityHint = 2, DescriptionHint = "宿舍房号标识" },
-        new() { Key = "dorm.capacity", DisplayName = "容量（床位数）", FieldType = "number", SensitivityHint = 3, DescriptionHint = "宿舍可容纳人数" },
+        new() { Key = "dorm.dormcode", DisplayName = "房号", FieldType = "string", SensitivityHint = 2, DescriptionHint = "住宿房号标识" },
+        new() { Key = "dorm.capacity", DisplayName = "容量（床位数）", FieldType = "number", SensitivityHint = 3, DescriptionHint = "住宿可容纳人数" },
         new() { Key = "dorm.currentcount", DisplayName = "在住人数", FieldType = "number", SensitivityHint = 3, DescriptionHint = "当前住宿人数" },
-        new() { Key = "dorm.location", DisplayName = "位置/区域", FieldType = "string", SensitivityHint = 2, DescriptionHint = "宿舍楼栋/楼层/位置信息" },
-        new() { Key = "dorm.remark", DisplayName = "备注", FieldType = "string", SensitivityHint = 2, DescriptionHint = "宿舍备注信息" }
+        new() { Key = "dorm.location", DisplayName = "位置/区域", FieldType = "string", SensitivityHint = 2, DescriptionHint = "住宿楼栋/楼层/位置信息" },
+        new() { Key = "dorm.remark", DisplayName = "备注", FieldType = "string", SensitivityHint = 2, DescriptionHint = "住宿备注信息" }
     };
 
     private static List<FieldOptionViewModel> GetMeterFields() => new()

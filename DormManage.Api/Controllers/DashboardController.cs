@@ -25,7 +25,7 @@ public class DashboardController : ControllerBase
     }
 
     /// <summary>
-    /// 7 项 KPI：入住人数 / 宿舍入住率 / 预约人员 / 异常人员 / 本月抄表覆盖 / 人均费用 / 本月费用合计
+    /// 7 项 KPI：入住人数 / 住宿入住率 / 预约人员 / 异常人员 / 本月抄表覆盖 / 人均费用 / 本月费用合计
     /// </summary>
     /// <param name="month">参考月份（yyyy-MM-dd），默认本月</param>
     [HttpGet("kpi")]

@@ -63,7 +63,7 @@ public class BookingController : ControllerBase
     [HttpPost("check-in")]
     public async Task<ApiResponse<DormBooking>> CheckIn([FromBody] CheckInRequest request)
     {
-        // v2.13.149 试用模式限制：未注册时 住宿登记/宿舍档案/人员清单 最多 5 条记录
+        // v2.13.149 试用模式限制：未注册时 住宿登记/住宿档案/人员清单 最多 5 条记录
         var trialCheck = LicenseGuard.CheckTrialRecordLimit(
             "住宿登记",
             await _db.DormBookings.CountAsync());
@@ -259,7 +259,7 @@ public class BookingController : ControllerBase
         sheet.Cell(1, 3).Value = "姓名";
         sheet.Cell(1, 4).Value = "部门";
         sheet.Cell(1, 5).Value = "班次";
-        sheet.Cell(1, 6).Value = "宿舍";
+        sheet.Cell(1, 6).Value = "住宿";
         sheet.Cell(1, 7).Value = "类型";
         sheet.Cell(1, 8).Value = "入退日期";
         sheet.Cell(1, 9).Value = "状态";

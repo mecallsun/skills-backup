@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj": {}
+    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj": {}
   },
   "projects": {
-    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj": {
+    "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj",
+        "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj",
         "projectName": "DiagLiveState",
-        "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj",
+        "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagLiveState\\DiagLiveState.csproj",
         "packagesPath": "C:\\Users\\Mecall\\.nuget\\packages\\",
-        "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagLiveState\\obj\\",
+        "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagLiveState\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Mecall\\AppData\\Roaming\\NuGet\\NuGet.Config"

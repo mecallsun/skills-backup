@@ -40,7 +40,7 @@
 | 3 | BillingStandard | 11 | 3 | 费用标准 |
 | 4 | Building | 7 | 2 | 楼栋 |
 | 5 | Department | 8 | 8 | 部门 |
-| 6 | Dorm | 24 | 140 | 宿舍档案 |
+| 6 | Dorm | 24 | 140 | 住宿档案 |
 | 7 | DormBooking | 17 | 337 | 办理登记 |
 | 8 | EmployeeType | 8 | 5 | 员工类型 |
 | 9 | EmploymentStatus | 8 | 3 | 在职状态 |

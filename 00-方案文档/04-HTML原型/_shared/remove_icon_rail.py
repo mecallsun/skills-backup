@@ -10,7 +10,7 @@ v2.12.3 移除 Tier 2 紧凑型图标导航条
 import re
 from pathlib import Path
 
-BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\00-方案文档\04-HTML原型")
+BASE_DIR = Path(r"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\00-方案文档\04-HTML原型")
 
 def remove_icon_rail(file_path: Path):
     content = file_path.read_text(encoding='utf-8')

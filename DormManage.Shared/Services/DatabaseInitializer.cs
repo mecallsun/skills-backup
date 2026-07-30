@@ -263,7 +263,7 @@ public static class DatabaseInitializer
         if (!await db.Addresses.AnyAsync(ct))
         {
             db.Addresses.Add(
-                new Address { AddressText = "江苏省苏州市吴中区金戈新材料厂区" }
+                new Address { AddressText = "江苏省苏州市吴中区金智新材料厂区" }
             );
             counts["Address"] = 1;
         }
@@ -643,7 +643,7 @@ public static class DatabaseInitializer
                     VALUES (3, N'employee.employeecode', N'Personnel', N'工号', N'string', 2, 3, 1, N'公司内唯一标识', '2026-07-22');
                     IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 4)
                     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
-                    VALUES (4, N'employee.dormcode', N'Personnel', N'宿舍房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
+                    VALUES (4, N'employee.dormcode', N'Personnel', N'住宿房号', N'string', 2, 4, 1, N'当前入住房号（隐私住址）', '2026-07-22');
                     IF NOT EXISTS (SELECT 1 FROM [dbo].[SysFieldPermission] WHERE Id = 5)
                     INSERT INTO [dbo].[SysFieldPermission] ([Id],[FieldKey],[Module],[FieldName],[FieldType],[SensitivityLevel],[SortOrder],[IsActive],[Description],[CreatedAt])
                     VALUES (5, N'employee.remark', N'Personnel', N'备注', N'string', 2, 5, 1, N'自由文本备注（可能含敏感信息）', '2026-07-22');
@@ -1156,7 +1156,7 @@ public class StartupReport
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("╔══════════════════════════════════════════════════════════════╗");
-        sb.AppendLine("║         金戈宿舍管理系统 · 启动机制 v2.13.25                  ║");
+        sb.AppendLine("║         金智住宿管理系统 · 启动机制 v2.13.25                  ║");
         sb.AppendLine("╠══════════════════════════════════════════════════════════════╣");
         var v = $"Build: {Version} | DB: {Provider} | {ConnectionOk switch { true => "✓ OK", false => "✗ FAIL" }}";
         var vStr = v.Length > 60 ? v.Substring(0, 60) : v.PadRight(60);

@@ -7,7 +7,7 @@ using DormManage.Shared.Models;
 namespace DormManage.Admin.Pages.DormBilling;
 
 /// <summary>
-/// 宿舍账单详情（P1-15）
+/// 住宿账单详情（P1-15）
 /// URL：/DormBilling/Details?dormCode=xxx&month=yyyy-MM
 /// </summary>
 public class DetailsModel : PageModel
@@ -47,7 +47,7 @@ public class DetailsModel : PageModel
     {
         if (string.IsNullOrWhiteSpace(dormCode))
         {
-            TempData["ErrorMessage"] = "缺少宿舍号参数";
+            TempData["ErrorMessage"] = "缺少住宿号参数";
             return RedirectToPage("/DormBilling/Index");
         }
 
@@ -57,7 +57,7 @@ public class DetailsModel : PageModel
         Dorm = await _db.Dorms.FirstOrDefaultAsync(d => d.DormCode == dormCode);
         if (Dorm is null)
         {
-            TempData["ErrorMessage"] = $"宿舍 {dormCode} 不存在";
+            TempData["ErrorMessage"] = $"住宿 {dormCode} 不存在";
             return RedirectToPage("/DormBilling/Index");
         }
 

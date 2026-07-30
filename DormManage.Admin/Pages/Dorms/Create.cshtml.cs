@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
-/// 宿舍新增页面模型
+/// 住宿新增页面模型
 /// </summary>
 public class CreateModel : PageModel
 {
@@ -52,10 +52,10 @@ public class CreateModel : PageModel
             return Page();
         }
 
-        // 检查宿舍号是否已存在
+        // 检查住宿号是否已存在
         if (await _db.Dorms.AnyAsync(d => d.DormCode == Dorm.DormCode))
         {
-            ModelState.AddModelError("Dorm.DormCode", "该宿舍号已存在");
+            ModelState.AddModelError("Dorm.DormCode", "该住宿号已存在");
             await LoadBasicsAsync();
             return Page();
         }
@@ -105,7 +105,7 @@ public class CreateModel : PageModel
 }
 
 /// <summary>
-/// 宿舍新增数据传输对象
+/// 住宿新增数据传输对象
 /// </summary>
 public class DormCreateDto
 {

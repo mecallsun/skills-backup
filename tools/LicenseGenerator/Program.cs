@@ -9,7 +9,7 @@ namespace LicenseGenerator;
 /// 用法：
 ///   LicenseGenerator.exe {SN} {LTDName} {ExpireDate:yyyy-MM-dd}
 /// 示例：
-///   LicenseGenerator.exe ABCDE-FGHIJ-KLMNO-PQRST-UVWXY "金戈电子有限公司" 2027-12-31
+///   LicenseGenerator.exe ABCDE-FGHIJ-KLMNO-PQRST-UVWXY "金智电子有限公司" 2027-12-31
 ///
 /// 输出：CDKEY（5-5-5-5-5 = 29 位）
 /// 算法：20 位验证段（MD5(SN|LTDName|SECRET_KEY) 前 20） + 5 位日期段（YYYYMMDD 转 HEX）
@@ -23,7 +23,7 @@ class Program
         if (args.Length < 3)
         {
             Console.WriteLine("用法：LicenseGenerator {SN} {LTDName} {ExpireDate:yyyy-MM-dd}");
-            Console.WriteLine("示例：LicenseGenerator.exe ABCDE-FGHIJ-KLMNO-PQRST-UVWXY \"金戈电子有限公司\" 2027-12-31");
+            Console.WriteLine("示例：LicenseGenerator.exe ABCDE-FGHIJ-KLMNO-PQRST-UVWXY \"金智电子有限公司\" 2027-12-31");
             return 1;
         }
 

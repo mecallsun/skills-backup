@@ -3,7 +3,7 @@
 @{
     // v2.13.214：标题根据操作类型动态显示（入住/退房）
     var pageTitle = Model.OpType == 2 ? "办理退房" : "办理入住";
-    ViewData["Title"] = pageTitle + " — 金戈宿舍管理系统";
+    ViewData["Title"] = pageTitle + " — 金智住宿管理系统";
     // v2.13.36 1:1 克隆原型：独立布局（不嵌入 _Layout）
     Layout = null;
 }
@@ -91,7 +91,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.13.36</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -110,10 +110,10 @@
     <div id="tab-bar">
         <a class="tab-item" href="/"><i class="bi bi-speedometer2"></i> 首页</a>
         <a class="tab-item active" href="/Booking"><i class="bi bi-clipboard-check"></i> 办理登记</a>
-        <a class="tab-item" href="/Dorms"><i class="bi bi-building"></i> 宿舍管理</a>
+        <a class="tab-item" href="/Dorms"><i class="bi bi-building"></i> 住宿管理</a>
         <a class="tab-item" href="/Personnel"><i class="bi bi-people-fill"></i> 人员清单</a>
         <a class="tab-item" href="/BillingStandard"><i class="bi bi-cash-stack"></i> 费用标准</a>
-        <a class="tab-item" href="/DormBilling"><i class="bi bi-receipt"></i> 宿舍账单</a>
+        <a class="tab-item" href="/DormBilling"><i class="bi bi-receipt"></i> 住宿账单</a>
         <a class="tab-item" href="/EmployeeBilling"><i class="bi bi-wallet2"></i> 员工账单</a>
         <a class="tab-item" href="/Meter"><i class="bi bi-clipboard-data"></i> 智能抄表</a>
         <a class="tab-item" href="/Basics"><i class="bi bi-database"></i> 基础资料</a>
@@ -462,7 +462,7 @@
         // ===== 6. 日期变化（v2.13.36 对齐原型 L251） =====
         function onDateChange() { refreshDorms(); }
 
-        // ===== 7. 宿舍选择（v2.13.88 改造：显示分配的床位号） =====
+        // ===== 7. 住宿选择（v2.13.88 改造：显示分配的床位号） =====
         function onDormSelect() {
             const sel = document.getElementById('dormSelect');
             const opt = sel.options[sel.selectedIndex];
@@ -564,7 +564,7 @@
                     });
                     const result = await resp.json();
                     if (result.success) {
-                        alert(`✓ 入住办理成功\n员工：${selectedEmp.realName}\n日期：${date}\n宿舍：${dormCode}`);
+                        alert(`✓ 入住办理成功\n员工：${selectedEmp.realName}\n日期：${date}\n住宿：${dormCode}`);
                         location.href = '/Booking';
                     } else {
                         alert(result.message || '入住办理失败');

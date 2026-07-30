@@ -320,7 +320,7 @@ const PERSONNEL = [
         "hireDate": "2024-12-08",
         "leaveDate": null,
         "dormCode": "D-019",
-        "remark": "宿舍长"
+        "remark": "住宿长"
     },
     {
         "id": 9,
@@ -420,7 +420,7 @@ const PERSONNEL = [
         "hireDate": "2024-03-26",
         "leaveDate": null,
         "dormCode": "D-191",
-        "remark": "宿舍长"
+        "remark": "住宿长"
     },
     {
         "id": 14,
@@ -700,7 +700,7 @@ const PERSONNEL = [
         "hireDate": "2025-01-22",
         "leaveDate": null,
         "dormCode": "D-143",
-        "remark": "宿舍长"
+        "remark": "住宿长"
     },
     {
         "id": 28,
@@ -1046,7 +1046,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-013",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 2,
@@ -2789,7 +2789,7 @@ const PERSONNEL = [
         "leaveDate": "2025-06-07",
         "dormCode": null,
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
@@ -3041,7 +3041,7 @@ const PERSONNEL = [
         "leaveDate": "2025-06-04",
         "dormCode": null,
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
@@ -3188,7 +3188,7 @@ const PERSONNEL = [
         "leaveDate": "2025-12-12",
         "dormCode": null,
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
@@ -3818,7 +3818,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-090",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
@@ -4322,7 +4322,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-103",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 1,
@@ -4553,7 +4553,7 @@ const PERSONNEL = [
         "leaveDate": "2026-02-17",
         "dormCode": "D-193",
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
@@ -5162,7 +5162,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-069",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 5,
@@ -5393,7 +5393,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-058",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 1,
@@ -5729,7 +5729,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-193",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 3,
@@ -5813,7 +5813,7 @@ const PERSONNEL = [
         "leaveDate": "2024-10-21",
         "dormCode": null,
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
@@ -6044,7 +6044,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-122",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 1,
@@ -6065,7 +6065,7 @@ const PERSONNEL = [
         "leaveDate": "2026-07-01",
         "dormCode": null,
         "status": 2,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 8,
         "employeeTypeName": "保安",
         "attendanceTypeId": 6,
@@ -6212,7 +6212,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-150",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 2,
         "employeeTypeName": "临时工",
         "attendanceTypeId": 2,
@@ -6233,7 +6233,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-194",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 1,
@@ -6800,7 +6800,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-157",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 1,
@@ -7010,7 +7010,7 @@ const PERSONNEL = [
         "leaveDate": "2025-11-20",
         "dormCode": null,
         "status": 3,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 2,
@@ -8228,7 +8228,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-133",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 4,
         "employeeTypeName": "实习生",
         "attendanceTypeId": 1,
@@ -8690,7 +8690,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-139",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
@@ -9761,7 +9761,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-193",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
@@ -10118,7 +10118,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-066",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 3,
@@ -10601,7 +10601,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-183",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 6,
         "employeeTypeName": "顾问",
         "attendanceTypeId": 4,
@@ -10706,7 +10706,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-047",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
@@ -11168,7 +11168,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-015",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 1,
@@ -11357,7 +11357,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-183",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
@@ -11546,7 +11546,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-009",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 1,
         "employeeTypeName": "合同工",
         "attendanceTypeId": 4,
@@ -11735,7 +11735,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-195",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
@@ -11777,7 +11777,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-187",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 1,
@@ -11903,7 +11903,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-092",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 3,
         "employeeTypeName": "外包",
         "attendanceTypeId": 4,
@@ -12113,7 +12113,7 @@ const PERSONNEL = [
         "leaveDate": null,
         "dormCode": "D-165",
         "status": 1,
-        "remark": "宿舍长",
+        "remark": "住宿长",
         "employeeTypeId": 7,
         "employeeTypeName": "技师",
         "attendanceTypeId": 4,
@@ -13878,7 +13878,7 @@ const BILLING_STANDARDS = [
 ];
 
 // =====================================================================
-// 宿舍账单 Mock 数据（2026-07 月份，6 条）
+// 住宿账单 Mock 数据（2026-07 月份，6 条）
 // =====================================================================
 const DORM_BILLS_202607 = [
     {
@@ -25516,9 +25516,9 @@ const EMPLOYEE_BILLS_202607 = [
         "isPublished": false
     },
     // v2.11.23 新增：调入段数据（TRANSFER_IN）— 补全三种 segmentType
-    // 业务场景：员工从原宿舍调出（TRANSFER_OUT 已存在 28 条），
-    //         并在 7 月份调入新宿舍（TRANSFER_IN），账单需分两段计算
-    // 数据来源：从 PERSONNEL 中随机挑选 20 名在宿员工，模拟 7 月调入新宿舍的场景
+    // 业务场景：员工从原住宿调出（TRANSFER_OUT 已存在 28 条），
+    //         并在 7 月份调入新住宿（TRANSFER_IN），账单需分两段计算
+    // 数据来源：从 PERSONNEL 中随机挑选 20 名在宿员工，模拟 7 月调入新住宿的场景
     {
         "id": 473,
         "employeeId": 45,
@@ -25961,7 +25961,7 @@ function renderNav(opts) {
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half" style="font-size:1.5rem;color:#1976d2"></i>
-                <span style="font-size:1.2rem;font-weight:bold;color:#1976d2">金戈宿舍管理系统</span>
+                <span style="font-size:1.2rem;font-weight:bold;color:#1976d2">金智住宿管理系统</span>
                 <span style="font-size:0.7rem;color:#9e9e9e;border-left:1px solid #ccc;padding-left:0.5rem;margin-left:0.5rem">v2.11.2</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -25985,7 +25985,7 @@ function renderNav(opts) {
             <i class="bi bi-clipboard-check"></i>办理登记
         </a>
         <a class="menu-item cat-core" href="${link('dorms/list.html')}">
-            <i class="bi bi-building"></i>宿舍管理
+            <i class="bi bi-building"></i>住宿管理
         </a>
         <a class="menu-item cat-core" href="${link('personnel/list.html')}">
             <i class="bi bi-people-fill"></i>人员清单
@@ -25995,7 +25995,7 @@ function renderNav(opts) {
             <i class="bi bi-cash-stack"></i>费用标准
         </a>
         <a class="menu-item cat-billing" href="${link('billing/dorm-bills.html')}">
-            <i class="bi bi-receipt"></i>宿舍账单
+            <i class="bi bi-receipt"></i>住宿账单
         </a>
         <a class="menu-item cat-billing" href="${link('billing/employee-bills.html')}">
             <i class="bi bi-wallet2"></i>员工分摊
@@ -26154,7 +26154,7 @@ function formatDate(d) {
     return d ? d.substring(0, 10) : '-';
 }
 // =====================================================================
-// 宿舍档案 Mock 数据（10 条种子数据，代表 200+ 间房规模）
+// 住宿档案 Mock 数据（10 条种子数据，代表 200+ 间房规模）
 // 房型：1人间 / 2人间 / 4人间 / 6人间
 // =====================================================================
 const DORMS = [
@@ -35201,12 +35201,12 @@ const LIVING_STATUS_BADGE = { LIVING: 'bg-success', LEFT: 'bg-secondary', BOOKED
 function livingBadge(s) {
     return `<span class="badge ${LIVING_STATUS_BADGE[s] || 'bg-light text-dark'}">${LIVING_STATUS_NAME[s] || s}</span>`;
 }
-// 辅助：获取宿舍当前在住人数
+// 辅助：获取住宿当前在住人数
 function currentResidents(dormCode) {
     return RESIDENCIES.filter(r => r.dormCode === dormCode && r.status === 1).length;
 }
-// 辅助：v2.13.95 宿舍档案列表「班次」列派生
-// 返回该宿舍房号当前在宿员工（Status=1）的考勤班次去重集合（按 AttendanceType.Id 升序）
+// 辅助：v2.13.95 住宿档案列表「班次」列派生
+// 返回该住宿房号当前在宿员工（Status=1）的考勤班次去重集合（按 AttendanceType.Id 升序）
 // 数据关系：RESIDENCIES → PERSONNEL (EmployeeId=PERSONNEL.Id) → ATTENDANCE_TYPES_FULL (PERSONNEL.attendanceTypeId=ATTENDANCE_TYPES_FULL.id)
 // 注意：mock-data.js 中员工表名为 PERSONNEL（不是 EMPLOYEES）；考勤班次表名为 ATTENDANCE_TYPES_FULL（不是 ATTENDANCE_TYPES，ATTENDANCE_TYPES 是字典）
 function currentAttendanceTypes(dormCode) {
@@ -35222,8 +35222,8 @@ function currentAttendanceTypes(dormCode) {
         .filter(t => t)
         .map(t => t.name);
 }
-// 辅助：v2.13.107 宿舍档案列表「班组」列派生
-// 返回该宿舍房号当前在宿员工（Status=1）的所属班组去重集合（按 Team.SortOrder 升序）
+// 辅助：v2.13.107 住宿档案列表「班组」列派生
+// 返回该住宿房号当前在宿员工（Status=1）的所属班组去重集合（按 Team.SortOrder 升序）
 // 数据关系：RESIDENCIES → PERSONNEL (EmployeeId=PERSONNEL.Id) → TEAMS (PERSONNEL.teamId=TEAMS.id)
 // 示例：A101 入住 3 人（A班/B班/B班）→ 返回 [{name:'一班', code:'TEAM_A1'}, {name:'三班', code:'TEAM_B1'}]（去重 + 按 SortOrder 排序）
 function currentTeams(dormCode) {
@@ -35241,7 +35241,7 @@ function currentTeams(dormCode) {
         .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
         .filter(t => { if (seen.has(t.id)) return false; seen.add(t.id); return true; });
 }
-// 辅助：获取宿舍的所有住宿记录（按入住日期倒序）
+// 辅助：获取住宿的所有住宿记录（按入住日期倒序）
 function dormHistory(dormCode) {
     return RESIDENCIES.filter(r => r.dormCode === dormCode)
                        .sort((a, b) => b.checkInDate.localeCompare(a.checkInDate));
@@ -47394,7 +47394,7 @@ function getMainAttendanceType(dormCode) {
 }
 // =====================================================================
 // 抄表记录 Mock 数据（MeterRecord，方案第 4.3.2 核心表）
-// 每间宿舍每月一条（DormCode + ReadMonth 唯一）；用量 = 本月读数 − 上月读数
+// 每间住宿每月一条（DormCode + ReadMonth 唯一）；用量 = 本月读数 − 上月读数
 // =====================================================================
 const METER_RECORDS = [
     {
@@ -52732,7 +52732,7 @@ const METER_OPERATORS = ["陈师傅", "刘师傅"];
 function meterMonths() {
     return [...new Set(METER_RECORDS.map(m => m.readMonth))].sort((a, b) => b.localeCompare(a));
 }
-// 辅助：某宿舍在指定月份之前最近一条有效读数（用于计算用量、校验递增）
+// 辅助：某住宿在指定月份之前最近一条有效读数（用于计算用量、校验递增）
 // v2.11.4：排除 status=0(未抄表)，仅取有效记录
 function prevMeter(dormCode, readMonth) {
     return METER_RECORDS
@@ -52767,7 +52767,7 @@ function meterCoverage(readMonth) {
     const read = new Set(METER_RECORDS.filter(m => m.readMonth === readMonth && (m.status === 1 || m.status === 2)).map(m => m.dormCode));
     // 未完成/占位：状态=0（三表全0或部分为0）
     const unfinished = new Set(METER_RECORDS.filter(m => m.readMonth === readMonth && m.status === 0).map(m => m.dormCode));
-    // 真正未覆盖：没有任何记录的宿舍
+    // 真正未覆盖：没有任何记录的住宿
     const allCovered = new Set([...read, ...unfinished]);
     const uncovered = active.filter(d => !allCovered.has(d.dormCode)).map(d => d.dormCode);
     return {
@@ -52784,7 +52784,7 @@ function meterCoverage(readMonth) {
         }
     };
 }
-// 辅助：v2.11.4 — 自动补全占位记录（每月每启用宿舍必须有 1 条，status=0 为默认值）
+// 辅助：v2.11.4 — 自动补全占位记录（每月每启用住宿必须有 1 条，status=0 为默认值）
 (function fillUnreadMeterRecords() {
     const months = ['2026-06', '2026-07'];
     const existing = new Set(METER_RECORDS.map(m => `${m.dormCode}|${m.readMonth}`));
@@ -52811,7 +52811,7 @@ function meterCoverage(readMonth) {
             }
         });
     });
-    // v2.11.4 演示：把 2026-07 月的 10 间宿舍改为"未完成"状态（演示占位记录）
+    // v2.11.4 演示：把 2026-07 月的 10 间住宿改为"未完成"状态（演示占位记录）
     const unreadSampleCodes = ['D-014', 'D-062', 'D-126', 'D-167', 'D-185', 'D-200', 'D-166', 'D-169', 'D-172', 'D-176'];
     unreadSampleCodes.forEach(code => {
         const recs = METER_RECORDS.filter(m => m.readMonth === '2026-07' && m.dormCode === code);
@@ -52839,7 +52839,7 @@ function meterCoverage(readMonth) {
             });
         }
     });
-    // v2.11.4 演示：把 2026-07 月的 5 间宿舍改为"未完成"状态（部分表项缺失）
+    // v2.11.4 演示：把 2026-07 月的 5 间住宿改为"未完成"状态（部分表项缺失）
     const unfinishedSampleCodes = ['D-005', 'D-015', 'D-030', 'D-045', 'D-060'];
     unfinishedSampleCodes.forEach(code => {
         const recs = METER_RECORDS.filter(m => m.readMonth === '2026-07' && m.dormCode === code && (m.status === 1 || m.status === 2));
@@ -52969,7 +52969,7 @@ const SYS_USERS = [
 // 权限矩阵（角色 × 模块）
 const PERMISSION_MATRIX = [
     { module: '智能抄表', admin: '增删改查', finance: '只读', operator: '仅上传' },
-    { module: '宿舍档案', admin: '增删改查', finance: '只读', operator: '无' },
+    { module: '住宿档案', admin: '增删改查', finance: '只读', operator: '无' },
     { module: '办理登记', admin: '增删改查', finance: '无', operator: '无' },
     { module: '人员清单', admin: '增删改查 / 导入导出', finance: '只读', operator: '无' },
     { module: '费用标准', admin: '编辑', finance: '只读', operator: '无' },
@@ -53500,10 +53500,10 @@ function employeeTypeName(emp) {
 
 
 // =====================================================================
-// v2.12.6 BOOKINGS 关联函数：人员清单的"住宿状态"和"宿舍房号"
+// v2.12.6 BOOKINGS 关联函数：人员清单的"住宿状态"和"住宿房号"
 // 业务规则：
 //   - 人员的"住宿状态"取自 BOOKINGS 表中该人员的最后一次有效操作记录
-//   - 人员的"宿舍房号"取自 BOOKINGS 表中该人员最后一次有效操作的 dormCode
+//   - 人员的"住宿房号"取自 BOOKINGS 表中该人员最后一次有效操作的 dormCode
 //   - 入住登记（type=1, status=2）→ 已住宿（LODGED），dormCode 更新为新房号
 //   - 退房登记（type=2, status=3）→ 未住宿（NOT_LODGED），dormCode 清空
 //   - 预约（type=1, status=1）→ 不算"已住宿"，dormCode 也未生效
@@ -53514,9 +53514,9 @@ function employeeTypeName(emp) {
 // ⚠️ v2.11.30 移除：getLatestValidBooking / getResidenceStatusCode / getResidenceStatusByCode
 //   原因：已提前到 normalizeData IIFE 之前定义（避免 IIFE 内同步逻辑被跳过）
 
-// 获取员工的"宿舍房号"（基于 BOOKINGS 最后有效记录）
+// 获取员工的"住宿房号"（基于 BOOKINGS 最后有效记录）
 
-// 获取员工的"宿舍房号"（基于 BOOKINGS 最后有效记录）
+// 获取员工的"住宿房号"（基于 BOOKINGS 最后有效记录）
 // 入住 → dormCode
 // 退房 → null（清空）
 // 无记录 → null
@@ -53559,8 +53559,8 @@ function getAllDormCodes() {
 // =====================================================================
 const EMPLOYEE_BILL_SEGMENT_TYPE = [
     { id: 1, code: 'LIVING',       name: '在宿段', color: 'bg-success',           remark: '完整在宿期间的分摊' },
-    { id: 2, code: 'TRANSFER_OUT', name: '调出段', color: 'bg-warning text-dark', remark: '调出前在原宿舍期间的分摊' },
-    { id: 3, code: 'TRANSFER_IN',  name: '调入段', color: 'bg-info text-dark',    remark: '调入后在新宿舍期间的分摊' }
+    { id: 2, code: 'TRANSFER_OUT', name: '调出段', color: 'bg-warning text-dark', remark: '调出前在原住宿期间的分摊' },
+    { id: 3, code: 'TRANSFER_IN',  name: '调入段', color: 'bg-info text-dark',    remark: '调入后在新住宿期间的分摊' }
 ];
 
 // ⚠️ v2.11.30 移除：getResidenceStatusByCode / getResidenceStatusCode

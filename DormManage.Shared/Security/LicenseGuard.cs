@@ -29,7 +29,7 @@ namespace DormManage.Shared.Security;
 ///
 /// v2.13.150：试用模式分模块记录上限（替代 v2.13.149 统一 5 条）
 /// - 住宿登记（Booking）：最多 500 条
-/// - 宿舍档案（Dorms）：最多 5 条
+/// - 住宿档案（Dorms）：最多 5 条
 /// - 人员清单（Personnel）：最多 5 条
 /// - 当 RegInt=-1（未注册）+ UseTimes < TRIAL_LIMIT（试用中）→ 进入试用模式
 /// - 当前记录数 ≥ 模块上限时拦截 POST，提示「试用功能受限请联系信息科！」
@@ -44,11 +44,11 @@ public static class LicenseGuard
     /// <summary>v2.13.150：试用受限标准提示（用户原话，区别于 v2.13.149）</summary>
     public const string TrialLimitMessage = "试用功能受限请联系信息科！";
 
-    /// <summary>v2.13.150：试用模式下各模块最大记录数（住宿登记/宿舍档案/人员清单）</summary>
+    /// <summary>v2.13.150：试用模式下各模块最大记录数（住宿登记/住宿档案/人员清单）</summary>
     public static readonly IReadOnlyDictionary<string, int> TrialMaxRecordsByModule = new Dictionary<string, int>
     {
         ["住宿登记"] = 500,
-        ["宿舍档案"] = 5,
+        ["住宿档案"] = 5,
         ["人员清单"] = 5
     };
 
@@ -156,7 +156,7 @@ public static class LicenseGuard
     /// 用于 Api Controller / Razor Page POST handler 在 Create 前调用
     /// 设计：每个调用方传入当前记录数（避免在此方法内做 DB 查询，职责单一）
     /// </summary>
-    /// <param name="moduleName">模块显示名（必须为「住宿登记」「宿舍档案」「人员清单」之一）</param>
+    /// <param name="moduleName">模块显示名（必须为「住宿登记」「住宿档案」「人员清单」之一）</param>
     /// <param name="currentCount">当前记录数</param>
     /// <returns>(isAllowed, message) → isAllowed=true 放行；false 拦截并返回详细提示</returns>
     public static (bool IsAllowed, string Message) CheckTrialRecordLimit(string moduleName, int currentCount)
@@ -167,7 +167,7 @@ public static class LicenseGuard
             return (true, "");
         }
 
-        // v2.13.150：分模块上限（住宿登记 500 / 宿舍档案 5 / 人员清单 5）
+        // v2.13.150：分模块上限（住宿登记 500 / 住宿档案 5 / 人员清单 5）
         if (!TrialMaxRecordsByModule.TryGetValue(moduleName, out var maxRecords))
         {
             // 未知模块名 → 默认按 5 条限制（保守安全）

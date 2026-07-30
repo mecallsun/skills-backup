@@ -42,7 +42,7 @@ for (const page of PAGES) {
     // 检查关键元素（按办理登记页面结构）
     const checks = {
         'brand-icon': /class="bi bi-droplet-half brand-icon"/.test(topBarHtml),
-        'brand-text': /class="brand-text">金戈宿舍管理系统</.test(topBarHtml),
+        'brand-text': /class="brand-text">金智住宿管理系统</.test(topBarHtml),
         'brand-version': /class="brand-version">v2\.12\./.test(topBarHtml),
         'user-pill': /class="user-pill"/.test(topBarHtml),
         'admin-label': />管理员</.test(topBarHtml),

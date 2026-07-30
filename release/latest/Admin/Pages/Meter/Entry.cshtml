@@ -66,9 +66,9 @@
                         <div class="form-section-title">基本信息</div>
                         <div class="row g-2">
                             <div class="col-md-4 form-field">
-                                <label class="form-label">宿舍<span class="required">*</span></label>
+                                <label class="form-label">住宿<span class="required">*</span></label>
                                 <select asp-for="DormId" class="form-select" onchange="onDormMonthChange()" required>
-                                    <option value="">请选择宿舍</option>
+                                    <option value="">请选择住宿</option>
                                     @foreach (var dorm in Model.Dorms)
                                     {
                                         <option value="@dorm.Id" selected="@(Model.DormId == dorm.Id)">
@@ -172,7 +172,7 @@
                     </div>
                     <div class="card-body py-2">
                         <div id="usagePreview" class="usage-preview">
-                            <p class="text-muted small mb-0">请选择宿舍与月份，并录入读数</p>
+                            <p class="text-muted small mb-0">请选择住宿与月份，并录入读数</p>
                         </div>
                     </div>
                 </div>
@@ -220,7 +220,7 @@
         var selectElectricDataURL = null;
         var selectColdFile = null, selectHotFile = null, selectElectricFile = null;
 
-        // v2.13.68 AJAX 加载上月读数（宿舍/月份变更时触发）
+        // v2.13.68 AJAX 加载上月读数（住宿/月份变更时触发）
         function onDormMonthChange() {
             var dormId = document.querySelector('select[name="DormId"]').value;
             var readMonth = document.querySelector('input[name="ReadMonth"]').value;
@@ -246,8 +246,8 @@
                         var html = '<div id="existWarning" class="alert ' + alertClass + ' mt-2 mb-0 py-1" style="font-size:0.85rem;">'
                             + '<i class="bi ' + icon + '"></i> '
                             + (data.isEffective
-                                ? '⚠️ 该宿舍 ' + readMonth + ' 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。'
-                                : 'ℹ️ 该宿舍 ' + readMonth + ' 已有【' + statusName + '】占位记录（ID: ' + data.currentRecordId + '），提交后将覆盖此记录，旧数据保存到备注历史。')
+                                ? '⚠️ 该住宿 ' + readMonth + ' 已有【' + statusName + '】记录（ID: ' + data.currentRecordId + '），如需修改请走【修正】流程，不可重复补录。'
+                                : 'ℹ️ 该住宿 ' + readMonth + ' 已有【' + statusName + '】占位记录（ID: ' + data.currentRecordId + '），提交后将覆盖此记录，旧数据保存到备注历史。')
                             + '</div>';
                         var basicCard = document.querySelector('.card.meter-card.mb-2 .card-body');
                         if (basicCard) basicCard.insertAdjacentHTML('beforeend', html);
@@ -371,7 +371,7 @@
             var electric = document.getElementById('ElectricMeter').value;
             var remark = document.querySelector('textarea[name="Remark"]').value;
 
-            if (!dormId) { alert('请选择宿舍'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
+            if (!dormId) { alert('请选择住宿'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
             if (!readMonth) { alert('请选择抄表月份'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
             if (!cold || !hot || !electric) { alert('请录入三表读数'); submitBtn.disabled = false; submitBtn.innerHTML = '<i class="bi bi-check"></i> 提交'; return; }
 

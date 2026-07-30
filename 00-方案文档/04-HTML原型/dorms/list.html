@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>宿舍档案 — 金戈宿舍管理系统</title>
+    <title>住宿档案 — 金智住宿管理系统</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../_shared/layout-tab.css">
@@ -13,7 +13,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -33,10 +33,10 @@
         <!-- 页面标题 - v2.13.211 按钮组强制靠页面最右侧 -->
         <div class="page-header d-flex justify-content-start align-items-center">
             <h1 class="page-title">
-                <i class="bi bi-building"></i>宿舍档案<span class="total-count">（共 <span id="totalCount">6</span> 间）</span>
+                <i class="bi bi-building"></i>住宿档案<span class="total-count">（共 <span id="totalCount">6</span> 间）</span>
             </h1>
             <div class="btn-group page-header-actions ms-auto" role="group">
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalDormCreate"><i class="bi bi-plus-lg"></i> 新增宿舍</button>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalDormCreate"><i class="bi bi-plus-lg"></i> 新增住宿</button>
             </div>
         </div>
 
@@ -98,12 +98,12 @@
         </div>
     </div>
 
-    <!-- v2.12.38 编辑宿舍 模态弹窗 -->
+    <!-- v2.12.38 编辑住宿 模态弹窗 -->
     <div class="modal fade" id="modalDormEdit" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDormEditLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title" id="modalDormEditLabel"><i class="bi bi-pencil-square text-primary"></i> 编辑宿舍</h5>
+                    <h5 class="modal-title" id="modalDormEditLabel"><i class="bi bi-pencil-square text-primary"></i> 编辑住宿</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -115,7 +115,7 @@
                                 <div class="col-md-6 form-field">
                                     <label class="form-label">房号<span class="required">*</span></label>
                                     <input type="text" id="de_dormCode" class="form-control" required maxlength="20" readonly style="background:#f5f7fa; cursor:not-allowed;">
-                                    <small class="text-muted d-block" style="font-size:0.75rem;">宿舍编号不可修改</small>
+                                    <small class="text-muted d-block" style="font-size:0.75rem;">住宿编号不可修改</small>
                                 </div>
                                 <div class="col-md-6 form-field">
                                     <label class="form-label">楼栋<span class="required">*</span></label>
@@ -168,7 +168,7 @@
                                 <div class="col-md-6 form-field d-flex align-items-end">
                                     <div class="form-check pb-2">
                                         <input type="checkbox" id="de_isActive" class="form-check-input">
-                                        <label class="form-check-label">启用该宿舍</label>
+                                        <label class="form-check-label">启用该住宿</label>
                                     </div>
                                 </div>
                                 <div class="col-md-12 form-field">
@@ -187,12 +187,12 @@
         </div>
     </div>
 
-    <!-- v2.12.37 新增宿舍 模态弹窗 -->
+    <!-- v2.12.37 新增住宿 模态弹窗 -->
     <div class="modal fade" id="modalDormCreate" tabindex="-1" data-bs-backdrop="static" aria-labelledby="modalDormCreateLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
             <div class="modal-content">
                 <div class="modal-header py-2">
-                    <h5 class="modal-title" id="modalDormCreateLabel"><i class="bi bi-plus-circle text-success"></i> 新增宿舍</h5>
+                    <h5 class="modal-title" id="modalDormCreateLabel"><i class="bi bi-plus-circle text-success"></i> 新增住宿</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -257,7 +257,7 @@
                                 <div class="col-md-6 form-field d-flex align-items-end">
                                     <div class="form-check pb-2">
                                         <input type="checkbox" id="dc_isActive" class="form-check-input" checked>
-                                        <label class="form-check-label">启用该宿舍</label>
+                                        <label class="form-check-label">启用该住宿</label>
                                     </div>
                                 </div>
                                 <div class="col-md-12 form-field">
@@ -295,7 +295,7 @@
             mountTabBar({ basePath: '..', currentUrl: 'dorms/list.html' });
         });
 
-        // ========== v2.12.37 新增宿舍 模态弹窗逻辑 ==========
+        // ========== v2.12.37 新增住宿 模态弹窗逻辑 ==========
         // 弹窗显示时初始化
         document.getElementById('modalDormCreate').addEventListener('show.bs.modal', function () {
             // 初始化楼栋下拉（仅启用）
@@ -363,7 +363,7 @@
             if (capacity > 40) { alert('容量不能超过 40'); return; }
             // 床位号自动生成（按容量生成 1..Capacity 的逗号分隔字符串）
             const bedNumbers = Array.from({length: capacity}, (_, i) => i + 1).join(',');
-            alert('✓ 原型演示：宿舍 ' + code + ' 已新建\n房号：' + code + '\n容量：' + capacity + ' 人\n床位数：' + capacity + '\n床位号（自动生成）：' + bedNumbers + '\n（实际将 POST /api/v1/dorms）');
+            alert('✓ 原型演示：住宿 ' + code + ' 已新建\n房号：' + code + '\n容量：' + capacity + ' 人\n床位数：' + capacity + '\n床位号（自动生成）：' + bedNumbers + '\n（实际将 POST /api/v1/dorms）');
             bootstrap.Modal.getInstance(document.getElementById('modalDormCreate')).hide();
             // 刷新列表（原型演示：直接刷新页面）
             location.reload();
@@ -400,7 +400,7 @@
             renderRows: (items, total, start) => {
                 const tbody = document.getElementById('tbody');
                 if (total === 0) {
-                    tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">暂无宿舍</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">暂无住宿</td></tr>`;
                     return;
                 }
                 tbody.innerHTML = items.map((d, idx) => {
@@ -468,22 +468,22 @@
                 const residents = currentResidents(dorm.dormCode);
                 const hasHistory = (typeof BOOKINGS !== 'undefined') ? BOOKINGS.some(b => b.dormCode === dorm.dormCode) : false;
                 if (residents > 0) {
-                    alert('该宿舍当前有 ' + residents + ' 人在宿，禁止删除');
+                    alert('该住宿当前有 ' + residents + ' 人在宿，禁止删除');
                     return;
                 }
                 if (hasHistory) {
-                    alert('该宿舍 "' + code + '" 有历史办理登记记录，禁止删除');
+                    alert('该住宿 "' + code + '" 有历史办理登记记录，禁止删除');
                     return;
                 }
             }
-            if (!confirm(`确定删除宿舍 "${code}" 吗？`)) return;
-            alert(`✓ 原型演示：宿舍 ${code} 已删除\n（实际将 DELETE /api/v1/dorms/${id}）`);
+            if (!confirm(`确定删除住宿 "${code}" 吗？`)) return;
+            alert(`✓ 原型演示：住宿 ${code} 已删除\n（实际将 DELETE /api/v1/dorms/${id}）`);
         }
 
-        // ========== v2.12.38 编辑宿舍 模态弹窗逻辑 ==========
+        // ========== v2.12.38 编辑住宿 模态弹窗逻辑 ==========
         function deOpen(id) {
             const dorm = (typeof DORMS !== 'undefined') ? DORMS.find(d => d.id === id) : null;
-            if (!dorm) { alert('宿舍不存在'); return; }
+            if (!dorm) { alert('住宿不存在'); return; }
             // 初始化楼栋下拉
             const bSel = document.getElementById('de_building');
             bSel.innerHTML = '<option value="">请选择楼栋</option>';
@@ -518,7 +518,7 @@
             if (capacity > 40) { alert('容量不能超过 40'); return; }
             // 床位号自动生成
             const bedNumbers = Array.from({length: capacity}, (_, i) => i + 1).join(',');
-            alert('✓ 原型演示：宿舍 ' + code + ' 已更新\n容量：' + capacity + ' 人\n床位号（重新生成）：' + bedNumbers + '\n（实际将 PUT /api/v1/dorms/{id}）');
+            alert('✓ 原型演示：住宿 ' + code + ' 已更新\n容量：' + capacity + ' 人\n床位号（重新生成）：' + bedNumbers + '\n（实际将 PUT /api/v1/dorms/{id}）');
             bootstrap.Modal.getInstance(document.getElementById('modalDormEdit')).hide();
             location.reload();
         }

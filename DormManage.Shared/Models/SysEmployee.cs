@@ -46,7 +46,7 @@ public class SysEmployee : BaseEntity
     /// EF Core [ForeignKey] 关联 → EmployeeType.Id
     /// 引用本字段的业务场景：
     /// - 人员清单列表 / 详情（员工类型 Badge + 中文名）
-    /// - 宿舍详情页"当前入住人员"列表（v2.11.6 强制数据源）
+    /// - 住宿详情页"当前入住人员"列表（v2.11.6 强制数据源）
     /// - 办理记录列表（员工类型筛选）
     /// - 任何其他需要展示"员工类型中文名"的页面
     /// 单一数据源，避免在多处冗余存储。
@@ -145,16 +145,16 @@ public class SysEmployee : BaseEntity
     public DateOnly? LeaveDate { get; set; }
 
     /// <summary>
-    /// 当前宿舍代码（v2.11.18 起作为"入住人数"统计的单一数据源）
+    /// 当前住宿代码（v2.11.18 起作为"入住人数"统计的单一数据源）
     /// </summary>
     /// <remarks>
-    /// 业务含义：人员当前是否入住宿舍的最终事实。
+    /// 业务含义：人员当前是否入住住宿的最终事实。
     /// 入住人数 = count(PERSONNEL where DormCode != null and DormCode != '')
     /// 维护规则（v2.11.18 强制）：
     /// - 办理登记操作（CheckIn/ConfirmCheckIn/CancelToday）→ 同步更新 DormCode = 记录 DormCode
     /// - 办理登记操作（CheckOut/ConfirmCheckOutCreate/UndoCheckOut）→ 同步清空 DormCode = NULL
     /// - 撤销预约（CANCELLED） → 不变更 DormCode（未生效过）
-    /// 数据一致性：人员清单 dormCode 列 / 首页 KPI 1 入住人数 / 人员清单宿舍列 共享此字段。
+    /// 数据一致性：人员清单 dormCode 列 / 首页 KPI 1 入住人数 / 人员清单住宿列 共享此字段。
     /// </remarks>
     [MaxLength(20)]
     public int? BedNo { get; set; }
@@ -197,8 +197,8 @@ public class SysEmployee : BaseEntity
     /// EF Core [ForeignKey] 关联 → AttendanceType.Id
     /// 引用本字段的业务场景：
     /// - 人员清单列表（考勤班次 Badge）
-    /// - 宿舍详情"当前入住人员"列表（v2.11.6 已建立关联引用规则）
-    /// - 宿舍账单明细"员工分摊明细"列表（v2.11.7 新增考勤班次列）
+    /// - 住宿详情"当前入住人员"列表（v2.11.6 已建立关联引用规则）
+    /// - 住宿账单明细"员工分摊明细"列表（v2.11.7 新增考勤班次列）
     /// - 任何其他需要展示"考勤班次中文名+颜色"的页面
     /// 单一数据源，避免在多处冗余存储。
     /// </remarks>

@@ -34,7 +34,7 @@ public sealed class AboutForm : Form
             Controls.Clear();
             var lbl = new Label
             {
-                Text = $"金戈宿舍管理系统托盘守护程序 v{Assembly.GetExecutingAssembly().GetName().Version}",
+                Text = $"金智住宿管理系统托盘守护程序 v{Assembly.GetExecutingAssembly().GetName().Version}",
                 AutoSize = true,
                 Location = new Point(20, 20)
             };
@@ -49,7 +49,7 @@ public sealed class AboutForm : Form
 
         var lblTitle = new Label
         {
-            Text = "金戈宿舍管理系统托盘守护程序",
+            Text = "金智住宿管理系统托盘守护程序",
             Font = new Font(msgFont.FontFamily, 13f, FontStyle.Bold),
             AutoSize = true,
             Location = new Point(20, 20)
@@ -70,7 +70,7 @@ public sealed class AboutForm : Form
         };
         var lblAuthor = new Label
         {
-            Text = "维护：金戈项目组",
+            Text = "维护：金智项目组",
             Font = msgFont,
             AutoSize = true,
             Location = new Point(20, 114)

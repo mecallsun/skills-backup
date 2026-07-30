@@ -118,13 +118,13 @@ public class BasicsService : IBasicsService
             return "有员工关联此部门";
         // Building → Dorm.BuildingId
         if (await _db.Dorms.AnyAsync(d => d.BuildingId == id))
-            return "有宿舍关联此楼栋";
+            return "有住宿关联此楼栋";
         // Floor → Dorm.FloorId
         if (await _db.Dorms.AnyAsync(d => d.FloorId == id))
-            return "有宿舍关联此楼层";
+            return "有住宿关联此楼层";
         // Address → Dorm.AddressId
         if (await _db.Dorms.AnyAsync(d => d.AddressId == id))
-            return "有宿舍关联此地址";
+            return "有住宿关联此地址";
         // EmployeeType → SysEmployee.EmployeeTypeId
         if (await _db.Employees.AnyAsync(e => e.EmployeeTypeId == id))
             return "有员工关联此类型";

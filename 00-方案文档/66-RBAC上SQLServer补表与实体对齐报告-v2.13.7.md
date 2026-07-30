@@ -12,7 +12,7 @@
 
 ## 1. 背景
 
-v2.13.6 修复了核心业务模块（宿舍/办理/人员/抄表）在 SQL Server 的映射，但遗留 Sys*/RBAC 子系统与真实 WaterMeterDB 的结构性分裂：
+v2.13.6 修复了核心业务模块（住宿/办理/人员/抄表）在 SQL Server 的映射，但遗留 Sys*/RBAC 子系统与真实 WaterMeterDB 的结构性分裂：
 - `/api/v1/auth/roles` → 500 `对象名 'SysRoles' 无效`（表名约定错配）
 - `/api/v1/auth/users` → 500 `列名 'Id'/'CreatedAt' 无效`（主键 + 列名分裂）
 - 真实库缺 `SysPermission`、`SysRolePermission` 表（RBAC 权限体系为 v2.13.x 基于 SQLite 新增）

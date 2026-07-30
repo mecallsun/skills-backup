@@ -1,7 +1,7 @@
 @page
 @model DormManage.Admin.Pages.Dorms.IndexModel
 @{
-    ViewData["Title"] = "宿舍管理";
+    ViewData["Title"] = "住宿管理";
     Layout = "_Layout";
 
     var currentPage = Model.PageIndex;
@@ -15,10 +15,10 @@
     <!-- 页头（v2.13.15 使用 PageHeader 组件） -->
     @await Component.InvokeAsync("PageHeader", new {
         icon = "bi-building",
-        title = "宿舍档案",
+        title = "住宿档案",
         count = Model.Total,
         countLabel = "间",
-        primaryAction = new PageAction { Label = "新增宿舍", Url = "/Dorms/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "dorm:create" }
+        primaryAction = new PageAction { Label = "新增住宿", Url = "/Dorms/Create", Icon = "bi-plus-lg", Style = "success", PermissionCode = "dorm:create" }
     })
 
     <!-- 筛选条件区域（v2.13.10 按原型 dorms/list.html 排序：楼栋/楼层/状态/关键词） -->
@@ -210,7 +210,7 @@
                         else
                         {
                             <tr>
-                                <td colspan="11" class="text-center text-muted py-4">暂无宿舍数据</td>
+                                <td colspan="11" class="text-center text-muted py-4">暂无住宿数据</td>
                             </tr>
                         }
                     </tbody>
@@ -231,7 +231,7 @@
 @section Scripts {
 <script>
     function deleteDorm(id, code) {
-        if (!confirm('确定删除宿舍 "' + code + '" 吗？此操作不可恢复。')) return;
+        if (!confirm('确定删除住宿 "' + code + '" 吗？此操作不可恢复。')) return;
         const f = document.createElement('form');
         f.method = 'post';
         f.action = '/Dorms?handler=Delete&id=' + id;
@@ -240,7 +240,7 @@
         document.body.appendChild(f);
         f.submit();
     }
-    // v2.13.117 「新增宿舍」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
+    // v2.13.117 「新增住宿」按钮改走独立页面跳转（与 Personnel/Booking 等模块一致）
     //   原 Modal 弹窗 + iframe 模式保留给行内「编辑」按钮使用（OPT-1 优化项，行 179-181）
     function openDormModal(id) {
         var url = id > 0 ? '/Dorms/Edit?id=' + id + '&inModal=1' : '/Dorms/Create?inModal=1';
@@ -248,8 +248,8 @@
         frame.src = url;
         var title = document.getElementById('dormModalTitle');
         title.innerHTML = id > 0
-            ? '<i class="bi bi-pencil-square text-primary"></i> 编辑宿舍'
-            : '<i class="bi bi-plus-circle text-success"></i> 新增宿舍';
+            ? '<i class="bi bi-pencil-square text-primary"></i> 编辑住宿'
+            : '<i class="bi bi-plus-circle text-success"></i> 新增住宿';
     }
     // 监听 iframe 提交完成事件（Create/Edit 页面保存后跳转到 /Dorms，弹窗需关闭）
     var modalEl = document.getElementById('dormModal');
@@ -261,12 +261,12 @@
 </script>
 }
 
-<!-- v2.13.11 宿舍新增/编辑 Modal 弹窗（iframe 复用独立页面，避免表单代码重复） -->
+<!-- v2.13.11 住宿新增/编辑 Modal 弹窗（iframe 复用独立页面，避免表单代码重复） -->
 <div class="modal fade" id="dormModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width: 800px;">
         <div class="modal-content">
             <div class="modal-header py-2">
-                <h5 class="modal-title" id="dormModalTitle"><i class="bi bi-plus-circle text-success"></i> 新增宿舍</h5>
+                <h5 class="modal-title" id="dormModalTitle"><i class="bi bi-plus-circle text-success"></i> 新增住宿</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">

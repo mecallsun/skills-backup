@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Api.Controllers.Dorms;
 
 /// <summary>
-/// 宿舍管理 API 控制器
+/// 住宿管理 API 控制器
 /// </summary>
 [ApiController]
 [Route("api/dorms")]
@@ -24,7 +24,7 @@ public class DormsController : ControllerBase
     }
 
     /// <summary>
-    /// 获取宿舍列表
+    /// 获取住宿列表
     /// </summary>
     [HttpGet]
     public async Task<ApiResponse<PagedResult<DormDto>>> GetDorms(
@@ -71,7 +71,7 @@ public class DormsController : ControllerBase
             })
             .ToListAsync();
 
-        // v2.13.95 派生班次（避免 N+1：批量一次 JOIN 全部页内宿舍）
+        // v2.13.95 派生班次（避免 N+1：批量一次 JOIN 全部页内住宿）
         var dormCodes = items.Select(d => d.DormCode).ToList();
         var attendanceMap = await _db.DormBookings
             .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
@@ -97,9 +97,9 @@ public class DormsController : ControllerBase
                 d.AttendanceTypeNames = names;
         }
 
-        // v2.13.111 派生班组（避免 N+1：批量一次 JOIN 全部页内宿舍）
+        // v2.13.111 派生班组（避免 N+1：批量一次 JOIN 全部页内住宿）
         // 数据链路：DormBooking(Status=2 在宿) → SysEmployee(TeamId FK) → Team(Name + SortOrder)
-        // 与 v2.13.91 宿舍详情班组列 / v2.13.97 Booking 列表班组列采用同 EmployeeTeamMap 模式
+        // 与 v2.13.91 住宿详情班组列 / v2.13.97 Booking 列表班组列采用同 EmployeeTeamMap 模式
         var teamMap = await _db.DormBookings
             .Where(b => dormCodes.Contains(b.DormCode) && b.Status == 2)
             .Join(_db.Employees.AsNoTracking(),
@@ -134,14 +134,14 @@ public class DormsController : ControllerBase
     }
 
     /// <summary>
-    /// 获取宿舍详情
+    /// 获取住宿详情
     /// </summary>
     [HttpGet("{id}")]
     public async Task<ApiResponse<DormDto>> GetDorm(int id)
     {
         var dorm = await _db.Dorms.FindAsync(id);
         if (dorm == null)
-            return ApiResponse<DormDto>.Fail("NOT_FOUND", "宿舍不存在");
+            return ApiResponse<DormDto>.Fail("NOT_FOUND", "住宿不存在");
 
         var dto = new DormDto
         {
@@ -163,14 +163,14 @@ public class DormsController : ControllerBase
     }
 
     /// <summary>
-    /// 新增宿舍
+    /// 新增住宿
     /// </summary>
     [HttpPost]
     public async Task<ApiResponse<DormDto>> CreateDorm([FromBody] DormCreateRequest request)
     {
-        // v2.13.149 试用模式限制：未注册时 宿舍档案最多 5 条记录
+        // v2.13.149 试用模式限制：未注册时 住宿档案最多 5 条记录
         var trialCheck = LicenseGuard.CheckTrialRecordLimit(
-            "宿舍档案",
+            "住宿档案",
             await _db.Dorms.CountAsync());
         if (!trialCheck.IsAllowed)
         {
@@ -178,10 +178,10 @@ public class DormsController : ControllerBase
         }
 
         if (string.IsNullOrWhiteSpace(request.DormCode))
-            return ApiResponse<DormDto>.Fail("CODE_REQUIRED", "宿舍号不能为空");
+            return ApiResponse<DormDto>.Fail("CODE_REQUIRED", "住宿号不能为空");
 
         if (await _db.Dorms.AnyAsync(d => d.DormCode == request.DormCode))
-            return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该宿舍号已存在");
+            return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该住宿号已存在");
 
         var building = await _basicsService.GetBuildingByIdAsync(request.BuildingId);
         var address = await _basicsService.GetAddressByIdAsync(request.AddressId);
@@ -221,19 +221,19 @@ public class DormsController : ControllerBase
     }
 
     /// <summary>
-    /// 更新宿舍
+    /// 更新住宿
     /// </summary>
     [HttpPut("{id}")]
     public async Task<ApiResponse<DormDto>> UpdateDorm(int id, [FromBody] DormUpdateRequest request)
     {
         var dorm = await _db.Dorms.FindAsync(id);
         if (dorm == null)
-            return ApiResponse<DormDto>.Fail("NOT_FOUND", "宿舍不存在");
+            return ApiResponse<DormDto>.Fail("NOT_FOUND", "住宿不存在");
 
         if (await _db.Dorms.AnyAsync(d => d.DormCode == request.DormCode && d.Id != id))
-            return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该宿舍号已存在");
+            return ApiResponse<DormDto>.Fail("CODE_EXISTS", "该住宿号已存在");
 
-        // v2.13.82 业务约束：在宿人数 > 0 时禁止停用宿舍（优先于容量校验）
+        // v2.13.82 业务约束：在宿人数 > 0 时禁止停用住宿（优先于容量校验）
         // 锁定条件：当前 dorm.IsActive=true 且 请求 IsActive=false 且 CurrentCount > 0
         var currentStaying = await _db.DormBookings
             .CountAsync(b => b.DormCode == dorm.DormCode && b.Status == 2);
@@ -241,7 +241,7 @@ public class DormsController : ControllerBase
         {
             return ApiResponse<DormDto>.Fail(
                 "DORM_HAS_RESIDENTS",
-                $"该宿舍当前在宿 {currentStaying} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
+                $"该住宿当前在宿 {currentStaying} 人，禁止停用。请先办理所有人员退宿手续后再操作。");
         }
 
         // v2.13.12: 容量变更约束 — 减少容量时不能超过当前入住人数
@@ -290,20 +290,20 @@ public class DormsController : ControllerBase
     }
 
     /// <summary>
-    /// 删除宿舍
+    /// 删除住宿
     /// </summary>
     [HttpDelete("{id}")]
     public async Task<ApiResponse> DeleteDorm(int id)
     {
         var dorm = await _db.Dorms.FindAsync(id);
         if (dorm == null)
-            return ApiResponse.Fail("NOT_FOUND", "宿舍不存在");
+            return ApiResponse.Fail("NOT_FOUND", "住宿不存在");
 
         // v2.13.12: 检查在宿 + 预约记录（两者均阻止删除）
         var hasActiveBookings = await _db.DormBookings
             .AnyAsync(b => b.DormCode == dorm.DormCode && (b.Status == 2 || b.Status == 1));
         if (hasActiveBookings)
-            return ApiResponse.Fail("HAS_BOOKINGS", "该宿舍有在宿或预约人员，无法删除");
+            return ApiResponse.Fail("HAS_BOOKINGS", "该住宿有在宿或预约人员，无法删除");
 
         _db.Dorms.Remove(dorm);
         await _db.SaveChangesAsync();
@@ -313,7 +313,7 @@ public class DormsController : ControllerBase
 }
 
 /// <summary>
-/// 宿舍数据传输对象
+/// 住宿数据传输对象
 /// </summary>
 public class DormDto
 {
@@ -337,7 +337,7 @@ public class DormDto
 }
 
 /// <summary>
-/// 宿舍创建请求
+/// 住宿创建请求
 /// </summary>
 public class DormCreateRequest
 {
@@ -352,7 +352,7 @@ public class DormCreateRequest
 }
 
 /// <summary>
-/// 宿舍更新请求
+/// 住宿更新请求
 /// </summary>
 public class DormUpdateRequest
 {

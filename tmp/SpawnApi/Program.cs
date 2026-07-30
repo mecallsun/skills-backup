@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 
-const string ApiExe = @"E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\publish-final\Api\DormManage.Api.exe";
+const string ApiExe = @"E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\publish-final\Api\DormManage.Api.exe";
 const string KEY = "Jinge#Dorm@2026$Tray^Handshake&Key!v1";
 const string ChildApi = "Api";
 

@@ -65,7 +65,7 @@
 
 ### 第二轮：v2.13.24 P75 — 入住记录业务深度字段（8 项）
 
-**业务依据**：07-办理登记需求-v2.11.md + 36-宿舍管理模块-v2.11.4.md
+**业务依据**：07-办理登记需求-v2.11.md + 36-住宿管理模块-v2.11.4.md
 
 | 字段 | 类型 | 业务场景 | 来源 |
 |------|------|---------|------|
@@ -126,7 +126,7 @@
        └─────────────────────────────────────────────────┘
                                           ↑↓ 联动
        ┌─────────────────────────────────────────────────┐
-       │           宿舍档案（Dorm）                        │
+       │           住宿档案（Dorm）                        │
        │  v2.13.24 补全 9 PDA 字段 + 5 抄表缓存字段      │
        └─────────────────────────────────────────────────┘
 ```
@@ -144,7 +144,7 @@
 | 7 | 快速确认退房 (ConfirmReservedCheckOutAsync) | Booking → Employee | DormCode=null + ResidenceStatusId=2 | BookingService.cs |
 | **8** | **修改员工考勤班次 (PersonnelService.Update)** | **Employee → Booking** | **AttendanceTypeId → Booking** | **PersonnelService.cs** |
 | **9** | **修改员工床位号 (PersonnelService.Update)** | **Employee → Booking** | **BedNo → Booking** | **PersonnelService.cs** |
-| **10** | **宿舍容量减少 (DormService.UpdateCapacityAsync)** | **Dorm → Employee + Booking** | **BedNo 重新分配 → Employee + Booking** | **DormService.cs** |
+| **10** | **住宿容量减少 (DormService.UpdateCapacityAsync)** | **Dorm → Employee + Booking** | **BedNo 重新分配 → Employee + Booking** | **DormService.cs** |
 | **11** | **抄表记录保存 (MeterController.SaveRecord)** | **MeterRecord → Dorm** | **LastXxxMeter/LastReadMonth/LastReadAt** | **MeterController.cs** |
 | 12 | 标记离职 (PersonnelService.MarkLeftAsync) | — | EmploymentStatusId=3 + DormCode="" | PersonnelService.cs |
 | **13** | **列表查询 (BookingService.GetListAsync)** | **Employee → Booking（RAM 覆盖）** | **RealName → EmployeeName（实时覆盖，不写 DB）** | **BookingService.cs** |
@@ -242,7 +242,7 @@ $ dotnet build DormManage.sln -c Release
 
 - [05-原型与代码基线对照.md](./05-原型与代码基线对照.md)
 - [27-抄表记录需求-v2.11.4.md](./27-抄表记录需求-v2.11.4.md)
-- [36-宿舍管理模块-v2.11.4.md](./36-宿舍管理模块-v2.11.4.md)
+- [36-住宿管理模块-v2.11.4.md](./36-住宿管理模块-v2.11.4.md)
 - [73-原型与需求文档差异修复报告-v2.13.24.md](./73-原型与需求文档差异修复报告-v2.13.24.md)
 - [74-代码100%对齐原型与文档验证报告-v2.13.24.md](./74-代码100%对齐原型与文档验证报告-v2.13.24.md)
 - [76-入住记录与抄表记录业务深度文档-v2.13.24.md](./76-入住记录与抄表记录业务深度文档-v2.13.24.md)

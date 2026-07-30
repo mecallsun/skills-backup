@@ -16,7 +16,7 @@ using DormManage.Shared.Services;
 if (!DormManage.Shared.Security.TrayLaunchGuard.VerifyLaunchedByTray(
         DormManage.Shared.Security.TrayLaunchGuard.ChildAdmin, out var _trayGuardReason))
 {
-    Console.Error.WriteLine($"[TRAY-GUARD] 本程序必须由「金戈宿舍管理系统托盘程序」启动，禁止独立运行。原因：{_trayGuardReason}");
+    Console.Error.WriteLine($"[TRAY-GUARD] 本程序必须由「金智住宿管理系统托盘程序」启动，禁止独立运行。原因：{_trayGuardReason}");
     Console.Error.WriteLine("[TRAY-GUARD] 请运行 DormManage.TrayApp.exe，由其统一拉起 Web/Api 服务。本次启动将在 2 秒后终止...");
     Thread.Sleep(2000);
     return;
@@ -180,7 +180,7 @@ var kestrelPort = Environment.GetEnvironmentVariable("DormManage_KESTREL_PORT") 
 app.Urls.Clear();
 app.Urls.Add($"http://0.0.0.0:{kestrelPort}");
 // v2.13.109 起 SQLite 已移除；不再调用 EnsureCreated()。
-// SQL Server Schema 由 init_schema.sql 运维脚本管理；行政宿舍 Excel 导入仅在 SQLite 开发环境使用，删除。
+// SQL Server Schema 由 init_schema.sql 运维脚本管理；行政住宿 Excel 导入仅在 SQLite 开发环境使用，删除。
 var runtimeProvider = AppConfigRuntime.Instance.GetCurrent().Provider;
 if (!string.Equals(runtimeProvider, "SqlServer", StringComparison.OrdinalIgnoreCase))
 {

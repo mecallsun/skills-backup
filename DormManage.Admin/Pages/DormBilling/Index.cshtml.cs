@@ -9,7 +9,7 @@ using DormManage.Admin.Pages.Shared;
 namespace DormManage.Admin.Pages.DormBilling;
 
 /// <summary>
-/// 宿舍账单页面模型
+/// 住宿账单页面模型
 /// </summary>
 public class IndexModel : PaginatedPageModel
 {
@@ -23,7 +23,7 @@ public class IndexModel : PaginatedPageModel
     }
 
     /// <summary>
-    /// 宿舍账单列表
+    /// 住宿账单列表
     /// </summary>
     public PagedResult<DormBillingDto>? Result { get; set; }
 
@@ -38,7 +38,7 @@ public class IndexModel : PaginatedPageModel
     public List<FloorDropdownItem> Floors { get; set; } = new();
 
     /// <summary>
-    /// 宿舍房号候选（datalist 自动完成用）
+    /// 住宿房号候选（datalist 自动完成用）
     /// </summary>
     public List<string> DormCodes { get; set; } = new();
 
@@ -136,7 +136,7 @@ public class IndexModel : PaginatedPageModel
 }
 
 /// <summary>
-/// 宿舍账单数据传输对象
+/// 住宿账单数据传输对象
 /// </summary>
 public class DormBillingDto
 {

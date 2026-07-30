@@ -28,7 +28,7 @@ console.log('\n--- 筛选条件 ---');
 const labels = output.match(/<label[^>]*>([^<]+)<\/label>/g) || [];
 labels.forEach(l => {
     const text = l.replace(/<[^>]+>/g, '').trim();
-    if (text.includes('姓名') || text.includes('住宿') || text.includes('宿舍') || text.includes('在宿')) {
+    if (text.includes('姓名') || text.includes('住宿') || text.includes('住宿') || text.includes('在宿')) {
         console.log(`  标签：${text}${text === '住宿状态' ? ' ✅ 已更正' : ''}`);
     }
 });
@@ -65,7 +65,7 @@ if (tbodyMatch) {
     rows.slice(0, 10).forEach((row, i) => {
         const cells = row.match(/<td[^>]*>([\s\S]*?)<\/td>/g) || [];
         const cleaned = cells.map(c => c.replace(/<[^>]+>/g, '').trim().replace(/\s+/g, ' '));
-        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 住宿=${cleaned[10]} 宿舍=${cleaned[11]}`);
+        console.log(`  [${i + 1}] ${cleaned[2]}(${cleaned[1]}) 在职=${cleaned[8]} 住宿=${cleaned[10]} 住宿=${cleaned[11]}`);
     });
 }
 

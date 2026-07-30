@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>人员清单 - 金戈宿舍管理系统（v2.12.2）</title>
+    <title>人员清单 - 金智住宿管理系统（v2.12.2）</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="../_shared/layout-tab.css">
@@ -16,7 +16,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.2</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -268,7 +268,7 @@
                 fStatus.appendChild(optStatus);
             }
         }
-        // 宿舍（房号）下拉候选列表（datalist）：浏览器输入时弹出候选项
+        // 住宿（房号）下拉候选列表（datalist）：浏览器输入时弹出候选项
         // 来源：DORMS 字典 + BOOKINGS 出现过的 dormCode
         if (dlDorm && typeof getAllDormCodes === 'function') {
             var codes = getAllDormCodes();
@@ -312,7 +312,7 @@
                 var s = p.employmentStatusId !== undefined ? p.employmentStatusId : p.status;
                 if (s !== statusId) return false;
             }
-            // 宿舍（房号）模糊筛选（v2.11.18 修订：使用 PERSONNEL.dormCode 单一数据源）
+            // 住宿（房号）模糊筛选（v2.11.18 修订：使用 PERSONNEL.dormCode 单一数据源）
             if (dormVal) {
                 var dc = p.dormCode;
                 if (!dc || String(dc).trim() === '' || dc.toLowerCase().indexOf(dormVal.toLowerCase()) === -1) return false;

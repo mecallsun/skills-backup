@@ -33,7 +33,7 @@ internal static class Program
         if (!createdNew)
         {
             MessageBox.Show(
-                "金戈宿舍管理系统托盘守护程序已在运行中。\n\n请检查任务栏托盘区（系统托盘图标）。",
+                "金智住宿管理系统托盘守护程序已在运行中。\n\n请检查任务栏托盘区（系统托盘图标）。",
                 "已在运行",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);

@@ -107,7 +107,7 @@ class Program
         {
             Console.WriteLine("  → cdkey 为空 → 视为未注册（RegInt=-1, RegStatus=Unregistered）");
             Console.WriteLine("  → IsReadOnly 应返回 false（试用模式可写）");
-            Console.WriteLine("  → 试用模式记录数限制：住宿登记 500 / 宿舍档案 5 / 人员清单 5");
+            Console.WriteLine("  → 试用模式记录数限制：住宿登记 500 / 住宿档案 5 / 人员清单 5");
         }
         else if (!string.IsNullOrEmpty(regDateStr) && DateTime.TryParse(regDateStr, out var rd))
         {

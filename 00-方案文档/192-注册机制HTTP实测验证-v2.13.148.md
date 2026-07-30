@@ -13,7 +13,7 @@
 |------|------|
 | 主机 | Windows 11 Pro 10.0.26200 |
 | 机器码 | `BFEBFBFF000A06A4AA2E3B0E`（本机真实 WMI） |
-| 公司名 | 广东金戈新材料股份有限公司 |
+| 公司名 | 广东金智新材料股份有限公司 |
 | CDKEY | `3B55C-A8LE9-3865B-FBE56-C1DC0`（NPGS 36 进制，含 'L'）|
 | 有效期 | 2026-07-26 |
 | 服务端口 | Admin :5001 / Api :5100 / IPC :5099 |
@@ -81,7 +81,7 @@ Api (DormManage.Api :5100)
     "RegInt": 1,
     "SN": "BFEBFBFF000A06A4AA2E3B0E",
     "CDKEY": "3B55C-A8LE9-3865B-FBE56-C1DC0",
-    "LTDName": "广东金戈新材料股份有限公司",
+    "LTDName": "广东金智新材料股份有限公司",
     "RegDate": "2026-07-26T00:00:00",
     "UseTimes": 0,
     "DetectedAtUtc": "2026-07-24T22:24:18.0217179Z"

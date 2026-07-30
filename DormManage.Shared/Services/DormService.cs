@@ -13,7 +13,7 @@ public interface IDormService
     Task<Dorm?> GetByIdAsync(int id);
 
     /// <summary>
-    /// 更新宿舍容量（P2-5 约束）
+    /// 更新住宿容量（P2-5 约束）
     /// 规则：新容量 >= 当前在宿人数（Status=Staying），否则返回业务错误
     /// </summary>
     Task<ApiResponse<Dorm>> UpdateCapacityAsync(int id, int newCapacity);
@@ -63,7 +63,7 @@ public class DormService : IDormService
 
         var dorm = await _db.Dorms.FindAsync(id);
         if (dorm is null)
-            return ApiResponse<Dorm>.Fail("NOT_FOUND", "宿舍不存在");
+            return ApiResponse<Dorm>.Fail("NOT_FOUND", "住宿不存在");
 
         // P2-5 核心约束：新容量必须 ≥ 当前在宿人数
         var stayingBookings = await _db.DormBookings

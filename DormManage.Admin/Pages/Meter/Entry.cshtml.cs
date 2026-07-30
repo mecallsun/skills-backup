@@ -44,7 +44,7 @@ public class EntryModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? ReadMonth { get; set; }
 
-    /// <summary>宿舍列表（用于下拉选择）</summary>
+    /// <summary>住宿列表（用于下拉选择）</summary>
     public List<MeterEntryDto> Dorms { get; set; } = new();
 
     /// <summary>上月智能抄表参考（用于上月读数提示卡片）</summary>
@@ -56,7 +56,7 @@ public class EntryModel : PageModel
     /// <summary>上月读数参考文本</summary>
     public string? LastReadingRef { get; set; }
 
-    /// <summary>当前宿舍当前月份已有记录的 ID（用于 JS 预填 + 关联图片上传）</summary>
+    /// <summary>当前住宿当前月份已有记录的 ID（用于 JS 预填 + 关联图片上传）</summary>
     public long? ExistingRecordId { get; set; }
 
     public async Task OnGetAsync()
@@ -66,7 +66,7 @@ public class EntryModel : PageModel
             ReadMonth = DateTime.Now.ToString("yyyy-MM");
         }
 
-        // 加载启用的宿舍列表
+        // 加载启用的住宿列表
         Dorms = await _db.Dorms
             .Where(d => d.IsActive)
             .OrderBy(d => d.DormCode)
@@ -78,7 +78,7 @@ public class EntryModel : PageModel
             })
             .ToListAsync();
 
-        // 如果有宿舍和月份，加载上月读数参考 + 已有记录
+        // 如果有住宿和月份，加载上月读数参考 + 已有记录
         if (DormId.HasValue && !string.IsNullOrEmpty(ReadMonth))
         {
             await LoadReadingsAsync();
@@ -103,7 +103,7 @@ public class EntryModel : PageModel
         [FromForm] string? Remark)
     {
         // 基本校验
-        if (DormId <= 0) return new JsonResult(new { success = false, message = "请选择宿舍" });
+        if (DormId <= 0) return new JsonResult(new { success = false, message = "请选择住宿" });
         if (string.IsNullOrWhiteSpace(ReadMonth)) return new JsonResult(new { success = false, message = "请选择抄表月份" });
         if (!DateTime.TryParseExact(ReadMonth + "-01", "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out _))
             return new JsonResult(new { success = false, message = "抄表月份格式错误（应为 yyyy-MM）" });
@@ -125,10 +125,10 @@ public class EntryModel : PageModel
                 return new JsonResult(new { success = false, message = $"电表读数必须 ≥ 上月 {prev.ElectricMeter:F2}", errorField = "ElectricMeter" });
         }
 
-        // 查找宿舍
+        // 查找住宿
         var dorm = await _db.Dorms.FindAsync(DormId);
         if (dorm == null)
-            return new JsonResult(new { success = false, message = $"宿舍 ID {DormId} 不存在" });
+            return new JsonResult(new { success = false, message = $"住宿 ID {DormId} 不存在" });
 
         var existing = await _db.MeterRecords
             .FirstOrDefaultAsync(r => r.DormId == DormId && r.ReadMonth == ReadMonth);
@@ -139,7 +139,7 @@ public class EntryModel : PageModel
             var statusName = ((MeterRecordStatus)existing.Status).GetDisplayName();
             return new JsonResult(new {
                 success = false,
-                message = $"该宿舍 {ReadMonth} 已有【{statusName}】记录（ID: {existing.Id}），如需修改请走【修正】流程，不可重复补录。"
+                message = $"该住宿 {ReadMonth} 已有【{statusName}】记录（ID: {existing.Id}），如需修改请走【修正】流程，不可重复补录。"
             });
         }
 
@@ -329,7 +329,7 @@ public class EntryModel : PageModel
     }
 
     /// <summary>
-    /// 加载宿舍+月份的"上月读数"和"已存在记录"（OnGetAsync 使用）
+    /// 加载住宿+月份的"上月读数"和"已存在记录"（OnGetAsync 使用）
     /// </summary>
     private async Task LoadReadingsAsync()
     {
@@ -349,11 +349,11 @@ public class EntryModel : PageModel
             ExistingRecordId = current.Id;
             if (((MeterRecordStatus)current.Status).IsEffective())
             {
-                ExistWarning = $"⚠️ 该宿舍 {ReadMonth} 已有【{((MeterRecordStatus)current.Status).GetDisplayName()}】记录（ID: {current.Id}），如需修改请走【修正】流程，不可重复补录。";
+                ExistWarning = $"⚠️ 该住宿 {ReadMonth} 已有【{((MeterRecordStatus)current.Status).GetDisplayName()}】记录（ID: {current.Id}），如需修改请走【修正】流程，不可重复补录。";
             }
             else
             {
-                ExistWarning = $"ℹ️ 该宿舍 {ReadMonth} 已有【{((MeterRecordStatus)current.Status).GetDisplayName()}】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。";
+                ExistWarning = $"ℹ️ 该住宿 {ReadMonth} 已有【{((MeterRecordStatus)current.Status).GetDisplayName()}】占位记录，提交后将覆盖此记录，旧数据保存到备注历史。";
             }
         }
     }
@@ -375,7 +375,7 @@ public class EntryModel : PageModel
 }
 
 /// <summary>
-/// 抄表录入宿舍数据传输对象
+/// 抄表录入住宿数据传输对象
 /// </summary>
 public class MeterEntryDto
 {

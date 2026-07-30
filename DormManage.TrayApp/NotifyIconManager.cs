@@ -107,7 +107,7 @@ public sealed class NotifyIconManager : IDisposable
         _notifyIcon = new NotifyIcon
         {
             Icon = LoadTrayIcon(),
-            Text = "金戈宿舍管理系统 v2.13.71",
+            Text = "金智住宿管理系统 v2.13.71",
             Visible = true
         };
 
@@ -276,7 +276,7 @@ public sealed class NotifyIconManager : IDisposable
             _miAdminStatus.Text = $"Admin：{StateText(state)}";
         }
 
-        _notifyIcon.Text = $"金戈宿舍管理系统 v2.13.71\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
+        _notifyIcon.Text = $"金智住宿管理系统 v2.13.71\nApi: {StateText(_apiState)}\nAdmin: {StateText(_adminState)}";
 
         // v2.13.213 启动轮询动画联动：图标变为绿色之前一直轮询
         // 统一规则：

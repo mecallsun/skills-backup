@@ -212,6 +212,6 @@ report.AdminAllPermsGranted = await GrantAdminAllPermissionsAsync(db, logger, ct
 
 ## 八、最新程序包
 
-`E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\release\_archive\DormManage-v2.13.181_20260727_002651.zip`（200.25 MB）
+`E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\release\_archive\DormManage-v2.13.181_20260727_002651.zip`（200.25 MB）
 
 部署后启动 TrayApp → 自动执行两次迁移 → admin 用户/角色/权限自动补齐 → 登录 admin 即可全功能使用。

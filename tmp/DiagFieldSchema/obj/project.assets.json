@@ -3586,11 +3586,11 @@
   "project": {
     "version": "2.13.25",
     "restore": {
-      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldSchema\\DiagFieldSchema.csproj",
+      "projectUniqueName": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldSchema\\DiagFieldSchema.csproj",
       "projectName": "DiagFieldSchema",
-      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldSchema\\DiagFieldSchema.csproj",
+      "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldSchema\\DiagFieldSchema.csproj",
       "packagesPath": "C:\\Users\\Mecall\\.nuget\\packages\\",
-      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\tmp\\DiagFieldSchema\\obj\\",
+      "outputPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\tmp\\DiagFieldSchema\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Mecall\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -3605,8 +3605,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\DormManage.Shared\\DormManage.Shared.csproj": {
-              "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\宿舍管理系统\\DormManage.Shared\\DormManage.Shared.csproj"
+            "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\DormManage.Shared\\DormManage.Shared.csproj": {
+              "projectPath": "E:\\AI工作目录\\AI编程开发\\JINGE开发\\住宿管理系统\\DormManage.Shared\\DormManage.Shared.csproj"
             }
           }
         }

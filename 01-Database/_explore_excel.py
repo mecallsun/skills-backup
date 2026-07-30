@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-员工宿舍明细表导入工具 v2.12.40
+员工住宿明细表导入工具 v2.12.40
 
 数据源结构:
 - "员工花名册" 工作表 (889 行 × 14 列): 员工花名册
@@ -10,7 +10,7 @@
   列: (空) | 住宿员工姓名 | 性别 | 部门 | 岗位 | 班组 | 考勤班次 | 入住时间 | 入职时间 | 离职时间
 
 - "6月" 工作表 (406 行 × 13 列): 住宿明细（含房号）
-  列: 序号 | 宿舍房号 | 超用电/度 | 入住人数 | 住宿员工姓名 | 性别 | 部门 | 班组/科 | 入住时间 | 扣费金额/元 | 扣费金额/元 | 离职时间 | 备注
+  列: 序号 | 住宿房号 | 超用电/度 | 入住人数 | 住宿员工姓名 | 性别 | 部门 | 班组/科 | 入住时间 | 扣费金额/元 | 扣费金额/元 | 离职时间 | 备注
 
 导入目标:
 - SysEmployee（员工花名册）
@@ -35,7 +35,7 @@ REMOTE_CONN = (
     'UID=__DB_USER__;'
     'PWD=__DB_PASSWORD__;'
 )
-EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\宿舍管理系统\行政宿舍资料\员工宿舍明细表.xlsx'
+EXCEL_PATH = r'E:\AI工作目录\AI编程开发\JINGE开发\住宿管理系统\行政住宿资料\员工住宿明细表.xlsx'
 
 
 def print_log(msg, level='INFO'):
@@ -115,7 +115,7 @@ def get_dorm_dict(conn):
             result[r.DormCode] = {'DormId': r.DormId, 'Capacity': capacity, 'DormType': dt}
         return result
     except Exception as e:
-        print_log(f'读取宿舍字典失败: {e}', 'WARN')
+        print_log(f'读取住宿字典失败: {e}', 'WARN')
         return {}
     finally:
         cursor.close()
@@ -169,7 +169,7 @@ def extract_employees(ws):
 
 def extract_bookings_with_dorm(ws):
     """6月 工作表（首选）：含房号的入住明细"""
-    # 列：1.序号 2.宿舍房号 3.超用电/度 4.入住人数 5.住宿员工姓名 6.性别 7.部门 8.班组/科 9.入住时间 10.扣费金额 11.扣费金额 12.离职时间 13.备注
+    # 列：1.序号 2.住宿房号 3.超用电/度 4.入住人数 5.住宿员工姓名 6.性别 7.部门 8.班组/科 9.入住时间 10.扣费金额 11.扣费金额 12.离职时间 13.备注
     bookings = []
     # 6月 工作表的第 2 行是表头
     for r in range(3, ws.max_row + 1):
@@ -216,7 +216,7 @@ def extract_bookings_without_dorm(ws):
 
 def main():
     print_log('=========================================', 'INFO')
-    print_log('员工宿舍明细表导入工具 (v2.12.40)', 'INFO')
+    print_log('员工住宿明细表导入工具 (v2.12.40)', 'INFO')
     print_log('=========================================', 'INFO')
     print()
 
@@ -263,9 +263,9 @@ def main():
 
     try:
         dorm_dict = get_dorm_dict(conn)
-        print_log(f'远程宿舍字典: {len(dorm_dict)} 个', 'INFO')
+        print_log(f'远程住宿字典: {len(dorm_dict)} 个', 'INFO')
 
-        # 显示宿舍字典
+        # 显示住宿字典
         print('\n=== 远程 Dorm 表数据 ===')
         cursor = conn.cursor()
         cursor.execute('SELECT DormId, DormCode, DormType FROM Dorm WHERE IsActive = 1 ORDER BY DormCode')
@@ -319,7 +319,7 @@ def main():
         inserted_bk = 0
         skipped = 0
         bed_assignments = {}  # {DormCode: {BedNo: EmployeeId}}
-        # 创建宿舍存在性集合（用于过滤）
+        # 创建住宿存在性集合（用于过滤）
         valid_dorms = set(dorm_dict.keys())
 
         for bk in bookings:
@@ -338,9 +338,9 @@ def main():
                     continue
 
                 dorm_code = bk['DormCode']
-                # 验证宿舍存在性（无效的宿舍跳过）
+                # 验证住宿存在性（无效的住宿跳过）
                 if dorm_code and dorm_code not in valid_dorms:
-                    print_log(f'  {name}：宿舍 [{dorm_code}] 在远程库不存在，跳过', 'WARN')
+                    print_log(f'  {name}：住宿 [{dorm_code}] 在远程库不存在，跳过', 'WARN')
                     skipped += 1
                     continue
 
@@ -349,7 +349,7 @@ def main():
                 if dorm_code:
                     if dorm_code not in bed_assignments:
                         bed_assignments[dorm_code] = []
-                    # 查找当前宿舍下一个可用床位号
+                    # 查找当前住宿下一个可用床位号
                     dorm_capacity = dorm_dict[dorm_code]['Capacity']
                     used_beds = set(bed_assignments[dorm_code])
                     bed_no = None
@@ -417,10 +417,10 @@ def main():
         print(f'最终统计:')
         print(f'  SysEmployee: {emp_count} 条')
         print(f'  DormBooking: {bk_count} 条 (在宿: {staying_count})')
-        print(f'  使用的宿舍数: {dorm_used} / {len(valid_dorms)}')
+        print(f'  使用的住宿数: {dorm_used} / {len(valid_dorms)}')
         print('=========================================')
 
-        # 10. 按宿舍统计在宿人数
+        # 10. 按住宿统计在宿人数
         cursor.execute("""
             SELECT DormCode, COUNT(*) AS cnt
             FROM DormBooking

@@ -24,7 +24,7 @@
         <div class="d-flex justify-content-between align-items-center h-100">
             <div class="d-flex align-items-center">
                 <i class="bi bi-droplet-half brand-icon"></i>
-                <span class="brand-text">金戈宿舍管理系统</span>
+                <span class="brand-text">金智住宿管理系统</span>
                 <span class="brand-version">v2.12.0</span>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -580,7 +580,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label">公司名称</label>
                                             <input type="text" id="licLTDName" class="form-control"
-                                                   value="金戈电子有限公司" readonly>
+                                                   value="金智电子有限公司" readonly>
                                         </div>
                                         <div class="col-md-12">
                                             <label class="form-label">注册码（29 位 = 5-5-5-5-5）</label>
@@ -622,7 +622,7 @@
                             <div class="card-header bg-light"><strong><i class="bi bi-info-circle"></i> 关于系统</strong></div>
                             <div class="card-body" id="aboutBody">
                                 <table class="table table-sm table-borderless mb-0">
-                                    <tr><th width="120" class="text-muted">系统名称</th><td>金戈宿舍管理系统</td></tr>
+                                    <tr><th width="120" class="text-muted">系统名称</th><td>金智住宿管理系统</td></tr>
                                     <tr><th class="text-muted">当前版本</th><td><strong>v2.13.109</strong></td></tr>
                                     <tr><th class="text-muted">技术栈</th><td>.NET 8 + Razor Pages + Bootstrap 5 + EF Core</td></tr>
                                     <tr><th class="text-muted">部署方式</th><td>EXE 自托管 + 托盘守护进程</td></tr>
@@ -931,11 +931,11 @@
                 ]
             },
             {
-                module: '宿舍管理', icon: 'bi-building', perms: [
+                module: '住宿管理', icon: 'bi-building', perms: [
                     { code: 'dorm:view', name: '查看列表', type: '菜单' },
-                    { code: 'dorm:create', name: '新增宿舍', type: '按钮' },
-                    { code: 'dorm:edit', name: '编辑宿舍', type: '按钮' },
-                    { code: 'dorm:delete', name: '删除宿舍', type: '按钮' },
+                    { code: 'dorm:create', name: '新增住宿', type: '按钮' },
+                    { code: 'dorm:edit', name: '编辑住宿', type: '按钮' },
+                    { code: 'dorm:delete', name: '删除住宿', type: '按钮' },
                     { code: 'dorm:history', name: '历史记录', type: '菜单' }
                 ]
             },
@@ -956,7 +956,7 @@
                 ]
             },
             {
-                module: '宿舍账单', icon: 'bi-receipt', perms: [
+                module: '住宿账单', icon: 'bi-receipt', perms: [
                     { code: 'dormbilling:view', name: '查看列表', type: '菜单' },
                     { code: 'dormbilling:detail', name: '查看详情', type: '按钮' },
                     { code: 'dormbilling:generate', name: '生成账单', type: '按钮' },
@@ -1135,7 +1135,7 @@
         // 关于
         document.getElementById('aboutBody').innerHTML = `
             <table class="table table-sm table-borderless mb-0">
-                <tr><th width="160" class="text-muted">系统名称</th><td>金戈新材料 · 水电抄表系统</td></tr>
+                <tr><th width="160" class="text-muted">系统名称</th><td>金智新材料 · 水电抄表系统</td></tr>
                 <tr><th class="text-muted">后台版本</th><td>v2.11（Web 后台）</td></tr>
                 <tr><th class="text-muted">运行架构</th><td>.NET 8 自托管 EXE + 托盘守护（WaterMeter.Api / Admin / TrayApp）</td></tr>
                 <tr><th class="text-muted">PDA 服务</th><td>${statusHtml(cfg.pdaService)} · 端口 ${cfg.pdaPort}</td></tr>
@@ -1153,7 +1153,7 @@
             { id: 1, fieldKey: 'employee.realname',   fieldName: '姓名',     module: 'Personnel', sensitivityLevel: 1, sortOrder: 1, isActive: true,  description: '员工真实姓名（高 PII）' },
             { id: 2, fieldKey: 'employee.phone',      fieldName: '手机号',   module: 'Personnel', sensitivityLevel: 1, sortOrder: 2, isActive: true,  description: '联系电话（高 PII）' },
             { id: 3, fieldKey: 'employee.employeecode', fieldName: '工号',   module: 'Personnel', sensitivityLevel: 2, sortOrder: 3, isActive: true,  description: '公司内唯一标识' },
-            { id: 4, fieldKey: 'employee.dormcode',   fieldName: '宿舍房号', module: 'Personnel', sensitivityLevel: 2, sortOrder: 4, isActive: true,  description: '当前入住房号（隐私住址）' },
+            { id: 4, fieldKey: 'employee.dormcode',   fieldName: '住宿房号', module: 'Personnel', sensitivityLevel: 2, sortOrder: 4, isActive: true,  description: '当前入住房号（隐私住址）' },
             { id: 5, fieldKey: 'employee.remark',     fieldName: '备注',     module: 'Personnel', sensitivityLevel: 2, sortOrder: 5, isActive: false, description: '自由文本备注（可能含敏感信息）' }
         ];
 

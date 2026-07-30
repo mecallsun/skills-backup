@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DormManage.Admin.Pages.Dorms;
 
 /// <summary>
-/// 宿舍详情页面模型（v2.13.39 100% 原型对齐）
+/// 住宿详情页面模型（v2.13.39 100% 原型对齐）
 ///
 /// 改造点（vs 原型 dorms/details.html）：
 /// 1. 基本信息加「房间数」字段
@@ -202,7 +202,7 @@ public class DetailsModel : PageModel
 }
 
 /// <summary>
-/// 宿舍详情数据传输对象（v2.13.39 新增 RoomCount）
+/// 住宿详情数据传输对象（v2.13.39 新增 RoomCount）
 /// </summary>
 public class DormDetailDto
 {
@@ -269,7 +269,7 @@ public class BookingRecordDto
 }
 
 /// <summary>
-/// 考勤班次 Badge DTO（v2.12.40）：用于在宿舍详情"当前入住人员"列表中展示考勤班次 Badge
+/// 考勤班次 Badge DTO（v2.12.40）：用于在住宿详情"当前入住人员"列表中展示考勤班次 Badge
 /// </summary>
 public class AttendanceBadgeDto
 {
@@ -278,7 +278,7 @@ public class AttendanceBadgeDto
 }
 
 /// <summary>
-/// 员工类型 Badge DTO（v2.13.39 新增）：用于在宿舍详情"当前入住人员"列表中展示员工类型 Badge
+/// 员工类型 Badge DTO（v2.13.39 新增）：用于在住宿详情"当前入住人员"列表中展示员工类型 Badge
 /// </summary>
 public class EmployeeTypeBadgeDto
 {
@@ -287,7 +287,7 @@ public class EmployeeTypeBadgeDto
 }
 
 /// <summary>
-/// 班组 Badge DTO（v2.13.91 新增）：用于在宿舍详情"当前入住人员"列表中展示班组 Badge
+/// 班组 Badge DTO（v2.13.91 新增）：用于在住宿详情"当前入住人员"列表中展示班组 Badge
 /// </summary>
 public class TeamBadgeDto
 {

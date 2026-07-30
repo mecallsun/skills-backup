@@ -456,7 +456,7 @@ public class PersonnelService : IPersonnelService
         emp.EmploymentStatusId = EmployeeStatus.Left; // 3=已离职
         emp.Status = EmployeeStatus.Left;
         emp.LeaveDate = leaveDate;
-        emp.DormCode = "";        // 离职清空当前宿舍（真实表 NOT NULL）
+        emp.DormCode = "";        // 离职清空当前住宿（真实表 NOT NULL）
         await _db.SaveChangesAsync();
         return (true, "已标记离职");
     }

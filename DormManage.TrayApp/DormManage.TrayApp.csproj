@@ -11,7 +11,7 @@
     <LangVersion>latest</LangVersion>
     <Version>2.13.24</Version>
     <Company>JINGE</Company>
-    <Product>金戈宿舍管理系统托盘守护程序</Product>
+    <Product>金智住宿管理系统托盘守护程序</Product>
     <Description>DormManage.TrayApp v2.13.24 - 托盘守护 + 自动启停 + 故障自愈 + IPC 服务端</Description>
     <!-- v2.13.140：Release 构建启用 Obfuscar 源码级混淆 -->
     <ObfuscateOnRelease>true</ObfuscateOnRelease>
