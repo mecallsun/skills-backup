@@ -33,12 +33,12 @@
 
     <!-- ========== Tier 3: 页面内容区 ========== -->
     <div class="page-content">
-        <!-- 页面标题 -->
-        <div class="page-header d-flex justify-content-between align-items-center">
+        <!-- 页面标题 - v2.13.211 按钮组强制靠页面最右侧 -->
+        <div class="page-header d-flex justify-content-start align-items-center">
             <h1 class="page-title">
                 <i class="bi bi-people-fill"></i>人员清单<span class="total-count">（共 <span id="totalCount">0</span> 人）</span>
             </h1>
-            <div class="btn-group" role="group">
+            <div class="btn-group page-header-actions ms-auto" role="group">
                 <a href="create.html" class="btn btn-success"><i class="bi bi-plus-lg"></i> 新增</a>
                 <a href="import.html" class="btn btn-info text-white"><i class="bi bi-upload"></i> 导入</a>
                 <button class="btn btn-outline-success" onclick="exportExcel()"><i class="bi bi-file-earmark-excel"></i> 导出</button>

@@ -39,10 +39,18 @@
                 <div class="col-auto filter-item">
                     <label class="form-label mb-1">抄表月份</label>
                     <select name="ReadMonth" class="form-select">
+                        @{
+                            // v2.13.214：默认选中当前主机月份（ReadMonth 为空时）
+                            var defaultMonth = DateTime.Now.ToString("yyyy-MM");
+                        }
                         <option value="">全部</option>
                         @foreach (var month in Model.Months)
                         {
-                            <option value="@month" selected="@(Model.ReadMonth == month)">@month</option>
+                            // 默认选中逻辑：URL 传 ReadMonth → 选中对应月份；URL 未传 → 选中当前月
+                            var isSelected = !string.IsNullOrWhiteSpace(Model.ReadMonth)
+                                ? Model.ReadMonth == month
+                                : month == defaultMonth;
+                            <option value="@month" selected="@isSelected">@month</option>
                         }
                     </select>
                 </div>

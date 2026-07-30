@@ -26,75 +26,77 @@
         }
 
         <!-- 筛选区 -->
-        <div class="filter-card mb-3">
-            <form method="get" class="filter-row">
+        <form method="get" class="card mb-3 filter-card" data-filter-form="users">
+            <div class="card-body py-1">
                 <input type="hidden" name="tab" value="users" />
-                <div class="filter-item">
-                    <label class="form-label">搜索</label>
-                    <input type="text" name="uSearch" value="@Model.UserSearch" class="form-control" placeholder="用户名 / 姓名" />
-                </div>
-                <div class="filter-item">
-                    <label class="form-label">角色</label>
-                    <select name="uRoleId" class="form-select">
-                        <option value="">全部</option>
-                        @foreach (var role in Model.UserAvailableRoles)
-                        {
-                            if (Model.UserRoleId == role.Id)
+                <div class="row g-2 align-items-end flex-nowrap filter-row">
+                    <div class="col-auto filter-item">
+                        <label class="form-label mb-1">搜索</label>
+                        <input type="text" name="uSearch" value="@Model.UserSearch" class="form-control" placeholder="用户名 / 姓名" />
+                    </div>
+                    <div class="col-auto filter-item">
+                        <label class="form-label mb-1">角色</label>
+                        <select name="uRoleId" class="form-select">
+                            <option value="">全部</option>
+                            @foreach (var role in Model.UserAvailableRoles)
                             {
-                                <option value="@role.Id" selected="selected">@role.RoleName</option>
+                                if (Model.UserRoleId == role.Id)
+                                {
+                                    <option value="@role.Id" selected="selected">@role.RoleName</option>
+                                }
+                                else
+                                {
+                                    <option value="@role.Id">@role.RoleName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-auto filter-item">
+                        <label class="form-label mb-1">状态</label>
+                        <select name="uStatus" class="form-select">
+                            @if (string.IsNullOrEmpty(Model.UserStatus))
+                            {
+                                <option value="" selected="selected">全部</option>
                             }
                             else
                             {
-                                <option value="@role.Id">@role.RoleName</option>
+                                <option value="">全部</option>
                             }
-                        }
-                    </select>
-                </div>
-                <div class="filter-item">
-                    <label class="form-label">状态</label>
-                    <select name="uStatus" class="form-select">
-                        @if (string.IsNullOrEmpty(Model.UserStatus))
-                        {
-                            <option value="" selected="selected">全部</option>
-                        }
-                        else
-                        {
-                            <option value="">全部</option>
-                        }
-                        @if (Model.UserStatus == "active")
-                        {
-                            <option value="active" selected="selected">启用</option>
-                        }
-                        else
-                        {
-                            <option value="active">启用</option>
-                        }
-                        @if (Model.UserStatus == "disabled")
-                        {
-                            <option value="disabled" selected="selected">禁用</option>
-                        }
-                        else
-                        {
-                            <option value="disabled">禁用</option>
-                        }
-                        @if (Model.UserStatus == "locked")
-                        {
-                            <option value="locked" selected="selected">已锁定</option>
-                        }
-                        else
-                        {
-                            <option value="locked">已锁定</option>
-                        }
-                    </select>
-                </div>
-                <div class="filter-item filter-item-btn">
-                    <div class="filter-item-btn-group">
-                        <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
-                        <a href="/Settings?tab=users" class="btn btn-outline-secondary filter-btn"><i class="bi bi-arrow-counterclockwise"></i> 重置</a>
+                            @if (Model.UserStatus == "active")
+                            {
+                                <option value="active" selected="selected">启用</option>
+                            }
+                            else
+                            {
+                                <option value="active">启用</option>
+                            }
+                            @if (Model.UserStatus == "disabled")
+                            {
+                                <option value="disabled" selected="selected">禁用</option>
+                            }
+                            else
+                            {
+                                <option value="disabled">禁用</option>
+                            }
+                            @if (Model.UserStatus == "locked")
+                            {
+                                <option value="locked" selected="selected">已锁定</option>
+                            }
+                            else
+                            {
+                                <option value="locked">已锁定</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-auto filter-item filter-item-btn">
+                        <div class="filter-item-btn-group">
+                            <button type="submit" class="btn btn-primary filter-btn"><i class="bi bi-search"></i> 查询</button>
+                            <button type="button" class="btn btn-outline-secondary filter-btn" onclick="FilterPersistence.resetFilters('users')"><i class="bi bi-arrow-counterclockwise"></i> 重置</button>
+                        </div>
                     </div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">

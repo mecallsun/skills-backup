@@ -18,19 +18,23 @@
 
 <!-- 共用页头（P2-1）：图标 + 标题 + 总数 + 操作按钮 + 可选 Tab -->
 <div class="page-header mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0 d-flex align-items-center">
-            @if (!string.IsNullOrEmpty(Model.Icon))
-            {
-                <i class="bi @Model.Icon me-2"></i>
-            }
-            <span>@Model.Title</span>
-            @if (Model.Count.HasValue)
-            {
-                <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
-            }
-        </h2>
-        <div class="d-flex align-items-center gap-2 page-header-actions flex-nowrap">
+    <h2 class="mb-0 page-header-title">
+        @if (!string.IsNullOrEmpty(Model.Icon))
+        {
+            <i class="bi @Model.Icon me-2"></i>
+        }
+        <span>@Model.Title</span>
+        @if (Model.Count.HasValue)
+        {
+            <span class="badge bg-secondary ms-2">@Model.Count @Model.CountLabel</span>
+        }
+        @* v2.13.209 新增：Raw HTML 副标题（抄表进度 3 段统计，内嵌于 h2 行内） *@
+        @if (Model.SubtitleHtml != default)
+        {
+            <span class="coverage-subtitle ms-3">@Model.SubtitleHtml</span>
+        }
+    </h2>
+    <div class="page-header-actions flex-nowrap">
             @if (Model.PrimaryAction is not null && HasPerm(Model.PrimaryAction.PermissionCode))
             {
                 @if (!string.IsNullOrEmpty(Model.PrimaryAction.Url))
@@ -89,12 +93,8 @@
                     </button>
                 }
             }
-            @if (!string.IsNullOrEmpty(Model.Subtitle))
-            {
-                <small class="text-muted">@Model.Subtitle</small>
-            }
-        </div>
     </div>
+</div>
 
     @if (Model.Tabs.Any())
     {

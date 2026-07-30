@@ -78,10 +78,11 @@
         /* 筛选区卡片 */
         .filter-card {
             background: var(--bg-card);
-            border-radius: 12px;
+            border-radius: 6px;
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
             border: 1px solid #eee;
-            padding: 1rem 1.25rem;
+            padding: 0.35rem 0.625rem;
+            margin-bottom: 0.4rem;
         }
         /* 筛选条件响应式宽度 */
         .filter-item {
@@ -198,12 +199,12 @@
 
     <!-- ========== Tier 4: 页面内容区 ========== -->
     <div class="page-content">
-<!-- 页面标题 -->
-        <div class="page-header d-flex justify-content-between align-items-center">
+<!-- 页面标题 - v2.13.211 按钮组强制靠页面最右侧 -->
+        <div class="page-header d-flex justify-content-start align-items-center">
             <h1 class="page-title">
                 <i class="bi bi-clipboard-check"></i>办理登记（共 <span id="totalCount">0</span> 条）
             </h1>
-            <div>
+            <div class="page-header-actions ms-auto">
                 <!-- v2.12.29 办理登记按钮：弹出独占窗口（模态对话框） -->
                 <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalCheckIn"><i class="bi bi-box-arrow-in-right"></i> 办理入住</button>
                 <button class="btn btn-info text-white" data-bs-toggle="modal" data-bs-target="#modalCheckOut"><i class="bi bi-box-arrow-right"></i> 办理退房</button>

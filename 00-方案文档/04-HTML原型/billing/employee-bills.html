@@ -62,7 +62,7 @@
         .page-title i { color: var(--primary); }
 
         /* 筛选区卡片 */
-        .filter-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; padding: 1rem 1.25rem; }
+        .filter-card { background: var(--bg-card); border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; padding: 0.35rem 0.625rem; margin-bottom: 0.4rem; }
 
         /* 内容卡片 */
         .content-card { background: var(--bg-card); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; overflow: hidden; }
@@ -184,13 +184,13 @@
 
     <!-- ========== Tier 4: 页面内容区 ========== -->
     <div class="page-content">
-<!-- 页面标题 -->
-        <div class="page-header d-flex justify-content-between align-items-center">
+<!-- 页面标题 - v2.13.211 按钮组强制靠页面最右侧 -->
+        <div class="page-header d-flex justify-content-start align-items-center">
             <h1 class="page-title">
                 <i class="bi bi-wallet2"></i>员工分摊（共 <span id="totalCount">0</span> 条）
             </h1>
             <!-- v2.11.6：业务按钮迁移到页头 btn-group -->
-            <div class="btn-group" role="group" aria-label="员工分摊操作">
+            <div class="btn-group page-header-actions ms-auto" role="group" aria-label="员工分摊操作">
                 <button class="btn btn-success" onclick="generate(false)"><i class="bi bi-bar-chart-line"></i> 生成</button>
                 <button class="btn btn-info text-white" onclick="generate(true)"><i class="bi bi-arrow-repeat"></i> 重生成</button>
                 <button class="btn btn-outline-secondary" onclick="alert('原型演示：实际将下载 员工分摊费用_2026-07.xlsx')"><i class="bi bi-download"></i> 导出</button>

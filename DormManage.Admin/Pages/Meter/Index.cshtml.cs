@@ -83,8 +83,13 @@ public class IndexModel : PaginatedPageModel
 
         var query = _db.MeterRecords.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(ReadMonth))
-            query = query.Where(r => r.ReadMonth == ReadMonth);
+        // v2.13.214：默认筛选当前主机月份（避免「全部」返回大量历史数据）
+        // URL 优先 → ReadMonth 不为空 → 尊重用户选择
+        // URL 未传 → ReadMonth 为空 → 默认当前月份
+        var effectiveMonth = !string.IsNullOrWhiteSpace(ReadMonth)
+            ? ReadMonth
+            : DateTime.Now.ToString("yyyy-MM");
+        query = query.Where(r => r.ReadMonth == effectiveMonth);
 
         if (BuildingId.HasValue && BuildingId.Value > 0)
             query = query.Where(r => _db.Dorms.Any(d => d.Id == r.DormId && d.BuildingId == BuildingId.Value));
