@@ -1170,16 +1170,11 @@
                 hideFeedback('editRoleFeedback');
 
                 const data = new FormData(this);
-                // 使用表单原始值（带 hidden 字段后，isActive 自动包含 true/false）
-                // 可选：增加校验确保 checkbox 状态与 hidden value 同步
+                // v2.13.221 BUG 1 修复：先删除所有旧 IsActive，再根据 checkbox 状态单值提交
+                // （解决之前 hidden=false 干扰 checkbox=true 的问题）
+                data.delete('IsActive');
                 const checkbox = document.getElementById('editRoleActive');
-                if (checkbox && !checkbox.checked) {
-                    // 若 checkbox 未勾选但表单中已有 true 值（从 hidden 获取），强制覆写为 false
-                    if (data.get('IsActive') === 'true') data.set('IsActive', 'false');
-                } else if (checkbox && checkbox.checked && data.get('IsActive') !== 'true') {
-                    // 若勾选了但未发送 true 值，确保发送 true
-                    data.set('IsActive', 'true');
-                }
+                data.set('IsActive', (checkbox && checkbox.checked) ? 'true' : 'false');
 
                 const btn = document.getElementById('editRoleSubmit');
                 const orig = btn.innerHTML;

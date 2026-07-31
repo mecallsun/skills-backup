@@ -12,9 +12,14 @@
     bool IsActive(string? route)
     {
         if (string.IsNullOrWhiteSpace(route)) return false;
+        // v2.13.220 修复 BUG：TrimEnd('/') 会把单字符 '/' 变成空字符串，导致首页分支判断失效
+        // 修复：先检查是否为根路径（'/' 或 ''），避免 TrimEnd 后误判
         var r = route.TrimEnd('/');
-        if (string.Equals(r, "/", StringComparison.OrdinalIgnoreCase))
-            return currentPath == "/" || currentPath == "";
+        if (string.IsNullOrEmpty(r))
+        {
+            // 根路径（Route='/' 被 TrimEnd 为空字符串）：仅当 currentPath 为根路径时激活
+            return currentPath == "/" || currentPath == "" || currentPath == "/Index";
+        }
         return currentPath == r || currentPath.StartsWith(r + "/", StringComparison.OrdinalIgnoreCase);
     }
 }

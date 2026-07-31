@@ -239,11 +239,13 @@ public partial class IndexModel
         }
 
         // v2.13.92 字段权限：单独处理 privacy:field:enable 权限（数据权限 PermissionType=3）
+        // v2.13.221 BUG 2 修复：同时处理「添加」和「取消」两种状态（原代码只处理添加，导致取消勾选无效）
         var privacyPerm = await _db.SysPermissions.FirstOrDefaultAsync(p => p.PermissionCode == "privacy:field:enable");
         if (privacyPerm != null)
         {
-            var hasPrivacy = await _db.SysRolePermissions.AnyAsync(rp => rp.RoleId == RoleId && rp.PermissionId == privacyPerm.Id);
-            if (PrivacyFieldEnabled && !hasPrivacy)
+            var existingPrivacyRp = await _db.SysRolePermissions
+                .FirstOrDefaultAsync(rp => rp.RoleId == RoleId && rp.PermissionId == privacyPerm.Id);
+            if (PrivacyFieldEnabled && existingPrivacyRp == null)
             {
                 _db.SysRolePermissions.Add(new SysRolePermission
                 {
@@ -251,6 +253,11 @@ public partial class IndexModel
                     PermissionId = privacyPerm.Id,
                     CreatedAt = DateTime.Now
                 });
+            }
+            else if (!PrivacyFieldEnabled && existingPrivacyRp != null)
+            {
+                // 取消勾选 + 已存在授权 → 删除（v2.13.221 BUG 2 修复）
+                _db.SysRolePermissions.Remove(existingPrivacyRp);
             }
         }
 

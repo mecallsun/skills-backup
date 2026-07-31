@@ -185,7 +185,8 @@
                     </div>
                     <div class="form-check mb-3">
                         <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editRoleActive">
-                        <input type="hidden" name="IsActive" value="false">
+                        @* v2.13.221 BUG 1 修复：删除 hidden input（避免 FormData 同时包含 false+true 时模型绑定取 false）。
+                           改为在 JS 提交时根据 checkbox 状态用 data.set('IsActive', 'true'/'false') 单值提交。 *@
                         <label class="form-check-label" for="editRoleActive">启用角色</label>
                     </div>
                 </div>
@@ -286,6 +287,8 @@
                                 <input class="form-check-input" type="checkbox"
                                        name="PrivacyFieldEnabled" value="true" id="perm_privacy_field"
                                        @(Model.RolePrivacyFieldEnabled ? "checked" : "")>
+                                @* v2.13.221 BUG 2 修复：添加 hidden input（与 IsActive 同样模式），保证未勾选时 FormData 包含 PrivacyFieldEnabled=false *@
+                                <input type="hidden" name="PrivacyFieldEnabled" value="false">
                                 <label class="form-check-label" for="perm_privacy_field">
                                     <strong>允许显示隐私字段</strong>
                                     <small class="text-muted d-block ms-4">
