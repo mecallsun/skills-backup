@@ -12,11 +12,11 @@
 }
 
 <div class="container-fluid">
-    <!-- 页头（v2.13.158 与 Personnel 页头规范一致） -->
-    <div class="page-header">
-        <h2>
+    <!-- 页头（v2.13.224 与系统设置标题风格位置一致：靠左显示） -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">
             <i class="bi bi-database header-icon"></i> 基础资料
-            <span class="header-count">@Model.CurrentTabTotalCount 条记录</span>
+            <span class="badge bg-secondary ms-2">@Model.CurrentTabTotalCount 条记录</span>
         </h2>
     </div>
 
