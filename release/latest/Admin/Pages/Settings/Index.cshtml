@@ -1063,13 +1063,21 @@
         }
 
         // ====================== v2.13.67 角色管理子 Tab JS ======================
+        // v2.13.222 BUG 1 终极修复：改用 radio 单选框（启用/禁用），单值提交 100% 兼容 ASP.NET Core bool 模型绑定
         function openEditModal(id, roleCode, name, desc, sort, isActive) {
             document.getElementById('editRoleId').value = id;
             document.getElementById('editRoleCode').value = roleCode;
             document.getElementById('editRoleName').value = name;
             document.getElementById('editRoleDesc').value = desc || '';
             document.getElementById('editRoleSort').value = sort;
-            document.getElementById('editRoleActive').checked = isActive === 'true';
+            // radio 单选框：根据 isActive 字符串勾选对应 radio
+            if (isActive === 'true') {
+                document.getElementById('editRoleActiveYes').checked = true;
+                document.getElementById('editRoleActiveNo').checked = false;
+            } else {
+                document.getElementById('editRoleActiveYes').checked = false;
+                document.getElementById('editRoleActiveNo').checked = true;
+            }
             new bootstrap.Modal(document.getElementById('editRoleModal')).show();
         }
 
@@ -1170,11 +1178,11 @@
                 hideFeedback('editRoleFeedback');
 
                 const data = new FormData(this);
-                // v2.13.221 BUG 1 修复：先删除所有旧 IsActive，再根据 checkbox 状态单值提交
-                // （解决之前 hidden=false 干扰 checkbox=true 的问题）
-                data.delete('IsActive');
-                const checkbox = document.getElementById('editRoleActive');
-                data.set('IsActive', (checkbox && checkbox.checked) ? 'true' : 'false');
+                // v2.13.222 BUG 1 终极修复：使用 radio 单选框（启用/禁用），单值提交 100% 兼容 ASP.NET Core bool 模型绑定
+                // 不再需要 data.delete + set 修复逻辑，radio 天然单值提交
+                if (!data.has('IsActive')) {
+                    data.set('IsActive', 'false');  // 兜底（如果用户未勾选）
+                }
 
                 const btn = document.getElementById('editRoleSubmit');
                 const orig = btn.innerHTML;

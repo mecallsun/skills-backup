@@ -106,7 +106,7 @@
                         <th class="text-truncate">用户名</th>
                         <th class="text-truncate">姓名</th>
                         <th class="text-truncate">角色</th>
-                        <th class="text-truncate">联系方式</th>
+                        @* v2.13.223：删除「联系方式」列（按用户要求） *@
                         <th class="text-truncate">最后时间</th>
                         <th class="text-truncate">登录IP</th>
                         <th style="width:140px">有效期至</th>
@@ -132,24 +132,7 @@
                                     <span class="badge bg-info me-1">@roleName</span>
                                 }
                             </td>
-                            <td class="small text-truncate" title="@((!string.IsNullOrEmpty(u.Email) ? u.Email : "") + (!string.IsNullOrEmpty(u.Phone) ? ((!string.IsNullOrEmpty(u.Email) ? " | " : "") + u.Phone) : ""))">
-                                @if (!string.IsNullOrEmpty(u.Email))
-                                {
-                                    <i class="bi bi-envelope"></i> @u.Email
-                                }
-                                @if (!string.IsNullOrEmpty(u.Phone))
-                                {
-                                    @if (!string.IsNullOrEmpty(u.Email))
-                                    {
-                                        <span class="text-muted mx-1">|</span>
-                                    }
-                                    <i class="bi bi-phone"></i> @u.Phone
-                                }
-                                @if (string.IsNullOrEmpty(u.Email) && string.IsNullOrEmpty(u.Phone))
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                            </td>
+                            @* v2.13.223：删除「联系方式」对应的 td（与 th 同步） *@
                             <td class="small text-muted text-truncate" title="@(u.LastLoginTime.HasValue ? u.LastLoginTime.Value.ToString("yyyy-MM-dd HH:mm") : "从未登录")">
                                 @if (u.LastLoginTime.HasValue)
                                 {
@@ -209,9 +192,9 @@
                                     <span class="badge bg-secondary">禁用</span>
                                 }
                             </td>
-                            <td class="text-center op-cell">
-                                @* v2.13.182 操作按钮文字化：纯文字 + 空格分隔 + 强制一行显示 *@
-                                <button class="op-btn"
+                            <td class="text-center">
+                                @* v2.13.223：操作列按钮风格对齐角色管理（btn-sm btn-outline-primary/success/danger + 图标 + 文字） *@
+                                <button class="btn btn-sm btn-outline-primary"
                                         data-bs-toggle="modal"
                                         data-bs-target="#editUserModal"
                                         data-user-id="@u.Id"
@@ -222,35 +205,35 @@
                                         data-is-active="@u.IsActive.ToString().ToLower()"
                                         data-role-ids="@u.RoleIds"
                                         data-expires-at="@(u.ExpiresAt?.ToString("yyyy-MM-dd"))">
-                                    编辑
+                                    <i class="bi bi-pencil"></i> 编辑
                                 </button>
                                 @if (u.IsActive)
                                 {
-                                    <span class="op-btn-sep"> </span>
-                                    <button type="button" class="op-btn op-btn-warning" onclick="toggleUserStatus(@u.Id, false)" title="停用账号">停用</button>
+                                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="toggleUserStatus(@u.Id, false)" title="停用账号">
+                                        <i class="bi bi-pause-circle"></i> 停用
+                                    </button>
                                 }
                                 else
                                 {
-                                    <span class="op-btn-sep"> </span>
-                                    <button type="button" class="op-btn op-btn-success" onclick="toggleUserStatus(@u.Id, true)" title="启用账号">启用</button>
+                                    <button type="button" class="btn btn-sm btn-outline-success" onclick="toggleUserStatus(@u.Id, true)" title="启用账号">
+                                        <i class="bi bi-play-circle"></i> 启用
+                                    </button>
                                 }
-                                <span class="op-btn-sep"> </span>
-                                <button class="op-btn op-btn-warning"
+                                <button class="btn btn-sm btn-outline-secondary"
                                         data-bs-toggle="modal"
                                         data-bs-target="#resetPwdModal"
                                         data-user-id="@u.Id"
                                         data-user-name="@u.UserName">
-                                    重置密码
+                                    <i class="bi bi-key"></i> 重置密码
                                 </button>
                                 @if (u.UserName != "admin")
                                 {
-                                    <span class="op-btn-sep"> </span>
-                                    <button class="op-btn op-btn-danger"
+                                    <button class="btn btn-sm btn-outline-danger"
                                             data-bs-toggle="modal"
                                             data-bs-target="#deleteConfirmModal"
                                             data-user-id="@u.Id"
                                             data-user-name="@u.UserName">
-                                        删除
+                                        <i class="bi bi-trash"></i> 删除
                                     </button>
                                 }
                             </td>
@@ -258,7 +241,7 @@
                     }
                     @if (Model.UserUsers.Count == 0)
                     {
-                        <tr><td colspan="9" class="text-center py-4 text-muted">暂无数据</td></tr>
+                        <tr><td colspan="8" class="text-center py-4 text-muted">暂无数据</td></tr>
                     }
                 </tbody>
             </table>
