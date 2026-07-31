@@ -184,24 +184,8 @@
                         <input type="number" name="SortOrder" id="editRoleSort" class="form-control" min="0" max="999">
                     </div>
                     <div class="form-check mb-3">
-                        @* v2.13.222 BUG 1 终极修复：使用单一 hidden 字段（不用 checkbox）确保 ASP.NET Core 模型绑定 100% 可靠。
-                           原 checkbox + hidden 双 input 模式在 v2.13.221 仍有边角案例 BUG（hidden=false 与 checkbox=true 冲突时绑定取 false）。
-                           新方案：完全移除 checkbox，改用 2 个 radio 单选框（启用/禁用）——单值提交，与 ASP.NET Core bool 模型绑定 100% 兼容。 *@
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="IsActive" value="true" id="editRoleActiveYes">
-                                <label class="form-check-label" for="editRoleActiveYes">
-                                    <i class="bi bi-check-circle text-success"></i> 启用
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="IsActive" value="false" id="editRoleActiveNo" checked>
-                                <label class="form-check-label" for="editRoleActiveNo">
-                                    <i class="bi bi-x-circle text-secondary"></i> 禁用
-                                </label>
-                            </div>
-                        </div>
-                        <small class="text-muted">保存后状态立即生效</small>
+                        <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="editRoleActive">
+                        <label class="form-check-label" for="editRoleActive">启用角色</label>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -1178,11 +1178,11 @@
                 hideFeedback('editRoleFeedback');
 
                 const data = new FormData(this);
-                // v2.13.222 BUG 1 终极修复：使用 radio 单选框（启用/禁用），单值提交 100% 兼容 ASP.NET Core bool 模型绑定
-                // 不再需要 data.delete + set 修复逻辑，radio 天然单值提交
-                if (!data.has('IsActive')) {
-                    data.set('IsActive', 'false');  // 兜底（如果用户未勾选）
-                }
+                // v2.13.222 终极修复（回退 radio 后）：用单一 checkbox 模式
+                // 关键：删除所有同名 IsActive 字段后，根据 checkbox 状态精准设置单值
+                data.delete('IsActive');
+                const checkbox = document.getElementById('editRoleActive');
+                data.set('IsActive', checkbox && checkbox.checked ? 'true' : 'false');
 
                 const btn = document.getElementById('editRoleSubmit');
                 const orig = btn.innerHTML;
