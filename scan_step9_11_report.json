@@ -1,0 +1,21 @@
+{
+  "execution_time": "2026-08-11T22:56:31.130047",
+  "pool_root": "C:\\Users\\Mecall\\.skills-pool\\skills",
+  "backup_path": "C:\\Users\\Mecall\\.skills-pool\\_backup_20260811_20260811_224500",
+  "success_count": 498,
+  "fail_count": 0,
+  "skipped_count": 2,
+  "errors": [],
+  "skipped_sample": [
+    {
+      "skill": "a-stock",
+      "reason": "already exists",
+      "destination": "C:\\Users\\Mecall\\.skills-pool\\skills\\03-A股量化\\a-stock"
+    },
+    {
+      "skill": "R2R",
+      "reason": "already exists",
+      "destination": "C:\\Users\\Mecall\\.skills-pool\\skills\\07-研究调研\\R2R"
+    }
+  ]
+}

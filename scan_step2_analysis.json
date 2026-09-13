@@ -1,0 +1,55 @@
+{
+  "total": 367,
+  "unique_names": 357,
+  "duplicated_names": 7,
+  "by_top_dir": {
+    "AI研究项目": 355,
+    "AI课程培训": 7,
+    "skills": 3,
+    "AI编程开发": 2
+  },
+  "by_category": {
+    "(no-category)": 89,
+    "01-AIÕÀÑõ¢£µÁü": 43,
+    "03-AÞéíÚçÅÕîû": 10,
+    "04-VibeCoding": 24,
+    "05-Õåàի¦Õêøõ¢£": 16,
+    "06-Þüîգ¦µòêþÄç": 5,
+    "07-þáöþ®Âަâþáö": 23,
+    "08-Ճ¦þíÇޫ¥µû¢": 60,
+    "09-Õ+ÇÕÅæµíåµ×Â": 66,
+    "10-þÑ޻åզô": 8,
+    "11-իëÕà¿ڦµèñ": 16,
+    "12-ClaudeÕăÕÄé": 7
+  },
+  "top_duplicates": [
+    [
+      "pptx",
+      3
+    ],
+    [
+      "hyperframes",
+      3
+    ],
+    [
+      "ppt-master",
+      3
+    ],
+    [
+      "lead-get",
+      2
+    ],
+    [
+      "lead-hunter",
+      2
+    ],
+    [
+      "circle-of-competence",
+      2
+    ],
+    [
+      "stop-doing-list",
+      2
+    ]
+  ]
+}

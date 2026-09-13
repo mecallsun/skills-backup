@@ -1,0 +1,12 @@
+# 备份压缩包（已在 F 盘归档）
+*.zip
+_backup_*
+/backup_*/
+
+# Python 临时文件
+__pycache__/
+*.pyc
+*.pyo
+
+# 日志
+*.log
