@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(for f in \"E:/AI知识库/AI知识库/00自媒体技能/数据库/选题库.md\" \"E:/AI知识库/AI知识库/00自媒体技能/数据库/框架库.md\" \"E:/AI知识库/AI知识库/00自媒体技能/数据库/已发布内容库/README.md\")",
+      "Bash(do)",
+      "Bash(echo \"=== $f ===\")",
+      "Read(//e/AI知识库/AI知识库/00自媒体技能/**)",
+      "Bash(done)",
+      "WebSearch",
+      "Bash(python:*)",
+      "Bash(del:*)",
+      "Bash(ls:*)",
+      "Bash(rm:*)",
+      "Bash(for dir in \"1-研究规划\" \"2-深度研究\" \"3-内容库整合\" \"4-脚本创作\" \"5-选题管理\" \"6-数据复盘\" \"7-方法论沉淀\" \"8-工作流优化\" \"9-竞品观察\" \"10-选题日历\" \"11-人设守护\" \"12-选题雷达\")",
+      "Bash(do echo \"=== $dir ===\")",
+      "WebFetch(domain:resources.anthropic.com)",
+      "Bash(grep:*)"
+    ]
+  }
+}
